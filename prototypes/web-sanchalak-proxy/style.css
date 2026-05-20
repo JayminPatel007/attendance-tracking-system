@@ -1,0 +1,126 @@
+/* PROTOTYPE — web Sanchalak-proxy */
+
+.proxy-intro {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.proxy-intro .icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex: 0 0 auto;
+}
+.proxy-intro h2 { font-size: 16px; margin: 0 0 4px; }
+.proxy-intro p { font-size: 13px; color: var(--ink-dim); margin: 0; line-height: 1.5; }
+
+.sabha-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.sabha-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.sabha-card h3 { margin: 0 0 4px; font-size: 15px; }
+.sabha-card .schedule { font-size: 12px; color: var(--ink-dim); margin-bottom: 12px; }
+.sabha-card .meta-row { font-size: 12px; padding: 6px 0; border-top: 1px solid var(--line-soft); display: flex; justify-content: space-between; }
+.sabha-card .meta-row .k { color: var(--ink-dim); }
+.sabha-card .availability {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.sabha-card .availability.online { background: var(--good-soft); color: var(--good); }
+.sabha-card .availability.away { background: var(--warn-soft); color: var(--warn); }
+.sabha-card .availability.absent { background: var(--bad-soft); color: var(--bad); }
+.sabha-card .actions { margin-top: 14px; }
+
+/* Proxy mode active */
+.proxy-banner {
+  background: var(--warn);
+  color: white;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.proxy-banner .icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.proxy-banner .info { flex: 1; }
+.proxy-banner h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.proxy-banner .sub { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+.proxy-banner button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.proxy-banner button:hover { background: rgba(255,255,255,0.3); }
+
+.proxy-toolkit {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.toolkit-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+  transition: border-color 0.15s;
+}
+.toolkit-card:hover { border-color: var(--accent); }
+.toolkit-card .icon-lg {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.toolkit-card h3 { margin: 0 0 4px; font-size: 13px; }
+.toolkit-card p { margin: 0; font-size: 11px; color: var(--ink-dim); line-height: 1.4; }
+
+.audit-preview {
+  background: var(--line-soft);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.audit-preview h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-faint); margin: 0 0 8px; }
+.audit-preview .entry { padding: 4px 0; font-family: ui-monospace, Menlo, monospace; }

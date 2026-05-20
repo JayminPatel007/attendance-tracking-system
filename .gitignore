@@ -1,0 +1,10 @@
+# Claude Code per-developer settings
+.claude/settings.local.json
+**/.claude/settings.local.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,97 @@
+/* PROTOTYPE — web role appointment styles (chosen design) */
+
+h2.section { font-size: 18px; margin: 0 0 6px; }
+p.lead { font-size: 13px; color: var(--ink-dim); margin: 0 0 24px; }
+
+/* Shared form fields */
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: var(--ink-dim); display: block; margin-bottom: 4px; font-weight: 500; }
+.field input, .field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.field .hint { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Long form + directory-style Person picker */
+.vd { max-width: 760px; }
+.vd .form-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 28px; }
+.vd .form-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-faint); margin: 22px 0 14px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
+.vd .form-card h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.vd .credentials-suggest { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--accent); margin-bottom: 12px; }
+.vd .actions { display: flex; gap: 8px; margin-top: 28px; }
+
+/* Person picker — directory-list look */
+.vd .picker {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.vd .picker-search { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+.vd .picker-search input { flex: 1; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+.vd .picker-search .count { font-size: 11px; color: var(--ink-faint); }
+.vd .picker-list { max-height: 280px; overflow-y: auto; }
+.vd .picker-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+.vd .picker-row:last-child { border-bottom: 0; }
+.vd .picker-row:hover { background: var(--line-soft); }
+.vd .picker-row.selected { background: var(--accent-soft); }
+.vd .picker-row .info { flex: 1; }
+.vd .picker-row .name { font-size: 13px; font-weight: 500; }
+.vd .picker-row .sub { font-size: 11px; color: var(--ink-dim); }
+.vd .picker-row .roles-row { margin-top: 2px; }
+.vd .picker-row .role-chip-sm {
+  display: inline-block;
+  padding: 1px 7px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 10px;
+  margin-right: 4px;
+}
+.vd .picker-row .check {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+}
+.vd .picker-row.selected .check { border-color: var(--accent); background: var(--accent); color: white; }
+.vd .picker-row.create { color: var(--accent); font-weight: 500; }
+.vd .picker-row.create .check { display: none; }
+
+.vd .chosen-banner {
+  background: var(--good-soft);
+  color: var(--good);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.vd .chosen-banner a { color: var(--good); cursor: pointer; text-decoration: underline; font-size: 11px; }
+
+.vd .inline-create {
+  margin-top: 10px;
+  background: var(--line-soft);
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px dashed var(--line);
+}
+.vd .inline-create h4 { margin: 0 0 8px; font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.4px; }

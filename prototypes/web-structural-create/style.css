@@ -1,0 +1,145 @@
+/* PROTOTYPE — web structural admin */
+
+.role-banner {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.role-banner .role-switcher {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 3px;
+  border-radius: 999px;
+}
+.role-banner .role-switcher button {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--ink-dim);
+}
+.role-banner .role-switcher button.active {
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  gap: 4px;
+  margin-bottom: 24px;
+}
+.tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  position: relative;
+}
+.tab .lock { font-size: 10px; margin-left: 4px; opacity: 0.6; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab.disabled { color: var(--ink-faint); cursor: not-allowed; }
+.tab .count {
+  display: inline-block;
+  background: var(--line-soft);
+  color: var(--ink-dim);
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  font-weight: 600;
+}
+.tab.active .count { background: var(--accent-soft); color: var(--accent); }
+
+.entity-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+.entity-list {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.entity-list .head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.entity-list .head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.entity-list .head .small { font-size: 11px; color: var(--ink-dim); }
+.entity-row {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.entity-row:last-child { border-bottom: 0; }
+.entity-row:hover { background: var(--line-soft); }
+.entity-row .info { flex: 1; }
+.entity-row .name { font-size: 13px; font-weight: 500; }
+.entity-row .sub { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+.entity-row .meta { font-size: 11px; color: var(--ink-faint); }
+
+.create-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+}
+.create-card h3 { font-size: 14px; margin: 0 0 4px; }
+.create-card .sub { font-size: 12px; color: var(--ink-dim); margin-bottom: 16px; }
+
+.field { margin-bottom: 12px; }
+.field label { font-size: 11px; color: var(--ink-dim); display: block; margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+.field input, .field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.field .hint { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+
+.kind-builder {
+  background: var(--line-soft);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.kind-builder h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-faint); margin: 0 0 8px; }
+.kind-builder .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.track-radio { display: flex; gap: 6px; margin-top: 4px; }
+.track-radio label {
+  flex: 1;
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.track-radio label.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.track-radio input { display: none; }
+
+.disabled-tab-note {
+  padding: 30px 18px;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 13px;
+}

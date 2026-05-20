@@ -1,0 +1,122 @@
+/* PROTOTYPE — web Sabha definition */
+
+.def-page { max-width: 780px; }
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+}
+.form-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-faint);
+  margin: 22px 0 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+.form-card h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: var(--ink-dim); display: block; margin-bottom: 4px; font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.field textarea { min-height: 60px; resize: vertical; }
+.field .hint { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Schedule shape toggle */
+.shape-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.shape-option {
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.shape-option:hover { border-color: var(--ink-faint); }
+.shape-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+.shape-option h4 { margin: 0 0 4px; font-size: 14px; }
+.shape-option p { margin: 0; font-size: 11px; color: var(--ink-dim); line-height: 1.4; }
+
+/* Sanchalak picker — same as role-appointment */
+.picker { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.picker-search { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+.picker-search input { flex: 1; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+.picker-search .count { font-size: 11px; color: var(--ink-faint); }
+.picker-list { max-height: 220px; overflow-y: auto; }
+.picker-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+.picker-row:last-child { border-bottom: 0; }
+.picker-row:hover { background: var(--line-soft); }
+.picker-row.selected { background: var(--accent-soft); }
+.picker-row .info { flex: 1; }
+.picker-row .name { font-size: 13px; font-weight: 500; }
+.picker-row .sub { font-size: 11px; color: var(--ink-dim); }
+.picker-row .check {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+}
+.picker-row.selected .check { border-color: var(--accent); background: var(--accent); color: white; }
+.picker-row.create { color: var(--accent); font-weight: 500; }
+
+.chosen-banner {
+  background: var(--good-soft);
+  color: var(--good);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chosen-banner a { color: var(--good); cursor: pointer; text-decoration: underline; font-size: 11px; }
+
+.creds-hint {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.actions { display: flex; gap: 8px; margin-top: 24px; }
+
+.preview-strip {
+  margin-top: 18px;
+  background: var(--line-soft);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.preview-strip strong { color: var(--ink); }

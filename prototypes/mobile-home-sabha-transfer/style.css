@@ -1,0 +1,129 @@
+/* PROTOTYPE — Home Sabha Transfer (multi-step OTP) */
+
+.hs-page { display: flex; flex-direction: column; flex: 1; }
+.hs-body { padding: 16px; flex: 1; overflow-y: auto; }
+
+.steps-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.steps-bar .step {
+  flex: 1;
+  height: 4px;
+  background: var(--line);
+  border-radius: 999px;
+}
+.steps-bar .step.active { background: var(--accent); }
+.steps-bar .step.done { background: var(--good); }
+.steps-bar .step-label {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.hs-search { padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.hs-search input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+.hs-search .hint { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+
+.hs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.hs-row .meta { flex: 1; }
+.hs-row .name { font-size: 14px; font-weight: 500; }
+.hs-row .sub { font-size: 11px; color: var(--ink-dim); }
+.hs-row .arrow { color: var(--ink-faint); font-size: 18px; }
+
+.transfer-summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.transfer-summary .person { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.transfer-summary .name-lg { font-size: 18px; font-weight: 600; }
+.transfer-summary .mobile { font-size: 12px; color: var(--ink-dim); }
+.movement {
+  background: var(--line-soft);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+}
+.movement .from { color: var(--ink-dim); text-decoration: line-through; }
+.movement .arrow-dn { text-align: center; color: var(--ink-faint); margin: 6px 0; }
+.movement .to { font-weight: 600; color: var(--accent); }
+
+.legal-note {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 14px 0;
+}
+
+.otp-block { padding: 30px 16px; text-align: center; }
+.otp-block .icon-lg {
+  width: 56px;
+  height: 56px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.otp-block h2 { font-size: 18px; margin: 0 0 6px; }
+.otp-block .lead { font-size: 13px; color: var(--ink-dim); margin: 0 0 22px; }
+.otp-block .lead strong { color: var(--ink); }
+
+.otp-input {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.otp-input input {
+  width: 50px;
+  height: 60px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-family: inherit;
+}
+.otp-input input:focus { outline: none; border-color: var(--accent); }
+.otp-resend { font-size: 12px; color: var(--accent); margin-top: 8px; cursor: pointer; }
+.otp-resend.disabled { color: var(--ink-faint); cursor: default; }
+.otp-error { font-size: 12px; color: var(--bad); margin-top: 8px; }
+
+.success-block { padding: 40px 20px; text-align: center; }
+.success-block .check {
+  width: 72px;
+  height: 72px;
+  background: var(--good);
+  color: white;
+  border-radius: 999px;
+  font-size: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.success-block h2 { font-size: 20px; margin: 0 0 6px; }
+.success-block p { font-size: 13px; color: var(--ink-dim); margin: 0 0 22px; }

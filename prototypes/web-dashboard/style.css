@@ -1,0 +1,152 @@
+/* PROTOTYPE — web dashboard styles */
+
+h2.section { font-size: 16px; margin: 0 0 16px; }
+h3.section { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-faint); margin: 24px 0 8px; }
+
+/* Sidebar icons / badge */
+.sidenav .nav-icon {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.sidenav .nav-item.active .nav-icon { color: var(--accent); }
+.sidenav .nav-item { text-decoration: none; }
+.sidenav .nav-badge {
+  margin-left: auto;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* Page header used by all sections */
+.page-head { margin-bottom: 20px; }
+.page-head h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+.page-head .sub { font-size: 13px; color: var(--ink-dim); }
+
+/* ===== Variant A — KPI strip + card grid ===== */
+.va .kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.va .kpi {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.va .kpi .label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.4px; }
+.va .kpi .value { font-size: 26px; font-weight: 600; margin-top: 4px; }
+.va .kpi .delta { font-size: 11px; }
+.va .kpi .delta.bad { color: var(--bad); }
+.va .kpi .delta.good { color: var(--good); }
+
+.va .grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+.va .grid .card { padding: 16px 18px; }
+.va .grid .card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.va .grid .card .title { font-size: 14px; font-weight: 600; }
+.va .grid .card .link { font-size: 12px; color: var(--accent); text-decoration: none; }
+.va .candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+.va .candidate-row:first-of-type { border-top: 0; }
+.va .candidate-row .meta { flex: 1; }
+.va .candidate-row .sub { font-size: 11px; color: var(--ink-dim); }
+.va .candidate-row .missed { font-size: 12px; color: var(--bad); font-weight: 600; }
+.va .stack-cards { display: flex; flex-direction: column; gap: 16px; }
+.va .sparkline { height: 80px; }
+
+/* ===== Variant B — single big table with filters ===== */
+.vb { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
+.vb .filters .filter-group { margin-bottom: 18px; }
+.vb .filters .filter-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.vb .filters label { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 13px; }
+.vb .filters select, .vb .filters input { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+.vb .table-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.vb .table-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.vb .table-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.vb table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.vb thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--line-soft);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-dim);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+.vb tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.vb tbody tr:last-child td { border-bottom: 0; }
+.vb tbody tr:hover { background: var(--line-soft); }
+.vb .week-dots { display: inline-flex; gap: 2px; }
+.vb .week-dots .dot { width: 10px; height: 10px; border-radius: 2px; background: var(--line); }
+.vb .week-dots .dot.present { background: var(--good); }
+.vb .week-dots .dot.absent { background: var(--bad-soft); border: 1px solid var(--bad); }
+
+/* ===== Variant C — hierarchical tree explorer ===== */
+.vc { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+.vc .tree { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; max-height: 70vh; overflow-y: auto; }
+.vc .tree-node {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.vc .tree-node:hover { background: var(--line-soft); }
+.vc .tree-node.selected { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.vc .tree-node .caret { display: inline-block; width: 12px; color: var(--ink-faint); font-size: 10px; }
+.vc .tree-node .type { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.4px; margin-left: 4px; }
+.vc .tree-node .name { flex: 1; }
+.vc .tree-node .badge {
+  margin-left: 6px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.vc .tree-children { padding-left: 16px; border-left: 1px dashed var(--line); margin-left: 6px; }
+.vc .detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 24px; }
+.vc .detail .crumb { font-size: 12px; color: var(--ink-dim); margin-bottom: 6px; }
+.vc .detail h2 { margin: 0 0 16px; font-size: 18px; }
+.vc .detail .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.vc .detail .stat { padding: 10px 12px; background: var(--line-soft); border-radius: 8px; }
+.vc .detail .stat .label { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.4px; }
+.vc .detail .stat .value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+.vc .candidate-list .row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+.vc .candidate-list .row:first-child { border-top: 0; }
+.vc .candidate-list .row .meta { flex: 1; }
+.vc .candidate-list .row .sub { font-size: 11px; color: var(--ink-dim); }

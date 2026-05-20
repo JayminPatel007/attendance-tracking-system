@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Web · Per-tier Dashboard · Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="../shared/base.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="prototype-banner">PROTOTYPE · Web · Per-tier Analytics Dashboard · viewed as Yuvak Nirdeshak — Kshetra Andheri-7</div>
+<div class="web-shell">
+  <div class="topnav">
+    <div class="logo">Sabha</div>
+    <div class="role-chip">Yuvak Nirdeshak · Kshetra Andheri-7</div>
+    <div class="spacer"></div>
+    <div class="user">Pratik Patel</div>
+  </div>
+  <nav class="sidenav" id="sidenav">
+    <div class="nav-section">Analytics</div>
+    <a class="nav-item" data-section="A" href="?variant=A">
+      <span class="nav-icon">▤</span>Dashboard overview
+    </a>
+    <a class="nav-item" data-section="B" href="?variant=B">
+      <span class="nav-icon">☰</span>People analytics
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" data-section="C" href="?variant=C">
+      <span class="nav-icon">⫶</span>Sabha analytics
+    </a>
+    <div class="nav-section">Manage</div>
+    <a class="nav-item" href="../web-role-appointment/">Role assignments</a>
+    <a class="nav-item">Sabhas</a>
+    <a class="nav-item">Directory</a>
+    <a class="nav-item">Occurrences</a>
+  </nav>
+  <main class="web-main" id="variant-root"></main>
+</div>
+<script src="../shared/data.js"></script>
+<script src="variants.js"></script>
+<script src="../shared/switcher.js"></script>
+</body>
+</html>

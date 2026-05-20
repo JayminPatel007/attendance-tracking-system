@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Attendance Tracking — Prototypes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="shared/base.css" />
+<style>
+  .landing { max-width: 920px; margin: 60px auto; padding: 0 24px 80px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  p.lead { color: var(--ink-dim); margin: 0 0 32px; }
+  .group { margin-bottom: 28px; }
+  .group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-faint); margin: 0 0 10px; }
+  .proto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .proto-link {
+    display: block;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+  .proto-link:hover { border-color: var(--accent); }
+  .proto-link .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .proto-link .sub { font-size: 12px; color: var(--ink-dim); line-height: 1.4; }
+  .proto-link .tag {
+    display: inline-block;
+    background: var(--line-soft);
+    color: var(--ink-dim);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    margin-right: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .legend { font-size: 12px; color: var(--ink-dim); margin-top: 32px; padding: 12px 14px; background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+<div id="prototype-banner">PROTOTYPE — throwaway, not production code</div>
+<div class="landing">
+  <h1>Attendance Tracking — UI prototypes</h1>
+  <p class="lead">All high-priority flows across mobile (Sanchalak / Sah-Sanchalak) and web (Nirikshak → MK + Sant). Designs converged on a single chosen layout per screen.</p>
+
+  <div class="group">
+    <h2>Mobile · Day-to-day Sanchalak operations</h2>
+    <div class="proto-grid">
+      <a class="proto-link" href="mobile-attendance/">
+        <div class="title">Attendance marking — today's Occurrence</div>
+        <div class="sub">Tap-toggle list with search and filter chips. The 5-second-per-Person hot path.</div>
+      </a>
+      <a class="proto-link" href="mobile-walk-in/">
+        <div class="title">Add Walk-in</div>
+        <div class="sub">Search Directory, pick a Person, confirm. Offline = cached Roster only.</div>
+      </a>
+      <a class="proto-link" href="mobile-add-person/">
+        <div class="title">Add Person to Directory</div>
+        <div class="sub">Mobile-first entry. Match → forced redirect. Try <code>9820111122</code>.</div>
+      </a>
+      <a class="proto-link" href="mobile-home-sabha-transfer/">
+        <div class="title">Verified Home Sabha Transfer</div>
+        <div class="sub">OTP-verified change (ADR-0002). Try OTP <code>4827</code>.</div>
+      </a>
+      <a class="proto-link" href="mobile-occurrence-control/">
+        <div class="title">Manage current Occurrence</div>
+        <div class="sub">Cancel · Reschedule · Venue override. Sanchalak-only (ADR-0001).</div>
+      </a>
+      <a class="proto-link" href="mobile-sync-status/">
+        <div class="title">Sync &amp; offline</div>
+        <div class="sub">Pending queue, manual sync, Roster staleness indicator (ADR-0007).</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Web · Analytics &amp; structural admin</h2>
+    <div class="proto-grid">
+      <a class="proto-link" href="web-dashboard/?variant=A">
+        <div class="title">Analytics — three sections</div>
+        <div class="sub">Dashboard overview · People analytics · Sabha analytics. Sidebar nav switches.</div>
+      </a>
+      <a class="proto-link" href="web-role-appointment/">
+        <div class="title">Role appointment + inline Person create</div>
+        <div class="sub">Single long form. Directory-style Person picker (ADR-0011).</div>
+      </a>
+      <a class="proto-link" href="web-occurrence-reopen/">
+        <div class="title">Occurrence reopen</div>
+        <div class="sub">Nirikshak / Nirdeshak authority. Reason captured + audit trail (ADR-0001).</div>
+      </a>
+      <a class="proto-link" href="web-sanchalak-proxy/">
+        <div class="title">Sanchalak-proxy mode</div>
+        <div class="sub">Nirikshak acts for Sanchalak with prominent banner + audit visibility.</div>
+      </a>
+      <a class="proto-link" href="web-sabha-definition/">
+        <div class="title">Define a Sabha</div>
+        <div class="sub">Weekly-recurring or monthly-ad-hoc (ADR-0012). Assigns Sanchalak inline.</div>
+      </a>
+      <a class="proto-link" href="web-structural-create/">
+        <div class="title">Structural admin</div>
+        <div class="sub">Cities / Zones / Sabha Kinds (MK) or Kshetras (Sanyojak) per ADR-0009.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="legend">
+    To run: <code>cd prototypes &amp;&amp; python3 -m http.server 8000</code>, then open <code>http://localhost:8000/</code>.<br />
+    Out of scope: ad-hoc Sabha flows (deferred per CONTEXT.md).
+  </div>
+</div>
+</body>
+</html>

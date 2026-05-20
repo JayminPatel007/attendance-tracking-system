@@ -1,0 +1,111 @@
+/* PROTOTYPE — mobile occurrence control */
+
+.oc-page { display: flex; flex-direction: column; flex: 1; }
+.oc-body { padding: 16px; flex: 1; overflow-y: auto; }
+
+.state-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+}
+.state-card .state-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.state-card .state-pill.scheduled { background: var(--accent-soft); color: var(--accent); }
+.state-card .state-pill.open { background: var(--good-soft); color: var(--good); }
+.state-card .state-pill.cancelled { background: var(--bad-soft); color: var(--bad); }
+.state-card .state-pill.rescheduled { background: var(--warn-soft); color: var(--warn); }
+.state-card .where { font-size: 14px; font-weight: 600; margin-top: 10px; }
+.state-card .when { font-size: 13px; color: var(--ink-dim); margin-top: 2px; }
+.state-card .badge {
+  display: inline-block;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.scope-note {
+  background: var(--line-soft);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-bottom: 18px;
+}
+.scope-note strong { color: var(--ink); }
+
+.action-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.action-card .head {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.action-card .head .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.action-card.danger .head .icon { background: var(--bad-soft); color: var(--bad); }
+.action-card .head .body { flex: 1; }
+.action-card .head .title { font-size: 14px; font-weight: 600; }
+.action-card .head .sub { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+.action-card .head .chev { color: var(--ink-faint); font-size: 14px; transition: transform 0.15s; }
+.action-card.open .head .chev { transform: rotate(90deg); }
+.action-card .panel { padding: 0 16px 16px; border-top: 1px solid var(--line-soft); display: none; }
+.action-card.open .panel { display: block; padding-top: 14px; }
+
+.field { margin-bottom: 12px; }
+.field label { font-size: 11px; color: var(--ink-dim); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.field textarea { min-height: 60px; resize: vertical; }
+.field .hint { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.revert-card {
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.revert-card h3 { margin: 0 0 4px; font-size: 14px; color: var(--warn); }
+.revert-card p { margin: 0 0 12px; font-size: 12px; color: var(--ink); }
+
+.audit-strip { font-size: 11px; color: var(--ink-faint); padding: 6px 16px; }

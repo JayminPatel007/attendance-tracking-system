@@ -1,0 +1,81 @@
+/* PROTOTYPE — mobile add Walk-in */
+
+.wi-page { display: flex; flex-direction: column; flex: 1; }
+.wi-scope-strip {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.wi-scope-strip.warn { background: var(--warn-soft); color: var(--warn); }
+.wi-search-wrap {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.wi-search-wrap input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 14px;
+}
+.wi-hint { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+
+.wi-list { flex: 1; overflow-y: auto; }
+.wi-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.wi-row:active { background: var(--line-soft); }
+.wi-row .meta { flex: 1; min-width: 0; }
+.wi-row .name { font-size: 14px; font-weight: 500; }
+.wi-row .home { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+.wi-row .home strong { color: var(--ink); }
+.wi-row .arrow { color: var(--ink-faint); font-size: 18px; }
+.wi-row.roster-member .home::before { content: "Home: "; }
+.wi-row.away .home::before { content: "Away from "; }
+
+.wi-section {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-faint);
+  padding: 12px 16px 4px;
+}
+
+.wi-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+.wi-empty .add-link { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 500; }
+
+.wi-confirm-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 5;
+}
+.wi-confirm {
+  background: var(--surface);
+  width: 100%;
+  border-radius: 18px 18px 0 0;
+  padding: 22px 20px 18px;
+  animation: slide 0.18s ease-out;
+}
+@keyframes slide { from { transform: translateY(20%); } to { transform: translateY(0); } }
+.wi-confirm .person { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.wi-confirm h2 { margin: 0; font-size: 14px; color: var(--ink-dim); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+.wi-confirm .name-lg { font-size: 18px; font-weight: 600; }
+.wi-confirm .meta-row { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
+.wi-confirm .meta-row .k { color: var(--ink-dim); }
+.wi-confirm .note { font-size: 11px; color: var(--ink-dim); margin-top: 12px; }
+.wi-confirm .actions { display: flex; gap: 8px; margin-top: 18px; }
