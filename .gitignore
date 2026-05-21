@@ -1,6 +1,8 @@
 # Claude Code per-developer settings
 .claude/settings.local.json
 **/.claude/settings.local.json
+node_modules/
+
 
 # OS / editor noise
 .DS_Store
