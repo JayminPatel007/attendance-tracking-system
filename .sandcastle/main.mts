@@ -1,4 +1,4 @@
-import { run, claudeCode } from "@ai-hero/sandcastle";
+import { run, codex } from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 
 // Simple loop: an agent that picks open issues one by one and closes them.
@@ -12,10 +12,10 @@ await run({
   // Sandbox provider — Docker is the default runtime.
   sandbox: docker(),
 
-  // The agent provider. Pass a model string to claudeCode() — sonnet balances
-  // capability and speed for most tasks. Switch to claude-opus-4-6 for harder
+  // The agent provider. Pass a model string to codex() — sonnet balances
+  // capability and speed for most tasks. Switch to claude-opus-4-7 for harder
   // problems, or claude-haiku-4-5-20251001 for speed.
-  agent: claudeCode("claude-opus-4-6"),
+  agent: codex("gpt-5.4-mini"),
 
   // Path to the prompt file. Shell expressions inside are evaluated inside the
   // sandbox at the start of each iteration, so the agent always sees fresh data.
