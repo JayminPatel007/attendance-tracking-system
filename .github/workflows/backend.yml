@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'apps/backend/**'
+      - 'infra/keycloak/**'
       - '.github/workflows/backend.yml'
   pull_request:
     paths:
       - 'apps/backend/**'
+      - 'infra/keycloak/**'
       - '.github/workflows/backend.yml'
 
 defaults:
