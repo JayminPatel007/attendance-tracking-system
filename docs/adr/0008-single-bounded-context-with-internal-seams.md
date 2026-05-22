@@ -1,5 +1,9 @@
 # Single Bounded Context, with Internal Package Seams
 
+> **Status: superseded by [ADR-0015](0015-bounded-context-seams-as-build-modules.md).**
+>
+> The "one bounded context, hexagonal within, analytics as extraction candidate" reasoning still stands; what changed is the *enforcement* of the internal seams. ADR-0015 promotes them from review-enforced Java packages to build-tool-enforced Maven modules / Angular libraries / Dart packages. The original tradeoff (review-only enforcement) preserved below for context.
+
 The system is built as one bounded context inside one Spring Boot application backed by one database, with the ubiquitous language defined in `CONTEXT.md` as the single source of truth. Internally the code is organized into packages — `identity`, `sabha`, `attendance`, `analytics` — that talk to each other through narrow application-service or domain-event interfaces, *not* through cross-package reach-ins. The intent is to keep the option of extracting any of these into its own context (most likely `analytics`) without rewriting the domain.
 
 ## Why not multi-context now

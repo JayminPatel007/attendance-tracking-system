@@ -1,6 +1,6 @@
 # Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure
 
-The Slice-1 scaffold (#2) commits the system to a single Git monorepo containing three deployables under `apps/`: a Spring Boot backend, an Angular web app, and a Flutter mobile app. Backend Java is laid out by the seams declared in ADR-0008 — `org.sabha.identity`, `org.sabha.sabha`, `org.sabha.attendance`, `org.sabha.analytics` — with a `BackendApplication` entry point at the package root. GitHub Actions runs one workflow per app, each scoped by `paths:` so an app's CI only fires on changes that touch it.
+The Slice-1 scaffold (#2) commits the system to a single Git monorepo containing three deployables under `apps/`: a Spring Boot backend, an Angular web app, and a Flutter mobile app. Per [ADR-0015](0015-bounded-context-seams-as-build-modules.md), each platform's bounded-context seams are encoded as **separate build modules** (Maven modules / Angular libraries / Dart packages), not just packages — the compiler enforces the no-reach-in rule. GitHub Actions runs one workflow per app, each scoped by `paths:` so an app's CI only fires on changes that touch it.
 
 ## Why a monorepo rather than three separate repos
 
@@ -14,26 +14,68 @@ The web app is the operational surface for every non-Sabha-level role: Sanyojak 
 
 The mobile app's framework was pre-decided by ADR-0003 (Flutter for one codebase across iOS + Android). The backend was pre-decided as Spring Boot before this slice.
 
-## Backend package layout
+## Backend module layout
 
-Per ADR-0008 the bounded context is single, with internal package seams that must not reach into each other. The scaffold encodes those seams as four sibling packages under `org.sabha`:
+Per ADR-0015 the bounded context is single, but its internal seams are encoded as **separate Maven modules** — not just Java packages — so a reach-in does not compile. The scaffold ships 14 modules under `apps/backend/`:
 
-- `identity` — Users, credentials, RoleAssignments
-- `sabha` — Sabha, Occurrence, Roster, lifecycle state machine
-- `attendance` — AttendanceMarking, Walk-ins, sync protocol
-- `analytics` — read-model projections, dashboards, Re-engagement Candidate calculator (the most likely extraction candidate, per ADR-0008)
+```
+backend-parent (pom)
+├── shared-kernel               <- pure Java, cross-context VOs
+├── identity-domain             <- pure Java, depends on shared-kernel
+├── identity-application        <- pure Java, depends on identity-domain
+├── identity-infrastructure     <- Spring OK; REST controllers, JPA repos
+├── sabha-{domain,application,infrastructure}
+├── attendance-{domain,application,infrastructure}
+├── analytics-{domain,application,infrastructure}
+└── bootstrap                   <- SpringBootApplication, application.yml,
+                                   actuator, jdbc; the only fat jar
+```
 
-Each ships a `package-info.java` documenting that cross-package communication goes through application services or domain events, never direct aggregate access. We deliberately do not yet enforce this with ArchUnit or module-info — the rule is review-enforced, which is the tradeoff ADR-0008 accepted. If reach-ins start sneaking in we revisit and add the architectural fitness function.
+Hexagonal layering applies *within* each context — domain at the core, application services orchestrating via ports, infrastructure adapters at the edges. The dependency rules are written into each `pom.xml`:
 
-Hexagonal layering applies *within* each seam (domain core, application services, adapters at the edges) — not orthogonally across them.
+- `*-domain` depends only on `shared-kernel`.
+- `*-application` depends only on its own `*-domain` and `shared-kernel`.
+- `*-infrastructure` depends only on its own `*-application` plus Spring.
+- `bootstrap` depends on every `*-infrastructure` module.
+- Cross-context communication goes through `shared-kernel` or domain events — never directly module-to-module.
+
+The Spring Boot main class lives in `bootstrap` and declares `@SpringBootApplication(scanBasePackages = "org.sabha")` so DI picks up adapters across every infrastructure module.
+
+## Web library layout
+
+Per ADR-0015 the Angular workspace is split into the main app plus seven `ng-packagr` libraries under `apps/web/projects/`:
+
+- `shared-kernel` / `shared-ui` / `shared-data-access` — cross-cutting.
+- `identity-domain` / `sabha-domain` / `attendance-domain` / `analytics-domain` — frontend mirrors of the backend bounded contexts.
+
+Each library has its own `public-api.ts`; the app composes them. `tsconfig.json` registers the libraries under `paths:` so the app imports them by name (`import { … } from 'identity-domain'`). `npm run build:libs` builds libraries in dependency order before the app builds.
+
+Mobile gets `analytics` deliberately omitted (ADR-0003: mobile is Sanchalak/Sah-Sanchalak only); web has the full set including a future `*-feature` library per slice.
+
+## Mobile package layout
+
+Per ADR-0015 `apps/mobile/` is a melos workspace:
+
+```
+apps/mobile/
+  melos.yaml + pubspec.yaml     <- workspace root
+  sabha_attendance/             <- the Flutter app
+  packages/
+    shared_kernel/              <- pure Dart, no Flutter dep
+    identity_domain/
+    sabha_domain/
+    attendance_domain/
+```
+
+The app's `pubspec.yaml` declares `path:` dependencies on the four packages; `melos bootstrap` links them. `melos run analyze` and `melos run test` fan out across every package.
 
 ## CI structure
 
 Three workflows in `.github/workflows/`, one per app, all triggered on `push` and `pull_request` with `paths:` filters:
 
-- `backend.yml` — JDK 21 (Temurin), `mvn -B -ntp verify`. Maven cache via `actions/setup-java`.
-- `web.yml` — Node 20, `npm ci`, `ng test --browsers=ChromeHeadlessCI`, then `ng build --configuration=production`.
-- `mobile.yml` — `subosito/flutter-action@v2`, `flutter create --platforms=android,ios .` (regenerates the platform dirs ignored by `.gitignore`), `flutter analyze`, `flutter test`.
+- `backend.yml` — JDK 21 (Temurin), `mvn -B -ntp verify` at `apps/backend/` (builds all 14 modules in dependency order). Maven cache via `actions/setup-java`.
+- `web.yml` — Node 20, `npm ci`, `npm run build:libs` (ng-packagr for the seven libraries in dependency order), then `ng test web --browsers=ChromeHeadlessCI` and `ng build web --configuration=production`.
+- `mobile.yml` — `subosito/flutter-action@v2`; `flutter create --platforms=android,ios --project-name=sabha_attendance_mobile .` inside `sabha_attendance/` to regenerate the gitignored platform dirs; `dart pub global activate melos`; `melos bootstrap`; `melos run analyze`; `melos run test`.
 
 A repo-wide pipeline that fans out into the three jobs was considered. We deferred it: in practice each app's path-filtered workflow handles "did the thing I changed still build" cleanly, and a wrapper would mostly duplicate status reporting. If we add cross-app contract tests later they can live in a separate workflow without touching these three.
 
@@ -41,14 +83,14 @@ A repo-wide pipeline that fans out into the three jobs was considered. We deferr
 
 Each app ships one smoke test that proves its stack works end-to-end:
 
-- Backend — `HealthEndpointTest` asserts `GET /actuator/health` returns `{status:UP, components.db.status:UP}`. Uses H2 for fast feedback; the real Postgres path is exercised by `docker compose up` and the per-app health check, and will be exercised again by the integration test in Slice 2 (#3).
-- Web — `app.component.spec.ts` asserts the home placeholder renders the app title. Runs headlessly via Karma + ChromeHeadlessCI.
-- Mobile — `splash_test.dart` widget-tests that the splash screen renders the app title.
+- Backend — `bootstrap/src/test/.../HealthEndpointTest` asserts `GET /actuator/health` returns `{status:UP, components.db.status:UP}`. Uses H2 for fast feedback; the real Postgres path is exercised by `docker compose up` and Slice 2's integration test (#3).
+- Web — `src/app/app.component.spec.ts` asserts the home placeholder renders the app title. Runs headlessly via Karma + ChromeHeadlessCI.
+- Mobile — `sabha_attendance/test/splash_test.dart` widget-tests that the splash screen renders the app title.
 
 ## Consequences
 
 - All future slices land in `apps/{backend,web,mobile}` — slice issues should not propose new top-level deployables without an ADR.
-- Adding a new backend seam means adding a new sibling package under `org.sabha` and a `package-info.java` declaring its no-reach-in contract.
-- Mobile platform directories (`android/`, `ios/`) are not committed; CI regenerates them via `flutter create`. A developer cloning fresh must run `flutter create --platforms=android,ios .` once before `flutter run`.
+- Adding code inside an existing bounded context means editing the right one of its three modules. Adding a *new* bounded context means adding a `*-domain/application/infrastructure` triple on each platform — capture in an ADR.
+- Mobile platform directories live under `sabha_attendance/{android,ios,...}` and are not committed; CI regenerates them via `flutter create`. A developer cloning fresh runs `cd apps/mobile/sabha_attendance && flutter create --platforms=android,ios --project-name=sabha_attendance_mobile .` once before `flutter run`.
 - Local Postgres for the running stack comes up via `docker compose up` and listens on host port **55432** to avoid clashing with any pre-existing host Postgres on 5432.
 - Tests use H2; production and the compose stack use Postgres. The schema-migration story (Flyway / Liquibase) lands in Slice 2 (#3) where real tables first appear.
