@@ -1,0 +1,26 @@
+# Flutter / Dart
+**/.dart_tool/
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/pubspec.lock
+
+# melos
+.melos_tool/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Generated platform dirs for the Flutter app
+# (recreate via `flutter create --platforms=android,ios --project-name=sabha_attendance_mobile .`)
+sabha_attendance/android/
+sabha_attendance/ios/
+sabha_attendance/linux/
+sabha_attendance/macos/
+sabha_attendance/windows/
+sabha_attendance/web/

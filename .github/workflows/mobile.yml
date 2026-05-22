@@ -1,0 +1,48 @@
+name: mobile
+
+on:
+  push:
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile.yml'
+
+defaults:
+  run:
+    working-directory: apps/mobile
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: stable
+          cache: true
+
+      - name: Install melos
+        run: dart pub global activate melos
+
+      - name: Generate Flutter app platform directories
+        working-directory: apps/mobile/sabha_attendance
+        run: |
+          flutter create --platforms=android,ios --project-name=sabha_attendance_mobile .
+          # flutter create writes its own boilerplate test that references the
+          # generated MyApp; the real test is splash_test.dart.
+          rm -f test/widget_test.dart
+
+      - name: Bootstrap workspace (path links + pub get)
+        run: melos bootstrap
+
+      - name: Analyze (all packages)
+        run: melos run analyze
+
+      - name: Test (all packages with a test/ dir)
+        run: melos run test

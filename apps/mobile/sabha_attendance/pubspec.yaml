@@ -1,0 +1,30 @@
+name: sabha_attendance_mobile
+description: Sabha Attendance — mobile app for Sanchalak / Sah-Sanchalak (ADR-0003).
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Hexagonal layering per ADR-0015: the app shell composes domain libraries.
+  shared_kernel:
+    path: ../packages/shared_kernel
+  identity_domain:
+    path: ../packages/identity_domain
+  sabha_domain:
+    path: ../packages/sabha_domain
+  attendance_domain:
+    path: ../packages/attendance_domain
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
