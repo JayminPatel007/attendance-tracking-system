@@ -1,0 +1,18 @@
+name: sabha_mobile_workspace
+
+packages:
+  - sabha_attendance
+  - packages/*
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+
+scripts:
+  analyze:
+    description: Run `flutter analyze` (or `dart analyze`) across every package.
+    run: melos exec -- "flutter analyze"
+
+  test:
+    description: Run `flutter test` (or `dart test`) across every package that has a test/ directory.
+    run: melos exec --dir-exists=test -- "flutter test"
