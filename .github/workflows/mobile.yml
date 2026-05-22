@@ -28,7 +28,11 @@ jobs:
           cache: true
 
       - name: Generate platform directories
-        run: flutter create --platforms=android,ios .
+        run: |
+          flutter create --platforms=android,ios --project-name=sabha_attendance_mobile .
+          # flutter create writes its own boilerplate test that references the
+          # generated MyApp; we already have splash_test.dart against the real app.
+          rm -f test/widget_test.dart
 
       - name: Get dependencies
         run: flutter pub get
