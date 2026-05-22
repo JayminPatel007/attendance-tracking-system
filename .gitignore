@@ -4,7 +4,7 @@
 node_modules/
 
 # Backend (Maven / Spring Boot)
-apps/backend/target/
+apps/backend/**/target/
 apps/backend/.mvn/wrapper/maven-wrapper.jar
 
 # Web (Angular)
