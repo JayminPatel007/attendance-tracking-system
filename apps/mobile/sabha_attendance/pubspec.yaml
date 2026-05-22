@@ -11,6 +11,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # OIDC Authorization Code + PKCE against Keycloak per ADR-0016.
+  flutter_appauth: ^7.0.0
+
+  # Backend HTTP client.
+  http: ^1.2.0
+
   # Hexagonal layering per ADR-0015: the app shell composes domain libraries.
   shared_kernel:
     path: ../packages/shared_kernel
