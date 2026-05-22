@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: sabha-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sabha}
+    username: ${SPRING_DATASOURCE_USERNAME:sabha}
+    password: ${SPRING_DATASOURCE_PASSWORD:sabha}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-components: always
+      probes:
+        enabled: true

@@ -1,0 +1,22 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Generated platform dirs (recreate via `flutter create --platforms=android,ios .`)
+android/
+ios/
+linux/
+macos/
+windows/
+web/
