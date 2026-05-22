@@ -16,6 +16,29 @@
     "declaration": false,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
+    "paths": {
+      "analytics-domain": [
+        "./dist/analytics-domain"
+      ],
+      "attendance-domain": [
+        "./dist/attendance-domain"
+      ],
+      "identity-domain": [
+        "./dist/identity-domain"
+      ],
+      "sabha-domain": [
+        "./dist/sabha-domain"
+      ],
+      "shared-data-access": [
+        "./dist/shared-data-access"
+      ],
+      "shared-kernel": [
+        "./dist/shared-kernel"
+      ],
+      "shared-ui": [
+        "./dist/shared-ui"
+      ]
+    },
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",

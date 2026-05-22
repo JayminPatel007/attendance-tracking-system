@@ -30,8 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build libraries (ng-packagr)
+        run: npm run build:libs
+
       - name: Unit tests (headless)
-        run: npx ng test --watch=false --browsers=ChromeHeadlessCI
+        run: npx ng test web --watch=false --browsers=ChromeHeadlessCI
 
       - name: Production build
-        run: npx ng build --configuration=production
+        run: npx ng build web --configuration=production
