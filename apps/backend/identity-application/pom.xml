@@ -13,9 +13,10 @@
     <artifactId>identity-application</artifactId>
     <name>Identity Application</name>
     <description>
-        Identity bounded context — application layer. Use-case interactors
-        (Login, ChangePassword, AssignRole) orchestrating domain via ports.
-        No Spring, no JPA — application services are pure orchestration.
+        Identity bounded context — application layer. Use-case interactors and the
+        REST controllers that expose them (per ADR-0017). Depends on spring-web /
+        spring-security for HTTP + JWT types only; no persistence, no starters,
+        no Spring Boot autoconfig — those live in *-infrastructure and bootstrap.
     </description>
 
     <dependencies>
@@ -26,6 +27,23 @@
         <dependency>
             <groupId>org.sabha</groupId>
             <artifactId>shared-kernel</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
     </dependencies>
 

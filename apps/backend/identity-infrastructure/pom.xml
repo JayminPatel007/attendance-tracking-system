@@ -13,8 +13,10 @@
     <artifactId>identity-infrastructure</artifactId>
     <name>Identity Infrastructure</name>
     <description>
-        Identity bounded context — adapters. REST controllers, JPA repositories,
-        password hashing, OTP delivery clients. May depend on Spring.
+        Identity bounded context — outbound adapters (JdbcUserRepository,
+        JdbcCallerResolver) and security configuration (SecurityFilterChain).
+        Per ADR-0017, inbound REST controllers live in identity-application,
+        not here.
     </description>
 
     <dependencies>
@@ -25,10 +27,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,6 +1,6 @@
 # Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)
 
-**Status**: accepted. **Supersedes [ADR-0008](0008-single-bounded-context-with-internal-seams.md).**
+**Status**: accepted. **Supersedes [ADR-0008](0008-single-bounded-context-with-internal-seams.md). Amended by [ADR-0017](0017-rest-adapters-live-in-application-modules.md)** (REST controllers and Spring Web annotations are now permitted in `*-application`; the rest of this ADR stands.)
 
 The system is still one bounded context per the original ADR-0008 reasoning (single org, presumably small team, modest concurrency). What changes here is the *enforcement mechanism* for the internal seams: they move from review-enforced Java packages to **build-tool-enforced modules**. Each bounded context — `identity`, `sabha`, `attendance`, `analytics` — is split into three modules (`domain`, `application`, `infrastructure`) on each platform, plus a `shared-kernel` shared by all and a single `bootstrap` deployable per platform.
 

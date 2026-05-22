@@ -1,4 +1,4 @@
-package org.sabha.identity.infrastructure;
+package org.sabha.identity.application;
 
 import java.util.UUID;
 
@@ -23,7 +23,8 @@ public class IdentityRestController {
     public ResponseEntity<WhoAmIResponse> whoami(@AuthenticationPrincipal Jwt jwt) {
         UUID keycloakUserId = UUID.fromString(jwt.getSubject());
         return users.findByKeycloakUserId(keycloakUserId)
-                .map(user -> ResponseEntity.ok(toResponse(user)))
+                .map(IdentityRestController::toResponse)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(403).build());
     }
 

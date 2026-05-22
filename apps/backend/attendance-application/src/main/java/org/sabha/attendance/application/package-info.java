@@ -1,6 +1,7 @@
 /**
- * Attendance application layer: use-case interactors — MarkAttendance,
- * MarkWalkIn, ProcessSyncQueue (idempotent application of mobile-queued
- * markings per ADR-0007). Framework-free.
+ * Attendance bounded context — application layer. Use-case interactors and the
+ * REST controllers that expose them (per ADR-0017). Depends on
+ * attendance-domain (ports) and shared-kernel ({@code CallerResolver}); never
+ * on other bounded contexts directly.
  */
 package org.sabha.attendance.application;
