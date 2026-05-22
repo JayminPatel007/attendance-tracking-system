@@ -1,5 +1,7 @@
 # User Authentication: Custom Username + Password, Set by Assigner
 
+**Status**: substantive policy stands; implementation shape **superseded by [ADR-0016](0016-oidc-auth-via-keycloak.md)** (OIDC via Keycloak). The "assigner sets username + password," "force change on first login," and "mobile-OTP reset with assigner-reissue fallback" rules below all remain in force — only the wire protocol and credential store are now delegated to Keycloak.
+
 Users authenticate with a custom username and password. The assigning Karyakar chooses both at role assignment time and hands them to the new User; the User is forced to change the password on first login. OTP remains in the system for a different purpose entirely — Person-side verification of Home Sabha transfers (ADR-0002) — but is not used for User login.
 
 ## Why not mobile + OTP (the obvious alternative)

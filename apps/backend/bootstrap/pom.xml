@@ -14,8 +14,9 @@
     <name>Backend Bootstrap</name>
     <description>
         The single Spring Boot deployable. Wires all bounded-context infrastructure
-        modules together via component scan, owns application.yml, ships the
-        /actuator/health smoke test. Only this module produces a fat jar.
+        modules together via component scan, owns application.yml, runs Liquibase
+        migrations at boot, and houses the cross-context integration smoke tests.
+        Only this module produces a fat jar.
     </description>
 
     <dependencies>
@@ -50,6 +51,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
@@ -61,14 +67,46 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dasniko</groupId>
+            <artifactId>testcontainers-keycloak</artifactId>
+            <version>3.7.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <finalName>backend</finalName>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/../../../infra/keycloak</directory>
+                <includes>
+                    <include>realm-sabha.json</include>
+                </includes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -80,6 +118,20 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!--
+                            docker-java defaults to API 1.32, which Docker Desktop 24+ rejects.
+                            Force a modern API version compatible with Docker 24+ servers.
+                            Testcontainers reads this via System.getProperty("api.version").
+                        -->
+                        <api.version>1.43</api.version>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>

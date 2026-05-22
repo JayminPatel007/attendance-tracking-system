@@ -2,9 +2,24 @@ spring:
   application:
     name: sabha-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sabha}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:55432/sabha}
     username: ${SPRING_DATASOURCE_USERNAME:sabha}
     password: ${SPRING_DATASOURCE_PASSWORD:sabha}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:58080/realms/sabha}
+
+sabha:
+  keycloak:
+    issuer-uri: ${SABHA_KEYCLOAK_ISSUER_URI:http://localhost:58080/realms/sabha}
+    admin-base-url: ${SABHA_KEYCLOAK_ADMIN_BASE_URL:http://localhost:58080}
+    realm: ${SABHA_KEYCLOAK_REALM:sabha}
+    admin-username: ${SABHA_KEYCLOAK_ADMIN_USERNAME:admin}
+    admin-password: ${SABHA_KEYCLOAK_ADMIN_PASSWORD:admin}
 
 management:
   endpoints:

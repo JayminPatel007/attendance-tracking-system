@@ -1,0 +1,123 @@
+{
+  "realm": "sabha",
+  "enabled": true,
+  "displayName": "Sabha Attendance",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "accessTokenLifespan": 900,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "passwordPolicy": "length(8) and notUsername",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "clients": [
+    {
+      "clientId": "sabha-mobile",
+      "name": "Sabha Attendance Mobile",
+      "description": "Public OIDC client for the Flutter mobile app. Authorization Code + PKCE only.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "com.sabha.app:/oauth2redirect",
+        "com.sabha.app://oauth2redirect"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "com.sabha.app:/logout"
+      },
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["basic", "openid", "profile", "email"]
+    },
+    {
+      "clientId": "sabha-web",
+      "name": "Sabha Attendance Web",
+      "description": "Public OIDC client for the Angular web app. Authorization Code + PKCE. Defined now for forward-compat with Slice 9.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://localhost:4200/callback"
+      ],
+      "webOrigins": ["http://localhost:4200"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200"
+      },
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["basic", "openid", "profile", "email"]
+    },
+    {
+      "clientId": "sabha-test",
+      "name": "Integration test client",
+      "description": "Direct Access Grants enabled so integration tests can obtain a JWT without the hosted-login UI. NOT used by mobile / web in production.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [],
+      "webOrigins": [],
+      "attributes": {},
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["basic", "openid", "profile", "email"]
+    }
+  ],
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "username": "sanchalak",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Seeded",
+      "lastName": "Sanchalak",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme123!",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": []
+    }
+  ],
+  "requiredActions": [
+    {
+      "alias": "UPDATE_PASSWORD",
+      "name": "Update Password",
+      "providerId": "UPDATE_PASSWORD",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 30
+    }
+  ]
+}
