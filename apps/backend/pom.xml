@@ -40,9 +40,7 @@
         <module>sabha-application</module>
         <module>sabha-infrastructure</module>
 
-        <module>attendance-domain</module>
-        <module>attendance-application</module>
-        <module>attendance-infrastructure</module>
+        <module>attendance-service</module>
 
         <module>analytics-domain</module>
         <module>analytics-application</module>
@@ -93,17 +91,27 @@
 
             <dependency>
                 <groupId>org.sabha</groupId>
-                <artifactId>attendance-domain</artifactId>
+                <artifactId>attendance-domain-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>attendance-application-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>attendance-data-access</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>attendance-messaging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.sabha</groupId>
                 <artifactId>attendance-application</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.sabha</groupId>
-                <artifactId>attendance-infrastructure</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

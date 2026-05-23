@@ -37,7 +37,15 @@
         </dependency>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>attendance-infrastructure</artifactId>
+            <artifactId>attendance-data-access</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>attendance-application</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>attendance-messaging</artifactId>
         </dependency>
         <dependency>
             <groupId>org.sabha</groupId>
