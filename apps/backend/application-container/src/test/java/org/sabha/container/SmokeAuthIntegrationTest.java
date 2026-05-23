@@ -148,7 +148,7 @@ class SmokeAuthIntegrationTest {
                         .content("""
                                 { "personId": "00000000-0000-0000-0000-000000000101", "present": true }
                                 """))
-                .andExpect(status().isConflict());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
