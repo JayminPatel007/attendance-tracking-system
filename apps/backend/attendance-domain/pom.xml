@@ -13,15 +13,25 @@
     <artifactId>attendance-domain</artifactId>
     <name>Attendance Domain</name>
     <description>
-        Attendance bounded context — pure domain. AttendanceMarking aggregate,
-        marking-type discriminator (Roster vs Walk-in), sync conflict resolution
-        rules (ADR-0007). No Spring, no JPA.
+        Attendance bounded context — pure domain. Aggregate roots (Occurrence),
+        entities, value objects, domain ports. No Spring, no JPA.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>shared-kernel</artifactId>
+            <artifactId>common-domain</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

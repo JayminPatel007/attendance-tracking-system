@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.CurrentRoster;
 import org.sabha.attendance.domain.CurrentRosterQuery;
-import org.sabha.sharedkernel.CallerResolver;
+import org.sabha.common.CallerResolver;
 import org.springframework.stereotype.Service;
 
 @Service

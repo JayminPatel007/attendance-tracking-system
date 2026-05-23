@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
  * (occurrences, attendance_markings), and sabha (home_sabhas, persons) to
  * answer "what is the Sanchalak looking at right now?". Cross-context reads
  * are explicitly allowed via this port abstraction (ADR-0017); cross-context
- * writes still go through domain events or shared-kernel.
+ * writes still go through domain events or common-domain.
  */
 @Repository
 public class JdbcCurrentRosterQuery implements CurrentRosterQuery {

@@ -6,7 +6,7 @@ import org.sabha.attendance.domain.AttendanceMarking;
 import org.sabha.attendance.domain.AttendanceMarkingRepository;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceRepository;
-import org.sabha.sharedkernel.CallerResolver;
+import org.sabha.common.CallerResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

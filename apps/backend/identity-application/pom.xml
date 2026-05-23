@@ -16,7 +16,8 @@
         Identity bounded context — application layer. Use-case interactors and the
         REST controllers that expose them (per ADR-0017). Depends on spring-web /
         spring-security for HTTP + JWT types only; no persistence, no starters,
-        no Spring Boot autoconfig — those live in *-infrastructure and bootstrap.
+        no Spring Boot autoconfig — those live in *-infrastructure and
+        application-container (ADR-0019).
     </description>
 
     <dependencies>
@@ -26,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>shared-kernel</artifactId>
+            <artifactId>common-domain</artifactId>
         </dependency>
 
         <dependency>

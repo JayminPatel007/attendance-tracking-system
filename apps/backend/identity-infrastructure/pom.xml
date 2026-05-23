@@ -14,9 +14,9 @@
     <name>Identity Infrastructure</name>
     <description>
         Identity bounded context — outbound adapters (JdbcUserRepository,
-        JdbcCallerResolver) and security configuration (SecurityFilterChain).
-        Per ADR-0017, inbound REST controllers live in identity-application,
-        not here.
+        JdbcCallerResolver). Per ADR-0019, the SecurityFilterChain moves to
+        application-container; inbound REST controllers live in
+        identity-application.
     </description>
 
     <dependencies>
