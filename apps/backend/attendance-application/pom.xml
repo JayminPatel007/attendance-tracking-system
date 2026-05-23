@@ -26,7 +26,7 @@
         </dependency>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>shared-kernel</artifactId>
+            <artifactId>common-domain</artifactId>
         </dependency>
 
         <dependency>

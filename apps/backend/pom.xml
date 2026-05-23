@@ -17,9 +17,11 @@
     <packaging>pom</packaging>
     <name>Sabha Attendance Backend (parent)</name>
     <description>
-        Multi-module modular monolith. Per ADR-0015, each bounded context exposes
-        three Maven modules (domain / application / infrastructure) and the bootstrap
-        module wires them into a single Spring Boot deployable.
+        Multi-module modular monolith. Per ADR-0019, each bounded context is split
+        into five Maven modules (domain-core / application-service / data-access /
+        messaging / application) under a *-service / *-domain aggregator. The
+        common-domain module is shared across contexts; application-container is
+        the single Spring Boot deployable.
     </description>
 
     <properties>
@@ -28,7 +30,7 @@
     </properties>
 
     <modules>
-        <module>shared-kernel</module>
+        <module>common-domain</module>
 
         <module>identity-domain</module>
         <module>identity-application</module>
@@ -46,14 +48,14 @@
         <module>analytics-application</module>
         <module>analytics-infrastructure</module>
 
-        <module>bootstrap</module>
+        <module>application-container</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.sabha</groupId>
-                <artifactId>shared-kernel</artifactId>
+                <artifactId>common-domain</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

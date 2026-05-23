@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>shared-kernel</artifactId>
+            <artifactId>common-domain</artifactId>
         </dependency>
     </dependencies>
 

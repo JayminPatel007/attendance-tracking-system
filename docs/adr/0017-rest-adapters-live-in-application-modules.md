@@ -1,6 +1,6 @@
 # REST adapters live in `*-application` modules
 
-**Status**: accepted. **Amends [ADR-0015](0015-bounded-context-seams-as-build-modules.md).**
+**Status**: superseded by [ADR-0019](0019-bounded-context-module-taxonomy.md). Originally amended [ADR-0015](0015-bounded-context-seams-as-build-modules.md) by allowing Spring Web annotations in `*-application`. ADR-0019 keeps the `*-application` module name but redefines its role as **presentation-only** (REST controllers + DTOs); use cases move to a new `*-application-service` module. The "co-locate controller and use case in the same module" rationale this ADR argued for no longer applies — the new model puts them in adjacent but distinct modules so the layer boundary matches the module boundary.
 
 ADR-0015 split each bounded context into `*-domain` / `*-application` / `*-infrastructure` and described `*-application` as "pure Java, no Spring." We are relaxing that one constraint: **`*-application` modules may use Spring Web and Spring Security annotations to expose HTTP endpoints alongside their use cases.** Outbound adapters (JDBC, messaging, external HTTP clients) remain in `*-infrastructure`.
 

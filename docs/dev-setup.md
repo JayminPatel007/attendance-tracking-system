@@ -4,7 +4,7 @@ Quick gotchas that aren't obvious from the codebase.
 
 ## Backend integration tests on macOS (Docker Desktop)
 
-The backend's integration tests use Testcontainers to spin up Postgres + Keycloak (see `apps/backend/bootstrap/src/test/java/.../SmokeAuthIntegrationTest.java`). Two macOS-specific quirks must be handled the first time you run them.
+The backend's integration tests use Testcontainers to spin up Postgres + Keycloak (see `apps/backend/application-container/src/test/java/.../SmokeAuthIntegrationTest.java`). Two macOS-specific quirks must be handled the first time you run them.
 
 ### 1. Point Testcontainers at the *real* Docker daemon socket
 
@@ -35,7 +35,7 @@ Or add to your shell rc file. **Linux developers and CI runners don't need this*
 
 ### 3. The Docker API version is pinned in the pom
 
-`apps/backend/bootstrap/pom.xml` sets `<api.version>1.43</api.version>` as a surefire system property. docker-java's default is 1.32, which Docker Desktop 24+ rejects with "client version too old." Don't drop that property unless you're also dropping support for new Docker versions.
+`apps/backend/application-container/pom.xml` sets `<api.version>1.43</api.version>` as a surefire system property. docker-java's default is 1.32, which Docker Desktop 24+ rejects with "client version too old." Don't drop that property unless you're also dropping support for new Docker versions.
 
 ## Running the stack
 
