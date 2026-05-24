@@ -29,12 +29,30 @@
 
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>identity-infrastructure</artifactId>
+            <artifactId>identity-data-access</artifactId>
         </dependency>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>sabha-infrastructure</artifactId>
+            <artifactId>identity-application</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>identity-messaging</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>sabha-data-access</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>sabha-application</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>sabha-messaging</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.sabha</groupId>
             <artifactId>attendance-data-access</artifactId>
@@ -47,9 +65,18 @@
             <groupId>org.sabha</groupId>
             <artifactId>attendance-messaging</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>analytics-infrastructure</artifactId>
+            <artifactId>analytics-data-access</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>analytics-application</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>analytics-messaging</artifactId>
         </dependency>
 
         <dependency>
