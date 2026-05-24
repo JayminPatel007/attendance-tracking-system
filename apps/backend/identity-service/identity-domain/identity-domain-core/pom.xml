@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.sabha</groupId>
+        <artifactId>backend-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>identity-domain-core</artifactId>
+    <name>Identity Domain Core</name>
+    <description>
+        Entities ring (Clean Architecture) for the Identity context: aggregate
+        roots (User), value objects, domain events, domain-rule exceptions.
+        Pure Java — no Spring, no JPA. ADR-0019 + ADR-0020.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>common-domain</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration><skip>true</skip></configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

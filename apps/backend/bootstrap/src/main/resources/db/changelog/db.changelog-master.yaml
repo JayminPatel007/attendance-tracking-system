@@ -1,5 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/slice-2/001-core-schema.sql
-  - include:
-      file: db/changelog/slice-2/002-seed.sql
