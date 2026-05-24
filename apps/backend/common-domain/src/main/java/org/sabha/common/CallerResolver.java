@@ -11,9 +11,8 @@ import java.util.UUID;
  * ADR-0019, cross-context dependencies go through common-domain or domain
  * events.
  *
- * <p>The implementation lives in the identity context (currently
- * identity-infrastructure; moves to identity-data-access in Sub-PR C) because
- * the {@code users} table is owned by the identity bounded context.</p>
+ * <p>The implementation lives in identity-data-access because the
+ * {@code users} table is owned by the identity bounded context.</p>
  */
 public interface CallerResolver {
 

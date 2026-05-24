@@ -32,19 +32,10 @@
     <modules>
         <module>common-domain</module>
 
-        <module>identity-domain</module>
-        <module>identity-application</module>
-        <module>identity-infrastructure</module>
-
-        <module>sabha-domain</module>
-        <module>sabha-application</module>
-        <module>sabha-infrastructure</module>
-
+        <module>identity-service</module>
+        <module>sabha-service</module>
         <module>attendance-service</module>
-
-        <module>analytics-domain</module>
-        <module>analytics-application</module>
-        <module>analytics-infrastructure</module>
+        <module>analytics-service</module>
 
         <module>application-container</module>
     </modules>
@@ -59,7 +50,22 @@
 
             <dependency>
                 <groupId>org.sabha</groupId>
-                <artifactId>identity-domain</artifactId>
+                <artifactId>identity-domain-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>identity-application-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>identity-data-access</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>identity-messaging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -67,25 +73,30 @@
                 <artifactId>identity-application</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.sabha</groupId>
-                <artifactId>identity-infrastructure</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.sabha</groupId>
-                <artifactId>sabha-domain</artifactId>
+                <artifactId>sabha-domain-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>sabha-application-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>sabha-data-access</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>sabha-messaging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.sabha</groupId>
                 <artifactId>sabha-application</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.sabha</groupId>
-                <artifactId>sabha-infrastructure</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -117,17 +128,27 @@
 
             <dependency>
                 <groupId>org.sabha</groupId>
-                <artifactId>analytics-domain</artifactId>
+                <artifactId>analytics-domain-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>analytics-application-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>analytics-data-access</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>analytics-messaging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.sabha</groupId>
                 <artifactId>analytics-application</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.sabha</groupId>
-                <artifactId>analytics-infrastructure</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
