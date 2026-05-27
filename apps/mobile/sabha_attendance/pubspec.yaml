@@ -17,6 +17,11 @@ dependencies:
   # Backend HTTP client.
   http: ^1.2.0
 
+  # Local SQLite store for offline roster cache + pending-marking queue (ADR-0007).
+  sqflite: ^2.3.0
+  path: ^1.9.0
+  path_provider: ^2.1.0
+
   # Hexagonal layering per ADR-0015: the app shell composes domain libraries.
   shared_kernel:
     path: ../packages/shared_kernel
@@ -31,6 +36,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # Exercises real SQLite in unit tests without platform plugins.
+  sqflite_common_ffi: ^2.3.0
 
 flutter:
   uses-material-design: true
