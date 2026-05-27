@@ -1,5 +1,6 @@
 package org.sabha.attendance.domain;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -45,8 +46,9 @@ class OccurrenceTest {
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+        Instant clientMarkedAt = Instant.parse("2026-05-23T19:00:00Z");
 
-        occurrence.mark(personId, true, markedBy);
+        occurrence.mark(personId, true, markedBy, clientMarkedAt);
 
         assertThat(occurrence.markings()).hasSize(1);
         AttendanceMarking marking = occurrence.markings().iterator().next();
@@ -69,8 +71,9 @@ class OccurrenceTest {
                 LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+        Instant clientMarkedAt = Instant.parse("2026-05-23T19:00:00Z");
 
-        assertThatThrownBy(() -> occurrence.mark(personId, true, markedBy))
+        assertThatThrownBy(() -> occurrence.mark(personId, true, markedBy, clientMarkedAt))
                 .isInstanceOf(OccurrenceNotOpenForMarkingException.class);
         assertThat(occurrence.markings()).isEmpty();
         assertThat(occurrence.pullDomainEvents()).isEmpty();
@@ -118,12 +121,64 @@ class OccurrenceTest {
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
 
-        occurrence.mark(personId, true, markedBy);
-        occurrence.mark(personId, false, markedBy);
+        occurrence.mark(personId, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+        occurrence.mark(personId, false, markedBy, Instant.parse("2026-05-23T19:05:00Z"));
 
         assertThat(occurrence.markings()).hasSize(1);
         AttendanceMarking marking = occurrence.markings().iterator().next();
         assertThat(marking.personId()).isEqualTo(personId);
         assertThat(marking.present()).isFalse();
+    }
+
+    @Test
+    void anIncomingMarkingWithAnOlderClientMarkedAtDoesNotOverwriteANewerOne() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        Instant newer = Instant.parse("2026-05-23T19:05:00Z");
+        Instant older = Instant.parse("2026-05-23T19:00:00Z");
+        occurrence.mark(personId, true, markedBy, newer);
+        occurrence.pullDomainEvents();
+
+        occurrence.mark(personId, false, markedBy, older);
+
+        assertThat(occurrence.markings()).hasSize(1);
+        AttendanceMarking marking = occurrence.markings().iterator().next();
+        assertThat(marking.present()).isTrue();
+        assertThat(marking.clientMarkedAt()).isEqualTo(newer);
+        assertThat(occurrence.pullDomainEvents()).isEmpty();
+    }
+
+    @Test
+    void anIncomingMarkingWithAnEqualClientMarkedAtAppliesAsTieBreakerByArrival() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        Instant tied = Instant.parse("2026-05-23T19:00:00Z");
+        occurrence.mark(personId, true, markedBy, tied);
+        occurrence.pullDomainEvents();
+
+        occurrence.mark(personId, false, markedBy, tied);
+
+        assertThat(occurrence.markings()).hasSize(1);
+        assertThat(occurrence.markings().iterator().next().present()).isFalse();
+    }
+
+    @Test
+    void markingExposesTheClientMarkedAtOnTheRecordedAttendance() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+        Instant clientMarkedAt = Instant.parse("2026-05-23T19:12:34Z");
+
+        occurrence.mark(personId, true, markedBy, clientMarkedAt);
+
+        AttendanceMarking marking = occurrence.markings().iterator().next();
+        assertThat(marking.clientMarkedAt()).isEqualTo(clientMarkedAt);
     }
 }

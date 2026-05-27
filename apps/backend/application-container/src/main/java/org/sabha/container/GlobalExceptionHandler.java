@@ -1,5 +1,6 @@
 package org.sabha.container;
 
+import org.sabha.attendance.applicationservice.StaleRosterException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> notFound(NotFoundException ex) {
         return ResponseEntity.status(404)
                 .body(ErrorResponse.of(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(StaleRosterException.class)
+    public ResponseEntity<ErrorResponse> staleRoster(StaleRosterException ex) {
+        return ResponseEntity.status(409)
+                .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), "ROSTER_STALE"));
     }
 
     @ExceptionHandler(ConcurrentModificationException.class)

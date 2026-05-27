@@ -58,12 +58,16 @@ public class Occurrence extends AggregateRoot<UUID> {
         registerEvent(new OccurrenceFinalized(id, Instant.now()));
     }
 
-    public void mark(UUID personId, boolean present, UUID markedBy) {
+    public void mark(UUID personId, boolean present, UUID markedBy, Instant clientMarkedAt) {
         if (state != OccurrenceState.OPEN_FOR_MARKING) {
             throw new OccurrenceNotOpenForMarkingException(id, state);
         }
+        AttendanceMarking existing = markings.get(personId);
+        if (existing != null && existing.clientMarkedAt().isAfter(clientMarkedAt)) {
+            return;
+        }
         markings.put(personId, new AttendanceMarking(
-                UUID.randomUUID(), id, personId, present, markedBy));
+                UUID.randomUUID(), id, personId, present, markedBy, clientMarkedAt));
         registerEvent(new AttendanceMarked(id, personId, present, markedBy, Instant.now()));
     }
 

@@ -1,5 +1,6 @@
 package org.sabha.attendance.dataaccess;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -76,6 +77,6 @@ public class JdbcCurrentRosterQuery implements CurrentRosterQuery {
                 })
                 .list();
 
-        return Optional.of(new CurrentRoster(occ, roster));
+        return Optional.of(new CurrentRoster(occ, roster, Instant.now()));
     }
 }

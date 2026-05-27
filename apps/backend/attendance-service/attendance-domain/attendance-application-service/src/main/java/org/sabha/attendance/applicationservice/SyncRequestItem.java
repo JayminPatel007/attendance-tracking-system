@@ -1,13 +1,11 @@
-package org.sabha.attendance.domain;
+package org.sabha.attendance.applicationservice;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public record AttendanceMarking(
-        UUID id,
+public record SyncRequestItem(
         UUID occurrenceId,
         UUID personId,
         boolean present,
-        UUID markedByUserId,
         Instant clientMarkedAt) {
 }
