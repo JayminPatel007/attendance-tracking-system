@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/slice-2/003-occurrence-version.sql
   - include:
       file: db/changelog/slice-3/001-occurrence-state-transitions.sql
+  - include:
+      file: db/changelog/slice-4/001-client-marked-at.sql

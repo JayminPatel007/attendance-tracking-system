@@ -1,5 +1,6 @@
 package org.sabha.attendance.dataaccess;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         OccurrenceRow r = row.get();
 
         List<AttendanceMarking> markings = jdbc.sql("""
-                SELECT id, person_id, present, marked_by_user_id
+                SELECT id, person_id, present, marked_by_user_id, client_marked_at
                 FROM attendance_markings
                 WHERE occurrence_id = ?
                 """)
@@ -54,7 +55,8 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
                         occurrenceId,
                         rs.getObject("person_id", UUID.class),
                         rs.getBoolean("present"),
-                        rs.getObject("marked_by_user_id", UUID.class)))
+                        rs.getObject("marked_by_user_id", UUID.class),
+                        rs.getTimestamp("client_marked_at").toInstant()))
                 .list();
 
         return Optional.of(new Occurrence(r.id, r.sabhaId, r.date, r.state, r.version, markings));
@@ -79,18 +81,20 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         for (AttendanceMarking m : occurrence.markings()) {
             jdbc.sql("""
                     INSERT INTO attendance_markings
-                        (id, occurrence_id, person_id, present, marked_by_user_id)
-                    VALUES (?, ?, ?, ?, ?)
+                        (id, occurrence_id, person_id, present, marked_by_user_id, client_marked_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
                     ON CONFLICT (occurrence_id, person_id)
                     DO UPDATE SET present = EXCLUDED.present,
                                   marked_at = now(),
-                                  marked_by_user_id = EXCLUDED.marked_by_user_id
+                                  marked_by_user_id = EXCLUDED.marked_by_user_id,
+                                  client_marked_at = EXCLUDED.client_marked_at
                     """)
                     .param(m.id())
                     .param(occurrence.id())
                     .param(m.personId())
                     .param(m.present())
                     .param(m.markedByUserId())
+                    .param(Timestamp.from(m.clientMarkedAt()))
                     .update();
         }
     }

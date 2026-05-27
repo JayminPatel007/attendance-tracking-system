@@ -1,5 +1,6 @@
 package org.sabha.attendance.applicationservice;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ class MarkAttendanceApplicationServiceTest {
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID PERSON_ID = UUID.fromString("00000000-0000-0000-0000-000000000101");
+    private static final Instant CLIENT_MARKED_AT = Instant.parse("2026-05-23T19:00:00Z");
 
     @Test
     void executingTheUseCaseLoadsMarksSavesAndPublishesEvents() {
@@ -40,7 +42,7 @@ class MarkAttendanceApplicationServiceTest {
                 occurrences,
                 publisher);
 
-        service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true);
+        service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
 
         assertThat(occurrences.savedOccurrences()).hasSize(1);
         Occurrence saved = occurrences.savedOccurrences().get(0);
@@ -63,7 +65,7 @@ class MarkAttendanceApplicationServiceTest {
                 occurrences,
                 publisher);
 
-        assertThatThrownBy(() -> service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true))
+        assertThatThrownBy(() -> service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT))
                 .isInstanceOf(org.sabha.common.ConcurrentModificationException.class);
         assertThat(occurrences.saveAttempts).isEqualTo(3);
         assertThat(publisher.published).isEmpty();
@@ -81,7 +83,7 @@ class MarkAttendanceApplicationServiceTest {
                 occurrences,
                 publisher);
 
-        service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true);
+        service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
 
         assertThat(occurrences.saveAttempts).isEqualTo(2);
         assertThat(publisher.published).singleElement().isInstanceOf(AttendanceMarked.class);
@@ -97,7 +99,7 @@ class MarkAttendanceApplicationServiceTest {
                 publisher);
 
         UUID unknownSubject = UUID.fromString("00000000-0000-0000-0000-000000000999");
-        assertThatThrownBy(() -> service.execute(unknownSubject, OCCURRENCE_ID, PERSON_ID, true))
+        assertThatThrownBy(() -> service.execute(unknownSubject, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT))
                 .isInstanceOf(CallerUnknownException.class);
         assertThat(occurrences.savedOccurrences()).isEmpty();
         assertThat(publisher.published).isEmpty();
@@ -112,7 +114,7 @@ class MarkAttendanceApplicationServiceTest {
                 occurrences,
                 publisher);
 
-        assertThatThrownBy(() -> service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true))
+        assertThatThrownBy(() -> service.execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT))
                 .isInstanceOf(OccurrenceNotFoundException.class);
         assertThat(occurrences.savedOccurrences()).isEmpty();
         assertThat(publisher.published).isEmpty();

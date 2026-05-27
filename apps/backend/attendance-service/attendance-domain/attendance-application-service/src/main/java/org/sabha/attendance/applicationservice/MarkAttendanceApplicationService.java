@@ -1,5 +1,6 @@
 package org.sabha.attendance.applicationservice;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
@@ -28,7 +29,8 @@ public class MarkAttendanceApplicationService {
     }
 
     @Transactional
-    public void execute(UUID keycloakSubject, UUID occurrenceId, UUID personId, boolean present) {
+    public void execute(UUID keycloakSubject, UUID occurrenceId, UUID personId, boolean present,
+                        Instant clientMarkedAt) {
         UUID markedBy = callerResolver.resolveUserId(keycloakSubject)
                 .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
 
@@ -37,7 +39,7 @@ public class MarkAttendanceApplicationService {
             Occurrence occurrence = occurrences.findById(occurrenceId)
                     .orElseThrow(() -> new OccurrenceNotFoundException(occurrenceId));
 
-            occurrence.mark(personId, present, markedBy);
+            occurrence.mark(personId, present, markedBy, clientMarkedAt);
 
             try {
                 occurrences.save(occurrence);

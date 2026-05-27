@@ -6,6 +6,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -149,6 +152,158 @@ class SmokeAuthIntegrationTest {
                                 { "personId": "00000000-0000-0000-0000-000000000101", "present": true }
                                 """))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void syncWithAFreshRosterAppliesEveryQueuedMarkingAndPersistsTheClientMarkedAt() throws Exception {
+        String token = obtainSanchalakAccessToken();
+        Instant fresh = Instant.now().minus(Duration.ofHours(1));
+        Instant clientMarkedAt = Instant.now().minus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
+
+        String body = """
+                {
+                  "rosterVersion": "%s",
+                  "markings": [
+                    { "occurrenceId": "00000000-0000-0000-0000-000000000020",
+                      "personId":     "00000000-0000-0000-0000-000000000101",
+                      "present":      true,
+                      "clientMarkedAt": "%s" }
+                  ]
+                }
+                """.formatted(fresh, clientMarkedAt);
+
+        mockMvc.perform(post("/api/sync")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.appliedCount").value(1));
+
+        Instant persisted = jdbc.sql("""
+                SELECT client_marked_at FROM attendance_markings
+                WHERE occurrence_id = '00000000-0000-0000-0000-000000000020'
+                  AND person_id = '00000000-0000-0000-0000-000000000101'
+                """).query((rs, n) -> rs.getTimestamp("client_marked_at").toInstant()).single();
+        org.assertj.core.api.Assertions.assertThat(persisted).isEqualTo(clientMarkedAt);
+    }
+
+    @Test
+    void syncWithARosterVersionOlderThanSevenDaysRejectsWithCodeRosterStale() throws Exception {
+        String token = obtainSanchalakAccessToken();
+        Instant stale = Instant.now().minus(Duration.ofDays(7)).minus(Duration.ofMinutes(1));
+
+        String body = """
+                {
+                  "rosterVersion": "%s",
+                  "markings": [
+                    { "occurrenceId": "00000000-0000-0000-0000-000000000020",
+                      "personId":     "00000000-0000-0000-0000-000000000101",
+                      "present":      true,
+                      "clientMarkedAt": "%s" }
+                  ]
+                }
+                """.formatted(stale, Instant.now());
+
+        mockMvc.perform(post("/api/sync")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ROSTER_STALE"));
+
+        Integer rowCount = jdbc.sql("""
+                SELECT COUNT(*) AS c FROM attendance_markings
+                WHERE occurrence_id = '00000000-0000-0000-0000-000000000020'
+                """).query((rs, n) -> rs.getInt("c")).single();
+        org.assertj.core.api.Assertions.assertThat(rowCount).isZero();
+    }
+
+    @Test
+    void syncAppliesLastWriteWinsWhenTwoDevicesPostMarkingsForTheSamePersonOutOfOrder() throws Exception {
+        String token = obtainSanchalakAccessToken();
+        Instant fresh = Instant.now().minus(Duration.ofHours(1));
+        Instant earlier = Instant.now().minus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
+        Instant later = earlier.plus(Duration.ofMinutes(5));
+
+        // Device B (the laggard) arrives FIRST with the LATER markedAt — present.
+        mockMvc.perform(post("/api/sync")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "rosterVersion": "%s",
+                                  "markings": [
+                                    { "occurrenceId": "00000000-0000-0000-0000-000000000020",
+                                      "personId":     "00000000-0000-0000-0000-000000000102",
+                                      "present":      true,
+                                      "clientMarkedAt": "%s" }
+                                  ]
+                                }
+                                """.formatted(fresh, later)))
+                .andExpect(status().isOk());
+
+        // Device A then catches up with the EARLIER markedAt — absent. LWW says present wins.
+        mockMvc.perform(post("/api/sync")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "rosterVersion": "%s",
+                                  "markings": [
+                                    { "occurrenceId": "00000000-0000-0000-0000-000000000020",
+                                      "personId":     "00000000-0000-0000-0000-000000000102",
+                                      "present":      false,
+                                      "clientMarkedAt": "%s" }
+                                  ]
+                                }
+                                """.formatted(fresh, earlier)))
+                .andExpect(status().isOk());
+
+        Boolean present = jdbc.sql("""
+                SELECT present FROM attendance_markings
+                WHERE occurrence_id = '00000000-0000-0000-0000-000000000020'
+                  AND person_id = '00000000-0000-0000-0000-000000000102'
+                """).query((rs, n) -> rs.getBoolean("present")).single();
+        org.assertj.core.api.Assertions.assertThat(present).isTrue();
+    }
+
+    @Test
+    void syncIsIdempotentWhenTheSameBatchIsReplayed() throws Exception {
+        String token = obtainSanchalakAccessToken();
+        Instant fresh = Instant.now().minus(Duration.ofHours(1));
+        Instant clientMarkedAt = Instant.now().minus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
+        String body = """
+                {
+                  "rosterVersion": "%s",
+                  "markings": [
+                    { "occurrenceId": "00000000-0000-0000-0000-000000000020",
+                      "personId":     "00000000-0000-0000-0000-000000000103",
+                      "present":      true,
+                      "clientMarkedAt": "%s" }
+                  ]
+                }
+                """.formatted(fresh, clientMarkedAt);
+
+        mockMvc.perform(post("/api/sync").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/sync").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+
+        Integer rowCount = jdbc.sql("""
+                SELECT COUNT(*) AS c FROM attendance_markings
+                WHERE occurrence_id = '00000000-0000-0000-0000-000000000020'
+                  AND person_id = '00000000-0000-0000-0000-000000000103'
+                """).query((rs, n) -> rs.getInt("c")).single();
+        org.assertj.core.api.Assertions.assertThat(rowCount).isEqualTo(1);
+    }
+
+    @Test
+    void currentRosterIncludesARosterVersionForTheClientToEchoBackInSync() throws Exception {
+        String token = obtainSanchalakAccessToken();
+
+        mockMvc.perform(get("/api/sanchalak/current-roster").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rosterVersion").exists());
     }
 
     @Test
