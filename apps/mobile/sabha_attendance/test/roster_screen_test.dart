@@ -4,81 +4,145 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:sabha_attendance_mobile/roster/roster_api.dart';
+import 'package:sabha_attendance_mobile/roster/roster_controller.dart';
 import 'package:sabha_attendance_mobile/roster/roster_screen.dart';
+import 'package:sabha_attendance_mobile/sync/attendance_store.dart';
+import 'package:sabha_attendance_mobile/sync/sync_engine.dart';
+
+CurrentRoster _seedRoster({DateTime? rosterVersion}) => CurrentRoster(
+      occurrence: OccurrenceView(
+        id: 'occ-1', date: '2026-05-24', state: 'OPEN_FOR_MARKING', sabhaId: 'sabha-1'),
+      roster: [
+        RosterEntry(personId: 'p1', fullName: 'Alice', present: null),
+        RosterEntry(personId: 'p2', fullName: 'Bob', present: true),
+      ],
+      rosterVersion: rosterVersion ?? DateTime.utc(2026, 5, 27, 10),
+    );
 
 void main() {
-  testWidgets('roster screen renders the people returned by the backend', (tester) async {
-    final client = MockClient((req) async {
-      if (req.url.path.endsWith('/api/sanchalak/current-roster')) {
-        return http.Response(
-          jsonEncode({
-            'occurrence': {
-              'id': '00000000-0000-0000-0000-000000000020',
-              'date': '2026-05-22',
-              'state': 'OPEN_FOR_MARKING',
-              'sabhaId': '00000000-0000-0000-0000-000000000002',
-            },
+  sqfliteFfiInit();
+  late AttendanceStore store;
+
+  setUp(() async {
+    store = await AttendanceStore.openInMemory(factory: databaseFactoryFfi);
+  });
+
+  tearDown(() async {
+    await store.close();
+  });
+
+  DateTime fixedNow() => DateTime.utc(2026, 5, 27, 12);
+
+  RosterController makeController(RosterApi api) {
+    final engine = SyncEngine(store: store, api: api, clock: fixedNow);
+    return RosterController(api: api, store: store, syncEngine: engine, now: fixedNow);
+  }
+
+  /// Pumps the widget tree after the controller is fully initialized. All
+  /// sqflite + HTTP I/O happens inside `tester.runAsync` because `testWidgets`
+  /// runs in a FakeAsync zone where real-time Futures never resolve.
+  Future<RosterController> bootScreen(
+    WidgetTester tester,
+    RosterApi api, {
+    Future<void> Function()? setupStore,
+  }) async {
+    if (setupStore != null) {
+      await tester.runAsync(setupStore);
+    }
+    final controller = makeController(api);
+    await tester.runAsync(() => controller.initialize());
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: RosterScreen(controller: controller))));
+    await tester.pump();
+    return controller;
+  }
+
+  testWidgets('roster renders people fetched from the backend and caches them locally', (tester) async {
+    final api = RosterApi(
+      baseUrl: 'http://test',
+      accessToken: 'tok',
+      client: MockClient((req) async => http.Response(jsonEncode({
+            'occurrence': {'id': 'occ-1', 'date': '2026-05-24', 'state': 'OPEN_FOR_MARKING', 'sabhaId': 'sabha-1'},
             'roster': [
               {'personId': 'p1', 'fullName': 'Alice', 'present': null},
               {'personId': 'p2', 'fullName': 'Bob', 'present': true},
             ],
-          }),
-          200,
-        );
-      }
-      return http.Response('not found', 404);
-    });
-    final api = RosterApi(baseUrl: 'http://test', accessToken: 'tok', client: client);
+            'rosterVersion': '2026-05-27T10:00:00.000Z',
+          }), 200)),
+    );
+    await bootScreen(tester, api);
 
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: RosterScreen(api: api))));
-    await tester.pumpAndSettle();
+    expect(find.text('Alice'), findsOneWidget);
+    expect(find.text('Bob'), findsOneWidget);
+    final cached = await tester.runAsync(() => store.cachedRoster());
+    expect(cached!.roster, hasLength(2));
+  });
+
+  testWidgets('offline launch falls back to the cached roster when the API call fails', (tester) async {
+    final api = RosterApi(
+      baseUrl: 'http://test',
+      accessToken: 'tok',
+      client: MockClient((req) async => throw http.ClientException('offline')),
+    );
+    await bootScreen(tester, api,
+        setupStore: () => store.cacheRoster(_seedRoster()));
 
     expect(find.text('Alice'), findsOneWidget);
     expect(find.text('Bob'), findsOneWidget);
   });
 
-  testWidgets('tapping a person sends a mark request with the toggled value', (tester) async {
-    final List<Map<String, dynamic>> postedBodies = [];
-    int fetchCount = 0;
+  testWidgets('tapping a person enqueues a pending marking without calling the mark endpoint', (tester) async {
+    var markCalls = 0;
+    final api = RosterApi(
+      baseUrl: 'http://test',
+      accessToken: 'tok',
+      client: MockClient((req) async {
+        if (req.url.path.endsWith('/markings')) {
+          markCalls++;
+          return http.Response('', 200);
+        }
+        return http.Response(jsonEncode({
+          'occurrence': {'id': 'occ-1', 'date': '2026-05-24', 'state': 'OPEN_FOR_MARKING', 'sabhaId': 'sabha-1'},
+          'roster': [{'personId': 'p1', 'fullName': 'Alice', 'present': null}],
+          'rosterVersion': '2026-05-27T10:00:00.000Z',
+        }), 200);
+      }),
+    );
+    await bootScreen(tester, api);
 
-    final client = MockClient((req) async {
-      if (req.method == 'GET' && req.url.path.endsWith('/api/sanchalak/current-roster')) {
-        fetchCount += 1;
-        // First fetch: Alice unmarked. After a POST flips Alice to present,
-        // the screen re-fetches; return Alice as present this time.
-        final alicePresent = fetchCount > 1 ? true : null;
-        return http.Response(
-          jsonEncode({
-            'occurrence': {
-              'id': 'occ-1',
-              'date': '2026-05-22',
-              'state': 'OPEN_FOR_MARKING',
-              'sabhaId': 'sabha-1',
-            },
-            'roster': [
-              {'personId': 'p1', 'fullName': 'Alice', 'present': alicePresent},
-            ],
-          }),
-          200,
-        );
-      }
-      if (req.method == 'POST' && req.url.path.contains('/markings')) {
-        postedBodies.add(jsonDecode(req.body) as Map<String, dynamic>);
-        return http.Response('', 200);
-      }
-      return http.Response('not found', 404);
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Alice'));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
     });
-    final api = RosterApi(baseUrl: 'http://test', accessToken: 'tok', client: client);
+    await tester.pump();
 
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: RosterScreen(api: api))));
-    await tester.pumpAndSettle();
+    expect(markCalls, 0);
+    final pending = await tester.runAsync(() => store.pendingMarkings());
+    expect(pending, hasLength(1));
+    expect(pending!.single.personId, 'p1');
+    expect(pending.single.present, true);
+  });
 
-    await tester.tap(find.text('Alice'));
-    await tester.pumpAndSettle();
+  testWidgets('when the cached rosterVersion is older than 7 days a blocking modal disables taps', (tester) async {
+    final api = RosterApi(
+      baseUrl: 'http://test',
+      accessToken: 'tok',
+      client: MockClient((req) async => throw http.ClientException('offline')),
+    );
+    await bootScreen(tester, api,
+        setupStore: () => store.cacheRoster(_seedRoster(rosterVersion: DateTime.utc(2026, 5, 19, 10))));
 
-    expect(postedBodies, hasLength(1));
-    expect(postedBodies.single, {'personId': 'p1', 'present': true});
+    expect(find.textContaining('Roster is'), findsOneWidget);
+    expect(find.text('Sync now'), findsOneWidget);
+
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Alice'), warnIfMissed: false);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    });
+    await tester.pump();
+    final pending = await tester.runAsync(() => store.pendingMarkings());
+    expect(pending, isEmpty);
   });
 }

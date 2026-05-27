@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../sync/pending_marking.dart';
+
 /// Thin wrapper over the two backend endpoints the mobile needs in Slice 2:
 /// GET /api/sanchalak/current-roster and POST /api/occurrences/{id}/markings.
 class RosterApi {
@@ -39,6 +41,55 @@ class RosterApi {
       throw RosterApiException('POST mark -> ${resp.statusCode}: ${resp.body}');
     }
   }
+
+  /// Pushes a batch of locally-queued markings (ADR-0007). Returns the
+  /// server-reported count of applied items. Throws [StaleRosterException]
+  /// when the backend rejects the cached roster with code `ROSTER_STALE`.
+  Future<int> sync({
+    required DateTime rosterVersion,
+    required List<PendingMarking> markings,
+  }) async {
+    final resp = await _client.post(
+      Uri.parse('$baseUrl/api/sync'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'rosterVersion': rosterVersion.toUtc().toIso8601String(),
+        'markings': markings
+            .map((m) => {
+                  'occurrenceId': m.occurrenceId,
+                  'personId': m.personId,
+                  'present': m.present,
+                  'clientMarkedAt': m.clientMarkedAt.toUtc().toIso8601String(),
+                })
+            .toList(),
+      }),
+    );
+    if (resp.statusCode == 200) {
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      return body['appliedCount'] as int;
+    }
+    if (resp.statusCode == 409) {
+      try {
+        final body = jsonDecode(resp.body) as Map<String, dynamic>;
+        if (body['code'] == 'ROSTER_STALE') {
+          throw StaleRosterException(body['message'] as String? ?? 'roster stale');
+        }
+      } on FormatException {
+        // fall through to generic
+      }
+    }
+    throw RosterApiException('POST sync -> ${resp.statusCode}: ${resp.body}');
+  }
+}
+
+class StaleRosterException implements Exception {
+  StaleRosterException(this.message);
+  final String message;
+  @override
+  String toString() => 'StaleRosterException: $message';
 }
 
 class RosterApiException implements Exception {
@@ -49,10 +100,14 @@ class RosterApiException implements Exception {
 }
 
 class CurrentRoster {
-  CurrentRoster({required this.occurrence, required this.roster});
+  CurrentRoster({required this.occurrence, required this.roster, required this.rosterVersion});
 
   final OccurrenceView occurrence;
   final List<RosterEntry> roster;
+
+  /// Server-stamped freshness token for this snapshot. Echoed back during
+  /// sync so the backend can enforce the 7-day staleness gate (ADR-0007).
+  final DateTime rosterVersion;
 
   factory CurrentRoster.fromJson(Map<String, dynamic> json) {
     return CurrentRoster(
@@ -60,6 +115,7 @@ class CurrentRoster {
       roster: (json['roster'] as List<dynamic>)
           .map((e) => RosterEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
+      rosterVersion: DateTime.parse(json['rosterVersion'] as String),
     );
   }
 }
