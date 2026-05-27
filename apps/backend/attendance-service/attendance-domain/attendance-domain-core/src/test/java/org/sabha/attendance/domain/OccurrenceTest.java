@@ -77,6 +77,41 @@ class OccurrenceTest {
     }
 
     @Test
+    void finalizingAnOpenOccurrenceTransitionsToFinalizedAndRegistersAnEvent() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+
+        occurrence.markFinalized();
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.FINALIZED);
+        List<DomainEvent> events = occurrence.pullDomainEvents();
+        assertThat(events).singleElement().isInstanceOf(OccurrenceFinalized.class);
+        OccurrenceFinalized event = (OccurrenceFinalized) events.get(0);
+        assertThat(event.aggregateId()).isEqualTo(OCCURRENCE_ID);
+    }
+
+    @Test
+    void finalizingAScheduledOccurrenceIsRejected() {
+        Occurrence occurrence = Occurrence.scheduled(OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 23));
+
+        assertThatThrownBy(occurrence::markFinalized)
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.SCHEDULED);
+        assertThat(occurrence.pullDomainEvents()).isEmpty();
+    }
+
+    @Test
+    void finalizingAnAlreadyFinalizedOccurrenceIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
+
+        assertThatThrownBy(occurrence::markFinalized)
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.FINALIZED);
+        assertThat(occurrence.pullDomainEvents()).isEmpty();
+    }
+
+    @Test
     void markingAPersonTwiceKeepsOnlyTheLatestValue() {
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
