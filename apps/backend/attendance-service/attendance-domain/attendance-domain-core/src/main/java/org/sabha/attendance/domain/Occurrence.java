@@ -50,6 +50,14 @@ public class Occurrence extends AggregateRoot<UUID> {
         registerEvent(new OccurrenceOpened(id, Instant.now()));
     }
 
+    public void markFinalized() {
+        if (state != OccurrenceState.OPEN_FOR_MARKING) {
+            throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.FINALIZED);
+        }
+        state = OccurrenceState.FINALIZED;
+        registerEvent(new OccurrenceFinalized(id, Instant.now()));
+    }
+
     public void mark(UUID personId, boolean present, UUID markedBy) {
         if (state != OccurrenceState.OPEN_FOR_MARKING) {
             throw new OccurrenceNotOpenForMarkingException(id, state);

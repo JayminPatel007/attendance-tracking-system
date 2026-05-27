@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/slice-2/002-seed.sql
   - include:
       file: db/changelog/slice-2/003-occurrence-version.sql
+  - include:
+      file: db/changelog/slice-3/001-occurrence-state-transitions.sql
