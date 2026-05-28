@@ -169,6 +169,71 @@ class OccurrenceTest {
     }
 
     @Test
+    void markingAPersonRegistersThatMarkingAsPending() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        occurrence.mark(personId, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+
+        List<AttendanceMarking> pending = occurrence.pullPendingMarkings();
+        assertThat(pending).singleElement()
+                .satisfies(m -> {
+                    assertThat(m.personId()).isEqualTo(personId);
+                    assertThat(m.present()).isTrue();
+                });
+    }
+
+    @Test
+    void pullingPendingMarkingsDrainsThemSoTheSecondPullReturnsEmpty() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        occurrence.mark(personId, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+
+        assertThat(occurrence.pullPendingMarkings()).hasSize(1);
+        assertThat(occurrence.pullPendingMarkings()).isEmpty();
+    }
+
+    @Test
+    void rehydratedMarkingsAreNotPending() {
+        UUID personA = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID personB = UUID.fromString("00000000-0000-0000-0000-000000000102");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+        AttendanceMarking existingA = new AttendanceMarking(UUID.randomUUID(), OCCURRENCE_ID,
+                personA, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+        AttendanceMarking existingB = new AttendanceMarking(UUID.randomUUID(), OCCURRENCE_ID,
+                personB, false, markedBy, Instant.parse("2026-05-23T19:01:00Z"));
+
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING,
+                0L, java.util.List.of(existingA, existingB));
+
+        assertThat(occurrence.markings()).hasSize(2);
+        assertThat(occurrence.pullPendingMarkings()).isEmpty();
+    }
+
+    @Test
+    void anLwwSkippedMarkingDoesNotRegisterAsPending() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        Instant newer = Instant.parse("2026-05-23T19:05:00Z");
+        Instant older = Instant.parse("2026-05-23T19:00:00Z");
+        occurrence.mark(personId, true, markedBy, newer);
+        occurrence.pullPendingMarkings();
+
+        occurrence.mark(personId, false, markedBy, older);
+
+        assertThat(occurrence.pullPendingMarkings()).isEmpty();
+    }
+
+    @Test
     void markingExposesTheClientMarkedAtOnTheRecordedAttendance() {
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);

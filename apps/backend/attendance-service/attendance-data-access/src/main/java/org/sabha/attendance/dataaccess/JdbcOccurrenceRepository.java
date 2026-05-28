@@ -78,7 +78,7 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
             throw new OptimisticLockException(occurrence.id());
         }
 
-        for (AttendanceMarking m : occurrence.markings()) {
+        for (AttendanceMarking m : occurrence.pullPendingMarkings()) {
             jdbc.sql("""
                     INSERT INTO attendance_markings
                         (id, occurrence_id, person_id, present, marked_by_user_id, client_marked_at)

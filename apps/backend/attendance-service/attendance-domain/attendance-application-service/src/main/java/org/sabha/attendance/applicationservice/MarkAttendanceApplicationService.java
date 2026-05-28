@@ -1,6 +1,7 @@
 package org.sabha.attendance.applicationservice;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
@@ -31,6 +32,18 @@ public class MarkAttendanceApplicationService {
     @Transactional
     public void execute(UUID keycloakSubject, UUID occurrenceId, UUID personId, boolean present,
                         Instant clientMarkedAt) {
+        executeBatch(keycloakSubject, occurrenceId,
+                List.of(new MarkItem(personId, present, clientMarkedAt)));
+    }
+
+    /**
+     * Applies several markings against a single Occurrence inside one
+     * load-mutate-save cycle (plus retry on optimistic-lock conflict). Used by
+     * {@link SyncAttendanceApplicationService} so a batch of N items against one
+     * Occurrence is N marks but only one DB load + one save.
+     */
+    @Transactional
+    public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
         UUID markedBy = callerResolver.resolveUserId(keycloakSubject)
                 .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
 
@@ -39,7 +52,9 @@ public class MarkAttendanceApplicationService {
             Occurrence occurrence = occurrences.findById(occurrenceId)
                     .orElseThrow(() -> new OccurrenceNotFoundException(occurrenceId));
 
-            occurrence.mark(personId, present, markedBy, clientMarkedAt);
+            for (MarkItem item : items) {
+                occurrence.mark(item.personId(), item.present(), markedBy, item.clientMarkedAt());
+            }
 
             try {
                 occurrences.save(occurrence);
@@ -52,5 +67,8 @@ public class MarkAttendanceApplicationService {
             return;
         }
         throw new org.sabha.common.ConcurrentModificationException(occurrenceId, lastConflict);
+    }
+
+    public record MarkItem(UUID personId, boolean present, Instant clientMarkedAt) {
     }
 }
