@@ -2,9 +2,11 @@ package org.sabha.attendance.domain;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,6 +19,7 @@ public class Occurrence extends AggregateRoot<UUID> {
     private final LocalDate date;
     private OccurrenceState state;
     private final Map<UUID, AttendanceMarking> markings = new LinkedHashMap<>();
+    private final List<AttendanceMarking> pendingMarkings = new ArrayList<>();
 
     public Occurrence(UUID id, UUID sabhaId, LocalDate date, OccurrenceState state) {
         this.id = id;
@@ -66,9 +69,24 @@ public class Occurrence extends AggregateRoot<UUID> {
         if (existing != null && existing.clientMarkedAt().isAfter(clientMarkedAt)) {
             return;
         }
-        markings.put(personId, new AttendanceMarking(
-                UUID.randomUUID(), id, personId, present, markedBy, clientMarkedAt));
+        AttendanceMarking marking = new AttendanceMarking(
+                UUID.randomUUID(), id, personId, present, markedBy, clientMarkedAt);
+        markings.put(personId, marking);
+        pendingMarkings.add(marking);
         registerEvent(new AttendanceMarked(id, personId, present, markedBy, Instant.now()));
+    }
+
+    /**
+     * Drains the markings that mutated since the last pull. Repositories iterate
+     * this set (not {@link #markings()}) so a save only writes rows that
+     * actually changed — keeping the per-save cost O(pending), independent of
+     * roster size. Mirrors the {@code pullDomainEvents} contract on
+     * {@link org.sabha.common.AggregateRoot}.
+     */
+    public List<AttendanceMarking> pullPendingMarkings() {
+        List<AttendanceMarking> drained = List.copyOf(pendingMarkings);
+        pendingMarkings.clear();
+        return drained;
     }
 
     public Collection<AttendanceMarking> markings() {

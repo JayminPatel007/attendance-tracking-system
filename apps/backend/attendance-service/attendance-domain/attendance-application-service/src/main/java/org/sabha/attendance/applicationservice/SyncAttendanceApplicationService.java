@@ -3,9 +3,12 @@ package org.sabha.attendance.applicationservice;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
 import org.sabha.common.CallerResolver;
 import org.springframework.stereotype.Service;
 
@@ -43,12 +46,18 @@ public class SyncAttendanceApplicationService {
             throw new StaleRosterException(clientRosterVersion, now, MAX_ROSTER_AGE);
         }
 
-        int applied = 0;
+        Map<UUID, List<MarkItem>> byOccurrence = groupByOccurrence(items);
+        byOccurrence.forEach((occurrenceId, batch) ->
+                markAttendance.executeBatch(keycloakSubject, occurrenceId, batch));
+        return new SyncResult(items.size());
+    }
+
+    private static Map<UUID, List<MarkItem>> groupByOccurrence(List<SyncRequestItem> items) {
+        Map<UUID, List<MarkItem>> grouped = new LinkedHashMap<>();
         for (SyncRequestItem item : items) {
-            markAttendance.execute(keycloakSubject, item.occurrenceId(), item.personId(),
-                    item.present(), item.clientMarkedAt());
-            applied++;
+            grouped.computeIfAbsent(item.occurrenceId(), k -> new java.util.ArrayList<>())
+                    .add(new MarkItem(item.personId(), item.present(), item.clientMarkedAt()));
         }
-        return new SyncResult(applied);
+        return grouped;
     }
 }

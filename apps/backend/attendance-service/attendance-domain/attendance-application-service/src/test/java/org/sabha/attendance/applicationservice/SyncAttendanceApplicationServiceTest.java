@@ -87,6 +87,37 @@ class SyncAttendanceApplicationServiceTest {
     }
 
     @Test
+    void aSyncBatchLoadsEachOccurrenceOnceRegardlessOfHowManyItemsItContains() {
+        UUID otherOccurrenceId = UUID.fromString("00000000-0000-0000-0000-000000000021");
+        InMemoryOccurrenceRepository occurrences = new InMemoryOccurrenceRepository();
+        occurrences.put(new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING));
+        occurrences.put(new Occurrence(otherOccurrenceId, SABHA_ID,
+                LocalDate.of(2026, 5, 24), OccurrenceState.OPEN_FOR_MARKING));
+        CapturingPublisher publisher = new CapturingPublisher();
+        CallerResolver resolver = subject ->
+                subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
+        MarkAttendanceApplicationService markUseCase = new MarkAttendanceApplicationService(
+                resolver, occurrences, publisher);
+        Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
+        SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
+                resolver, markUseCase, clock);
+
+        Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
+        SyncResult result = service.execute(SUBJECT, fresh, List.of(
+                new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(10))),
+                new SyncRequestItem(OCCURRENCE_ID, PERSON_B, false, SERVER_NOW.minus(Duration.ofMinutes(9))),
+                new SyncRequestItem(otherOccurrenceId, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(8))),
+                new SyncRequestItem(otherOccurrenceId, PERSON_B, false, SERVER_NOW.minus(Duration.ofMinutes(7)))));
+
+        assertThat(result.appliedCount()).isEqualTo(4);
+        assertThat(occurrences.loadCount(OCCURRENCE_ID)).isEqualTo(1);
+        assertThat(occurrences.loadCount(otherOccurrenceId)).isEqualTo(1);
+        assertThat(occurrences.saveCount(OCCURRENCE_ID)).isEqualTo(1);
+        assertThat(occurrences.saveCount(otherOccurrenceId)).isEqualTo(1);
+    }
+
+    @Test
     void anUnknownKeycloakSubjectIsRejectedBeforeAnyMarkingsAreApplied() {
         Fixture f = openOccurrence();
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
@@ -126,6 +157,8 @@ class SyncAttendanceApplicationServiceTest {
     private static final class InMemoryOccurrenceRepository implements OccurrenceRepository {
         private final Map<UUID, Occurrence> store = new HashMap<>();
         private final List<Occurrence> saved = new ArrayList<>();
+        private final Map<UUID, Integer> loadCounts = new HashMap<>();
+        private final Map<UUID, Integer> saveCounts = new HashMap<>();
 
         void put(Occurrence occurrence) {
             store.put(occurrence.id(), occurrence);
@@ -135,13 +168,23 @@ class SyncAttendanceApplicationServiceTest {
             return saved;
         }
 
+        int loadCount(UUID occurrenceId) {
+            return loadCounts.getOrDefault(occurrenceId, 0);
+        }
+
+        int saveCount(UUID occurrenceId) {
+            return saveCounts.getOrDefault(occurrenceId, 0);
+        }
+
         @Override
         public Optional<Occurrence> findById(UUID occurrenceId) {
+            loadCounts.merge(occurrenceId, 1, Integer::sum);
             return Optional.ofNullable(store.get(occurrenceId));
         }
 
         @Override
         public void save(Occurrence occurrence) {
+            saveCounts.merge(occurrence.id(), 1, Integer::sum);
             store.put(occurrence.id(), occurrence);
             saved.add(occurrence);
         }
