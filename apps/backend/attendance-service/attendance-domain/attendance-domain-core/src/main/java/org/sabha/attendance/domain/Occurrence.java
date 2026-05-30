@@ -2,6 +2,7 @@ package org.sabha.attendance.domain;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +19,10 @@ public class Occurrence extends AggregateRoot<UUID> {
     private final UUID sabhaId;
     private final LocalDate date;
     private OccurrenceState state;
+    private String venueOverride;
+    private LocalDate rescheduledDate;
+    private LocalTime rescheduledStartTime;
+    private LocalTime rescheduledEndTime;
     private final Map<UUID, AttendanceMarking> markings = new LinkedHashMap<>();
     private final List<AttendanceMarking> pendingMarkings = new ArrayList<>();
 
@@ -46,11 +51,62 @@ public class Occurrence extends AggregateRoot<UUID> {
     }
 
     public void open() {
-        if (state != OccurrenceState.SCHEDULED) {
+        if (state != OccurrenceState.SCHEDULED && state != OccurrenceState.RESCHEDULED) {
             throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.OPEN_FOR_MARKING);
         }
         state = OccurrenceState.OPEN_FOR_MARKING;
         registerEvent(new OccurrenceOpened(id, Instant.now()));
+    }
+
+    /**
+     * Sanchalak-only Sabha-shaping: cancel a Scheduled Occurrence (ADR-0001).
+     * Reversible via {@link #revert()}; the cancellation reason is recorded on
+     * the audit transition by the application service, not on the aggregate.
+     */
+    public void cancel() {
+        if (state != OccurrenceState.SCHEDULED) {
+            throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.CANCELLED);
+        }
+        state = OccurrenceState.CANCELLED;
+    }
+
+    /**
+     * Reverts a Cancelled Occurrence back to Scheduled (ADR-0001). The 24h grace
+     * window is enforced by the application service, which has the Clock and the
+     * Sabha schedule needed to compute the scheduled-end cutoff.
+     */
+    public void revert() {
+        if (state != OccurrenceState.CANCELLED) {
+            throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.SCHEDULED);
+        }
+        state = OccurrenceState.SCHEDULED;
+    }
+
+    /**
+     * Sanchalak-only Sabha-shaping: move this Occurrence to a new date/time
+     * without touching the Sabha's standing schedule (ADR-0001). The override
+     * date/time drive the cron scanners' open/finalize timing.
+     */
+    public void reschedule(LocalDate newDate, LocalTime newStartTime, LocalTime newEndTime) {
+        if (state != OccurrenceState.SCHEDULED) {
+            throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.RESCHEDULED);
+        }
+        this.rescheduledDate = newDate;
+        this.rescheduledStartTime = newStartTime;
+        this.rescheduledEndTime = newEndTime;
+        state = OccurrenceState.RESCHEDULED;
+    }
+
+    /**
+     * Sanchalak-only Sabha-shaping: set a one-off venue for this Occurrence
+     * without changing the Sabha's standing venue (ADR-0001). Allowed up until
+     * the Occurrence enters Open for Marking.
+     */
+    public void overrideVenue(String venue) {
+        if (state != OccurrenceState.SCHEDULED && state != OccurrenceState.RESCHEDULED) {
+            throw new VenueOverrideNotAllowedException(id, state);
+        }
+        this.venueOverride = venue;
     }
 
     public void markFinalized() {
@@ -112,5 +168,30 @@ public class Occurrence extends AggregateRoot<UUID> {
 
     public OccurrenceState state() {
         return state;
+    }
+
+    public String venueOverride() {
+        return venueOverride;
+    }
+
+    public LocalDate rescheduledDate() {
+        return rescheduledDate;
+    }
+
+    public LocalTime rescheduledStartTime() {
+        return rescheduledStartTime;
+    }
+
+    public LocalTime rescheduledEndTime() {
+        return rescheduledEndTime;
+    }
+
+    /** Restores persisted shaping overrides during rehydration. */
+    public void restoreShaping(String venueOverride, LocalDate rescheduledDate,
+                               LocalTime rescheduledStartTime, LocalTime rescheduledEndTime) {
+        this.venueOverride = venueOverride;
+        this.rescheduledDate = rescheduledDate;
+        this.rescheduledStartTime = rescheduledStartTime;
+        this.rescheduledEndTime = rescheduledEndTime;
     }
 }

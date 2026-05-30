@@ -41,6 +41,98 @@ class OccurrenceTest {
     }
 
     @Test
+    void cancellingAScheduledOccurrenceTransitionsToCancelled() {
+        Occurrence occurrence = Occurrence.scheduled(OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 23));
+
+        occurrence.cancel();
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.CANCELLED);
+    }
+
+    @Test
+    void cancellingAnOccurrenceThatIsNotScheduledIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+
+        assertThatThrownBy(occurrence::cancel)
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+    }
+
+    @Test
+    void revertingACancelledOccurrenceTransitionsBackToScheduled() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.CANCELLED);
+
+        occurrence.revert();
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.SCHEDULED);
+    }
+
+    @Test
+    void revertingAnOccurrenceThatIsNotCancelledIsRejected() {
+        Occurrence occurrence = Occurrence.scheduled(OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 23));
+
+        assertThatThrownBy(occurrence::revert)
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.SCHEDULED);
+    }
+
+    @Test
+    void reschedulingAScheduledOccurrenceStoresTheOverrideAndTransitionsToRescheduled() {
+        Occurrence occurrence = Occurrence.scheduled(OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 23));
+        LocalDate newDate = LocalDate.of(2026, 5, 30);
+
+        occurrence.reschedule(newDate, java.time.LocalTime.of(18, 0), java.time.LocalTime.of(19, 30));
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.RESCHEDULED);
+        assertThat(occurrence.rescheduledDate()).isEqualTo(newDate);
+        assertThat(occurrence.rescheduledStartTime()).isEqualTo(java.time.LocalTime.of(18, 0));
+        assertThat(occurrence.rescheduledEndTime()).isEqualTo(java.time.LocalTime.of(19, 30));
+    }
+
+    @Test
+    void reschedulingAnOccurrenceThatIsNotScheduledIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
+
+        assertThatThrownBy(() -> occurrence.reschedule(
+                LocalDate.of(2026, 5, 30), java.time.LocalTime.of(18, 0), java.time.LocalTime.of(19, 30)))
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.FINALIZED);
+    }
+
+    @Test
+    void openingARescheduledOccurrenceTransitionsToOpenForMarking() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.RESCHEDULED);
+
+        occurrence.open();
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+    }
+
+    @Test
+    void overridingVenueOnAScheduledOccurrenceStoresItWithoutChangingState() {
+        Occurrence occurrence = Occurrence.scheduled(OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 23));
+
+        occurrence.overrideVenue("Community Hall Annexe");
+
+        assertThat(occurrence.venueOverride()).isEqualTo("Community Hall Annexe");
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.SCHEDULED);
+    }
+
+    @Test
+    void overridingVenueOnAnOccurrenceOpenForMarkingIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+
+        assertThatThrownBy(() -> occurrence.overrideVenue("Community Hall Annexe"))
+                .isInstanceOf(VenueOverrideNotAllowedException.class);
+        assertThat(occurrence.venueOverride()).isNull();
+    }
+
+    @Test
     void markingAPersonOnAnOpenOccurrenceRecordsTheMarkingAndRegistersAnEvent() {
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);

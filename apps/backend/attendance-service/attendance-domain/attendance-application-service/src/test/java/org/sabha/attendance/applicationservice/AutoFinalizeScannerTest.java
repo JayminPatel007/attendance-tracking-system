@@ -80,6 +80,43 @@ class AutoFinalizeScannerTest {
         assertThat(publisher.published).singleElement().isInstanceOf(OccurrenceFinalized.class);
     }
 
+    @Test
+    void finalizesARescheduledOccurrenceByItsRescheduledEndTimeNotTheStandingSchedule() {
+        // Standing slot ends 20:00. The occurrence (dated 2026-05-25) was rescheduled to
+        // end at 22:00, so its cutoff is 2026-05-26 22:00 + 24h = 2026-05-27 22:00 IST.
+        // now = 2026-05-27 21:00 IST — past the standing-schedule cutoff but before the
+        // rescheduled one, so it must NOT finalize.
+        Instant now = LocalDate.of(2026, 5, 27).atTime(21, 0).atZone(KOLKATA).toInstant();
+        Clock clock = Clock.fixed(now, KOLKATA);
+
+        StubOccurrenceQueries queries = new StubOccurrenceQueries();
+        queries.open.add(new OpenOccurrenceRef(DUE_OCCURRENCE, SABHA_ID,
+                LocalDate.of(2026, 5, 26), LocalTime.of(22, 0)));
+
+        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
+                LocalTime.of(19, 0), LocalTime.of(20, 0)));
+
+        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
+                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        occurrences.put(new Occurrence(DUE_OCCURRENCE, SABHA_ID,
+                LocalDate.of(2026, 5, 26), OccurrenceState.OPEN_FOR_MARKING));
+        OccurrenceStateMachineTest.InMemoryTransitionLog log =
+                new OccurrenceStateMachineTest.InMemoryTransitionLog();
+        OccurrenceStateMachineTest.CapturingPublisher publisher =
+                new OccurrenceStateMachineTest.CapturingPublisher();
+        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+                occurrences, log, publisher, clock);
+
+        AutoFinalizeScanner scanner = new AutoFinalizeScanner(
+                queries, lookup, stateMachine, clock, Duration.ofHours(24));
+
+        scanner.scan();
+
+        assertThat(occurrences.savedOccurrences()).isEmpty();
+        assertThat(log.appended).isEmpty();
+    }
+
     private static final class StubOccurrenceQueries implements OccurrenceQueries {
         final List<ScheduledOccurrenceRef> scheduled = new ArrayList<>();
         final List<OpenOccurrenceRef> open = new ArrayList<>();

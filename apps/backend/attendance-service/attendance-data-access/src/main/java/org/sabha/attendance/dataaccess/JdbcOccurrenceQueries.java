@@ -1,6 +1,7 @@
 package org.sabha.attendance.dataaccess;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,31 +22,42 @@ public class JdbcOccurrenceQueries implements OccurrenceQueries {
 
     @Override
     public List<ScheduledOccurrenceRef> findScheduledOnOrBefore(LocalDate date) {
+        // Rescheduled Occurrences are open candidates too; their effective date/time
+        // come from the rescheduled overrides (ADR-0001), falling back to the standing
+        // occurrence date when not rescheduled.
         return jdbc.sql("""
-                SELECT id, sabha_id, occurrence_date
+                SELECT id, sabha_id,
+                       COALESCE(rescheduled_date, occurrence_date) AS effective_date,
+                       rescheduled_start_time
                 FROM occurrences
-                WHERE state = 'SCHEDULED' AND occurrence_date <= ?
+                WHERE state IN ('SCHEDULED', 'RESCHEDULED')
+                  AND COALESCE(rescheduled_date, occurrence_date) <= ?
                 """)
                 .param(date)
                 .query((rs, n) -> new ScheduledOccurrenceRef(
                         rs.getObject("id", UUID.class),
                         rs.getObject("sabha_id", UUID.class),
-                        rs.getObject("occurrence_date", LocalDate.class)))
+                        rs.getObject("effective_date", LocalDate.class),
+                        rs.getObject("rescheduled_start_time", LocalTime.class)))
                 .list();
     }
 
     @Override
     public List<OpenOccurrenceRef> findOpenOnOrBefore(LocalDate date) {
         return jdbc.sql("""
-                SELECT id, sabha_id, occurrence_date
+                SELECT id, sabha_id,
+                       COALESCE(rescheduled_date, occurrence_date) AS effective_date,
+                       rescheduled_end_time
                 FROM occurrences
-                WHERE state = 'OPEN_FOR_MARKING' AND occurrence_date <= ?
+                WHERE state = 'OPEN_FOR_MARKING'
+                  AND COALESCE(rescheduled_date, occurrence_date) <= ?
                 """)
                 .param(date)
                 .query((rs, n) -> new OpenOccurrenceRef(
                         rs.getObject("id", UUID.class),
                         rs.getObject("sabha_id", UUID.class),
-                        rs.getObject("occurrence_date", LocalDate.class)))
+                        rs.getObject("effective_date", LocalDate.class),
+                        rs.getObject("rescheduled_end_time", LocalTime.class)))
                 .list();
     }
 }

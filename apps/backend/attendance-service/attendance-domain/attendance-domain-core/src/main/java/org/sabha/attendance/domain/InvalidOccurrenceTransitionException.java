@@ -2,7 +2,14 @@ package org.sabha.attendance.domain;
 
 import java.util.UUID;
 
-public class InvalidOccurrenceTransitionException extends RuntimeException {
+import org.sabha.common.DomainException;
+
+/**
+ * Raised when an Occurrence state transition is attempted from a state that
+ * does not permit it. Extends {@link DomainException} so user-driven invalid
+ * transitions surface as HTTP 422 rather than a 500.
+ */
+public class InvalidOccurrenceTransitionException extends DomainException {
 
     private final UUID occurrenceId;
     private final OccurrenceState from;

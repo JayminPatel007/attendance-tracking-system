@@ -1,6 +1,7 @@
 package org.sabha.container;
 
 import org.sabha.attendance.applicationservice.StaleRosterException;
+import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
@@ -21,6 +22,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> notFound(NotFoundException ex) {
         return ResponseEntity.status(404)
                 .body(ErrorResponse.of(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> forbidden(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(403)
+                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
     }
 
     @ExceptionHandler(StaleRosterException.class)

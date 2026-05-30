@@ -2,6 +2,7 @@ package org.sabha.attendance.dataaccess;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,7 +28,8 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
     @Override
     public Optional<Occurrence> findById(UUID occurrenceId) {
         Optional<OccurrenceRow> row = jdbc.sql("""
-                SELECT id, sabha_id, occurrence_date, state, version
+                SELECT id, sabha_id, occurrence_date, state, version,
+                       venue_override, rescheduled_date, rescheduled_start_time, rescheduled_end_time
                 FROM occurrences
                 WHERE id = ?
                 """)
@@ -37,7 +39,11 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
                         rs.getObject("sabha_id", UUID.class),
                         rs.getObject("occurrence_date", LocalDate.class),
                         OccurrenceState.valueOf(rs.getString("state")),
-                        rs.getLong("version")))
+                        rs.getLong("version"),
+                        rs.getString("venue_override"),
+                        rs.getObject("rescheduled_date", LocalDate.class),
+                        rs.getObject("rescheduled_start_time", LocalTime.class),
+                        rs.getObject("rescheduled_end_time", LocalTime.class)))
                 .optional();
         if (row.isEmpty()) {
             return Optional.empty();
@@ -59,7 +65,10 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
                         rs.getTimestamp("client_marked_at").toInstant()))
                 .list();
 
-        return Optional.of(new Occurrence(r.id, r.sabhaId, r.date, r.state, r.version, markings));
+        Occurrence occurrence = new Occurrence(r.id, r.sabhaId, r.date, r.state, r.version, markings);
+        occurrence.restoreShaping(r.venueOverride, r.rescheduledDate,
+                r.rescheduledStartTime, r.rescheduledEndTime);
+        return Optional.of(occurrence);
     }
 
     @Override
@@ -67,10 +76,19 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
     public void save(Occurrence occurrence) {
         int rows = jdbc.sql("""
                 UPDATE occurrences
-                SET state = ?, version = version + 1
+                SET state = ?,
+                    venue_override = ?,
+                    rescheduled_date = ?,
+                    rescheduled_start_time = ?,
+                    rescheduled_end_time = ?,
+                    version = version + 1
                 WHERE id = ? AND version = ?
                 """)
                 .param(occurrence.state().name())
+                .param(occurrence.venueOverride())
+                .param(occurrence.rescheduledDate())
+                .param(occurrence.rescheduledStartTime())
+                .param(occurrence.rescheduledEndTime())
                 .param(occurrence.id())
                 .param(occurrence.version())
                 .update();
@@ -99,6 +117,8 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         }
     }
 
-    private record OccurrenceRow(UUID id, UUID sabhaId, LocalDate date, OccurrenceState state, Long version) {
+    private record OccurrenceRow(UUID id, UUID sabhaId, LocalDate date, OccurrenceState state, Long version,
+                                 String venueOverride, LocalDate rescheduledDate,
+                                 LocalTime rescheduledStartTime, LocalTime rescheduledEndTime) {
     }
 }
