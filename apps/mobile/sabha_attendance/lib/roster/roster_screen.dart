@@ -13,12 +13,14 @@ class RosterScreen extends StatefulWidget {
     this.onSignOut,
     this.onOpenSyncStatus,
     this.onOpenOccurrenceControl,
+    this.onOpenAddPerson,
   });
 
   final RosterController controller;
   final VoidCallback? onSignOut;
   final VoidCallback? onOpenSyncStatus;
   final VoidCallback? onOpenOccurrenceControl;
+  final VoidCallback? onOpenAddPerson;
 
   @override
   State<RosterScreen> createState() => _RosterScreenState();
@@ -77,6 +79,7 @@ class _RosterScreenState extends State<RosterScreen> {
       onTap: state.blocked ? null : (RosterEntry e) => widget.controller.toggle(e),
       onOpenSyncStatus: widget.onOpenSyncStatus,
       onOpenOccurrenceControl: widget.onOpenOccurrenceControl,
+      onOpenAddPerson: widget.onOpenAddPerson,
       onSignOut: widget.onSignOut,
     );
 
@@ -97,6 +100,7 @@ class _RosterBody extends StatelessWidget {
     required this.onTap,
     required this.onOpenSyncStatus,
     required this.onOpenOccurrenceControl,
+    required this.onOpenAddPerson,
     required this.onSignOut,
   });
 
@@ -105,6 +109,7 @@ class _RosterBody extends StatelessWidget {
   final Future<void> Function(RosterEntry)? onTap;
   final VoidCallback? onOpenSyncStatus;
   final VoidCallback? onOpenOccurrenceControl;
+  final VoidCallback? onOpenAddPerson;
   final VoidCallback? onSignOut;
 
   @override
@@ -119,6 +124,12 @@ class _RosterBody extends StatelessWidget {
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
+          if (onOpenAddPerson != null)
+            IconButton(
+              icon: const Icon(Icons.person_add_alt_1),
+              tooltip: 'Add Person',
+              onPressed: onOpenAddPerson,
+            ),
           if (onOpenOccurrenceControl != null)
             IconButton(
               icon: const Icon(Icons.tune),

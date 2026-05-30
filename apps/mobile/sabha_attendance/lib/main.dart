@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' show databaseFactory;
 
+import 'add_person/add_person_api.dart';
+import 'add_person/add_person_controller.dart';
+import 'add_person/add_person_screen.dart';
 import 'auth/auth_config.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
@@ -90,9 +93,12 @@ class _AppShellState extends State<AppShell> {
               final controller = RosterController(api: api, store: store, syncEngine: engine);
               final occurrenceControlApi =
                   OccurrenceControlApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
+              final addPersonApi =
+                  AddPersonApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
                 controller: controller,
                 occurrenceControlApi: occurrenceControlApi,
+                addPersonApi: addPersonApi,
                 onSignOut: widget.session.clear,
               );
             },
@@ -107,11 +113,13 @@ class _RosterShell extends StatefulWidget {
   const _RosterShell({
     required this.controller,
     required this.occurrenceControlApi,
+    required this.addPersonApi,
     required this.onSignOut,
   });
 
   final RosterController controller;
   final OccurrenceControlApi occurrenceControlApi;
+  final AddPersonApi addPersonApi;
   final VoidCallback onSignOut;
 
   @override
@@ -142,6 +150,32 @@ class _RosterShellState extends State<_RosterShell> {
     ));
   }
 
+  void _openAddPerson() {
+    // The Home Sabha a new Person is registered to is the Sanchalak's current
+    // Sabha — the realistic "this Person attended our Sabha" case (ADR-0013).
+    final occurrence = widget.controller.state.roster?.occurrence;
+    if (occurrence == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Load a roster first to choose a Home Sabha.')),
+      );
+      return;
+    }
+    final controller =
+        AddPersonController(api: widget.addPersonApi, homeSabhaId: occurrence.sabhaId);
+    final navigator = Navigator.of(context);
+    navigator.push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Add Person')),
+        body: AddPersonScreen(
+          controller: controller,
+          homeSabhaLabel: 'Your current Sabha · ${occurrence.date}',
+          onSelectExisting: (_) => navigator.pop(),
+          onCreated: (_) => navigator.pop(),
+        ),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return RosterScreen(
@@ -149,6 +183,7 @@ class _RosterShellState extends State<_RosterShell> {
       onSignOut: widget.onSignOut,
       onOpenSyncStatus: _openSyncStatus,
       onOpenOccurrenceControl: _openOccurrenceControl,
+      onOpenAddPerson: _openAddPerson,
     );
   }
 }
