@@ -27,7 +27,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -170,6 +172,34 @@ class OccurrenceShapingIntegrationTest {
 
         assertThat(state()).isEqualTo("SCHEDULED");
         assertThat(transitionCount()).isEqualTo(2);
+    }
+
+    @Test
+    void sanchalakReadsTheCurrentShapeableOccurrenceForTheMobileScreen() throws Exception {
+        String token = token("sanchalak");
+
+        mockMvc.perform(get("/api/sanchalak/current-occurrence")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OCCURRENCE_ID.toString()))
+                .andExpect(jsonPath("$.state").value("SCHEDULED"))
+                .andExpect(jsonPath("$.venueOverride").doesNotExist());
+    }
+
+    @Test
+    void currentOccurrenceSurfacesShapingAlreadyAppliedSoTheScreenCanReflectIt() throws Exception {
+        String token = token("sanchalak");
+
+        mockMvc.perform(post("/api/occurrences/" + OCCURRENCE_ID + "/venue-override")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"venue\": \"Community Hall Annexe\" }"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/sanchalak/current-occurrence")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.venueOverride").value("Community Hall Annexe"));
     }
 
     private String state() {

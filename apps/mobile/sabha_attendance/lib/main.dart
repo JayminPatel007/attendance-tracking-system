@@ -6,6 +6,9 @@ import 'auth/auth_config.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'auth/session.dart';
+import 'occurrence_control/occurrence_control_api.dart';
+import 'occurrence_control/occurrence_control_controller.dart';
+import 'occurrence_control/occurrence_control_screen.dart';
 import 'roster/roster_api.dart';
 import 'roster/roster_controller.dart';
 import 'roster/roster_screen.dart';
@@ -85,8 +88,11 @@ class _AppShellState extends State<AppShell> {
               final api = RosterApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final engine = SyncEngine(store: store, api: api, clock: () => DateTime.now().toUtc());
               final controller = RosterController(api: api, store: store, syncEngine: engine);
+              final occurrenceControlApi =
+                  OccurrenceControlApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
                 controller: controller,
+                occurrenceControlApi: occurrenceControlApi,
                 onSignOut: widget.session.clear,
               );
             },
@@ -98,9 +104,14 @@ class _AppShellState extends State<AppShell> {
 }
 
 class _RosterShell extends StatefulWidget {
-  const _RosterShell({required this.controller, required this.onSignOut});
+  const _RosterShell({
+    required this.controller,
+    required this.occurrenceControlApi,
+    required this.onSignOut,
+  });
 
   final RosterController controller;
+  final OccurrenceControlApi occurrenceControlApi;
   final VoidCallback onSignOut;
 
   @override
@@ -120,12 +131,24 @@ class _RosterShellState extends State<_RosterShell> {
     ));
   }
 
+  void _openOccurrenceControl() {
+    final controller = OccurrenceControlController(api: widget.occurrenceControlApi);
+    controller.initialize();
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Manage Sabha')),
+        body: OccurrenceControlScreen(controller: controller),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return RosterScreen(
       controller: widget.controller,
       onSignOut: widget.onSignOut,
       onOpenSyncStatus: _openSyncStatus,
+      onOpenOccurrenceControl: _openOccurrenceControl,
     );
   }
 }

@@ -12,11 +12,13 @@ class RosterScreen extends StatefulWidget {
     required this.controller,
     this.onSignOut,
     this.onOpenSyncStatus,
+    this.onOpenOccurrenceControl,
   });
 
   final RosterController controller;
   final VoidCallback? onSignOut;
   final VoidCallback? onOpenSyncStatus;
+  final VoidCallback? onOpenOccurrenceControl;
 
   @override
   State<RosterScreen> createState() => _RosterScreenState();
@@ -74,6 +76,7 @@ class _RosterScreenState extends State<RosterScreen> {
       displayedPresence: state.displayedPresence,
       onTap: state.blocked ? null : (RosterEntry e) => widget.controller.toggle(e),
       onOpenSyncStatus: widget.onOpenSyncStatus,
+      onOpenOccurrenceControl: widget.onOpenOccurrenceControl,
       onSignOut: widget.onSignOut,
     );
 
@@ -93,6 +96,7 @@ class _RosterBody extends StatelessWidget {
     required this.displayedPresence,
     required this.onTap,
     required this.onOpenSyncStatus,
+    required this.onOpenOccurrenceControl,
     required this.onSignOut,
   });
 
@@ -100,6 +104,7 @@ class _RosterBody extends StatelessWidget {
   final bool? Function(RosterEntry) displayedPresence;
   final Future<void> Function(RosterEntry)? onTap;
   final VoidCallback? onOpenSyncStatus;
+  final VoidCallback? onOpenOccurrenceControl;
   final VoidCallback? onSignOut;
 
   @override
@@ -114,6 +119,12 @@ class _RosterBody extends StatelessWidget {
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
+          if (onOpenOccurrenceControl != null)
+            IconButton(
+              icon: const Icon(Icons.tune),
+              tooltip: 'Manage Sabha',
+              onPressed: onOpenOccurrenceControl,
+            ),
           if (onOpenSyncStatus != null)
             IconButton(
               icon: const Icon(Icons.sync),
