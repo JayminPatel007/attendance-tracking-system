@@ -1,12 +1,15 @@
 package org.sabha.attendance.application;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.sabha.attendance.applicationservice.CurrentRoster;
 import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
+import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
 import org.sabha.attendance.applicationservice.SyncResult;
@@ -25,14 +28,17 @@ public class AttendanceRestController {
     private final GetCurrentRosterUseCase getCurrentRoster;
     private final MarkAttendanceApplicationService markAttendance;
     private final SyncAttendanceApplicationService syncAttendance;
+    private final OccurrenceShapingService shapeOccurrence;
 
     public AttendanceRestController(
             GetCurrentRosterUseCase getCurrentRoster,
             MarkAttendanceApplicationService markAttendance,
-            SyncAttendanceApplicationService syncAttendance) {
+            SyncAttendanceApplicationService syncAttendance,
+            OccurrenceShapingService shapeOccurrence) {
         this.getCurrentRoster = getCurrentRoster;
         this.markAttendance = markAttendance;
         this.syncAttendance = syncAttendance;
+        this.shapeOccurrence = shapeOccurrence;
     }
 
     @GetMapping("/api/sanchalak/current-roster")
@@ -64,6 +70,55 @@ public class AttendanceRestController {
                 .toList();
         SyncResult result = syncAttendance.execute(keycloakSubject, req.rosterVersion(), items);
         return ResponseEntity.ok(new SyncResponse(result.appliedCount()));
+    }
+
+    @PostMapping("/api/occurrences/{occurrenceId}/cancel")
+    public ResponseEntity<Void> cancel(
+            @PathVariable UUID occurrenceId,
+            @RequestBody CancelRequest req,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        shapeOccurrence.cancel(keycloakSubject, occurrenceId, req.reason());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/occurrences/{occurrenceId}/revert")
+    public ResponseEntity<Void> revert(
+            @PathVariable UUID occurrenceId,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        shapeOccurrence.revert(keycloakSubject, occurrenceId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/occurrences/{occurrenceId}/reschedule")
+    public ResponseEntity<Void> reschedule(
+            @PathVariable UUID occurrenceId,
+            @RequestBody RescheduleRequest req,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        shapeOccurrence.reschedule(keycloakSubject, occurrenceId,
+                req.date(), req.startTime(), req.endTime());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/occurrences/{occurrenceId}/venue-override")
+    public ResponseEntity<Void> venueOverride(
+            @PathVariable UUID occurrenceId,
+            @RequestBody VenueOverrideRequest req,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        shapeOccurrence.overrideVenue(keycloakSubject, occurrenceId, req.venue());
+        return ResponseEntity.ok().build();
+    }
+
+    public record CancelRequest(String reason) {
+    }
+
+    public record RescheduleRequest(LocalDate date, LocalTime startTime, LocalTime endTime) {
+    }
+
+    public record VenueOverrideRequest(String venue) {
     }
 
     public record MarkRequest(UUID personId, boolean present, Instant clientMarkedAt) {

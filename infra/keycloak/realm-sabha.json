@@ -108,6 +108,23 @@
       ],
       "requiredActions": [],
       "realmRoles": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000008",
+      "username": "sah-sanchalak",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Seeded",
+      "lastName": "Sah-Sanchalak",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme123!",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": []
     }
   ],
   "requiredActions": [

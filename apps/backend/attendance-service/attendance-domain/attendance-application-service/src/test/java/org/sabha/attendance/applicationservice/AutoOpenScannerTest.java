@@ -80,6 +80,49 @@ class AutoOpenScannerTest {
         assertThat(publisher.published).singleElement().isInstanceOf(OccurrenceOpened.class);
     }
 
+    @Test
+    void opensARescheduledOccurrenceByItsRescheduledStartTimeNotTheStandingSchedule() {
+        // Standing slot is 19:00. now = 20:00 IST on the rescheduled date. The
+        // occurrence rescheduled to 19:30 is due; the one rescheduled to 21:00 is not —
+        // proving the scanner honours the per-Occurrence override, not the 19:00 standing slot.
+        Instant now = LocalDate.of(2026, 5, 31).atTime(20, 0).atZone(KOLKATA).toInstant();
+        Clock clock = Clock.fixed(now, KOLKATA);
+        UUID dueRescheduled = UUID.fromString("00000000-0000-0000-0000-000000000030");
+        UUID notYetRescheduled = UUID.fromString("00000000-0000-0000-0000-000000000031");
+
+        StubOccurrenceQueries queries = new StubOccurrenceQueries();
+        queries.scheduled.add(new ScheduledOccurrenceRef(dueRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 31), LocalTime.of(19, 30)));
+        queries.scheduled.add(new ScheduledOccurrenceRef(notYetRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 31), LocalTime.of(21, 0)));
+
+        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
+                LocalTime.of(19, 0), LocalTime.of(20, 0)));
+
+        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
+                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        occurrences.put(new Occurrence(dueRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 24), OccurrenceState.RESCHEDULED));
+        occurrences.put(new Occurrence(notYetRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 24), OccurrenceState.RESCHEDULED));
+        OccurrenceStateMachineTest.InMemoryTransitionLog log =
+                new OccurrenceStateMachineTest.InMemoryTransitionLog();
+        OccurrenceStateMachineTest.CapturingPublisher publisher =
+                new OccurrenceStateMachineTest.CapturingPublisher();
+        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+                occurrences, log, publisher, clock);
+
+        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, stateMachine, clock);
+
+        scanner.scan();
+
+        assertThat(occurrences.savedOccurrences()).hasSize(1);
+        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(dueRescheduled);
+        assertThat(occurrences.savedOccurrences().get(0).state())
+                .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+    }
+
     private static final class StubOccurrenceQueries implements OccurrenceQueries {
         final List<ScheduledOccurrenceRef> scheduled = new ArrayList<>();
         final List<OpenOccurrenceRef> open = new ArrayList<>();

@@ -3,6 +3,7 @@ package org.sabha.attendance.applicationservice;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -46,8 +47,11 @@ public class AutoOpenScanner {
             if (schedule.isEmpty()) {
                 continue;
             }
+            LocalTime startTime = ref.rescheduledStartTime() != null
+                    ? ref.rescheduledStartTime()
+                    : schedule.get().startTime();
             Instant scheduledStartAt = ZonedDateTime.of(
-                    ref.date(), schedule.get().startTime(), clock.getZone()).toInstant();
+                    ref.date(), startTime, clock.getZone()).toInstant();
             if (!scheduledStartAt.isAfter(now)) {
                 stateMachine.transition(ref.occurrenceId(),
                         OccurrenceAction.OPEN, TransitionActor.system());

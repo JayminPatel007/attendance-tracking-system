@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -48,8 +49,11 @@ public class AutoFinalizeScanner {
             if (schedule.isEmpty()) {
                 continue;
             }
+            LocalTime endTime = ref.rescheduledEndTime() != null
+                    ? ref.rescheduledEndTime()
+                    : schedule.get().endTime();
             Instant scheduledEndAt = ZonedDateTime.of(
-                    ref.date(), schedule.get().endTime(), clock.getZone()).toInstant();
+                    ref.date(), endTime, clock.getZone()).toInstant();
             Instant cutoff = scheduledEndAt.plus(gracePeriod);
             if (!cutoff.isAfter(now)) {
                 stateMachine.transition(ref.occurrenceId(),
