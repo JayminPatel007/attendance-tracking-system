@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/slice-4/001-client-marked-at.sql
   - include:
       file: db/changelog/slice-5/001-occurrence-shaping.sql
+  - include:
+      file: db/changelog/slice-6/001-person-directory.sql
