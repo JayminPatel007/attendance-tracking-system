@@ -5,6 +5,7 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
+import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,6 +41,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> conflict(ConcurrentModificationException ex) {
         return ResponseEntity.status(409)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MobileAlreadyRegisteredException.class)
+    public ResponseEntity<ErrorResponse> mobileAlreadyRegistered(MobileAlreadyRegisteredException ex) {
+        return ResponseEntity.status(409)
+                .body(ErrorResponse.mobileConflict(ex.getMessage(), ex.existing().id()));
     }
 
     @ExceptionHandler(DomainException.class)
