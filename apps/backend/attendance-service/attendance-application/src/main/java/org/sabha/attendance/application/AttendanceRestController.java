@@ -6,7 +6,9 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.attendance.applicationservice.CurrentOccurrence;
 import org.sabha.attendance.applicationservice.CurrentRoster;
+import org.sabha.attendance.applicationservice.GetCurrentOccurrenceUseCase;
 import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.OccurrenceShapingService;
@@ -26,16 +28,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttendanceRestController {
 
     private final GetCurrentRosterUseCase getCurrentRoster;
+    private final GetCurrentOccurrenceUseCase getCurrentOccurrence;
     private final MarkAttendanceApplicationService markAttendance;
     private final SyncAttendanceApplicationService syncAttendance;
     private final OccurrenceShapingService shapeOccurrence;
 
     public AttendanceRestController(
             GetCurrentRosterUseCase getCurrentRoster,
+            GetCurrentOccurrenceUseCase getCurrentOccurrence,
             MarkAttendanceApplicationService markAttendance,
             SyncAttendanceApplicationService syncAttendance,
             OccurrenceShapingService shapeOccurrence) {
         this.getCurrentRoster = getCurrentRoster;
+        this.getCurrentOccurrence = getCurrentOccurrence;
         this.markAttendance = markAttendance;
         this.syncAttendance = syncAttendance;
         this.shapeOccurrence = shapeOccurrence;
@@ -45,6 +50,14 @@ public class AttendanceRestController {
     public ResponseEntity<CurrentRoster> currentRoster(@AuthenticationPrincipal Jwt jwt) {
         UUID keycloakSubject = UUID.fromString(jwt.getSubject());
         return getCurrentRoster.execute(keycloakSubject)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/api/sanchalak/current-occurrence")
+    public ResponseEntity<CurrentOccurrence> currentOccurrence(@AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        return getCurrentOccurrence.execute(keycloakSubject)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
