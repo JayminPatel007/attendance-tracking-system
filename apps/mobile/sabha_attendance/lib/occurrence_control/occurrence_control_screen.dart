@@ -143,9 +143,9 @@ class _StateChip extends StatelessWidget {
     };
     return Chip(
       label: Text(label),
-      backgroundColor: color.withValues(alpha: 0.12),
+      backgroundColor: color.withOpacity(0.12),
       labelStyle: TextStyle(color: color, fontWeight: FontWeight.w600),
-      side: BorderSide(color: color.withValues(alpha: 0.3)),
+      side: BorderSide(color: color.withOpacity(0.3)),
     );
   }
 }
@@ -159,9 +159,9 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.08),
+        color: Colors.red.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
       child: Row(children: [
         const Icon(Icons.error_outline, color: Colors.red, size: 20),
@@ -357,7 +357,7 @@ class _CancelledCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.red.withValues(alpha: 0.04),
+      color: Colors.red.withOpacity(0.04),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
