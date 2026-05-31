@@ -5,6 +5,9 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
+import org.sabha.identity.applicationservice.OtpRateLimitExceededException;
+import org.sabha.identity.applicationservice.OtpResendCooldownException;
+import org.sabha.identity.applicationservice.TransferNotAuthorizedException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,6 +50,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> mobileAlreadyRegistered(MobileAlreadyRegisteredException ex) {
         return ResponseEntity.status(409)
                 .body(ErrorResponse.mobileConflict(ex.getMessage(), ex.existing().id()));
+    }
+
+    @ExceptionHandler(TransferNotAuthorizedException.class)
+    public ResponseEntity<ErrorResponse> transferNotAuthorized(TransferNotAuthorizedException ex) {
+        return ResponseEntity.status(403)
+                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    }
+
+    @ExceptionHandler({OtpRateLimitExceededException.class, OtpResendCooldownException.class})
+    public ResponseEntity<ErrorResponse> tooManyOtpRequests(RuntimeException ex) {
+        return ResponseEntity.status(429)
+                .body(ErrorResponse.of(429, "Too Many Requests", ex.getMessage()));
     }
 
     @ExceptionHandler(DomainException.class)
