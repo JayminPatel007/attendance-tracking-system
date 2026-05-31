@@ -118,6 +118,22 @@ public class Occurrence extends AggregateRoot<UUID> {
     }
 
     public void mark(UUID personId, boolean present, UUID markedBy, Instant clientMarkedAt) {
+        record(personId, present, markedBy, clientMarkedAt, MarkingType.ROSTER);
+    }
+
+    /**
+     * Records a Walk-in: a Person attending this Occurrence who is not on its
+     * Roster (ADR-0007). A Walk-in is always present — the Sanchalak only
+     * registers someone who showed up — and never touches the Person's Home
+     * Sabha. Shares the Open-for-marking guard and last-write-wins semantics of
+     * {@link #mark}.
+     */
+    public void markWalkIn(UUID personId, UUID markedBy, Instant clientMarkedAt) {
+        record(personId, true, markedBy, clientMarkedAt, MarkingType.WALK_IN);
+    }
+
+    private void record(UUID personId, boolean present, UUID markedBy,
+                        Instant clientMarkedAt, MarkingType markingType) {
         if (state != OccurrenceState.OPEN_FOR_MARKING) {
             throw new OccurrenceNotOpenForMarkingException(id, state);
         }
@@ -126,10 +142,10 @@ public class Occurrence extends AggregateRoot<UUID> {
             return;
         }
         AttendanceMarking marking = new AttendanceMarking(
-                UUID.randomUUID(), id, personId, present, markedBy, clientMarkedAt);
+                UUID.randomUUID(), id, personId, present, markedBy, clientMarkedAt, markingType);
         markings.put(personId, marking);
         pendingMarkings.add(marking);
-        registerEvent(new AttendanceMarked(id, personId, present, markedBy, Instant.now()));
+        registerEvent(new AttendanceMarked(id, personId, present, markedBy, markingType, Instant.now()));
     }
 
     /**

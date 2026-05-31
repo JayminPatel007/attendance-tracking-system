@@ -10,5 +10,6 @@ public record AttendanceMarked(
         UUID personId,
         boolean present,
         UUID markedBy,
+        MarkingType markingType,
         Instant occurredAt) implements DomainEvent {
 }

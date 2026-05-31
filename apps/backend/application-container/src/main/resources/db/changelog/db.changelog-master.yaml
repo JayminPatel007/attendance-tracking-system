@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/slice-5/001-occurrence-shaping.sql
   - include:
       file: db/changelog/slice-6/001-person-directory.sql
+  - include:
+      file: db/changelog/slice-7/001-walk-in-marking-type.sql

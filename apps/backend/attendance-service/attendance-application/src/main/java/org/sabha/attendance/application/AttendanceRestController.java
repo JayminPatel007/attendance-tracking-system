@@ -11,6 +11,7 @@ import org.sabha.attendance.applicationservice.CurrentRoster;
 import org.sabha.attendance.applicationservice.GetCurrentOccurrenceUseCase;
 import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
+import org.sabha.attendance.applicationservice.MarkWalkInApplicationService;
 import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
@@ -30,6 +31,7 @@ public class AttendanceRestController {
     private final GetCurrentRosterUseCase getCurrentRoster;
     private final GetCurrentOccurrenceUseCase getCurrentOccurrence;
     private final MarkAttendanceApplicationService markAttendance;
+    private final MarkWalkInApplicationService markWalkIn;
     private final SyncAttendanceApplicationService syncAttendance;
     private final OccurrenceShapingService shapeOccurrence;
 
@@ -37,11 +39,13 @@ public class AttendanceRestController {
             GetCurrentRosterUseCase getCurrentRoster,
             GetCurrentOccurrenceUseCase getCurrentOccurrence,
             MarkAttendanceApplicationService markAttendance,
+            MarkWalkInApplicationService markWalkIn,
             SyncAttendanceApplicationService syncAttendance,
             OccurrenceShapingService shapeOccurrence) {
         this.getCurrentRoster = getCurrentRoster;
         this.getCurrentOccurrence = getCurrentOccurrence;
         this.markAttendance = markAttendance;
+        this.markWalkIn = markWalkIn;
         this.syncAttendance = syncAttendance;
         this.shapeOccurrence = shapeOccurrence;
     }
@@ -70,6 +74,17 @@ public class AttendanceRestController {
         UUID keycloakSubject = UUID.fromString(jwt.getSubject());
         Instant clientMarkedAt = req.clientMarkedAt() != null ? req.clientMarkedAt() : Instant.now();
         markAttendance.execute(keycloakSubject, occurrenceId, req.personId(), req.present(), clientMarkedAt);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/occurrences/{occurrenceId}/walk-ins")
+    public ResponseEntity<Void> walkIn(
+            @PathVariable UUID occurrenceId,
+            @RequestBody WalkInRequest req,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        Instant clientMarkedAt = req.clientMarkedAt() != null ? req.clientMarkedAt() : Instant.now();
+        markWalkIn.execute(keycloakSubject, occurrenceId, req.personId(), clientMarkedAt);
         return ResponseEntity.ok().build();
     }
 
@@ -135,6 +150,9 @@ public class AttendanceRestController {
     }
 
     public record MarkRequest(UUID personId, boolean present, Instant clientMarkedAt) {
+    }
+
+    public record WalkInRequest(UUID personId, Instant clientMarkedAt) {
     }
 
     public record SyncRequest(Instant rosterVersion, List<MarkingItem> markings) {
