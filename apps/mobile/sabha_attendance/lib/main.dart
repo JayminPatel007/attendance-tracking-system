@@ -16,6 +16,9 @@ import 'roster/roster_api.dart';
 import 'roster/roster_controller.dart';
 import 'roster/roster_screen.dart';
 import 'sync/attendance_store.dart';
+import 'walk_in/walk_in_api.dart';
+import 'walk_in/walk_in_controller.dart';
+import 'walk_in/walk_in_screen.dart';
 import 'sync/sync_engine.dart';
 import 'sync/sync_status_screen.dart';
 
@@ -95,10 +98,14 @@ class _AppShellState extends State<AppShell> {
                   OccurrenceControlApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final addPersonApi =
                   AddPersonApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
+              final walkInApi =
+                  WalkInApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
                 controller: controller,
                 occurrenceControlApi: occurrenceControlApi,
                 addPersonApi: addPersonApi,
+                walkInApi: walkInApi,
+                store: store,
                 onSignOut: widget.session.clear,
               );
             },
@@ -114,12 +121,16 @@ class _RosterShell extends StatefulWidget {
     required this.controller,
     required this.occurrenceControlApi,
     required this.addPersonApi,
+    required this.walkInApi,
+    required this.store,
     required this.onSignOut,
   });
 
   final RosterController controller;
   final OccurrenceControlApi occurrenceControlApi;
   final AddPersonApi addPersonApi;
+  final WalkInApi walkInApi;
+  final AttendanceStore store;
   final VoidCallback onSignOut;
 
   @override
@@ -176,6 +187,30 @@ class _RosterShellState extends State<_RosterShell> {
     ));
   }
 
+  void _openWalkIn() {
+    // A Walk-in is recorded against today's open Occurrence; the search is
+    // scoped server-side to that Occurrence's Sabha/Kshetra (ADR-0007).
+    final occurrence = widget.controller.state.roster?.occurrence;
+    if (occurrence == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Load a roster first to record a Walk-in.')),
+      );
+      return;
+    }
+    final controller = WalkInController(
+      api: widget.walkInApi,
+      store: widget.store,
+      occurrenceId: occurrence.id,
+      sabhaId: occurrence.sabhaId,
+    );
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Walk-in')),
+        body: WalkInScreen(controller: controller),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return RosterScreen(
@@ -184,6 +219,7 @@ class _RosterShellState extends State<_RosterShell> {
       onOpenSyncStatus: _openSyncStatus,
       onOpenOccurrenceControl: _openOccurrenceControl,
       onOpenAddPerson: _openAddPerson,
+      onOpenWalkIn: _openWalkIn,
     );
   }
 }

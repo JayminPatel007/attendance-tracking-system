@@ -181,6 +181,11 @@ class AddPersonApplicationServiceTest {
         }
 
         @Override
+        public Optional<WalkInCandidate> findByMobileForWalkIn(String mobile) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<UUID> kshetraIdOfSabha(UUID sabhaId) {
             return Optional.ofNullable(sabhaToKshetra.get(sabhaId));
         }

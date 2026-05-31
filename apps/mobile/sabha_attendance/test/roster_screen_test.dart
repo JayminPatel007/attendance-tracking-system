@@ -48,13 +48,15 @@ void main() {
     WidgetTester tester,
     RosterApi api, {
     Future<void> Function()? setupStore,
+    VoidCallback? onOpenWalkIn,
   }) async {
     if (setupStore != null) {
       await tester.runAsync(setupStore);
     }
     final controller = makeController(api);
     await tester.runAsync(() => controller.initialize());
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: RosterScreen(controller: controller))));
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: RosterScreen(controller: controller, onOpenWalkIn: onOpenWalkIn))));
     await tester.pump();
     return controller;
   }
@@ -123,6 +125,26 @@ void main() {
     expect(pending, hasLength(1));
     expect(pending!.single.personId, 'p1');
     expect(pending.single.present, true);
+  });
+
+  testWidgets('the Walk-in FAB opens the walk-in flow', (tester) async {
+    var opened = 0;
+    final api = RosterApi(
+      baseUrl: 'http://test',
+      accessToken: 'tok',
+      client: MockClient((req) async => http.Response(jsonEncode({
+            'occurrence': {'id': 'occ-1', 'date': '2026-05-24', 'state': 'OPEN_FOR_MARKING', 'sabhaId': 'sabha-1'},
+            'roster': [{'personId': 'p1', 'fullName': 'Alice', 'present': null}],
+            'rosterVersion': '2026-05-27T10:00:00.000Z',
+          }), 200)),
+    );
+    await bootScreen(tester, api, onOpenWalkIn: () => opened++);
+
+    expect(find.byKey(const Key('walk-in-fab')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('walk-in-fab')));
+    await tester.pump();
+
+    expect(opened, 1);
   });
 
   testWidgets('when the cached rosterVersion is older than 7 days a blocking modal disables taps', (tester) async {
