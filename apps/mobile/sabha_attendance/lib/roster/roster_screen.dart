@@ -15,6 +15,7 @@ class RosterScreen extends StatefulWidget {
     this.onOpenOccurrenceControl,
     this.onOpenAddPerson,
     this.onOpenWalkIn,
+    this.onOpenHomeSabhaTransfer,
   });
 
   final RosterController controller;
@@ -23,6 +24,7 @@ class RosterScreen extends StatefulWidget {
   final VoidCallback? onOpenOccurrenceControl;
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
+  final VoidCallback? onOpenHomeSabhaTransfer;
 
   @override
   State<RosterScreen> createState() => _RosterScreenState();
@@ -83,6 +85,7 @@ class _RosterScreenState extends State<RosterScreen> {
       onOpenOccurrenceControl: widget.onOpenOccurrenceControl,
       onOpenAddPerson: widget.onOpenAddPerson,
       onOpenWalkIn: widget.onOpenWalkIn,
+      onOpenHomeSabhaTransfer: widget.onOpenHomeSabhaTransfer,
       onSignOut: widget.onSignOut,
     );
 
@@ -105,6 +108,7 @@ class _RosterBody extends StatelessWidget {
     required this.onOpenOccurrenceControl,
     required this.onOpenAddPerson,
     required this.onOpenWalkIn,
+    required this.onOpenHomeSabhaTransfer,
     required this.onSignOut,
   });
 
@@ -115,6 +119,7 @@ class _RosterBody extends StatelessWidget {
   final VoidCallback? onOpenOccurrenceControl;
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
+  final VoidCallback? onOpenHomeSabhaTransfer;
   final VoidCallback? onSignOut;
 
   @override
@@ -143,6 +148,13 @@ class _RosterBody extends StatelessWidget {
               icon: const Icon(Icons.person_add_alt_1),
               tooltip: 'Add Person',
               onPressed: onOpenAddPerson,
+            ),
+          if (onOpenHomeSabhaTransfer != null)
+            IconButton(
+              key: const Key('home-sabha-transfer-button'),
+              icon: const Icon(Icons.swap_horiz),
+              tooltip: 'Home Sabha transfer',
+              onPressed: onOpenHomeSabhaTransfer,
             ),
           if (onOpenOccurrenceControl != null)
             IconButton(

@@ -9,6 +9,9 @@ import 'auth/auth_config.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'auth/session.dart';
+import 'home_sabha_transfer/home_sabha_transfer_api.dart';
+import 'home_sabha_transfer/home_sabha_transfer_controller.dart';
+import 'home_sabha_transfer/home_sabha_transfer_screen.dart';
 import 'occurrence_control/occurrence_control_api.dart';
 import 'occurrence_control/occurrence_control_controller.dart';
 import 'occurrence_control/occurrence_control_screen.dart';
@@ -100,11 +103,14 @@ class _AppShellState extends State<AppShell> {
                   AddPersonApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final walkInApi =
                   WalkInApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
+              final homeSabhaTransferApi =
+                  HomeSabhaTransferApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
                 controller: controller,
                 occurrenceControlApi: occurrenceControlApi,
                 addPersonApi: addPersonApi,
                 walkInApi: walkInApi,
+                homeSabhaTransferApi: homeSabhaTransferApi,
                 store: store,
                 onSignOut: widget.session.clear,
               );
@@ -122,6 +128,7 @@ class _RosterShell extends StatefulWidget {
     required this.occurrenceControlApi,
     required this.addPersonApi,
     required this.walkInApi,
+    required this.homeSabhaTransferApi,
     required this.store,
     required this.onSignOut,
   });
@@ -130,6 +137,7 @@ class _RosterShell extends StatefulWidget {
   final OccurrenceControlApi occurrenceControlApi;
   final AddPersonApi addPersonApi;
   final WalkInApi walkInApi;
+  final HomeSabhaTransferApi homeSabhaTransferApi;
   final AttendanceStore store;
   final VoidCallback onSignOut;
 
@@ -211,6 +219,33 @@ class _RosterShellState extends State<_RosterShell> {
     ));
   }
 
+  void _openHomeSabhaTransfer() {
+    // The destination Sabha is the Sanchalak's current Sabha — the Person is
+    // pulled into it after their own OTP-verified consent (ADR-0002).
+    final occurrence = widget.controller.state.roster?.occurrence;
+    if (occurrence == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Load a roster first to start a transfer.')),
+      );
+      return;
+    }
+    final controller = HomeSabhaTransferController(
+      api: widget.homeSabhaTransferApi,
+      destinationSabhaId: occurrence.sabhaId,
+    );
+    final navigator = Navigator.of(context);
+    navigator.push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Home Sabha transfer')),
+        body: HomeSabhaTransferScreen(
+          controller: controller,
+          destinationLabel: 'Your Sabha · ${occurrence.date}',
+          onDone: navigator.pop,
+        ),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return RosterScreen(
@@ -220,6 +255,7 @@ class _RosterShellState extends State<_RosterShell> {
       onOpenOccurrenceControl: _openOccurrenceControl,
       onOpenAddPerson: _openAddPerson,
       onOpenWalkIn: _openWalkIn,
+      onOpenHomeSabhaTransfer: _openHomeSabhaTransfer,
     );
   }
 }
