@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.applicationservice.OccurrenceRepository;
 import org.sabha.attendance.domain.AttendanceMarking;
+import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.OptimisticLockException;
@@ -51,7 +52,7 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         OccurrenceRow r = row.get();
 
         List<AttendanceMarking> markings = jdbc.sql("""
-                SELECT id, person_id, present, marked_by_user_id, client_marked_at
+                SELECT id, person_id, present, marked_by_user_id, client_marked_at, marking_type
                 FROM attendance_markings
                 WHERE occurrence_id = ?
                 """)
@@ -62,7 +63,8 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
                         rs.getObject("person_id", UUID.class),
                         rs.getBoolean("present"),
                         rs.getObject("marked_by_user_id", UUID.class),
-                        rs.getTimestamp("client_marked_at").toInstant()))
+                        rs.getTimestamp("client_marked_at").toInstant(),
+                        MarkingType.valueOf(rs.getString("marking_type"))))
                 .list();
 
         Occurrence occurrence = new Occurrence(r.id, r.sabhaId, r.date, r.state, r.version, markings);
@@ -99,13 +101,14 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         for (AttendanceMarking m : occurrence.pullPendingMarkings()) {
             jdbc.sql("""
                     INSERT INTO attendance_markings
-                        (id, occurrence_id, person_id, present, marked_by_user_id, client_marked_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                        (id, occurrence_id, person_id, present, marked_by_user_id, client_marked_at, marking_type)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT (occurrence_id, person_id)
                     DO UPDATE SET present = EXCLUDED.present,
                                   marked_at = now(),
                                   marked_by_user_id = EXCLUDED.marked_by_user_id,
-                                  client_marked_at = EXCLUDED.client_marked_at
+                                  client_marked_at = EXCLUDED.client_marked_at,
+                                  marking_type = EXCLUDED.marking_type
                     """)
                     .param(m.id())
                     .param(occurrence.id())
@@ -113,6 +116,7 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
                     .param(m.present())
                     .param(m.markedByUserId())
                     .param(Timestamp.from(m.clientMarkedAt()))
+                    .param(m.markingType().name())
                     .update();
         }
     }

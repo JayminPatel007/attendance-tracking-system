@@ -158,6 +158,56 @@ class OccurrenceTest {
     }
 
     @Test
+    void markingAWalkInRecordsAPresentWalkInMarkingAndRegistersAnEvent() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000110");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+        Instant clientMarkedAt = Instant.parse("2026-05-23T19:00:00Z");
+
+        occurrence.markWalkIn(personId, markedBy, clientMarkedAt);
+
+        assertThat(occurrence.markings()).hasSize(1);
+        AttendanceMarking marking = occurrence.markings().iterator().next();
+        assertThat(marking.personId()).isEqualTo(personId);
+        assertThat(marking.present()).isTrue();
+        assertThat(marking.markingType()).isEqualTo(MarkingType.WALK_IN);
+
+        List<DomainEvent> events = occurrence.pullDomainEvents();
+        assertThat(events).singleElement().isInstanceOf(AttendanceMarked.class);
+        AttendanceMarked event = (AttendanceMarked) events.get(0);
+        assertThat(event.personId()).isEqualTo(personId);
+        assertThat(event.markingType()).isEqualTo(MarkingType.WALK_IN);
+    }
+
+    @Test
+    void markingAWalkInOnAFinalizedOccurrenceIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000110");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        assertThatThrownBy(() -> occurrence.markWalkIn(personId, markedBy, Instant.parse("2026-05-23T19:00:00Z")))
+                .isInstanceOf(OccurrenceNotOpenForMarkingException.class);
+        assertThat(occurrence.markings()).isEmpty();
+        assertThat(occurrence.pullDomainEvents()).isEmpty();
+    }
+
+    @Test
+    void markingAPersonViaRosterFlowRecordsARosterMarking() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+        UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+        UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        occurrence.mark(personId, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+
+        assertThat(occurrence.markings().iterator().next().markingType()).isEqualTo(MarkingType.ROSTER);
+        AttendanceMarked event = (AttendanceMarked) occurrence.pullDomainEvents().get(0);
+        assertThat(event.markingType()).isEqualTo(MarkingType.ROSTER);
+    }
+
+    @Test
     void markingAPersonOnAFinalizedOccurrenceIsRejected() {
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
@@ -296,9 +346,9 @@ class OccurrenceTest {
         UUID personB = UUID.fromString("00000000-0000-0000-0000-000000000102");
         UUID markedBy = UUID.fromString("00000000-0000-0000-0000-000000000004");
         AttendanceMarking existingA = new AttendanceMarking(UUID.randomUUID(), OCCURRENCE_ID,
-                personA, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"));
+                personA, true, markedBy, Instant.parse("2026-05-23T19:00:00Z"), MarkingType.ROSTER);
         AttendanceMarking existingB = new AttendanceMarking(UUID.randomUUID(), OCCURRENCE_ID,
-                personB, false, markedBy, Instant.parse("2026-05-23T19:01:00Z"));
+                personB, false, markedBy, Instant.parse("2026-05-23T19:01:00Z"), MarkingType.ROSTER);
 
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING,

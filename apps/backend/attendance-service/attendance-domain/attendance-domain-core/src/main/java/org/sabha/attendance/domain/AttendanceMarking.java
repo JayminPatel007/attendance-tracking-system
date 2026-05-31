@@ -9,5 +9,6 @@ public record AttendanceMarking(
         UUID personId,
         boolean present,
         UUID markedByUserId,
-        Instant clientMarkedAt) {
+        Instant clientMarkedAt,
+        MarkingType markingType) {
 }
