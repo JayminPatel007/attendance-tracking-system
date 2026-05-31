@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.sabha.identity.applicationservice.NameCandidate;
 import org.sabha.identity.applicationservice.PersonDirectory;
+import org.sabha.identity.applicationservice.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.Person;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -82,6 +83,26 @@ public class JdbcPersonDirectory implements PersonDirectory {
                         rs.getString("full_name"),
                         rs.getString("home_sabha_name")))
                 .list();
+    }
+
+    @Override
+    public Optional<WalkInCandidate> findByMobileForWalkIn(String mobile) {
+        return jdbc.sql("""
+                SELECT p.id,
+                       p.full_name,
+                       MIN(s.sabha_kind) AS home_sabha
+                FROM persons p
+                JOIN home_sabhas hs ON hs.person_id = p.id
+                JOIN sabhas s ON s.id = hs.sabha_id
+                WHERE p.mobile = ?
+                GROUP BY p.id, p.full_name
+                """)
+                .param(mobile)
+                .query((rs, n) -> new WalkInCandidate(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("full_name"),
+                        rs.getString("home_sabha")))
+                .optional();
     }
 
     @Override

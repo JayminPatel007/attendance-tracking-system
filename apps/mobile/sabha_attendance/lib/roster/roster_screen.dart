@@ -14,6 +14,7 @@ class RosterScreen extends StatefulWidget {
     this.onOpenSyncStatus,
     this.onOpenOccurrenceControl,
     this.onOpenAddPerson,
+    this.onOpenWalkIn,
   });
 
   final RosterController controller;
@@ -21,6 +22,7 @@ class RosterScreen extends StatefulWidget {
   final VoidCallback? onOpenSyncStatus;
   final VoidCallback? onOpenOccurrenceControl;
   final VoidCallback? onOpenAddPerson;
+  final VoidCallback? onOpenWalkIn;
 
   @override
   State<RosterScreen> createState() => _RosterScreenState();
@@ -80,6 +82,7 @@ class _RosterScreenState extends State<RosterScreen> {
       onOpenSyncStatus: widget.onOpenSyncStatus,
       onOpenOccurrenceControl: widget.onOpenOccurrenceControl,
       onOpenAddPerson: widget.onOpenAddPerson,
+      onOpenWalkIn: widget.onOpenWalkIn,
       onSignOut: widget.onSignOut,
     );
 
@@ -101,6 +104,7 @@ class _RosterBody extends StatelessWidget {
     required this.onOpenSyncStatus,
     required this.onOpenOccurrenceControl,
     required this.onOpenAddPerson,
+    required this.onOpenWalkIn,
     required this.onSignOut,
   });
 
@@ -110,11 +114,21 @@ class _RosterBody extends StatelessWidget {
   final VoidCallback? onOpenSyncStatus;
   final VoidCallback? onOpenOccurrenceControl;
   final VoidCallback? onOpenAddPerson;
+  final VoidCallback? onOpenWalkIn;
   final VoidCallback? onSignOut;
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Scaffold(
+      floatingActionButton: onOpenWalkIn == null
+          ? null
+          : FloatingActionButton.extended(
+              key: const Key('walk-in-fab'),
+              icon: const Icon(Icons.directions_walk),
+              label: const Text('Walk-in'),
+              onPressed: onOpenWalkIn,
+            ),
+      body: Column(children: [
       Padding(
         padding: const EdgeInsets.all(16),
         child: Row(children: [
@@ -163,7 +177,8 @@ class _RosterBody extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: TextButton(onPressed: onSignOut, child: const Text('Sign out')),
         ),
-    ]);
+    ]),
+    );
   }
 }
 

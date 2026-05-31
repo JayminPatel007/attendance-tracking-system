@@ -10,6 +10,8 @@ import org.sabha.identity.applicationservice.AddResult;
 import org.sabha.identity.applicationservice.GetPersonDetailUseCase;
 import org.sabha.identity.applicationservice.NameCandidate;
 import org.sabha.identity.applicationservice.SearchDirectoryUseCase;
+import org.sabha.identity.applicationservice.SearchWalkInCandidatesUseCase;
+import org.sabha.identity.applicationservice.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.Person;
 import org.springframework.http.ResponseEntity;
@@ -34,14 +36,17 @@ public class PersonDirectoryRestController {
 
     private final AddPersonApplicationService addPerson;
     private final SearchDirectoryUseCase searchDirectory;
+    private final SearchWalkInCandidatesUseCase searchWalkInCandidates;
     private final GetPersonDetailUseCase getPersonDetail;
 
     public PersonDirectoryRestController(
             AddPersonApplicationService addPerson,
             SearchDirectoryUseCase searchDirectory,
+            SearchWalkInCandidatesUseCase searchWalkInCandidates,
             GetPersonDetailUseCase getPersonDetail) {
         this.addPerson = addPerson;
         this.searchDirectory = searchDirectory;
+        this.searchWalkInCandidates = searchWalkInCandidates;
         this.getPersonDetail = getPersonDetail;
     }
 
@@ -74,6 +79,13 @@ public class PersonDirectoryRestController {
             return ResponseEntity.ok(searchDirectory.byName(kshetraId, name));
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    @GetMapping("/api/directory/walk-in-search")
+    public ResponseEntity<List<WalkInCandidate>> walkInSearch(
+            @RequestParam UUID sabhaId,
+            @RequestParam String q) {
+        return ResponseEntity.ok(searchWalkInCandidates.search(sabhaId, q));
     }
 
     @GetMapping("/api/directory/persons/{id}")

@@ -23,6 +23,12 @@ public interface PersonDirectory {
      */
     List<NameCandidate> findNameCandidates(UUID kshetraId, String fullName, int limit);
 
+    /**
+     * Exact mobile match shaped for the Walk-in confirm sheet (Slice 7): like
+     * {@link #findByMobile} but joined to the Person's current Home Sabha.
+     */
+    Optional<WalkInCandidate> findByMobileForWalkIn(String mobile);
+
     /** The Kshetra the given Sabha belongs to — the scope for the name soft-warn. */
     Optional<UUID> kshetraIdOfSabha(UUID sabhaId);
 
