@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sabha.identity.applicationservice.HomeSabhaDirectory;
 import org.sabha.identity.applicationservice.NameCandidate;
 import org.sabha.identity.applicationservice.PersonDirectory;
 import org.sabha.identity.applicationservice.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
+import org.sabha.identity.domain.HomeSabhaRef;
 import org.sabha.identity.domain.Person;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -21,7 +23,7 @@ import org.springframework.stereotype.Repository;
  * indexes from {@code slice-6/001-person-directory.sql}.
  */
 @Repository
-public class JdbcPersonDirectory implements PersonDirectory {
+public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory {
 
     private static final int MAX_EDIT_DISTANCE = 2;
 
@@ -111,6 +113,41 @@ public class JdbcPersonDirectory implements PersonDirectory {
                 .param(sabhaId)
                 .query((rs, n) -> rs.getObject("kshetra_id", UUID.class))
                 .optional();
+    }
+
+    @Override
+    public List<HomeSabhaRef> homeSabhasOf(UUID personId) {
+        return jdbc.sql("""
+                SELECT hs.sabha_id, s.sabha_kind
+                FROM home_sabhas hs
+                JOIN sabhas s ON s.id = hs.sabha_id
+                WHERE hs.person_id = ?
+                """)
+                .param(personId)
+                .query((rs, n) -> new HomeSabhaRef(
+                        rs.getObject("sabha_id", UUID.class),
+                        rs.getString("sabha_kind")))
+                .list();
+    }
+
+    @Override
+    public Optional<String> kindOf(UUID sabhaId) {
+        return jdbc.sql("SELECT sabha_kind FROM sabhas WHERE id = ?")
+                .param(sabhaId)
+                .query((rs, n) -> rs.getString("sabha_kind"))
+                .optional();
+    }
+
+    @Override
+    public void replaceHomeSabha(UUID personId, UUID previousSabhaId, UUID destinationSabhaId) {
+        jdbc.sql("DELETE FROM home_sabhas WHERE person_id = ? AND sabha_id = ?")
+                .param(personId)
+                .param(previousSabhaId)
+                .update();
+        jdbc.sql("INSERT INTO home_sabhas (person_id, sabha_id) VALUES (?, ?)")
+                .param(personId)
+                .param(destinationSabhaId)
+                .update();
     }
 
     @Override
