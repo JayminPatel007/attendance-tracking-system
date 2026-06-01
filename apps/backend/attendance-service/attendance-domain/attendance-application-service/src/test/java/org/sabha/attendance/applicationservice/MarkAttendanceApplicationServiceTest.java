@@ -10,7 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
 import org.sabha.attendance.domain.AttendanceMarked;
+import org.sabha.attendance.domain.AttendanceMarking;
+import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.CallerResolver;
@@ -51,6 +54,30 @@ class MarkAttendanceApplicationServiceTest {
         assertThat(saved.markings().iterator().next().personId()).isEqualTo(PERSON_ID);
         assertThat(saved.markings().iterator().next().present()).isTrue();
         assertThat(publisher.published).singleElement().isInstanceOf(AttendanceMarked.class);
+    }
+
+    @Test
+    void executingAWalkInItemRecordsAPresentWalkInMarkingAndPublishesIt() {
+        InMemoryOccurrenceRepository occurrences = new InMemoryOccurrenceRepository();
+        occurrences.put(new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING));
+        CapturingPublisher publisher = new CapturingPublisher();
+        MarkAttendanceApplicationService service = new MarkAttendanceApplicationService(
+                staticCallerResolver(),
+                occurrences,
+                publisher);
+
+        service.executeBatch(SUBJECT, OCCURRENCE_ID,
+                List.of(MarkItem.walkIn(PERSON_ID, CLIENT_MARKED_AT)));
+
+        Occurrence saved = occurrences.savedOccurrences().get(0);
+        AttendanceMarking marking = saved.markings().iterator().next();
+        assertThat(marking.personId()).isEqualTo(PERSON_ID);
+        assertThat(marking.present()).isTrue();
+        assertThat(marking.markingType()).isEqualTo(MarkingType.WALK_IN);
+        assertThat(publisher.published).singleElement().isInstanceOf(AttendanceMarked.class);
+        assertThat(((AttendanceMarked) publisher.published.get(0)).markingType())
+                .isEqualTo(MarkingType.WALK_IN);
     }
 
     @Test

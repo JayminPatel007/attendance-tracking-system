@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
@@ -33,14 +34,16 @@ public class MarkAttendanceApplicationService {
     public void execute(UUID keycloakSubject, UUID occurrenceId, UUID personId, boolean present,
                         Instant clientMarkedAt) {
         executeBatch(keycloakSubject, occurrenceId,
-                List.of(new MarkItem(personId, present, clientMarkedAt)));
+                List.of(MarkItem.roster(personId, present, clientMarkedAt)));
     }
 
     /**
      * Applies several markings against a single Occurrence inside one
      * load-mutate-save cycle (plus retry on optimistic-lock conflict). Used by
      * {@link SyncAttendanceApplicationService} so a batch of N items against one
-     * Occurrence is N marks but only one DB load + one save.
+     * Occurrence is N marks but only one DB load + one save. Each item carries its
+     * own {@link MarkingType}, so a Walk-in is just an item with
+     * {@code markingType = WALK_IN} and rides the same load/retry/save/publish path.
      */
     @Transactional
     public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
@@ -53,7 +56,7 @@ public class MarkAttendanceApplicationService {
                     .orElseThrow(() -> new OccurrenceNotFoundException(occurrenceId));
 
             for (MarkItem item : items) {
-                occurrence.mark(item.personId(), item.present(), markedBy, item.clientMarkedAt());
+                apply(occurrence, item, markedBy);
             }
 
             try {
@@ -69,6 +72,26 @@ public class MarkAttendanceApplicationService {
         throw new org.sabha.common.ConcurrentModificationException(occurrenceId, lastConflict);
     }
 
-    public record MarkItem(UUID personId, boolean present, Instant clientMarkedAt) {
+    private static void apply(Occurrence occurrence, MarkItem item, UUID markedBy) {
+        switch (item.markingType()) {
+            case ROSTER -> occurrence.mark(item.personId(), item.present(), markedBy, item.clientMarkedAt());
+            case WALK_IN -> occurrence.markWalkIn(item.personId(), markedBy, item.clientMarkedAt());
+        }
+    }
+
+    /**
+     * One marking to apply to an Occurrence. {@link #roster} is the Roster-presence
+     * case (present may be true or false); {@link #walkIn} is a Person attending a
+     * Sabha that is not one of their Home Sabhas — always present.
+     */
+    public record MarkItem(UUID personId, boolean present, Instant clientMarkedAt, MarkingType markingType) {
+
+        public static MarkItem roster(UUID personId, boolean present, Instant clientMarkedAt) {
+            return new MarkItem(personId, present, clientMarkedAt, MarkingType.ROSTER);
+        }
+
+        public static MarkItem walkIn(UUID personId, Instant clientMarkedAt) {
+            return new MarkItem(personId, true, clientMarkedAt, MarkingType.WALK_IN);
+        }
     }
 }
