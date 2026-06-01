@@ -10,21 +10,21 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.sabha.identity.applicationservice.KeycloakAdminClient;
+import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.ws.rs.core.Response;
 
 /**
- * {@link KeycloakAdminClient} adapter over Keycloak's Admin REST API (ADR-0016).
+ * {@link IdentityProviderGateway} adapter over Keycloak's Admin REST API (ADR-0016).
  * Authenticates to the {@code master} realm with the configured admin
  * credentials (the same {@code sabha.keycloak.*} settings used elsewhere) and
  * creates Users in the {@code sabha} realm with the {@code UPDATE_PASSWORD}
  * required-action so the first login forces a password change.
  */
 @Component
-public class KeycloakAdminRestClient implements KeycloakAdminClient {
+public class KeycloakAdminRestClient implements IdentityProviderGateway {
 
     private final String adminBaseUrl;
     private final String realm;

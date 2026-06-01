@@ -68,7 +68,7 @@ class MkBootstrapServiceTest {
     }
 
     private static final class Fixture {
-        final FakeKeycloakAdminClient keycloak = new FakeKeycloakAdminClient();
+        final FakeIdentityProviderGateway keycloak = new FakeIdentityProviderGateway();
         final FakePersonRepository persons = new FakePersonRepository();
         final FakeUserRepository users = new FakeUserRepository();
         final FakeMembership membership = new FakeMembership();
@@ -78,7 +78,7 @@ class MkBootstrapServiceTest {
         }
     }
 
-    private static final class FakeKeycloakAdminClient implements KeycloakAdminClient {
+    private static final class FakeIdentityProviderGateway implements IdentityProviderGateway {
         String createdUsername;
         String createdPassword;
 

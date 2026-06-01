@@ -19,17 +19,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MkBootstrapService {
 
-    private final KeycloakAdminClient keycloak;
+    private final IdentityProviderGateway identityProvider;
     private final PersonRepository persons;
     private final UserRepository users;
     private final MadhyasthaKaryalayaMembership membership;
 
     public MkBootstrapService(
-            KeycloakAdminClient keycloak,
+            IdentityProviderGateway identityProvider,
             PersonRepository persons,
             UserRepository users,
             MadhyasthaKaryalayaMembership membership) {
-        this.keycloak = keycloak;
+        this.identityProvider = identityProvider;
         this.persons = persons;
         this.users = users;
         this.membership = membership;
@@ -42,7 +42,7 @@ public class MkBootstrapService {
         }
 
         UUID keycloakUserId =
-                keycloak.createUserRequiringPasswordChange(command.username(), command.rawPassword());
+                identityProvider.createUserRequiringPasswordChange(command.username(), command.rawPassword());
 
         Person person = Person.create(
                 UUID.randomUUID(),

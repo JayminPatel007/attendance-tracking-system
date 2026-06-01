@@ -40,7 +40,7 @@ Slice 2 only needs enough OIDC for one mobile client to authenticate. We commit 
                  │   Spring Boot      │      identity-infrastructure:
                  │  (resource server) │      - Spring Security oauth2-resource-server
                  │                    │      - JWT decoder against Keycloak JWKS
-                 └─────────┬──────────┘      - KeycloakAdminClient port (used at role-assignment
+                 └─────────┬──────────┘      - IdentityProviderGateway port (used at role-assignment
                            │                   to create users + set required-actions)
                            ▼
                  ┌────────────────────┐
