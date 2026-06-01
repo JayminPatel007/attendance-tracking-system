@@ -1,5 +1,7 @@
 package org.sabha.identity.dataaccess;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +64,7 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
         return jdbc.sql("""
                 SELECT p.id,
                        p.full_name,
-                       MIN(s.sabha_kind) AS home_sabha_name,
+                       array_agg(s.sabha_kind ORDER BY s.sabha_kind) AS home_sabhas,
                        MIN(levenshtein(lower(p.full_name), lower(?))) AS dist
                 FROM persons p
                 JOIN home_sabhas hs ON hs.person_id = p.id
@@ -83,7 +85,7 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
                 .query((rs, n) -> new NameCandidate(
                         rs.getObject("id", UUID.class),
                         rs.getString("full_name"),
-                        rs.getString("home_sabha_name")))
+                        homeSabhaKinds(rs)))
                 .list();
     }
 
@@ -92,7 +94,7 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
         return jdbc.sql("""
                 SELECT p.id,
                        p.full_name,
-                       MIN(s.sabha_kind) AS home_sabha
+                       array_agg(s.sabha_kind ORDER BY s.sabha_kind) AS home_sabhas
                 FROM persons p
                 JOIN home_sabhas hs ON hs.person_id = p.id
                 JOIN sabhas s ON s.id = hs.sabha_id
@@ -103,7 +105,7 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
                 .query((rs, n) -> new WalkInCandidate(
                         rs.getObject("id", UUID.class),
                         rs.getString("full_name"),
-                        rs.getString("home_sabha")))
+                        homeSabhaKinds(rs)))
                 .optional();
     }
 
@@ -178,5 +180,14 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
                 rs.getObject("date_of_birth", LocalDate.class),
                 rs.getString("mobile"),
                 rs.getObject("guardian_person_id", UUID.class));
+    }
+
+    /** Reads a Postgres {@code text[]} of {@code sabha_kind}s into an immutable list. */
+    private static List<String> homeSabhaKinds(ResultSet rs) throws SQLException {
+        java.sql.Array array = rs.getArray("home_sabhas");
+        if (array == null) {
+            return List.of();
+        }
+        return List.of((String[]) array.getArray());
     }
 }

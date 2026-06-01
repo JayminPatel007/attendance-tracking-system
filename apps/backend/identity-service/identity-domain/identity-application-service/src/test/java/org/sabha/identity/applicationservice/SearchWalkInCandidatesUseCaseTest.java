@@ -18,10 +18,14 @@ class SearchWalkInCandidatesUseCaseTest {
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
 
     @Test
-    void aNameQueryReturnsKshetraScopedCandidatesWithTheirHomeSabha() {
+    void aNameQueryReturnsKshetraScopedCandidatesWithAllTheirHomeSabhas() {
         InMemoryDirectory directory = new InMemoryDirectory();
         directory.mapSabhaToKshetra(SABHA, KSHETRA);
-        NameCandidate match = new NameCandidate(UUID.randomUUID(), "Ramesh Shah", "REGULAR_BAAL");
+        // A typical Person has more than one Home Sabha (their demographic kind +
+        // the universal Sanyukta), so the candidate must carry all of them rather
+        // than collapsing to one (CONTEXT.md).
+        NameCandidate match = new NameCandidate(
+                UUID.randomUUID(), "Ramesh Shah", List.of("REGULAR_BAAL", "REGULAR_SANYUKTA"));
         directory.seedNameCandidates(KSHETRA, List.of(match));
         SearchWalkInCandidatesUseCase useCase = new SearchWalkInCandidatesUseCase(directory);
 
@@ -30,15 +34,16 @@ class SearchWalkInCandidatesUseCaseTest {
         assertThat(results).singleElement().satisfies(c -> {
             assertThat(c.personId()).isEqualTo(match.personId());
             assertThat(c.fullName()).isEqualTo("Ramesh Shah");
-            assertThat(c.homeSabha()).isEqualTo("REGULAR_BAAL");
+            assertThat(c.homeSabhas()).containsExactly("REGULAR_BAAL", "REGULAR_SANYUKTA");
         });
     }
 
     @Test
-    void aMobileQueryReturnsTheExactPersonWithTheirHomeSabha() {
+    void aMobileQueryReturnsTheExactPersonWithAllTheirHomeSabhas() {
         InMemoryDirectory directory = new InMemoryDirectory();
         directory.mapSabhaToKshetra(SABHA, KSHETRA);
-        WalkInCandidate byMobile = new WalkInCandidate(UUID.randomUUID(), "Ramesh Shah", "REGULAR_BAAL");
+        WalkInCandidate byMobile = new WalkInCandidate(
+                UUID.randomUUID(), "Ramesh Shah", List.of("REGULAR_BAAL", "REGULAR_SANYUKTA"));
         directory.seedMobileMatch("+910000000110", byMobile);
         SearchWalkInCandidatesUseCase useCase = new SearchWalkInCandidatesUseCase(directory);
 

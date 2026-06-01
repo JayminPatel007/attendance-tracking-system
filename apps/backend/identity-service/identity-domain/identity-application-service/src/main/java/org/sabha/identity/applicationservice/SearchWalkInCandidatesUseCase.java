@@ -42,7 +42,7 @@ public class SearchWalkInCandidatesUseCase {
             return directory.findByMobileForWalkIn(query).map(List::of).orElseGet(List::of);
         }
         return directory.findNameCandidates(kshetraId, query, MAX_RESULTS).stream()
-                .map(c -> new WalkInCandidate(c.personId(), c.fullName(), c.homeSabhaName()))
+                .map(c -> new WalkInCandidate(c.personId(), c.fullName(), c.homeSabhas()))
                 .toList();
     }
 }
