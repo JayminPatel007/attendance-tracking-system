@@ -29,5 +29,15 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # Warm the heavy Testcontainers images before the test phase. Runners are
+      # ephemeral (no image cache between runs), so otherwise the first Keycloak
+      # test pulls the ~700MB image cold inside Testcontainers' 2-minute startup
+      # budget and intermittently times out (ContainerFetchException). Pulling
+      # here moves the download out of that timed window.
+      - name: Pre-pull Testcontainers images
+        run: |
+          docker pull quay.io/keycloak/keycloak:26.2
+          docker pull postgres:16-alpine
+
       - name: Build + test
         run: mvn -B -ntp verify
