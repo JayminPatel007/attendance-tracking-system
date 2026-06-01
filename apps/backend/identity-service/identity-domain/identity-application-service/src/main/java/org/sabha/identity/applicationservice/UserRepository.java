@@ -7,4 +7,6 @@ import org.sabha.identity.domain.User;
 
 public interface UserRepository {
     Optional<User> findByKeycloakUserId(UUID keycloakUserId);
+
+    void save(User user);
 }

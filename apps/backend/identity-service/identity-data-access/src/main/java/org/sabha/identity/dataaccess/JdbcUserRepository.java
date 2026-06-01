@@ -32,4 +32,17 @@ public class JdbcUserRepository implements UserRepository {
                         rs.getObject("keycloak_user_id", UUID.class)))
                 .optional();
     }
+
+    @Override
+    public void save(User user) {
+        jdbc.sql("""
+                INSERT INTO users (id, person_id, username, keycloak_user_id)
+                VALUES (?, ?, ?, ?)
+                """)
+                .param(user.id())
+                .param(user.personId())
+                .param(user.username())
+                .param(user.keycloakUserId())
+                .update();
+    }
 }

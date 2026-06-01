@@ -55,20 +55,19 @@
     {
       "clientId": "sabha-web",
       "name": "Sabha Attendance Web",
-      "description": "Public OIDC client for the Angular web app. Authorization Code + PKCE. Defined now for forward-compat with Slice 9.",
+      "description": "Confidential OIDC client for the Angular web app's Backend-for-Frontend (ADR-0022). Authorization Code; tokens are held server-side in the backend's HttpSession, never in the browser. The redirect URI is the backend's BFF callback, not an Angular route.",
       "enabled": true,
-      "publicClient": true,
+      "publicClient": false,
+      "secret": "dev-web-secret",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "http://localhost:4200/*",
-        "http://localhost:4200/callback"
+        "http://localhost:8080/login/oauth2/code/keycloak"
       ],
-      "webOrigins": ["http://localhost:4200"],
+      "webOrigins": ["http://localhost:8080"],
       "attributes": {
-        "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:4200"
       },
       "fullScopeAllowed": false,

@@ -12,6 +12,28 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:58080/realms/sabha}
+      # Web BFF client (ADR-0022): the Angular app authenticates via this
+      # server-side Authorization-Code client; tokens stay in the HttpSession.
+      # Provider endpoints are spelled out (not issuer-uri) so the context starts
+      # without an OIDC discovery fetch — important for tests that don't run
+      # Keycloak. They derive from sabha.keycloak.issuer-uri, which Keycloak-backed
+      # tests already override to their container.
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: ${SABHA_WEB_CLIENT_ID:sabha-web}
+            client-secret: ${SABHA_WEB_CLIENT_SECRET:dev-web-secret}
+            authorization-grant-type: authorization_code
+            scope: openid,profile,email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            authorization-uri: ${sabha.keycloak.issuer-uri}/protocol/openid-connect/auth
+            token-uri: ${sabha.keycloak.issuer-uri}/protocol/openid-connect/token
+            jwk-set-uri: ${sabha.keycloak.issuer-uri}/protocol/openid-connect/certs
+            user-info-uri: ${sabha.keycloak.issuer-uri}/protocol/openid-connect/userinfo
+            user-name-attribute: sub
 
 sabha:
   keycloak:

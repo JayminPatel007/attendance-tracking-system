@@ -51,6 +51,16 @@ services:
       SABHA_KEYCLOAK_REALM: sabha
       SABHA_KEYCLOAK_ADMIN_USERNAME: admin
       SABHA_KEYCLOAK_ADMIN_PASSWORD: admin
+      # Web BFF confidential client secret (ADR-0022); must match sabha-web in realm-sabha.json.
+      SABHA_WEB_CLIENT_SECRET: ${SABHA_WEB_CLIENT_SECRET:-dev-web-secret}
+      # Install-time Madhyastha Karyalaya bootstrap (ADR-0011). One-off + idempotent:
+      # seeds the first MK member into Keycloak (forced first-login password change)
+      # and locally. Leave the username/password unset to skip the seed.
+      SABHA_BOOTSTRAP_MK_USERNAME: ${SABHA_BOOTSTRAP_MK_USERNAME:-mk-admin}
+      SABHA_BOOTSTRAP_MK_PASSWORD: ${SABHA_BOOTSTRAP_MK_PASSWORD:-changeme123!}
+      SABHA_BOOTSTRAP_MK_FULL_NAME: ${SABHA_BOOTSTRAP_MK_FULL_NAME:-Madhyastha Karyalaya Member}
+      SABHA_BOOTSTRAP_MK_GENDER: ${SABHA_BOOTSTRAP_MK_GENDER:-MALE}
+      SABHA_BOOTSTRAP_MK_MOBILE: ${SABHA_BOOTSTRAP_MK_MOBILE:-+910000000900}
     depends_on:
       postgres:
         condition: service_healthy
