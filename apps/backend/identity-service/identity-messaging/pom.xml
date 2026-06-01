@@ -26,6 +26,14 @@
             <groupId>org.sabha</groupId>
             <artifactId>identity-application-service</artifactId>
         </dependency>
+
+        <!-- Outbound integration: provisions Users in Keycloak's Admin REST API
+             (ADR-0016). This adapter ring may pull the client lib it needs. -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>26.0.4</version>
+        </dependency>
     </dependencies>
 
     <build>
