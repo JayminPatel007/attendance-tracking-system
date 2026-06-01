@@ -56,7 +56,7 @@ public class SyncAttendanceApplicationService {
         Map<UUID, List<MarkItem>> grouped = new LinkedHashMap<>();
         for (SyncRequestItem item : items) {
             grouped.computeIfAbsent(item.occurrenceId(), k -> new java.util.ArrayList<>())
-                    .add(new MarkItem(item.personId(), item.present(), item.clientMarkedAt()));
+                    .add(MarkItem.roster(item.personId(), item.present(), item.clientMarkedAt()));
         }
         return grouped;
     }
