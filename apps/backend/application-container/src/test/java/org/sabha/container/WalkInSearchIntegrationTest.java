@@ -3,10 +3,12 @@ package org.sabha.container;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.sabha.identity.applicationservice.SearchWalkInCandidatesUseCase;
 import org.sabha.identity.applicationservice.WalkInCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -32,9 +34,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WalkInSearchIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql and slice-6/001-person-directory.sql.
+    private static final UUID KSHETRA_TRACER = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID SABHA_TRACER = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID BAAL_SABHA = UUID.fromString("00000000-0000-0000-0000-000000000111");
     private static final UUID SEEDED_RAMESH = UUID.fromString("00000000-0000-0000-0000-000000000110");
     private static final String RAMESH_MOBILE = "+910000000110";
+
+    // Inserted per-test (and cleaned up) to exercise a Person with more than one
+    // Home Sabha — the case MIN(sabha_kind) used to collapse.
+    private static final UUID MULTI_HOME_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000002a1");
+    private static final UUID SANYUKTA_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000002a2");
+    private static final String MULTI_HOME_MOBILE = "+910000000201";
 
     @Container
     @ServiceConnection
@@ -42,6 +52,16 @@ class WalkInSearchIntegrationTest {
 
     @Autowired
     SearchWalkInCandidatesUseCase searchWalkIn;
+
+    @Autowired
+    JdbcClient jdbc;
+
+    @AfterEach
+    void cleanUp() {
+        jdbc.sql("DELETE FROM home_sabhas WHERE person_id = ?").param(MULTI_HOME_PERSON).update();
+        jdbc.sql("DELETE FROM persons WHERE id = ?").param(MULTI_HOME_PERSON).update();
+        jdbc.sql("DELETE FROM sabhas WHERE id = ?").param(SANYUKTA_SABHA).update();
+    }
 
     @Test
     void aFuzzyNameSearchFindsACrossDemographicVisitorWithTheirHomeSabha() {
@@ -51,8 +71,7 @@ class WalkInSearchIntegrationTest {
         assertThat(results)
                 .filteredOn(c -> c.personId().equals(SEEDED_RAMESH))
                 .singleElement()
-                .extracting(WalkInCandidate::homeSabha)
-                .isEqualTo("REGULAR_BAAL");
+                .satisfies(c -> assertThat(c.homeSabhas()).containsExactly("REGULAR_BAAL"));
     }
 
     @Test
@@ -62,8 +81,33 @@ class WalkInSearchIntegrationTest {
         assertThat(results).singleElement().satisfies(c -> {
             assertThat(c.personId()).isEqualTo(SEEDED_RAMESH);
             assertThat(c.fullName()).isEqualTo("Ramesh Shah");
-            assertThat(c.homeSabha()).isEqualTo("REGULAR_BAAL");
+            assertThat(c.homeSabhas()).containsExactly("REGULAR_BAAL");
         });
+    }
+
+    @Test
+    void aSearchReturnsAllOfAMultiHomeSabhaPersonsKinds() {
+        // A Person with both a demographic (Baal) and the universal Sanyukta Home
+        // Sabha. MIN(sabha_kind) would surface only "REGULAR_BAAL"; the candidate
+        // must carry both (CONTEXT.md: one Home Sabha per kind).
+        jdbc.sql("""
+                INSERT INTO sabhas (id, kshetra_id, sabha_kind, schedule_shape,
+                                    day_of_week, start_time, end_time, standing_venue)
+                VALUES (?, ?, 'REGULAR_SANYUKTA', 'WEEKLY_RECURRING', 0,
+                        '09:00:00', '10:00:00', 'Sanyukta Hall, Kshetra Tracer')
+                """)
+                .param(SANYUKTA_SABHA).param(KSHETRA_TRACER).update();
+        jdbc.sql("INSERT INTO persons (id, full_name, gender, mobile) VALUES (?, 'Multi Home Tester', 'MALE', ?)")
+                .param(MULTI_HOME_PERSON).param(MULTI_HOME_MOBILE).update();
+        jdbc.sql("INSERT INTO home_sabhas (person_id, sabha_id) VALUES (?, ?)")
+                .param(MULTI_HOME_PERSON).param(BAAL_SABHA).update();
+        jdbc.sql("INSERT INTO home_sabhas (person_id, sabha_id) VALUES (?, ?)")
+                .param(MULTI_HOME_PERSON).param(SANYUKTA_SABHA).update();
+
+        List<WalkInCandidate> results = searchWalkIn.search(SABHA_TRACER, MULTI_HOME_MOBILE);
+
+        assertThat(results).singleElement().satisfies(c ->
+                assertThat(c.homeSabhas()).containsExactly("REGULAR_BAAL", "REGULAR_SANYUKTA"));
     }
 
     @TestConfiguration(proxyBeanMethods = false)

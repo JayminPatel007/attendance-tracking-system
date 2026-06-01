@@ -58,7 +58,7 @@ class AddPersonApplicationServiceTest {
     @Test
     void softWarnsOnCloseNameInSameKshetra() {
         InMemoryDirectory directory = directoryAt(KSHETRA);
-        NameCandidate candidate = new NameCandidate(UUID.randomUUID(), "Ravi Patel", "Yuvak Sabha");
+        NameCandidate candidate = new NameCandidate(UUID.randomUUID(), "Ravi Patel", List.of("REGULAR_YUVAK", "REGULAR_SANYUKTA"));
         directory.seedCandidates(KSHETRA, List.of(candidate));
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
@@ -73,7 +73,7 @@ class AddPersonApplicationServiceTest {
     void doesNotWarnWhenCloseNameIsInADifferentKshetra() {
         InMemoryDirectory directory = directoryAt(KSHETRA);
         directory.seedCandidates(OTHER_KSHETRA,
-                List.of(new NameCandidate(UUID.randomUUID(), "Ravi Patel", "Yuvak Sabha")));
+                List.of(new NameCandidate(UUID.randomUUID(), "Ravi Patel", List.of("REGULAR_YUVAK", "REGULAR_SANYUKTA"))));
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
         AddResult result = service.add(KEYCLOAK_SUBJECT, addCommand("Ravee Patel", "+919820112000"));
@@ -84,7 +84,7 @@ class AddPersonApplicationServiceTest {
     @Test
     void overridePastCandidatesCreatesAndEmitsAuditEvent() {
         InMemoryDirectory directory = directoryAt(KSHETRA);
-        NameCandidate candidate = new NameCandidate(UUID.randomUUID(), "Ravi Patel", "Yuvak Sabha");
+        NameCandidate candidate = new NameCandidate(UUID.randomUUID(), "Ravi Patel", List.of("REGULAR_YUVAK", "REGULAR_SANYUKTA"));
         directory.seedCandidates(KSHETRA, List.of(candidate));
         RecordingPublisher publisher = new RecordingPublisher();
         AddPersonApplicationService service = service(directory, publisher);
