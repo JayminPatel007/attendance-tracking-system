@@ -24,6 +24,7 @@ import org.sabha.identity.domain.HomeSabhaRef;
 import org.sabha.identity.domain.HomeSabhaTransfer;
 import org.sabha.identity.domain.HomeSabhaSwapped;
 import org.sabha.identity.domain.HomeSabhaTransferInitiated;
+import org.sabha.identity.domain.NoMatchingHomeSabhaException;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
 import org.sabha.identity.domain.PersonHasNoMobileException;
@@ -141,6 +142,26 @@ class HomeSabhaTransferServiceTest {
                 .containsExactly(OLD_YUVAK_SABHA);
         assertThat(f.transfers.findById(transferId).orElseThrow().status())
                 .isEqualTo(TransferStatus.EXPIRED);
+    }
+
+    @Test
+    void confirmWithNoHomeSabhaOfTheDestinationKindIsRejectedAndDoesNotSwap() {
+        Fixture f = new Fixture();
+        f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
+        f.directory.seedSabhaKind(DESTINATION_SABHA, YUVAK_KIND);
+        // The Person holds only a SANYUKTA Home Sabha — nothing of the
+        // destination's REGULAR_YUVAK kind to swap. The OTP is valid, so the
+        // rejection comes from the swap phase, after the OTP is consumed.
+        f.directory.seedHomeSabhas(PERSON, List.of(new HomeSabhaRef(SANYUKTA_SABHA, SANYUKTA_KIND)));
+        HomeSabhaTransferService service = f.service();
+        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+
+        assertThatThrownBy(() -> service.confirm(transferId, FIXED_OTP))
+                .isInstanceOf(NoMatchingHomeSabhaException.class);
+
+        // A swap-phase failure must not leave a half-applied swap behind.
+        assertThat(f.directory.homeSabhasOf(PERSON).stream().map(HomeSabhaRef::sabhaId).toList())
+                .containsExactly(SANYUKTA_SABHA);
     }
 
     @Test

@@ -9,13 +9,15 @@ import java.util.Set;
 
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
-import org.sabha.common.DomainException;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.identity.domain.HomeSabhaSwap;
 import org.sabha.identity.domain.HomeSabhaTransfer;
+import org.sabha.identity.domain.OtpAttemptsExhaustedException;
+import org.sabha.identity.domain.OtpExpiredException;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonHasNoMobileException;
+import org.sabha.identity.domain.WrongOtpException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,16 +110,22 @@ public class HomeSabhaTransferService {
 
     /**
      * A failed OTP must still persist its consequence (incremented attempt count,
-     * EXPIRED/LOCKED status) so the budget accumulates across calls — hence
-     * {@code noRollbackFor} on the OTP-consume {@link DomainException}s.
+     * EXPIRED/LOCKED status) so the budget accumulates across calls — hence the
+     * OTP-consume exceptions are exempted from rollback. The list is kept narrow
+     * on purpose: a swap-phase failure (e.g. {@link org.sabha.identity.domain.NoMatchingHomeSabhaException},
+     * also a {@code DomainException}) must roll back normally so it can never
+     * leave a half-applied swap behind.
      */
-    @Transactional(noRollbackFor = DomainException.class)
+    @Transactional(noRollbackFor = {
+            WrongOtpException.class,
+            OtpExpiredException.class,
+            OtpAttemptsExhaustedException.class })
     public void confirm(UUID transferId, String otpCode) {
         HomeSabhaTransfer transfer = transfers.findById(transferId).orElseThrow();
 
         try {
             transfer.confirm(otpCode, clock.instant());
-        } catch (DomainException rejected) {
+        } catch (WrongOtpException | OtpExpiredException | OtpAttemptsExhaustedException rejected) {
             transfers.save(transfer);
             throw rejected;
         }
