@@ -17,8 +17,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 
+import jakarta.servlet.http.Cookie;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,5 +104,34 @@ class WebBffIntegrationTest {
                 .andExpect(jsonPath("$.madhyasthaKaryalaya").value(false))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("DASHBOARD")))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("STRUCTURAL_ADMIN"))));
+    }
+
+    @Test
+    void bffMeIssuesAnXsrfCookieTheSpaCanEcho() throws Exception {
+        Cookie xsrf = mockMvc.perform(get("/bff/me").with(oidcLogin().idToken(t -> t.subject(SANCHALAK_SUBJECT))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getCookie("XSRF-TOKEN");
+
+        assertThat(xsrf).isNotNull();
+        assertThat(xsrf.getValue()).isNotBlank();
+    }
+
+    @Test
+    void logoutSucceedsWhenTheSpaEchoesTheXsrfToken() throws Exception {
+        Cookie xsrf = mockMvc.perform(get("/bff/me").with(oidcLogin().idToken(t -> t.subject(SANCHALAK_SUBJECT))))
+                .andReturn().getResponse().getCookie("XSRF-TOKEN");
+
+        mockMvc.perform(post("/bff/logout")
+                        .with(oidcLogin().idToken(t -> t.subject(SANCHALAK_SUBJECT)))
+                        .cookie(xsrf)
+                        .header("X-XSRF-TOKEN", xsrf.getValue()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void logoutIsRejectedWithoutTheXsrfToken() throws Exception {
+        mockMvc.perform(post("/bff/logout")
+                        .with(oidcLogin().idToken(t -> t.subject(SANCHALAK_SUBJECT))))
+                .andExpect(status().isForbidden());
     }
 }

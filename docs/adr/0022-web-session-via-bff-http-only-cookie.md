@@ -44,6 +44,27 @@ The web's "who am I + what can I see" comes from a small BFF endpoint (`GET /bff
 
 `sabha-web` changes from a **public** client to a **confidential** client (`publicClient: false`, a generated secret, `standardFlowEnabled: true`). Its redirect URI becomes the BFF callback (`{backend-origin}/login/oauth2/code/keycloak`) rather than an Angular route, and `post.logout.redirect.uris` points back at the SPA origin. The secret is supplied to the backend via configuration (`spring.security.oauth2.client.registration.keycloak.client-secret`); for the dev compose stack it lives in `.env.example`, consistent with ADR-0016's handling of the admin password. `sabha-mobile` and `sabha-test` are untouched.
 
+## SPA wiring (Slice 9)
+
+- **CSRF for a JS SPA.** The web chain uses the Spring Security single-page-app
+  pattern: a `SpaCsrfTokenRequestHandler` (renders the token XOR-masked for
+  BREACH protection, but resolves the `X-XSRF-TOKEN` header as the *raw* cookie
+  value Angular echoes) plus a `CsrfCookieFilter` that forces the deferred token
+  to load so the `XSRF-TOKEN` cookie is written even on safe requests. Without
+  the filter the cookie is never sent and the SPA's first mutating call (logout)
+  would 403. Angular's built-in XSRF support (default cookie `XSRF-TOKEN` →
+  header `X-XSRF-TOKEN`) matches this with no custom interceptor.
+- **Logout** is `POST /bff/logout` (CSRF-protected) → `204`; the SPA then reloads
+  at `/`, where the absent session sends the user back into login. This clears
+  the *backend* session only — the Keycloak SSO session is not ended, so if it is
+  still alive the next login round-trips silently without a password prompt.
+  RP-initiated (end-session) logout is a follow-up, tracked with the
+  Keycloak-hostname work (#28).
+- **Voluntary change-password** (account menu) reuses Keycloak's hosted form via
+  the OIDC `kc_action=UPDATE_PASSWORD` parameter on the login redirect, returning
+  to the app afterwards — same hosted UI as the first-login forced change, no
+  in-SPA password screen.
+
 ## Consequences
 
 - **`application-container` gains `spring-boot-starter-oauth2-client`** and a second `SecurityFilterChain` bean. ADR-0019's "SecurityFilterChain lives in application-container" is unchanged — there are now two, both here.
