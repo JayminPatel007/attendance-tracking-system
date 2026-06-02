@@ -1,5 +1,11 @@
-<main>
-  <h1>{{ title }}</h1>
-  <p>Web app placeholder — feature screens land in later slices.</p>
+@if (unlinked()) {
+  <main class="not-linked">
+    <h1>Account not linked</h1>
+    <p>
+      You signed in, but this login isn't linked to a Sabha account yet. Ask your
+      appointing Karyakar to complete your setup.
+    </p>
+  </main>
+} @else {
   <router-outlet />
-</main>
+}

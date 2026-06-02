@@ -1,0 +1,33 @@
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">Sabha</div>
+    <div class="spacer"></div>
+    <div class="account">
+      <button type="button" class="account-trigger" (click)="toggleMenu()">
+        {{ session()?.username }}
+      </button>
+      @if (menuOpen()) {
+        <div class="account-menu">
+          <button type="button" class="menu-item" (click)="changePassword()">
+            Change password
+          </button>
+          <button type="button" class="menu-item" (click)="logout()">Log out</button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <div class="body">
+    <nav class="sidenav">
+      @for (item of navItems(); track item.section) {
+        <a class="nav-item" [routerLink]="item.path" routerLinkActive="active">
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

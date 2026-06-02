@@ -1,7 +1,8 @@
 /**
  * shared-kernel — cross-context value objects and types.
  *
- * Counterpart to backend `shared-kernel`. Placeholder for Slice 1; populated
- * as later slices land cross-context types (Mobile, OccurrenceId, etc.).
+ * Counterpart to backend `shared-kernel`. Holds cross-cutting browser
+ * primitives (e.g. {@link BrowserLocation}) plus value objects landing in later
+ * slices.
  */
-export const __SHARED_KERNEL__ = 'shared-kernel';
+export * from './lib/browser-location';
