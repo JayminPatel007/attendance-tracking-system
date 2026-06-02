@@ -24,15 +24,26 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
+      # Listen on 58080 *inside* the container too, so the URL
+      # http://keycloak:58080 is identical from the browser (via the
+      # `127.0.0.1 keycloak` /etc/hosts entry) and from the other containers.
+      # That single shared URL keeps the OIDC token issuer consistent, which is
+      # what makes browser login through the web panel work (see docs/dev-setup.md).
+      KC_HTTP_PORT: "58080"
     volumes:
       - ./infra/keycloak/realm-sabha.json:/opt/keycloak/data/import/realm-sabha.json:ro
     ports:
-      - "58080:8080"
+      - "58080:58080"
       - "59000:9000"
     healthcheck:
+      # Keycloak's image ships no curl/wget, so we talk to the health port (9000)
+      # over bash's /dev/tcp. `Connection: close` is essential: without it the
+      # HTTP/1.1 socket stays open (keep-alive) and `cat` blocks until docker's
+      # timeout kills the check, leaving the container stuck "waiting" forever
+      # even though Keycloak is fully up.
       test:
         - "CMD-SHELL"
-        - "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"
+        - "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"
       interval: 10s
       timeout: 5s
       retries: 20
@@ -45,9 +56,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sabha
       SPRING_DATASOURCE_USERNAME: sabha
       SPRING_DATASOURCE_PASSWORD: sabha
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/sabha
-      SABHA_KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/sabha
-      SABHA_KEYCLOAK_ADMIN_BASE_URL: http://keycloak:8080
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:58080/realms/sabha
+      SABHA_KEYCLOAK_ISSUER_URI: http://keycloak:58080/realms/sabha
+      SABHA_KEYCLOAK_ADMIN_BASE_URL: http://keycloak:58080
       SABHA_KEYCLOAK_REALM: sabha
       SABHA_KEYCLOAK_ADMIN_USERNAME: admin
       SABHA_KEYCLOAK_ADMIN_PASSWORD: admin
@@ -74,6 +85,26 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # Angular web panel (ADR-0022). Built into static files and served by nginx,
+  # which also proxies the auth/BFF paths to the backend so the browser only ever
+  # talks to one origin (http://localhost:4200) and the session cookie just works.
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "4200:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1, not localhost: inside the container localhost resolves to the
+      # IPv6 ::1 first, but nginx listens on IPv4 only, so localhost is refused.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
