@@ -39,4 +39,13 @@ class VisibleSectionsTest {
 
         assertThat(sections).contains(Section.SANCHALAK_PROXY);
     }
+
+    @Test
+    void aSanyojakSeesTheStructuralAdminSectionForKshetraCreation() {
+        Set<Section> sections = VisibleSections.forMember(false, Set.of(Role.SANYOJAK));
+
+        assertThat(sections).contains(Section.STRUCTURAL_ADMIN);
+        // ...but not the MK-only sections.
+        assertThat(sections).doesNotContain(Section.ROLE_APPOINTMENT, Section.SABHA_DEFINITION);
+    }
 }

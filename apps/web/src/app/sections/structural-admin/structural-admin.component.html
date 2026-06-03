@@ -1,0 +1,139 @@
+<section class="structural">
+  <header class="page-head">
+    <h1>Structural Admin</h1>
+    <p class="sub">
+      Create Cities, Zones, and Sabha Kinds (Madhyastha Karyalaya) or Kshetras (Sanyojak).
+      Authority per ADR-0009 — every creation is attributed to you.
+    </p>
+  </header>
+
+  <nav class="tabs">
+    @for (tab of tabs(); track tab) {
+      <button
+        type="button"
+        class="tab"
+        [class.active]="activeTab() === tab"
+        (click)="selectTab(tab)"
+      >
+        {{ tabLabel[tab] }}
+      </button>
+    }
+  </nav>
+
+  @switch (activeTab()) {
+    @case ('cities') {
+      <div class="panel">
+        <ul class="entity-list">
+          @for (city of cities(); track city.id) {
+            <li>{{ city.name }}</li>
+          } @empty {
+            <li class="empty">No Cities yet.</li>
+          }
+        </ul>
+        <form class="create-card" (ngSubmit)="createCity()">
+          <h3>Add City</h3>
+          <label>
+            City name
+            <input name="cityName" [(ngModel)]="newCityName" placeholder="e.g., Surat" />
+          </label>
+          <button type="submit" [disabled]="!newCityName.trim()">Create City</button>
+        </form>
+      </div>
+    }
+
+    @case ('zones') {
+      <div class="panel">
+        <ul class="entity-list">
+          @for (zone of zones(); track zone.id) {
+            <li>{{ zone.name }} <span class="muted">in {{ zone.cityName }}</span></li>
+          } @empty {
+            <li class="empty">No Zones yet.</li>
+          }
+        </ul>
+        <form class="create-card" (ngSubmit)="createZone()">
+          <h3>Add Zone</h3>
+          <label>
+            Zone name
+            <input name="zoneName" [(ngModel)]="newZoneName" placeholder="e.g., Mumbai South" />
+          </label>
+          <label>
+            Parent City
+            <select name="zoneCity" [(ngModel)]="newZoneCityId">
+              <option value="">— pick City —</option>
+              @for (city of cities(); track city.id) {
+                <option [value]="city.id">{{ city.name }}</option>
+              }
+            </select>
+          </label>
+          <button type="submit" [disabled]="!newZoneName.trim() || !newZoneCityId">Create Zone</button>
+        </form>
+      </div>
+    }
+
+    @case ('sabha-kinds') {
+      <div class="panel">
+        <ul class="entity-list">
+          @for (kind of sabhaKinds(); track kind.id) {
+            <li>{{ kind.demographic }} <span class="muted">({{ kind.track }})</span></li>
+          } @empty {
+            <li class="empty">No Sabha Kinds yet.</li>
+          }
+        </ul>
+        <form class="create-card" (ngSubmit)="createSabhaKind()">
+          <h3>Register Sabha Kind</h3>
+          <label>
+            Demographic
+            <select name="kindDem" [(ngModel)]="newKindDemographic">
+              <option value="">—</option>
+              @for (d of demographics; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Track
+            <select name="kindTrack" [(ngModel)]="newKindTrack">
+              @for (t of tracks; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </label>
+          <p class="hint">Sanyukta is Regular-track only — BSS/YSS Sanyukta is disallowed.</p>
+          <button type="submit" [disabled]="!canRegisterKind()">Register Kind</button>
+        </form>
+      </div>
+    }
+
+    @case ('kshetras') {
+      <div class="panel">
+        @if (myZones().length === 0) {
+          <p class="empty">You are not a Sanyojak of any Zone.</p>
+        } @else {
+          <ul class="entity-list">
+            @for (kshetra of kshetras(); track kshetra.id) {
+              <li>{{ kshetra.name }}</li>
+            } @empty {
+              <li class="empty">No Kshetras in this Zone yet.</li>
+            }
+          </ul>
+          <form class="create-card" (ngSubmit)="createKshetra()">
+            <h3>Add Kshetra</h3>
+            <label>
+              Parent Zone
+              <select name="kshetraZone" [(ngModel)]="selectedZoneId">
+                @for (zone of myZones(); track zone.id) {
+                  <option [value]="zone.id">{{ zone.name }} ({{ zone.cityName }})</option>
+                }
+              </select>
+            </label>
+            <label>
+              Kshetra name
+              <input name="kshetraName" [(ngModel)]="newKshetraName" placeholder="e.g., Goregaon-2" />
+            </label>
+            <button type="submit" [disabled]="!newKshetraName.trim() || !selectedZoneId">Create Kshetra</button>
+          </form>
+        }
+      </div>
+    }
+  }
+</section>

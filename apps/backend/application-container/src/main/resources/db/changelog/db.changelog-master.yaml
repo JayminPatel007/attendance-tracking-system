@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/slice-7/001-walk-in-marking-type.sql
   - include:
       file: db/changelog/slice-8/001-home-sabha-transfers.sql
+  - include:
+      file: db/changelog/slice-10/001-structural-creation.sql
