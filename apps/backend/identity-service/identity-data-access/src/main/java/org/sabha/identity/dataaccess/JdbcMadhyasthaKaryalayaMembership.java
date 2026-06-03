@@ -2,6 +2,7 @@ package org.sabha.identity.dataaccess;
 
 import java.util.UUID;
 
+import org.sabha.common.MadhyasthaKaryalayaLookup;
 import org.sabha.identity.applicationservice.MadhyasthaKaryalayaMembership;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -12,9 +13,16 @@ import org.springframework.stereotype.Repository;
  * null scope (State-level; single-organization per ADR-0005, so there is no
  * per-State column). The {@link org.sabha.common.Role} enum deliberately
  * excludes MK, so this membership lives outside {@code RoleAssignmentLookup}.
+ *
+ * <p>Serves both the identity-internal {@link MadhyasthaKaryalayaMembership}
+ * port (bootstrap + read) and the cross-context read-only
+ * {@link MadhyasthaKaryalayaLookup} (common-domain) that the sabha context's
+ * structural-creation authorization consults — same {@code isMember} query,
+ * one adapter (ADR-0019).</p>
  */
 @Repository
-public class JdbcMadhyasthaKaryalayaMembership implements MadhyasthaKaryalayaMembership {
+public class JdbcMadhyasthaKaryalayaMembership
+        implements MadhyasthaKaryalayaMembership, MadhyasthaKaryalayaLookup {
 
     private static final String MK_ROLE = "MADHYASTHA_KARYALAYA";
 

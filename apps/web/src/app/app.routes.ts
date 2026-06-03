@@ -1,14 +1,21 @@
 import { Routes } from '@angular/router';
 
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
+import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
 import { SECTION_NAV } from './shell/section-nav';
 import { sectionGuard } from './shell/section.guard';
 import { ShellComponent } from './shell/shell.component';
 
-/** One guarded placeholder route per shell section, derived from the nav model. */
+/** Sections with a real screen; the rest fall back to the placeholder (later slices). */
+const SECTION_COMPONENTS = {
+  STRUCTURAL_ADMIN: StructuralAdminComponent,
+} as const;
+
+/** One guarded route per shell section, derived from the nav model. */
 const sectionRoutes: Routes = SECTION_NAV.map((item) => ({
   path: item.path,
-  component: SectionPlaceholderComponent,
+  component:
+    SECTION_COMPONENTS[item.section as keyof typeof SECTION_COMPONENTS] ?? SectionPlaceholderComponent,
   canActivate: [sectionGuard],
   data: { section: item.section, label: item.label },
 }));

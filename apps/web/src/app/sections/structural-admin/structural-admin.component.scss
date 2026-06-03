@@ -1,0 +1,109 @@
+.structural {
+  .page-head h1 {
+    margin: 0 0 4px;
+  }
+
+  .sub {
+    color: #6b7280;
+    margin: 0 0 18px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 18px;
+  }
+
+  .tab {
+    border: none;
+    background: none;
+    padding: 10px 14px;
+    cursor: pointer;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+
+    &.active {
+      color: #111827;
+      border-bottom-color: #2563eb;
+      font-weight: 600;
+    }
+  }
+
+  .panel {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .entity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .empty {
+      color: #9ca3af;
+      border-style: dashed;
+    }
+
+    .muted {
+      color: #9ca3af;
+    }
+  }
+
+  .create-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    h3 {
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    input,
+    select {
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+
+      &:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
