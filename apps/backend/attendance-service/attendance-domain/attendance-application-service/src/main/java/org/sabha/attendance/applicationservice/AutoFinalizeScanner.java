@@ -45,13 +45,18 @@ public class AutoFinalizeScanner {
         Instant now = clock.instant();
         LocalDate today = LocalDate.ofInstant(now, clock.getZone());
         for (OpenOccurrenceRef ref : occurrenceQueries.findOpenOnOrBefore(today)) {
-            Optional<SabhaSchedule> schedule = scheduleLookup.findSchedule(ref.sabhaId());
-            if (schedule.isEmpty()) {
-                continue;
+            // A per-Occurrence end time (a reschedule, or a monthly-ad-hoc
+            // Occurrence's own slot) wins; otherwise fall back to the Sabha's
+            // standing weekly schedule. Monthly Sabhas have no standing schedule,
+            // so an Occurrence with neither is skipped.
+            LocalTime endTime = ref.rescheduledEndTime();
+            if (endTime == null) {
+                Optional<SabhaSchedule> schedule = scheduleLookup.findSchedule(ref.sabhaId());
+                if (schedule.isEmpty()) {
+                    continue;
+                }
+                endTime = schedule.get().endTime();
             }
-            LocalTime endTime = ref.rescheduledEndTime() != null
-                    ? ref.rescheduledEndTime()
-                    : schedule.get().endTime();
             Instant scheduledEndAt = ZonedDateTime.of(
                     ref.date(), endTime, clock.getZone()).toInstant();
             Instant cutoff = scheduledEndAt.plus(gracePeriod);

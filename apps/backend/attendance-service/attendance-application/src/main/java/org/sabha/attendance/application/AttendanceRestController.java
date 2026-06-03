@@ -1,17 +1,20 @@
 package org.sabha.attendance.application;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.attendance.applicationservice.CreateMonthlyOccurrenceApplicationService;
 import org.sabha.attendance.applicationservice.CurrentOccurrence;
 import org.sabha.attendance.applicationservice.CurrentRoster;
 import org.sabha.attendance.applicationservice.GetCurrentOccurrenceUseCase;
 import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
+import org.sabha.attendance.applicationservice.MonthlyComplianceQuery;
 import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
@@ -33,18 +36,27 @@ public class AttendanceRestController {
     private final MarkAttendanceApplicationService markAttendance;
     private final SyncAttendanceApplicationService syncAttendance;
     private final OccurrenceShapingService shapeOccurrence;
+    private final CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence;
+    private final MonthlyComplianceQuery monthlyCompliance;
+    private final Clock clock;
 
     public AttendanceRestController(
             GetCurrentRosterUseCase getCurrentRoster,
             GetCurrentOccurrenceUseCase getCurrentOccurrence,
             MarkAttendanceApplicationService markAttendance,
             SyncAttendanceApplicationService syncAttendance,
-            OccurrenceShapingService shapeOccurrence) {
+            OccurrenceShapingService shapeOccurrence,
+            CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence,
+            MonthlyComplianceQuery monthlyCompliance,
+            Clock clock) {
         this.getCurrentRoster = getCurrentRoster;
         this.getCurrentOccurrence = getCurrentOccurrence;
         this.markAttendance = markAttendance;
         this.syncAttendance = syncAttendance;
         this.shapeOccurrence = shapeOccurrence;
+        this.createMonthlyOccurrence = createMonthlyOccurrence;
+        this.monthlyCompliance = monthlyCompliance;
+        this.clock = clock;
     }
 
     @GetMapping("/api/sanchalak/current-roster")
@@ -136,6 +148,34 @@ public class AttendanceRestController {
         UUID keycloakSubject = UUID.fromString(jwt.getSubject());
         shapeOccurrence.overrideVenue(keycloakSubject, occurrenceId, req.venue());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/sabhas/{sabhaId}/occurrences")
+    public ResponseEntity<CreatedOccurrenceResponse> createMonthlyOccurrence(
+            @PathVariable UUID sabhaId,
+            @RequestBody CreateOccurrenceRequest req,
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        UUID occurrenceId = createMonthlyOccurrence.create(
+                keycloakSubject, sabhaId, req.date(), req.startTime(), req.endTime(), req.venue());
+        return ResponseEntity.status(201).body(new CreatedOccurrenceResponse(occurrenceId));
+    }
+
+    @GetMapping("/api/sabhas/{sabhaId}/monthly-compliance")
+    public ResponseEntity<MonthlyComplianceResponse> monthlyCompliance(
+            @PathVariable UUID sabhaId,
+            @AuthenticationPrincipal Jwt jwt) {
+        boolean needsOccurrence = monthlyCompliance.needsOccurrence(sabhaId, LocalDate.now(clock));
+        return ResponseEntity.ok(new MonthlyComplianceResponse(needsOccurrence));
+    }
+
+    public record CreateOccurrenceRequest(LocalDate date, LocalTime startTime, LocalTime endTime, String venue) {
+    }
+
+    public record CreatedOccurrenceResponse(UUID occurrenceId) {
+    }
+
+    public record MonthlyComplianceResponse(boolean needsOccurrence) {
     }
 
     public record CancelRequest(String reason) {
