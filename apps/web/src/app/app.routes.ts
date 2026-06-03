@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
 import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
 import { SECTION_NAV } from './shell/section-nav';
@@ -8,6 +9,7 @@ import { ShellComponent } from './shell/shell.component';
 
 /** Sections with a real screen; the rest fall back to the placeholder (later slices). */
 const SECTION_COMPONENTS = {
+  ROLE_APPOINTMENT: RoleAppointmentComponent,
   STRUCTURAL_ADMIN: StructuralAdminComponent,
 } as const;
 

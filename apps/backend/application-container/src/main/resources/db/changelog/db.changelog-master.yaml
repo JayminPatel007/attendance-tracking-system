@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/slice-8/001-home-sabha-transfers.sql
   - include:
       file: db/changelog/slice-10/001-structural-creation.sql
+  - include:
+      file: db/changelog/slice-11/001-role-appointment.sql

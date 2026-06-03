@@ -1,0 +1,134 @@
+<section class="appointment">
+  <h2>Role Appointment</h2>
+
+  @if (stage() === 'done') {
+    <div class="done" role="status">
+      <p>Appointment recorded.</p>
+      <button type="button" (click)="reset()">Make another appointment</button>
+    </div>
+  } @else {
+    <!-- 1. Role + scope -->
+    <fieldset class="role">
+      <legend>Role</legend>
+      <label>
+        Appoint as
+        <select [ngModel]="role()" (ngModelChange)="onRoleChange($event)">
+          @for (r of roles; track r) {
+            <option [value]="r">{{ roleLabel[r] }}</option>
+          }
+        </select>
+      </label>
+
+      @switch (scopeKind()) {
+        @case ('SABHA') {
+          <label>Sabha <input [(ngModel)]="sabhaId" placeholder="Sabha id" /></label>
+        }
+        @case ('KSHETRA') {
+          <label>Kshetra <input [(ngModel)]="kshetraId" placeholder="Kshetra id" /></label>
+        }
+        @case ('ZONE') {
+          <label>Zone <input [(ngModel)]="zoneId" placeholder="Zone id" /></label>
+        }
+        @case ('CITY') {
+          <label>City <input [(ngModel)]="cityId" placeholder="City id" /></label>
+        }
+      }
+
+      @if (scopeKind() !== 'SABHA') {
+        <label>
+          Demographic
+          <select [(ngModel)]="demographic">
+            <option value="" disabled>Choose…</option>
+            @for (d of demographics; track d) {
+              <option [value]="d">{{ d }}</option>
+            }
+          </select>
+        </label>
+      }
+    </fieldset>
+
+    <!-- 2. Find the appointee in the Directory -->
+    <fieldset class="search">
+      <legend>Appointee</legend>
+
+      <div class="search-row">
+        <input [(ngModel)]="searchMobile" placeholder="Search by mobile" />
+        <button type="button" (click)="searchByMobile()">Find</button>
+      </div>
+      <div class="search-row">
+        <input [(ngModel)]="searchName" placeholder="Search by name" />
+        <input [(ngModel)]="searchKshetraId" placeholder="within Kshetra id" />
+        <button type="button" (click)="searchByName()">Find</button>
+      </div>
+
+      <ul class="candidates">
+        @if (mobileMatch(); as m) {
+          <li [class.selected]="selectedPersonId() === m.id">
+            <button type="button" (click)="pickExisting(m.id)">
+              {{ m.fullName }} <small>{{ m.mobile }}</small>
+            </button>
+          </li>
+        }
+        @for (c of nameCandidates(); track c.personId) {
+          <li [class.selected]="selectedPersonId() === c.personId">
+            <button type="button" (click)="pickExisting(c.personId)">
+              {{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small>
+            </button>
+          </li>
+        }
+        <li class="create-new">
+          <button type="button" (click)="startCreateNew()">+ Create new Person</button>
+        </li>
+      </ul>
+    </fieldset>
+
+    <!-- 3. Inline new Person -->
+    @if (creatingNew()) {
+      <fieldset class="new-person">
+        <legend>New Person</legend>
+        <label>Full name
+          <input [(ngModel)]="newPerson.fullName" (ngModelChange)="onNewPersonNameChange()" />
+        </label>
+        <label>Gender
+          <select [(ngModel)]="newPerson.gender">
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+          </select>
+        </label>
+        <label>Date of birth <input type="date" [(ngModel)]="newPerson.dateOfBirth" /></label>
+        <label>Mobile <input [(ngModel)]="newPerson.mobile" placeholder="+91…" /></label>
+        <label>Home Sabha <input [(ngModel)]="newPerson.homeSabhaId" placeholder="Sabha id" /></label>
+      </fieldset>
+    }
+
+    <!-- 4. Credentials -->
+    @if (selectedPersonId() || creatingNew()) {
+      <fieldset class="credentials">
+        <legend>Login</legend>
+        <label>Username <input [(ngModel)]="username" /></label>
+        <label>Initial password <input [(ngModel)]="rawPassword" /></label>
+        <p class="hint">The appointee changes this on first login. Skipped if they already have a login.</p>
+      </fieldset>
+    }
+
+    @if (softWarn().length) {
+      <div class="soft-warn" role="alert">
+        <p>Possible duplicates in the Directory:</p>
+        <ul>
+          @for (c of softWarn(); track c.personId) {
+            <li>{{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small></li>
+          }
+        </ul>
+        <button type="button" (click)="overrideSoftWarn()">None of these — create new anyway</button>
+      </div>
+    }
+
+    @if (error(); as e) {
+      <p class="error" role="alert">{{ e }}</p>
+    }
+
+    <button type="button" class="submit" [disabled]="!canSubmit()" (click)="submit()">
+      Appoint
+    </button>
+  }
+</section>
