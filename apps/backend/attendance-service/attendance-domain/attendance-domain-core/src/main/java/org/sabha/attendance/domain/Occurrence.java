@@ -50,6 +50,22 @@ public class Occurrence extends AggregateRoot<UUID> {
         return new Occurrence(id, sabhaId, date, OccurrenceState.SCHEDULED);
     }
 
+    /**
+     * Creates a Scheduled Occurrence carrying its own date, time, and venue
+     * (ADR-0012). Used for a monthly-ad-hoc Sabha's manually-created Occurrence,
+     * which has no standing schedule to fall back to — the picked start/end time
+     * and venue are held in the per-Occurrence override fields the cron scanners
+     * already prefer.
+     */
+    public static Occurrence scheduledAt(UUID id, UUID sabhaId, LocalDate date,
+                                         LocalTime startTime, LocalTime endTime, String venue) {
+        Occurrence occurrence = new Occurrence(id, sabhaId, date, OccurrenceState.SCHEDULED);
+        occurrence.rescheduledStartTime = startTime;
+        occurrence.rescheduledEndTime = endTime;
+        occurrence.venueOverride = venue;
+        return occurrence;
+    }
+
     public void open() {
         if (state != OccurrenceState.SCHEDULED && state != OccurrenceState.RESCHEDULED) {
             throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.OPEN_FOR_MARKING);

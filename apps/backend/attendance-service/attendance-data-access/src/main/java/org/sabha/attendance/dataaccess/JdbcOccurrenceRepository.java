@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sabha.attendance.applicationservice.OccurrenceInsert;
 import org.sabha.attendance.applicationservice.OccurrenceRepository;
 import org.sabha.attendance.domain.AttendanceMarking;
 import org.sabha.attendance.domain.MarkingType;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class JdbcOccurrenceRepository implements OccurrenceRepository {
+public class JdbcOccurrenceRepository implements OccurrenceRepository, OccurrenceInsert {
 
     private final JdbcClient jdbc;
 
@@ -71,6 +72,25 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository {
         occurrence.restoreShaping(r.venueOverride, r.rescheduledDate,
                 r.rescheduledStartTime, r.rescheduledEndTime);
         return Optional.of(occurrence);
+    }
+
+    @Override
+    public void add(Occurrence occurrence) {
+        jdbc.sql("""
+                INSERT INTO occurrences
+                    (id, sabha_id, occurrence_date, state,
+                     venue_override, rescheduled_date, rescheduled_start_time, rescheduled_end_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """)
+                .param(occurrence.id())
+                .param(occurrence.sabhaId())
+                .param(occurrence.date())
+                .param(occurrence.state().name())
+                .param(occurrence.venueOverride())
+                .param(occurrence.rescheduledDate())
+                .param(occurrence.rescheduledStartTime())
+                .param(occurrence.rescheduledEndTime())
+                .update();
     }
 
     @Override

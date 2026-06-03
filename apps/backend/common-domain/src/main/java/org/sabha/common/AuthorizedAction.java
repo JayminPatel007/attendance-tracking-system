@@ -7,7 +7,8 @@ import java.util.Set;
  *
  * <p>{@link #SABHA_SHAPING_ACTIONS} (ADR-0001) is the set restricted to the
  * Sanchalak of a Sabha (Sah-Sanchalak explicitly excluded): deciding whether and
- * when a Sabha Occurrence happens, and where. Day-of marking/directory actions
+ * when a Sabha Occurrence happens, and where — including manually creating a
+ * monthly-ad-hoc Sabha's Occurrence (ADR-0012). Day-of marking/directory actions
  * are shared with the Sah-Sanchalak and are not part of this set.</p>
  *
  * <p>The structural-creation actions (ADR-0009) name the tier each create acts
@@ -20,12 +21,14 @@ public enum AuthorizedAction {
     RESCHEDULE,
     VENUE_OVERRIDE,
     SCHEDULE_CHANGE,
+    CREATE_OCCURRENCE,
     CREATE_CITY,
     CREATE_ZONE,
     CREATE_SABHA_KIND,
     CREATE_KSHETRA,
+    CREATE_SABHA,
     APPOINT_ROLE;
 
     public static final Set<AuthorizedAction> SABHA_SHAPING_ACTIONS =
-            Set.of(CANCEL, RESCHEDULE, VENUE_OVERRIDE, SCHEDULE_CHANGE);
+            Set.of(CANCEL, RESCHEDULE, VENUE_OVERRIDE, SCHEDULE_CHANGE, CREATE_OCCURRENCE);
 }

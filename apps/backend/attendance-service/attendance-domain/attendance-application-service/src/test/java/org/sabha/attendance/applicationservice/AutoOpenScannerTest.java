@@ -123,6 +123,37 @@ class AutoOpenScannerTest {
                 .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
     }
 
+    @Test
+    void opensAMonthlyAdHocOccurrenceByItsOwnTimeWhenTheSabhaHasNoStandingSchedule() {
+        // A monthly-ad-hoc Sabha has no standing schedule; the Occurrence carries its
+        // own start time. now = 2026-06-21 10:00 IST, the occurrence's 09:00 slot passed.
+        Instant now = LocalDate.of(2026, 6, 21).atTime(10, 0).atZone(KOLKATA).toInstant();
+        Clock clock = Clock.fixed(now, KOLKATA);
+        UUID monthlySabha = UUID.fromString("00000000-0000-0000-0000-0000000000a9");
+        UUID monthlyOccurrence = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
+
+        StubOccurrenceQueries queries = new StubOccurrenceQueries();
+        queries.scheduled.add(new ScheduledOccurrenceRef(monthlyOccurrence, monthlySabha,
+                LocalDate.of(2026, 6, 21), LocalTime.of(9, 0)));
+
+        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
+
+        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
+                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        occurrences.put(Occurrence.scheduled(monthlyOccurrence, monthlySabha, LocalDate.of(2026, 6, 21)));
+        OccurrenceStateMachineTest.InMemoryTransitionLog log =
+                new OccurrenceStateMachineTest.InMemoryTransitionLog();
+        OccurrenceStateMachineTest.CapturingPublisher publisher =
+                new OccurrenceStateMachineTest.CapturingPublisher();
+        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(occurrences, log, publisher, clock);
+
+        new AutoOpenScanner(queries, lookup, stateMachine, clock).scan();
+
+        assertThat(occurrences.savedOccurrences()).hasSize(1);
+        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(monthlyOccurrence);
+        assertThat(occurrences.savedOccurrences().get(0).state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+    }
+
     private static final class StubOccurrenceQueries implements OccurrenceQueries {
         final List<ScheduledOccurrenceRef> scheduled = new ArrayList<>();
         final List<OpenOccurrenceRef> open = new ArrayList<>();

@@ -2,6 +2,7 @@ package org.sabha.container;
 
 import org.sabha.attendance.applicationservice.AutoFinalizeScanner;
 import org.sabha.attendance.applicationservice.AutoOpenScanner;
+import org.sabha.attendance.applicationservice.WeeklyMaterializationScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -19,6 +20,9 @@ import org.springframework.stereotype.Component;
  *   <li>Auto-Finalize at the top of every hour — Occurrences finalize 24h
  *       after their scheduled end, so an hourly cadence keeps the lag
  *       bounded to well within the analytics-stability budget.</li>
+ *   <li>Weekly materialization once daily — rolls each weekly Sabha's
+ *       Occurrences forward on an 8-week window (Slice 12 / ADR-0012); a daily
+ *       cadence is ample for a rolling weekly schedule and is idempotent.</li>
  * </ul>
  */
 @Component
@@ -29,11 +33,14 @@ public class OccurrenceCronJobs {
 
     private final AutoOpenScanner autoOpenScanner;
     private final AutoFinalizeScanner autoFinalizeScanner;
+    private final WeeklyMaterializationScanner weeklyMaterializationScanner;
 
     public OccurrenceCronJobs(AutoOpenScanner autoOpenScanner,
-                              AutoFinalizeScanner autoFinalizeScanner) {
+                              AutoFinalizeScanner autoFinalizeScanner,
+                              WeeklyMaterializationScanner weeklyMaterializationScanner) {
         this.autoOpenScanner = autoOpenScanner;
         this.autoFinalizeScanner = autoFinalizeScanner;
+        this.weeklyMaterializationScanner = weeklyMaterializationScanner;
     }
 
     @Scheduled(cron = "${sabha.cron.auto-open:0 * * * * *}")
@@ -51,6 +58,15 @@ public class OccurrenceCronJobs {
             autoFinalizeScanner.scan();
         } catch (RuntimeException e) {
             log.error("Auto-Finalize scan failed", e);
+        }
+    }
+
+    @Scheduled(cron = "${sabha.cron.weekly-materialization:0 0 2 * * *}")
+    public void runWeeklyMaterialization() {
+        try {
+            weeklyMaterializationScanner.scan();
+        } catch (RuntimeException e) {
+            log.error("Weekly materialization scan failed", e);
         }
     }
 }

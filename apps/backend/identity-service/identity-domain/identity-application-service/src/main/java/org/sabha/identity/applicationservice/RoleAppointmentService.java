@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  * candidates bubble up for the appointer to resolve.</p>
  */
 @Service
-public class RoleAppointmentService {
+public class RoleAppointmentService implements AppointRole {
 
     private final CallerResolver callerResolver;
     private final AppointmentAuthorization authz;
@@ -59,6 +59,7 @@ public class RoleAppointmentService {
         this.clock = clock;
     }
 
+    @Override
     @Transactional
     public AppointmentResult appoint(UUID keycloakSubject, RoleAppointmentCommand command) {
         UUID appointer = callerResolver.resolveUserId(keycloakSubject)

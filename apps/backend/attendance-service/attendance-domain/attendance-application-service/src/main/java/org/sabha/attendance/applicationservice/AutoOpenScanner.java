@@ -43,13 +43,18 @@ public class AutoOpenScanner {
         Instant now = clock.instant();
         LocalDate today = LocalDate.ofInstant(now, clock.getZone());
         for (ScheduledOccurrenceRef ref : occurrenceQueries.findScheduledOnOrBefore(today)) {
-            Optional<SabhaSchedule> schedule = scheduleLookup.findSchedule(ref.sabhaId());
-            if (schedule.isEmpty()) {
-                continue;
+            // A per-Occurrence start time (a reschedule, or a monthly-ad-hoc
+            // Occurrence's own slot) wins; otherwise fall back to the Sabha's
+            // standing weekly schedule. Monthly Sabhas have no standing schedule,
+            // so an Occurrence with neither is skipped.
+            LocalTime startTime = ref.rescheduledStartTime();
+            if (startTime == null) {
+                Optional<SabhaSchedule> schedule = scheduleLookup.findSchedule(ref.sabhaId());
+                if (schedule.isEmpty()) {
+                    continue;
+                }
+                startTime = schedule.get().startTime();
             }
-            LocalTime startTime = ref.rescheduledStartTime() != null
-                    ? ref.rescheduledStartTime()
-                    : schedule.get().startTime();
             Instant scheduledStartAt = ZonedDateTime.of(
                     ref.date(), startTime, clock.getZone()).toInstant();
             if (!scheduledStartAt.isAfter(now)) {
