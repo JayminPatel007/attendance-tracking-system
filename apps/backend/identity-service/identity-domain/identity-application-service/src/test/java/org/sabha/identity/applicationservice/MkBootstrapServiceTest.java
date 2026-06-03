@@ -108,6 +108,16 @@ class MkBootstrapServiceTest {
         }
 
         @Override
+        public Optional<User> findByPersonId(UUID personId) {
+            return saved.stream().filter(u -> u.personId().equals(personId)).findFirst();
+        }
+
+        @Override
+        public boolean existsByUsername(String username) {
+            return saved.stream().anyMatch(u -> u.username().equals(username));
+        }
+
+        @Override
         public void save(User user) {
             saved.add(user);
         }

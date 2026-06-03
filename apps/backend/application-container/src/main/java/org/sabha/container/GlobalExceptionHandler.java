@@ -8,6 +8,7 @@ import org.sabha.common.NotFoundException;
 import org.sabha.identity.applicationservice.OtpRateLimitExceededException;
 import org.sabha.identity.applicationservice.OtpResendCooldownException;
 import org.sabha.identity.applicationservice.TransferNotAuthorizedException;
+import org.sabha.identity.applicationservice.UsernameAlreadyTakenException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,6 +57,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> transferNotAuthorized(TransferNotAuthorizedException ex) {
         return ResponseEntity.status(403)
                 .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyTakenException.class)
+    public ResponseEntity<ErrorResponse> usernameAlreadyTaken(UsernameAlreadyTakenException ex) {
+        return ResponseEntity.status(409)
+                .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), "USERNAME_TAKEN"));
     }
 
     @ExceptionHandler({OtpRateLimitExceededException.class, OtpResendCooldownException.class})
