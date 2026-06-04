@@ -40,6 +40,8 @@ class OccurrenceShapingServiceTest {
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
     private static final UUID SAH_SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000008");
     private static final UUID SAH_SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000007");
+    private static final UUID NIRIKSHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000052");
+    private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000051");
     // The Sabha ends 20:00 on the Occurrence date; scheduled-end Instant is 2026-05-24T20:00:00Z.
     private static final Instant SCHEDULED_END = Instant.parse("2026-05-24T20:00:00Z");
 
@@ -59,6 +61,22 @@ class OccurrenceShapingServiceTest {
         assertThat(row.actorKind()).isEqualTo(ActorKind.USER);
         assertThat(row.actorUserId()).isEqualTo(SANCHALAK_USER);
         assertThat(row.reason()).isEqualTo("Festival clash");
+        // The Sanchalak acting on their own Sabha is not a proxy action.
+        assertThat(row.onBehalfOfUserId()).isNull();
+    }
+
+    @Test
+    void anAssignedNirikshakProxyingACancelIsAuditedActingForTheAbsentSanchalak() {
+        Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
+
+        f.service().cancel(NIRIKSHAK_SUBJECT, OCCURRENCE_ID, "Sanchalak unreachable");
+
+        assertThat(f.occurrences.saved).singleElement()
+                .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
+        OccurrenceStateTransition row = f.transitions.appended.get(0);
+        assertThat(row.action()).isEqualTo(OccurrenceAction.CANCEL);
+        assertThat(row.actorUserId()).isEqualTo(NIRIKSHAK_USER);
+        assertThat(row.onBehalfOfUserId()).isEqualTo(SANCHALAK_USER);
     }
 
     @Test
@@ -165,6 +183,9 @@ class OccurrenceShapingServiceTest {
                 if (subject.equals(SAH_SANCHALAK_SUBJECT)) {
                     return Optional.of(SAH_SANCHALAK_USER);
                 }
+                if (subject.equals(NIRIKSHAK_SUBJECT)) {
+                    return Optional.of(NIRIKSHAK_USER);
+                }
                 return Optional.empty();
             };
             RoleAssignmentLookup roles = new RoleAssignmentLookup() {
@@ -182,6 +203,11 @@ class OccurrenceShapingServiceTest {
                 @Override
                 public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
                     return Set.of();
+                }
+
+                @Override
+                public Optional<UUID> sanchalakOf(UUID sabhaId) {
+                    return sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
                 }
             };
             // Shaping is Sanchalak-scoped; the engine never consults the hierarchy for these actions.
@@ -204,8 +230,20 @@ class OccurrenceShapingServiceTest {
             SabhaScheduleLookup schedule = sabhaId -> Optional.of(new SabhaSchedule(
                     java.time.DayOfWeek.SUNDAY, LocalTime.of(19, 0), LocalTime.of(20, 0)));
             Clock clock = Clock.fixed(now, ZoneOffset.UTC);
+            org.sabha.common.NirikshakAssignmentLookup nirikshakAssignments =
+                    new org.sabha.common.NirikshakAssignmentLookup() {
+                        @Override
+                        public boolean isAssignedTo(UUID userId, UUID sabhaId) {
+                            return userId.equals(NIRIKSHAK_USER) && sabhaId.equals(SABHA_ID);
+                        }
+
+                        @Override
+                        public Set<UUID> sabhasAssignedTo(UUID userId) {
+                            return userId.equals(NIRIKSHAK_USER) ? Set.of(SABHA_ID) : Set.of();
+                        }
+                    };
             OccurrenceTransitionExecutor executor = new OccurrenceTransitionExecutor(
-                    callerResolver, new AuthorizationEngine(roles, hierarchy),
+                    callerResolver, new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
             return new OccurrenceShapingService(executor, schedule, clock, Duration.ofHours(24));
         }

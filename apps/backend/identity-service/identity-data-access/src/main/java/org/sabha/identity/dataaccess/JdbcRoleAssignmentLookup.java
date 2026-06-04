@@ -56,6 +56,18 @@ public class JdbcRoleAssignmentLookup implements RoleAssignmentLookup {
         return roles;
     }
 
+    @Override
+    public Optional<UUID> sanchalakOf(UUID sabhaId) {
+        return jdbc.sql("""
+                SELECT user_id FROM role_assignments
+                WHERE sabha_id = ? AND role = 'SANCHALAK'
+                LIMIT 1
+                """)
+                .param(sabhaId)
+                .query((rs, n) -> rs.getObject("user_id", UUID.class))
+                .optional();
+    }
+
     private static Optional<Role> toRole(String name) {
         try {
             return Optional.of(Role.valueOf(name));

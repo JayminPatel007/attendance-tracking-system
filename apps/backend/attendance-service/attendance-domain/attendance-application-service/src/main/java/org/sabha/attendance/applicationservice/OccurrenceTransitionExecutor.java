@@ -77,6 +77,8 @@ public class OccurrenceTransitionExecutor {
             if (!authorization.canUserDo(userId, authAction, occurrence.sabhaId())) {
                 throw new AuthorizationDeniedException(userId, authAction);
             }
+            UUID onBehalfOf = authorization.onBehalfOf(userId, authAction, occurrence.sabhaId())
+                    .orElse(null);
 
             OccurrenceState from = occurrence.state();
             mutation.accept(occurrence);
@@ -91,7 +93,7 @@ public class OccurrenceTransitionExecutor {
 
             transitions.append(new OccurrenceStateTransition(
                     UUID.randomUUID(), occurrenceId, from, to, auditAction,
-                    ActorKind.USER, userId, reason, clock.instant()));
+                    ActorKind.USER, userId, onBehalfOf, reason, clock.instant()));
             events.publishAll(occurrence.pullDomainEvents());
             return;
         }

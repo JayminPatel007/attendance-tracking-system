@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
 import org.sabha.common.CallerResolver;
+import org.sabha.common.UserActivityRecorder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,19 +26,22 @@ public class SyncAttendanceApplicationService {
 
     private final CallerResolver callerResolver;
     private final MarkAttendanceApplicationService markAttendance;
+    private final UserActivityRecorder activity;
     private final Clock clock;
 
     public SyncAttendanceApplicationService(
             CallerResolver callerResolver,
             MarkAttendanceApplicationService markAttendance,
+            UserActivityRecorder activity,
             Clock clock) {
         this.callerResolver = callerResolver;
         this.markAttendance = markAttendance;
+        this.activity = activity;
         this.clock = clock;
     }
 
     public SyncResult execute(UUID keycloakSubject, Instant clientRosterVersion, List<SyncRequestItem> items) {
-        callerResolver.resolveUserId(keycloakSubject)
+        UUID userId = callerResolver.resolveUserId(keycloakSubject)
                 .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
 
         Instant now = clock.instant();
@@ -49,6 +53,7 @@ public class SyncAttendanceApplicationService {
         Map<UUID, List<MarkItem>> byOccurrence = groupByOccurrence(items);
         byOccurrence.forEach((occurrenceId, batch) ->
                 markAttendance.executeBatch(keycloakSubject, occurrenceId, batch));
+        activity.recordSync(userId, now);
         return new SyncResult(items.size());
     }
 
