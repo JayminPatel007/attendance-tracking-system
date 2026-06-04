@@ -19,8 +19,8 @@ public class JdbcOccurrenceStateTransitionRepository implements OccurrenceStateT
         jdbc.sql("""
                 INSERT INTO occurrence_state_transitions
                     (id, occurrence_id, from_state, to_state, action,
-                     actor_kind, actor_user_id, reason, at_timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     actor_kind, actor_user_id, on_behalf_of_user_id, reason, at_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """)
                 .param(transition.id())
                 .param(transition.occurrenceId())
@@ -29,6 +29,7 @@ public class JdbcOccurrenceStateTransitionRepository implements OccurrenceStateT
                 .param(transition.action().name())
                 .param(transition.actorKind().name())
                 .param(transition.actorUserId())
+                .param(transition.onBehalfOfUserId())
                 .param(transition.reason())
                 .param(java.sql.Timestamp.from(transition.at()))
                 .update();

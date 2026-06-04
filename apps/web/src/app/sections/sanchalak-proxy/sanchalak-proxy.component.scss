@@ -1,0 +1,172 @@
+.proxy {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.proxy__header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.proxy__hint {
+  margin: 0.25rem 0 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* The prominent acting-as banner runs across the page (prototype web-sanchalak-proxy). */
+.proxy__banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e0a100;
+  border-left: 6px solid #e0a100;
+  border-radius: 8px;
+  background: #fff8e1;
+  color: #5a4500;
+
+  strong {
+    font-size: 1rem;
+  }
+}
+
+.proxy__exit {
+  margin-left: auto;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #b58900;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.proxy__error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.proxy__picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.proxy__pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.proxy__pick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.proxy__pick-label {
+  font-weight: 600;
+}
+
+.proxy__pick-sanchalak {
+  color: #444;
+  font-size: 0.9rem;
+}
+
+.proxy__pick-seen {
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.proxy__enter,
+.proxy__actions button {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #1565c0;
+  border-radius: 6px;
+  background: #1565c0;
+  color: #fff;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.proxy__toolkit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.proxy__occurrence {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.proxy__occurrence-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.proxy__occurrence-date {
+  font-weight: 600;
+}
+
+.proxy__state {
+  font-size: 0.8rem;
+  color: #1565c0;
+}
+
+.proxy__venue {
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.proxy__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+
+.proxy__action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #444;
+
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  &--reschedule {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+.proxy__empty,
+.proxy__locked {
+  color: #777;
+  font-size: 0.9rem;
+}

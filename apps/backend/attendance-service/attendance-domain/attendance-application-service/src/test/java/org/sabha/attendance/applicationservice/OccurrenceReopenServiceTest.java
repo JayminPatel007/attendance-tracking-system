@@ -140,8 +140,19 @@ class OccurrenceReopenServiceTest {
                 }
             };
             Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
+            org.sabha.common.NirikshakAssignmentLookup noProxy = new org.sabha.common.NirikshakAssignmentLookup() {
+                @Override
+                public boolean isAssignedTo(UUID userId, UUID sabhaId) {
+                    return false;
+                }
+
+                @Override
+                public Set<UUID> sabhasAssignedTo(UUID userId) {
+                    return Set.of();
+                }
+            };
             OccurrenceTransitionExecutor executor = new OccurrenceTransitionExecutor(
-                    callerResolver, new AuthorizationEngine(roles, hierarchy),
+                    callerResolver, new AuthorizationEngine(roles, hierarchy, noProxy),
                     occurrences, transitions, publisher, clock);
             return new OccurrenceReopenService(executor);
         }

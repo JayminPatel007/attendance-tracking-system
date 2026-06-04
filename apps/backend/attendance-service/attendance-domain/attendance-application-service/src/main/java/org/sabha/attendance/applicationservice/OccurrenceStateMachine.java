@@ -67,7 +67,8 @@ public class OccurrenceStateMachine {
                     action,
                     actor.kind(),
                     actor.userId(),
-                    null,
+                    null, // never a proxy action — the auto-Finalize/Open cron acts as SYSTEM
+                    null, // no reason on an automatic transition
                     clock.instant()));
             events.publishAll(occurrence.pullDomainEvents());
             return;

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
@@ -55,6 +56,33 @@ class AuthorizationEngineTest {
         AuthorizationEngine engine = engine(sabhaRoles(Map.of()), kshetraRoles(Map.of()));
 
         assertThat(engine.canUserDo(SANCHALAK, AuthorizedAction.CANCEL, SABHA_ID)).isFalse();
+    }
+
+    @Test
+    void aNirikshakAssignedToTheSabhaMayProxyEverySabhaShapingAction() {
+        AuthorizationEngine engine = engine(
+                sabhaRoles(Map.of()), kshetraRoles(Map.of()),
+                assignments(Map.of(NIRIKSHAK, Set.of(SABHA_ID))));
+
+        for (AuthorizedAction action : AuthorizedAction.SABHA_SHAPING_ACTIONS) {
+            assertThat(engine.canUserDo(NIRIKSHAK, action, SABHA_ID))
+                    .as("Nirikshak assigned to the Sabha should be allowed to proxy %s", action)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void aNirikshakNotAssignedToTheSabhaIsDeniedSabhaShapingActions() {
+        UUID otherSabha = UUID.fromString("00000000-0000-0000-0000-0000000000aa");
+        AuthorizationEngine engine = engine(
+                sabhaRoles(Map.of()), kshetraRoles(Map.of()),
+                assignments(Map.of(NIRIKSHAK, Set.of(otherSabha))));
+
+        for (AuthorizedAction action : AuthorizedAction.SABHA_SHAPING_ACTIONS) {
+            assertThat(engine.canUserDo(NIRIKSHAK, action, SABHA_ID))
+                    .as("Nirikshak not assigned to the Sabha should be denied %s", action)
+                    .isFalse();
+        }
     }
 
     @Test
@@ -115,7 +143,26 @@ class AuthorizationEngineTest {
         return new FixedRoleAssignments(Map.of(), kshetra);
     }
 
+    private static NirikshakAssignmentLookup assignments(Map<UUID, Set<UUID>> bySabha) {
+        return new NirikshakAssignmentLookup() {
+            @Override
+            public boolean isAssignedTo(UUID userId, UUID sabhaId) {
+                return bySabha.getOrDefault(userId, Set.of()).contains(sabhaId);
+            }
+
+            @Override
+            public Set<UUID> sabhasAssignedTo(UUID userId) {
+                return bySabha.getOrDefault(userId, Set.of());
+            }
+        };
+    }
+
     private static AuthorizationEngine engine(RoleAssignmentLookup sabha, FixedRoleAssignments kshetra) {
+        return engine(sabha, kshetra, assignments(Map.of()));
+    }
+
+    private static AuthorizationEngine engine(
+            RoleAssignmentLookup sabha, FixedRoleAssignments kshetra, NirikshakAssignmentLookup assignments) {
         // The Sabha sits in KSHETRA_ID with demographic DEMOGRAPHIC.
         StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
             @Override
@@ -137,7 +184,7 @@ class AuthorizationEngineTest {
         };
         RoleAssignmentLookup roles = new FixedRoleAssignments(
                 ((FixedRoleAssignments) sabha).sabha, kshetra.kshetra);
-        return new AuthorizationEngine(roles, hierarchy);
+        return new AuthorizationEngine(roles, hierarchy, assignments);
     }
 
     private record FixedRoleAssignments(Map<String, Set<Role>> sabha, Map<String, Set<Role>> kshetra)

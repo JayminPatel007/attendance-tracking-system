@@ -1,0 +1,85 @@
+<section class="proxy">
+  <header class="proxy__header">
+    <h1>Sanchalak Proxy</h1>
+    <p class="proxy__hint">
+      Act as the Sanchalak on a Sabha assigned to you when they are unavailable.
+      Every action is audit-logged as you.
+    </p>
+  </header>
+
+  @if (acting(); as sabha) {
+    <div class="proxy__banner" role="alert">
+      <strong>You are acting as Sanchalak for {{ sabha.sabhaLabel }}</strong>
+      <span>— all actions audit-logged as you{{ sabha.sanchalakName ? ' (on behalf of ' + sabha.sanchalakName + ')' : '' }}.</span>
+      <button type="button" class="proxy__exit" (click)="exitProxy()">Exit proxy mode</button>
+    </div>
+
+    @if (error()) {
+      <p class="proxy__error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="proxy__toolkit">
+      @if (occurrences().length === 0) {
+        <p class="proxy__empty">No Occurrences for this Sabha.</p>
+      }
+      @for (occurrence of occurrences(); track occurrence.id) {
+        <article class="proxy__occurrence">
+          <div class="proxy__occurrence-head">
+            <span class="proxy__occurrence-date">{{ occurrence.effectiveDate | date: 'mediumDate' }}</span>
+            <span class="proxy__state">{{ occurrence.state }}</span>
+            <span class="proxy__venue">{{ occurrence.venue }}</span>
+          </div>
+
+          @if (shapeable(occurrence)) {
+            <div class="proxy__actions">
+              <label class="proxy__action">
+                <span>Cancel — reason</span>
+                <input #cancelReason type="text" placeholder="e.g. Sanchalak unreachable" />
+                <button type="button" [disabled]="submitting()"
+                        (click)="cancel(occurrence.id, cancelReason.value)">Cancel</button>
+              </label>
+
+              <label class="proxy__action">
+                <span>Venue override</span>
+                <input #venue type="text" placeholder="One-off venue" />
+                <button type="button" [disabled]="submitting()"
+                        (click)="overrideVenue(occurrence.id, venue.value)">Set venue</button>
+              </label>
+
+              <div class="proxy__action proxy__action--reschedule">
+                <span>Reschedule</span>
+                <input #rsDate type="date" />
+                <input #rsStart type="time" />
+                <input #rsEnd type="time" />
+                <button type="button" [disabled]="submitting()"
+                        (click)="reschedule(occurrence.id, rsDate.value, rsStart.value, rsEnd.value)">
+                  Reschedule
+                </button>
+              </div>
+            </div>
+          } @else {
+            <p class="proxy__locked">This Occurrence can no longer be shaped.</p>
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <ul class="proxy__picker" aria-label="Assigned Sabhas">
+      @if (sabhas().length === 0) {
+        <li class="proxy__empty">No Sabhas are assigned to you.</li>
+      }
+      @for (sabha of sabhas(); track sabha.sabhaId) {
+        <li class="proxy__pick">
+          <div class="proxy__pick-info">
+            <span class="proxy__pick-label">{{ sabha.sabhaLabel }}</span>
+            <span class="proxy__pick-sanchalak">{{ sabha.sanchalakName ?? 'No Sanchalak' }}</span>
+            <span class="proxy__pick-seen">{{ lastSeenLabel(sabha.lastSeenAt) }}</span>
+          </div>
+          <button type="button" class="proxy__enter" (click)="enterProxy(sabha)">
+            Act as Sanchalak
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { OccurrenceReopenComponent } from './sections/occurrence-reopen/occurrence-reopen.component';
 import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
 import { SabhaDefinitionComponent } from './sections/sabha-definition/sabha-definition.component';
+import { SanchalakProxyComponent } from './sections/sanchalak-proxy/sanchalak-proxy.component';
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
 import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
 import { SECTION_NAV } from './shell/section-nav';
@@ -15,6 +16,7 @@ const SECTION_COMPONENTS = {
   STRUCTURAL_ADMIN: StructuralAdminComponent,
   SABHA_DEFINITION: SabhaDefinitionComponent,
   OCCURRENCE_REOPEN: OccurrenceReopenComponent,
+  SANCHALAK_PROXY: SanchalakProxyComponent,
 } as const;
 
 /** One guarded route per shell section, derived from the nav model. */

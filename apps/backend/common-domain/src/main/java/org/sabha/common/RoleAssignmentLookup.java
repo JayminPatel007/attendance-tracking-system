@@ -1,5 +1,6 @@
 package org.sabha.common;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,4 +24,15 @@ public interface RoleAssignmentLookup {
      * (kshetra, demographic)} scope and asks this for the matching roles.
      */
     Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic);
+
+    /**
+     * The User currently holding the {@link Role#SANCHALAK} role on {@code
+     * sabhaId}, if any. This is the reverse of {@link #rolesForUserOnSabha}: the
+     * attendance context's Authorization Engine needs it to attribute a Nirikshak
+     * proxy action to the absent Sanchalak it acts on behalf of (Slice 14). The
+     * default returns empty for fakes that do not exercise the proxy path.
+     */
+    default Optional<UUID> sanchalakOf(UUID sabhaId) {
+        return Optional.empty();
+    }
 }

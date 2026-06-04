@@ -29,7 +29,7 @@ class CreateMonthlyOccurrenceServiceTest {
     private final RecordingInsert occurrences = new RecordingInsert();
     private final CreateMonthlyOccurrenceApplicationService service = new CreateMonthlyOccurrenceApplicationService(
             subject -> subject.equals(SUBJECT) ? Optional.of(SANCHALAK) : Optional.empty(),
-            new AuthorizationEngine(new FakeRoles(), new FakeHierarchy()),
+            new AuthorizationEngine(new FakeRoles(), new FakeHierarchy(), new NoNirikshakAssignments()),
             new FakeShapes(),
             occurrences);
 
@@ -53,7 +53,7 @@ class CreateMonthlyOccurrenceServiceTest {
         UUID otherSubject = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
         CreateMonthlyOccurrenceApplicationService denying = new CreateMonthlyOccurrenceApplicationService(
                 subject -> Optional.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9")),
-                new AuthorizationEngine(new FakeRoles(), new FakeHierarchy()),
+                new AuthorizationEngine(new FakeRoles(), new FakeHierarchy(), new NoNirikshakAssignments()),
                 new FakeShapes(),
                 occurrences);
 
@@ -79,6 +79,19 @@ class CreateMonthlyOccurrenceServiceTest {
 
         @Override
         public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
+            return Set.of();
+        }
+    }
+
+    /** No Nirikshak proxy assignments — these tests exercise the Sanchalak path only. */
+    private static final class NoNirikshakAssignments implements org.sabha.common.NirikshakAssignmentLookup {
+        @Override
+        public boolean isAssignedTo(UUID userId, UUID sabhaId) {
+            return false;
+        }
+
+        @Override
+        public Set<UUID> sabhasAssignedTo(UUID userId) {
             return Set.of();
         }
     }

@@ -18,6 +18,7 @@ import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
+import org.sabha.common.UserActivityRecorder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,6 +45,29 @@ class SyncAttendanceApplicationServiceTest {
         assertThat(result.appliedCount()).isEqualTo(2);
         Occurrence saved = f.occurrences.savedOccurrences().get(f.occurrences.savedOccurrences().size() - 1);
         assertThat(saved.markings()).hasSize(2);
+    }
+
+    @Test
+    void aSuccessfulSyncRecordsTheSanchalaksLastSyncActivity() {
+        Fixture f = openOccurrence();
+        Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
+
+        f.service.execute(SUBJECT, fresh, List.of(
+                new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(10)))));
+
+        assertThat(f.recorder.syncs).containsExactly(Map.entry(MARKED_BY, SERVER_NOW));
+    }
+
+    @Test
+    void aRejectedStaleSyncRecordsNoActivity() {
+        Fixture f = openOccurrence();
+        Instant stale = SERVER_NOW.minus(Duration.ofDays(7)).minus(Duration.ofSeconds(1));
+
+        assertThatThrownBy(() -> f.service.execute(SUBJECT, stale, List.of(
+                new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW))))
+                .isInstanceOf(StaleRosterException.class);
+
+        assertThat(f.recorder.syncs).isEmpty();
     }
 
     @Test
@@ -101,7 +125,7 @@ class SyncAttendanceApplicationServiceTest {
                 resolver, occurrences, publisher);
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
-                resolver, markUseCase, clock);
+                resolver, markUseCase, new RecordingActivity(), clock);
 
         Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
         SyncResult result = service.execute(SUBJECT, fresh, List.of(
@@ -123,6 +147,7 @@ class SyncAttendanceApplicationServiceTest {
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
                 subject -> Optional.empty(),
                 f.markUseCase,
+                new RecordingActivity(),
                 Clock.fixed(SERVER_NOW, ZoneOffset.UTC));
 
         UUID unknown = UUID.fromString("00000000-0000-0000-0000-000000000999");
@@ -142,16 +167,33 @@ class SyncAttendanceApplicationServiceTest {
         MarkAttendanceApplicationService markUseCase = new MarkAttendanceApplicationService(
                 resolver, occurrences, publisher);
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
+        RecordingActivity recorder = new RecordingActivity();
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
-                resolver, markUseCase, clock);
-        return new Fixture(occurrences, publisher, markUseCase, service);
+                resolver, markUseCase, recorder, clock);
+        return new Fixture(occurrences, publisher, markUseCase, recorder, service);
     }
 
     private record Fixture(
             InMemoryOccurrenceRepository occurrences,
             CapturingPublisher publisher,
             MarkAttendanceApplicationService markUseCase,
+            RecordingActivity recorder,
             SyncAttendanceApplicationService service) {
+    }
+
+    private static final class RecordingActivity implements UserActivityRecorder {
+        final List<Map.Entry<UUID, Instant>> syncs = new ArrayList<>();
+        final List<Map.Entry<UUID, Instant>> logins = new ArrayList<>();
+
+        @Override
+        public void recordSync(UUID userId, Instant at) {
+            syncs.add(Map.entry(userId, at));
+        }
+
+        @Override
+        public void recordLogin(UUID userId, Instant at) {
+            logins.add(Map.entry(userId, at));
+        }
     }
 
     private static final class InMemoryOccurrenceRepository implements OccurrenceRepository {
