@@ -1,5 +1,6 @@
 package org.sabha.container;
 
+import org.sabha.attendance.applicationservice.CallerUnknownException;
 import org.sabha.attendance.applicationservice.StaleRosterException;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
@@ -31,6 +32,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ErrorResponse> forbidden(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(403)
+                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    }
+
+    /**
+     * An authenticated caller whose subject maps to no local User is forbidden,
+     * not a server error — the canonical mapping so endpoints need not pre-check.
+     */
+    @ExceptionHandler(CallerUnknownException.class)
+    public ResponseEntity<ErrorResponse> callerUnknown(CallerUnknownException ex) {
         return ResponseEntity.status(403)
                 .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
     }

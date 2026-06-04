@@ -27,7 +27,8 @@ public enum AuthorizedAction {
     CREATE_SABHA_KIND,
     CREATE_KSHETRA,
     CREATE_SABHA,
-    APPOINT_ROLE;
+    APPOINT_ROLE,
+    REOPEN;
 
     public static final Set<AuthorizedAction> SABHA_SHAPING_ACTIONS =
             Set.of(CANCEL, RESCHEDULE, VENUE_OVERRIDE, SCHEDULE_CHANGE, CREATE_OCCURRENCE);

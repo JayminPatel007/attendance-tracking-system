@@ -1,0 +1,75 @@
+<section class="reopen">
+  <header class="reopen__header">
+    <h1>Occurrence Reopen</h1>
+    <p class="reopen__hint">Reopen a Finalized Occurrence to correct attendance. Every reopen records you and a reason.</p>
+  </header>
+
+  <div class="reopen__panes">
+    <aside class="reopen__list" aria-label="Occurrences">
+      @if (occurrences().length === 0) {
+        <p class="reopen__empty">No Occurrences in your scope.</p>
+      }
+      @for (occurrence of occurrences(); track occurrence.occurrenceId) {
+        <button
+          type="button"
+          class="reopen__row"
+          [class.reopen__row--active]="occurrence.occurrenceId === selectedId()"
+          (click)="select(occurrence.occurrenceId)">
+          <span class="reopen__row-date">{{ occurrence.date | date: 'mediumDate' }}</span>
+          <span class="reopen__row-kind">{{ kindLabel(occurrence.sabhaKind) }} · {{ occurrence.kshetraName }}</span>
+          <span class="reopen__row-tags">
+            <span class="reopen__state">{{ occurrence.state }}</span>
+            @if (occurrence.reopened) {
+              <span class="reopen__badge" title="This Occurrence was reopened after Finalize">reopened</span>
+            }
+          </span>
+        </button>
+      }
+    </aside>
+
+    <div class="reopen__detail">
+      @if (selected(); as occurrence) {
+        <h2>{{ kindLabel(occurrence.sabhaKind) }}</h2>
+        <dl class="reopen__meta">
+          <dt>Date</dt><dd>{{ occurrence.date | date: 'fullDate' }}</dd>
+          <dt>Kshetra</dt><dd>{{ occurrence.kshetraName }}</dd>
+          <dt>Venue</dt><dd>{{ occurrence.venue }}</dd>
+          <dt>State</dt><dd>{{ occurrence.state }}</dd>
+        </dl>
+
+        @if (occurrence.reopened) {
+          <p class="reopen__reopened-note">
+            <span class="reopen__badge">reopened</span>
+            @if (occurrence.lastReopenReason) {
+              <span class="reopen__reason">“{{ occurrence.lastReopenReason }}”</span>
+            }
+          </p>
+        }
+
+        @if (occurrence.state === 'FINALIZED') {
+          <form class="reopen__card" (ngSubmit)="reopen()">
+            <label class="reopen__label" for="reopen-reason">Reason for reopening</label>
+            <textarea
+              id="reopen-reason"
+              class="reopen__textarea"
+              name="reason"
+              rows="3"
+              required
+              placeholder="e.g. Forgot to mark Ravi"
+              [(ngModel)]="reason"></textarea>
+            <button type="submit" class="reopen__submit" [disabled]="!canReopen() || submitting()">
+              Reopen Occurrence
+            </button>
+            @if (error()) {
+              <p class="reopen__error" role="alert">{{ error() }}</p>
+            }
+          </form>
+        } @else {
+          <p class="reopen__not-finalized">Only a Finalized Occurrence can be reopened.</p>
+        }
+      } @else {
+        <p class="reopen__placeholder">Select an Occurrence to view its detail.</p>
+      }
+    </div>
+  </div>
+</section>

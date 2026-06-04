@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { OccurrenceReopenComponent } from './sections/occurrence-reopen/occurrence-reopen.component';
 import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
 import { SabhaDefinitionComponent } from './sections/sabha-definition/sabha-definition.component';
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
@@ -13,6 +14,7 @@ const SECTION_COMPONENTS = {
   ROLE_APPOINTMENT: RoleAppointmentComponent,
   STRUCTURAL_ADMIN: StructuralAdminComponent,
   SABHA_DEFINITION: SabhaDefinitionComponent,
+  OCCURRENCE_REOPEN: OccurrenceReopenComponent,
 } as const;
 
 /** One guarded route per shell section, derived from the nav model. */

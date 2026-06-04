@@ -25,6 +25,8 @@ import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaSchedule;
 import org.sabha.common.SabhaScheduleLookup;
+import org.sabha.common.SabhaScope;
+import org.sabha.common.StructuralHierarchyLookup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -165,20 +167,47 @@ class OccurrenceShapingServiceTest {
                 }
                 return Optional.empty();
             };
-            RoleAssignmentLookup roles = (userId, sabhaId) -> {
-                if (userId.equals(SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
-                    return Set.of(Role.SANCHALAK);
+            RoleAssignmentLookup roles = new RoleAssignmentLookup() {
+                @Override
+                public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
+                    if (userId.equals(SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
+                        return Set.of(Role.SANCHALAK);
+                    }
+                    if (userId.equals(SAH_SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
+                        return Set.of(Role.SAH_SANCHALAK);
+                    }
+                    return Set.of();
                 }
-                if (userId.equals(SAH_SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
-                    return Set.of(Role.SAH_SANCHALAK);
+
+                @Override
+                public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
+                    return Set.of();
                 }
-                return Set.of();
+            };
+            // Shaping is Sanchalak-scoped; the engine never consults the hierarchy for these actions.
+            StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
+                @Override
+                public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
+                    return Optional.empty();
+                }
+
+                @Override
+                public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+                    return Optional.empty();
+                }
+
+                @Override
+                public Optional<UUID> cityOfZone(UUID zoneId) {
+                    return Optional.empty();
+                }
             };
             SabhaScheduleLookup schedule = sabhaId -> Optional.of(new SabhaSchedule(
                     java.time.DayOfWeek.SUNDAY, LocalTime.of(19, 0), LocalTime.of(20, 0)));
             Clock clock = Clock.fixed(now, ZoneOffset.UTC);
-            return new OccurrenceShapingService(callerResolver, new AuthorizationEngine(roles),
-                    occurrences, transitions, publisher, schedule, clock, Duration.ofHours(24));
+            OccurrenceTransitionExecutor executor = new OccurrenceTransitionExecutor(
+                    callerResolver, new AuthorizationEngine(roles, hierarchy),
+                    occurrences, transitions, publisher, clock);
+            return new OccurrenceShapingService(executor, schedule, clock, Duration.ofHours(24));
         }
     }
 

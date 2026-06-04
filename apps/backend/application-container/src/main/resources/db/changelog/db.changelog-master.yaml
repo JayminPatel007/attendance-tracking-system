@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/slice-11/001-role-appointment.sql
   - include:
       file: db/changelog/slice-12/001-sabha-definition.sql
+  - include:
+      file: db/changelog/slice-13/001-occurrence-reopen-seed.sql

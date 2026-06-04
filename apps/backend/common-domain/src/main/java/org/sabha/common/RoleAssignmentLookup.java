@@ -13,4 +13,14 @@ import java.util.UUID;
 public interface RoleAssignmentLookup {
 
     Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId);
+
+    /**
+     * The Kshetra-scoped operational roles a user holds for a given {@code
+     * (kshetraId, demographic)}. The Kshetra-tier reopen authorities (Nirikshak,
+     * Nirdeshak, Sah-Nirdeshak — ADR-0001) are stored against the Kshetra and
+     * demographic rather than a single Sabha (ADR-0011 appointment), so the
+     * attendance context's Authorization Engine resolves a Sabha to its {@code
+     * (kshetra, demographic)} scope and asks this for the matching roles.
+     */
+    Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic);
 }
