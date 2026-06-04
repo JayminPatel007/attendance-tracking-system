@@ -17,8 +17,28 @@ class VisibleSectionsTest {
                 Section.DASHBOARD,
                 Section.ROLE_APPOINTMENT,
                 Section.STRUCTURAL_ADMIN,
-                Section.SABHA_DEFINITION,
-                Section.OCCURRENCE_REOPEN);
+                Section.SABHA_DEFINITION);
+        // MK is an oversight tier, explicitly kept out of the reopen data-edit path
+        // (ADR-0001), so it does not see the Occurrence-reopen section.
+        assertThat(sections).doesNotContain(Section.OCCURRENCE_REOPEN);
+    }
+
+    @Test
+    void theKshetraTiersSeeTheOccurrenceReopenSection() {
+        for (Role tier : Set.of(Role.NIRIKSHAK, Role.NIRDESHAK, Role.SAH_NIRDESHAK)) {
+            Set<Section> sections = VisibleSections.forMember(false, Set.of(tier));
+
+            assertThat(sections)
+                    .as("%s should see Occurrence Reopen", tier)
+                    .contains(Section.OCCURRENCE_REOPEN);
+        }
+    }
+
+    @Test
+    void aSanchalakDoesNotSeeTheOccurrenceReopenSection() {
+        Set<Section> sections = VisibleSections.forMember(false, Set.of(Role.SANCHALAK));
+
+        assertThat(sections).doesNotContain(Section.OCCURRENCE_REOPEN);
     }
 
     @Test

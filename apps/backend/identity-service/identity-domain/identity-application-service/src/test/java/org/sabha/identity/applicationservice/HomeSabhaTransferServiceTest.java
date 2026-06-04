@@ -298,6 +298,11 @@ class HomeSabhaTransferServiceTest {
         public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
             return roles.getOrDefault(userId + "|" + sabhaId, Set.of());
         }
+
+        @Override
+        public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
+            return Set.of();
+        }
     }
 
     static final class InMemoryHomeSabhaDirectory implements HomeSabhaDirectory {

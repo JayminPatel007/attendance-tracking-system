@@ -6,5 +6,6 @@ public enum OccurrenceAction {
     CANCEL,
     REVERT,
     RESCHEDULE,
-    OVERRIDE_VENUE
+    OVERRIDE_VENUE,
+    REOPEN
 }

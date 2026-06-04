@@ -16,5 +16,16 @@ public enum Role {
     NIRIKSHAK,
     NIRDESHAK,
     SAH_NIRDESHAK,
-    SANYOJAK
+    SANYOJAK;
+
+    /**
+     * The Kshetra tiers permitted to reopen a Finalized Occurrence (ADR-0001):
+     * Nirikshak, Nirdeshak, and Sah-Nirdeshak — explicitly not the Sanchalak who
+     * owns shaping, nor the oversight tiers (Sanyojak, Sant, MK). This is the one
+     * canonical definition of the reopen authority set; the attendance
+     * Authorization Engine (write path) and the web shell's section visibility
+     * both read it, and {@code JdbcOccurrenceReopenQueries} mirrors it in SQL.
+     */
+    public static final java.util.Set<Role> REOPEN_TIERS =
+            java.util.Set.of(NIRIKSHAK, NIRDESHAK, SAH_NIRDESHAK);
 }

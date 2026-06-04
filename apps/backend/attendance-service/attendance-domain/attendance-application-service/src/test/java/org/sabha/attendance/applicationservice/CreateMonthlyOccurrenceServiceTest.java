@@ -29,7 +29,7 @@ class CreateMonthlyOccurrenceServiceTest {
     private final RecordingInsert occurrences = new RecordingInsert();
     private final CreateMonthlyOccurrenceApplicationService service = new CreateMonthlyOccurrenceApplicationService(
             subject -> subject.equals(SUBJECT) ? Optional.of(SANCHALAK) : Optional.empty(),
-            new AuthorizationEngine(new FakeRoles()),
+            new AuthorizationEngine(new FakeRoles(), new FakeHierarchy()),
             new FakeShapes(),
             occurrences);
 
@@ -53,7 +53,7 @@ class CreateMonthlyOccurrenceServiceTest {
         UUID otherSubject = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
         CreateMonthlyOccurrenceApplicationService denying = new CreateMonthlyOccurrenceApplicationService(
                 subject -> Optional.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9")),
-                new AuthorizationEngine(new FakeRoles()),
+                new AuthorizationEngine(new FakeRoles(), new FakeHierarchy()),
                 new FakeShapes(),
                 occurrences);
 
@@ -75,6 +75,29 @@ class CreateMonthlyOccurrenceServiceTest {
         @Override
         public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
             return userId.equals(SANCHALAK) && sabhaId.equals(MONTHLY_SABHA) ? Set.of(Role.SANCHALAK) : Set.of();
+        }
+
+        @Override
+        public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
+            return Set.of();
+        }
+    }
+
+    /** Monthly-occurrence creation is a shaping action (Sanchalak), so the engine never consults the hierarchy. */
+    private static final class FakeHierarchy implements org.sabha.common.StructuralHierarchyLookup {
+        @Override
+        public Optional<org.sabha.common.SabhaScope> sabhaScope(UUID sabhaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> cityOfZone(UUID zoneId) {
+            return Optional.empty();
         }
     }
 

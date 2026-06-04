@@ -125,6 +125,21 @@ public class Occurrence extends AggregateRoot<UUID> {
         this.venueOverride = venue;
     }
 
+    /**
+     * Reopens a Finalized Occurrence back to Open for Marking (ADR-0001). The
+     * grace window and the Kshetra-tier authority (Nirikshak / Nirdeshak /
+     * Sah-Nirdeshak — never Sanyojak, Sant, or MK) are enforced by the
+     * application service; the reopener and reason are recorded on the audit
+     * transition, and the "reopened" badge is derived from that transition log.
+     */
+    public void reopen() {
+        if (state != OccurrenceState.FINALIZED) {
+            throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.OPEN_FOR_MARKING);
+        }
+        state = OccurrenceState.OPEN_FOR_MARKING;
+        registerEvent(new OccurrenceReopened(id, Instant.now()));
+    }
+
     public void markFinalized() {
         if (state != OccurrenceState.OPEN_FOR_MARKING) {
             throw new InvalidOccurrenceTransitionException(id, state, OccurrenceState.FINALIZED);

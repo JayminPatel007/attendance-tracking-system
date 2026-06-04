@@ -125,6 +125,23 @@
       ],
       "requiredActions": [],
       "realmRoles": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000052",
+      "username": "nirikshak",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Seeded",
+      "lastName": "Nirikshak",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme123!",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": []
     }
   ],
   "requiredActions": [

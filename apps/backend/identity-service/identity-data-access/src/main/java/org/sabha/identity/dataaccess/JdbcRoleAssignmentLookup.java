@@ -40,6 +40,22 @@ public class JdbcRoleAssignmentLookup implements RoleAssignmentLookup {
         return roles;
     }
 
+    @Override
+    public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
+        Set<Role> roles = EnumSet.noneOf(Role.class);
+        jdbc.sql("""
+                SELECT role FROM role_assignments
+                WHERE user_id = ? AND kshetra_id = ? AND demographic = ?
+                """)
+                .param(userId)
+                .param(kshetraId)
+                .param(demographic)
+                .query((rs, n) -> rs.getString("role"))
+                .list()
+                .forEach(name -> toRole(name).ifPresent(roles::add));
+        return roles;
+    }
+
     private static Optional<Role> toRole(String name) {
         try {
             return Optional.of(Role.valueOf(name));

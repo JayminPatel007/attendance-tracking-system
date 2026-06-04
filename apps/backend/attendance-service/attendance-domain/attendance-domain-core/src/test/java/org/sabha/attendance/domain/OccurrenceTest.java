@@ -257,6 +257,31 @@ class OccurrenceTest {
     }
 
     @Test
+    void reopeningAFinalizedOccurrenceTransitionsToOpenForMarkingAndRegistersAnEvent() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.FINALIZED);
+
+        occurrence.reopen();
+
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+        List<DomainEvent> events = occurrence.pullDomainEvents();
+        assertThat(events).singleElement().isInstanceOf(OccurrenceReopened.class);
+        OccurrenceReopened event = (OccurrenceReopened) events.get(0);
+        assertThat(event.aggregateId()).isEqualTo(OCCURRENCE_ID);
+    }
+
+    @Test
+    void reopeningAnOccurrenceThatIsNotFinalizedIsRejected() {
+        Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
+                LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
+
+        assertThatThrownBy(occurrence::reopen)
+                .isInstanceOf(InvalidOccurrenceTransitionException.class);
+        assertThat(occurrence.state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+        assertThat(occurrence.pullDomainEvents()).isEmpty();
+    }
+
+    @Test
     void markingAPersonTwiceKeepsOnlyTheLatestValue() {
         Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING);
