@@ -1,0 +1,200 @@
+.sabha-definition {
+  max-width: 640px;
+
+  .page-head {
+    margin: 0 0 18px;
+
+    h2 {
+      margin: 0 0 4px;
+    }
+
+    .sub {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+  }
+
+  fieldset {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 0 0 16px;
+
+    legend {
+      padding: 0 6px;
+      color: #6b7280;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    input,
+    select,
+    textarea {
+      display: block;
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 64px;
+      resize: vertical;
+    }
+  }
+
+  .shape-toggle {
+    display: flex;
+    gap: 10px;
+
+    .shape-option {
+      flex: 1;
+      text-align: left;
+      padding: 12px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+
+      strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      span {
+        color: #6b7280;
+        font-size: 0.82rem;
+      }
+
+      &.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+    }
+  }
+
+  .schedule-fields {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+
+    label {
+      flex: 1;
+      margin: 0;
+    }
+  }
+
+  .compliance-note {
+    margin-top: 14px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 10px;
+
+    input {
+      flex: 1;
+    }
+
+    button {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+    }
+  }
+
+  .candidates {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+
+    li {
+      margin: 0 0 6px;
+
+      button {
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+
+        small {
+          color: #6b7280;
+          margin-left: 8px;
+        }
+      }
+    }
+  }
+
+  .chosen {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    border-radius: 6px;
+    margin-bottom: 12px;
+
+    .clear {
+      margin-left: auto;
+      padding: 4px 10px;
+    }
+  }
+
+  .credentials {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    label {
+      flex: 1 1 180px;
+    }
+  }
+
+  .hint {
+    display: block;
+    color: #6b7280;
+    font-size: 0.8rem;
+    margin: 4px 0 0;
+  }
+
+  .error {
+    color: #b91c1c;
+    margin: 0 0 14px;
+  }
+
+  .submit {
+    padding: 10px 20px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+  }
+
+  .done button {
+    margin-top: 8px;
+    padding: 8px 16px;
+  }
+}
