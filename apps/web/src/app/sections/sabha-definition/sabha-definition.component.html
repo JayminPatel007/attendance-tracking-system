@@ -1,0 +1,167 @@
+<section class="sabha-definition">
+  <header class="page-head">
+    <h2>Define a Sabha</h2>
+    <p class="sub">
+      Creates the standing Sabha. Occurrences materialize from the schedule (weekly)
+      or are added manually (monthly ad-hoc).
+    </p>
+  </header>
+
+  @if (stage() === 'done') {
+    <div class="done" role="status">
+      <p>Sabha created and its Sanchalak appointed.</p>
+      <button type="button" (click)="reset()">Define another Sabha</button>
+    </div>
+  } @else {
+    <!-- 1. Identification -->
+    <fieldset class="identification">
+      <legend>Identification</legend>
+      <label>
+        Sabha kind
+        <select [(ngModel)]="sabhaKindId">
+          <option value="" disabled>Choose…</option>
+          @for (k of kinds(); track k.id) {
+            <option [value]="k.id">{{ kindLabel(k) }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Zone
+        <select [ngModel]="zoneId" (ngModelChange)="onZoneChange($event)">
+          <option value="" disabled>Choose…</option>
+          @for (z of zones(); track z.id) {
+            <option [value]="z.id">{{ z.name }} · {{ z.cityName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Kshetra
+        <select [(ngModel)]="kshetraId" [disabled]="!kshetras().length">
+          <option value="" disabled>Choose…</option>
+          @for (k of kshetras(); track k.id) {
+            <option [value]="k.id">{{ k.name }}</option>
+          }
+        </select>
+        <small class="hint">Locked to your Nirdeshak scope by the server.</small>
+      </label>
+    </fieldset>
+
+    <!-- 2. Schedule shape -->
+    <fieldset class="schedule-shape">
+      <legend>Schedule shape</legend>
+      <div class="shape-toggle">
+        <button type="button" class="shape-option" [class.selected]="weekly()" (click)="setWeekly(true)">
+          <strong>Weekly-recurring (Regular)</strong>
+          <span>Fixed slot. The system auto-materializes each week's Occurrence ahead of time.</span>
+        </button>
+        <button type="button" class="shape-option" [class.selected]="!weekly()" (click)="setWeekly(false)">
+          <strong>Monthly ad-hoc (BSS / YSS)</strong>
+          <span>No standing day/time. The Sanchalak creates each Occurrence manually before its date.</span>
+        </button>
+      </div>
+
+      @if (weekly()) {
+        <div class="schedule-fields">
+          <label>
+            Day of week
+            <select [(ngModel)]="dayOfWeek">
+              @for (d of daysOfWeek; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </label>
+          <label>Start time <input type="time" [(ngModel)]="startTime" /></label>
+          <label>End time <input type="time" [(ngModel)]="endTime" /></label>
+        </div>
+      } @else {
+        <p class="hint compliance-note">
+          Monthly ad-hoc: no Occurrences are materialized automatically. The Sanchalak adds
+          this month's Occurrence from the mobile app, and is nudged past the month's midpoint
+          if none exists.
+        </p>
+      }
+    </fieldset>
+
+    <!-- 3. Standing venue -->
+    <fieldset class="venue">
+      <legend>Standing venue</legend>
+      <label>
+        Address (free-text)
+        <textarea [(ngModel)]="standingVenue" placeholder="e.g., Sansthan Hall, near Andheri Station"></textarea>
+        <small class="hint">The Sanchalak can override the venue per Occurrence without changing this.</small>
+      </label>
+    </fieldset>
+
+    <!-- 4. Sanchalak -->
+    <fieldset class="appointee">
+      <legend>Sanchalak</legend>
+      @if (sanchalak.selectedId()) {
+        <div class="chosen" role="status">
+          ✓ Chosen: <strong>{{ sanchalak.selectedName }}</strong>
+        </div>
+        <div class="credentials">
+          <label>Username <input [(ngModel)]="sanchalak.username" /></label>
+          <label>Initial password <input [(ngModel)]="sanchalak.rawPassword" /></label>
+          <small class="hint">Handed to the Sanchalak — they change it on first login (ADR-0011).</small>
+        </div>
+      } @else {
+        <div class="search-row">
+          <input [(ngModel)]="sanchalak.nameQuery" placeholder="Search by name" />
+          <button type="button" (click)="searchSanchalakByName()" [disabled]="!kshetraId">Find</button>
+        </div>
+        <div class="search-row">
+          <input [(ngModel)]="sanchalak.mobileQuery" placeholder="Search by mobile" />
+          <button type="button" (click)="searchSanchalakByMobile()">Find</button>
+        </div>
+        <ul class="candidates">
+          @if (sanchalak.mobileMatch(); as m) {
+            <li><button type="button" (click)="pickSanchalak(m.id, m.fullName)">{{ m.fullName }} <small>{{ m.mobile }}</small></button></li>
+          }
+          @for (c of sanchalak.candidates(); track c.personId) {
+            <li><button type="button" (click)="pickSanchalak(c.personId, c.fullName)">{{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small></button></li>
+          }
+        </ul>
+      }
+    </fieldset>
+
+    <!-- 5. Sah-Sanchalak (optional) -->
+    <fieldset class="appointee optional">
+      <legend>Sah-Sanchalak (optional)</legend>
+      @if (sah.selectedId()) {
+        <div class="chosen" role="status">
+          ✓ Chosen: <strong>{{ sah.selectedName }}</strong>
+          <button type="button" class="clear" (click)="clearSah()">Clear</button>
+        </div>
+        <div class="credentials">
+          <label>Username <input [(ngModel)]="sah.username" /></label>
+          <label>Initial password <input [(ngModel)]="sah.rawPassword" /></label>
+        </div>
+      } @else {
+        <div class="search-row">
+          <input [(ngModel)]="sah.nameQuery" placeholder="Search by name" />
+          <button type="button" (click)="searchSahByName()" [disabled]="!kshetraId">Find</button>
+        </div>
+        <div class="search-row">
+          <input [(ngModel)]="sah.mobileQuery" placeholder="Search by mobile" />
+          <button type="button" (click)="searchSahByMobile()">Find</button>
+        </div>
+        <ul class="candidates">
+          @if (sah.mobileMatch(); as m) {
+            <li><button type="button" (click)="pickSah(m.id, m.fullName)">{{ m.fullName }} <small>{{ m.mobile }}</small></button></li>
+          }
+          @for (c of sah.candidates(); track c.personId) {
+            <li><button type="button" (click)="pickSah(c.personId, c.fullName)">{{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small></button></li>
+          }
+        </ul>
+      }
+    </fieldset>
+
+    @if (error(); as e) {
+      <p class="error" role="alert">{{ e }}</p>
+    }
+
+    <button type="button" class="submit" [disabled]="!canSubmit()" (click)="submit()">
+      Create Sabha
+    </button>
+  }
+</section>

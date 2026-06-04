@@ -12,9 +12,11 @@ import org.sabha.attendance.applicationservice.CurrentOccurrence;
 import org.sabha.attendance.applicationservice.CurrentRoster;
 import org.sabha.attendance.applicationservice.GetCurrentOccurrenceUseCase;
 import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
+import org.sabha.attendance.applicationservice.ListSanchalakMonthlySabhasUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
 import org.sabha.attendance.applicationservice.MonthlyComplianceQuery;
+import org.sabha.attendance.applicationservice.MonthlySabha;
 import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
@@ -38,6 +40,7 @@ public class AttendanceRestController {
     private final OccurrenceShapingService shapeOccurrence;
     private final CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence;
     private final MonthlyComplianceQuery monthlyCompliance;
+    private final ListSanchalakMonthlySabhasUseCase listMonthlySabhas;
     private final Clock clock;
 
     public AttendanceRestController(
@@ -48,6 +51,7 @@ public class AttendanceRestController {
             OccurrenceShapingService shapeOccurrence,
             CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence,
             MonthlyComplianceQuery monthlyCompliance,
+            ListSanchalakMonthlySabhasUseCase listMonthlySabhas,
             Clock clock) {
         this.getCurrentRoster = getCurrentRoster;
         this.getCurrentOccurrence = getCurrentOccurrence;
@@ -56,6 +60,7 @@ public class AttendanceRestController {
         this.shapeOccurrence = shapeOccurrence;
         this.createMonthlyOccurrence = createMonthlyOccurrence;
         this.monthlyCompliance = monthlyCompliance;
+        this.listMonthlySabhas = listMonthlySabhas;
         this.clock = clock;
     }
 
@@ -159,6 +164,12 @@ public class AttendanceRestController {
         UUID occurrenceId = createMonthlyOccurrence.create(
                 keycloakSubject, sabhaId, req.date(), req.startTime(), req.endTime(), req.venue());
         return ResponseEntity.status(201).body(new CreatedOccurrenceResponse(occurrenceId));
+    }
+
+    @GetMapping("/api/sanchalak/monthly-sabhas")
+    public List<MonthlySabha> monthlySabhas(@AuthenticationPrincipal Jwt jwt) {
+        UUID keycloakSubject = UUID.fromString(jwt.getSubject());
+        return listMonthlySabhas.execute(keycloakSubject);
     }
 
     @GetMapping("/api/sabhas/{sabhaId}/monthly-compliance")

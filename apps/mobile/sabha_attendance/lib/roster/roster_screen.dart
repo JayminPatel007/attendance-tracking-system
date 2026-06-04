@@ -16,6 +16,7 @@ class RosterScreen extends StatefulWidget {
     this.onOpenAddPerson,
     this.onOpenWalkIn,
     this.onOpenHomeSabhaTransfer,
+    this.onOpenMonthlyOccurrence,
   });
 
   final RosterController controller;
@@ -25,6 +26,10 @@ class RosterScreen extends StatefulWidget {
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
   final VoidCallback? onOpenHomeSabhaTransfer;
+
+  /// Opens the monthly-ad-hoc Occurrence screen (Slice 12). Reachable even with
+  /// no current roster — a monthly Sabha with no Occurrence yet has none.
+  final VoidCallback? onOpenMonthlyOccurrence;
 
   @override
   State<RosterScreen> createState() => _RosterScreenState();
@@ -68,6 +73,15 @@ class _RosterScreenState extends State<RosterScreen> {
               onPressed: () => widget.controller.initialize(),
               child: const Text('Retry'),
             ),
+            if (widget.onOpenMonthlyOccurrence != null) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('open-monthly-occurrence-button'),
+                icon: const Icon(Icons.event_available),
+                label: const Text('Monthly Sabhas'),
+                onPressed: widget.onOpenMonthlyOccurrence,
+              ),
+            ],
             if (widget.onSignOut != null) ...[
               const SizedBox(height: 8),
               TextButton(onPressed: widget.onSignOut, child: const Text('Sign out')),
@@ -86,6 +100,7 @@ class _RosterScreenState extends State<RosterScreen> {
       onOpenAddPerson: widget.onOpenAddPerson,
       onOpenWalkIn: widget.onOpenWalkIn,
       onOpenHomeSabhaTransfer: widget.onOpenHomeSabhaTransfer,
+      onOpenMonthlyOccurrence: widget.onOpenMonthlyOccurrence,
       onSignOut: widget.onSignOut,
     );
 
@@ -109,6 +124,7 @@ class _RosterBody extends StatelessWidget {
     required this.onOpenAddPerson,
     required this.onOpenWalkIn,
     required this.onOpenHomeSabhaTransfer,
+    required this.onOpenMonthlyOccurrence,
     required this.onSignOut,
   });
 
@@ -120,6 +136,7 @@ class _RosterBody extends StatelessWidget {
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
   final VoidCallback? onOpenHomeSabhaTransfer;
+  final VoidCallback? onOpenMonthlyOccurrence;
   final VoidCallback? onSignOut;
 
   @override
@@ -161,6 +178,12 @@ class _RosterBody extends StatelessWidget {
               icon: const Icon(Icons.tune),
               tooltip: 'Manage Sabha',
               onPressed: onOpenOccurrenceControl,
+            ),
+          if (onOpenMonthlyOccurrence != null)
+            IconButton(
+              icon: const Icon(Icons.event_available),
+              tooltip: 'Monthly Sabhas',
+              onPressed: onOpenMonthlyOccurrence,
             ),
           if (onOpenSyncStatus != null)
             IconButton(

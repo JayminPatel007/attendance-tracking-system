@@ -12,6 +12,9 @@ import 'auth/session.dart';
 import 'home_sabha_transfer/home_sabha_transfer_api.dart';
 import 'home_sabha_transfer/home_sabha_transfer_controller.dart';
 import 'home_sabha_transfer/home_sabha_transfer_screen.dart';
+import 'monthly_occurrence/monthly_occurrence_api.dart';
+import 'monthly_occurrence/monthly_occurrence_controller.dart';
+import 'monthly_occurrence/monthly_occurrence_screen.dart';
 import 'occurrence_control/occurrence_control_api.dart';
 import 'occurrence_control/occurrence_control_controller.dart';
 import 'occurrence_control/occurrence_control_screen.dart';
@@ -105,12 +108,15 @@ class _AppShellState extends State<AppShell> {
                   WalkInApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final homeSabhaTransferApi =
                   HomeSabhaTransferApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
+              final monthlyOccurrenceApi =
+                  MonthlyOccurrenceApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
                 controller: controller,
                 occurrenceControlApi: occurrenceControlApi,
                 addPersonApi: addPersonApi,
                 walkInApi: walkInApi,
                 homeSabhaTransferApi: homeSabhaTransferApi,
+                monthlyOccurrenceApi: monthlyOccurrenceApi,
                 store: store,
                 onSignOut: widget.session.clear,
               );
@@ -129,6 +135,7 @@ class _RosterShell extends StatefulWidget {
     required this.addPersonApi,
     required this.walkInApi,
     required this.homeSabhaTransferApi,
+    required this.monthlyOccurrenceApi,
     required this.store,
     required this.onSignOut,
   });
@@ -138,6 +145,7 @@ class _RosterShell extends StatefulWidget {
   final AddPersonApi addPersonApi;
   final WalkInApi walkInApi;
   final HomeSabhaTransferApi homeSabhaTransferApi;
+  final MonthlyOccurrenceApi monthlyOccurrenceApi;
   final AttendanceStore store;
   final VoidCallback onSignOut;
 
@@ -165,6 +173,19 @@ class _RosterShellState extends State<_RosterShell> {
       builder: (_) => Scaffold(
         appBar: AppBar(title: const Text('Manage Sabha')),
         body: OccurrenceControlScreen(controller: controller),
+      ),
+    ));
+  }
+
+  void _openMonthlyOccurrence() {
+    // Reachable without a current roster: a monthly-ad-hoc Sabha with no
+    // Occurrence yet (ADR-0012) has no roster to derive its id from.
+    final controller = MonthlyOccurrenceController(api: widget.monthlyOccurrenceApi);
+    controller.initialize();
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Monthly Sabhas')),
+        body: MonthlyOccurrenceScreen(controller: controller),
       ),
     ));
   }
@@ -256,6 +277,7 @@ class _RosterShellState extends State<_RosterShell> {
       onOpenAddPerson: _openAddPerson,
       onOpenWalkIn: _openWalkIn,
       onOpenHomeSabhaTransfer: _openHomeSabhaTransfer,
+      onOpenMonthlyOccurrence: _openMonthlyOccurrence,
     );
   }
 }
