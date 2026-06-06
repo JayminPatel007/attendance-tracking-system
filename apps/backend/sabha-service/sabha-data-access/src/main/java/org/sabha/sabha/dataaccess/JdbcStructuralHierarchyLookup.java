@@ -41,6 +41,17 @@ public class JdbcStructuralHierarchyLookup implements StructuralHierarchyLookup 
     }
 
     @Override
+    public Optional<UUID> selectiveSabhaIn(UUID kshetraId, String demographic, String track) {
+        // A Sabha's (demographic, track) is carried denormalized in sabha_kind as
+        // TRACK_DEMOGRAPHIC (e.g. YSS_YUVAK), matching the split in sabhaScope.
+        return jdbc.sql("SELECT id FROM sabhas WHERE kshetra_id = ? AND sabha_kind = ?")
+                .param(kshetraId)
+                .param(track + "_" + demographic)
+                .query((rs, n) -> rs.getObject("id", UUID.class))
+                .optional();
+    }
+
+    @Override
     public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
         return jdbc.sql("SELECT zone_id FROM kshetras WHERE id = ?")
                 .param(kshetraId)

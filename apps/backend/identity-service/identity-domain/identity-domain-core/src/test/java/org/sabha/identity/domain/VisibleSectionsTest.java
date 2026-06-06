@@ -61,6 +61,20 @@ class VisibleSectionsTest {
     }
 
     @Test
+    void aNirdeshakSeesTheSelectionSection() {
+        Set<Section> sections = VisibleSections.forMember(false, Set.of(Role.NIRDESHAK));
+
+        assertThat(sections).contains(Section.SELECTION);
+    }
+
+    @Test
+    void aSanchalakDoesNotSeeTheSelectionSection() {
+        Set<Section> sections = VisibleSections.forMember(false, Set.of(Role.SANCHALAK));
+
+        assertThat(sections).doesNotContain(Section.SELECTION);
+    }
+
+    @Test
     void aSanyojakSeesTheStructuralAdminSectionForKshetraCreation() {
         Set<Section> sections = VisibleSections.forMember(false, Set.of(Role.SANYOJAK));
 

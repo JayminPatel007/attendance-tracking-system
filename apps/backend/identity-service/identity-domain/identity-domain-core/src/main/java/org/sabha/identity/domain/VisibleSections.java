@@ -15,7 +15,9 @@ import org.sabha.common.Role;
  * section belongs to the Kshetra tiers (Nirikshak / Nirdeshak / Sah-Nirdeshak),
  * who alone may reopen a Finalized Occurrence — never MK or the other oversight
  * tiers (ADR-0001, Slice 13). The Sanchalak-proxy section belongs to the
- * Nirikshak (Slice 14). Everyone with a web login sees the Dashboard.
+ * Nirikshak (Slice 14). The Selection section — the BSS/YSS nomination queue —
+ * belongs to the demographic Nirdeshak, who alone approves selections (ADR-0006,
+ * Slice 16). Everyone with a web login sees the Dashboard.
  *
  * <p>Stateless: the application service loads the membership flag and roles and
  * passes them in — the domain service never touches a repository (ADR-0019).</p>
@@ -37,6 +39,9 @@ public final class VisibleSections {
         }
         if (operationalRoles.contains(Role.NIRIKSHAK)) {
             sections.add(Section.SANCHALAK_PROXY);
+        }
+        if (operationalRoles.contains(Role.NIRDESHAK)) {
+            sections.add(Section.SELECTION);
         }
         if (!Collections.disjoint(operationalRoles, Role.REOPEN_TIERS)) {
             sections.add(Section.OCCURRENCE_REOPEN);
