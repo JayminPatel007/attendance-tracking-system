@@ -1,7 +1,6 @@
 /**
  * sabha-domain — frontend mirror of the backend sabha bounded context.
- * Types for Sabha, Occurrence, Roster.
- *
- * Placeholder for Slice 1.
+ * Sabha-kind vocabulary shared across the features that render denormalized
+ * kind tokens (Occurrences, the re-engagement dashboard).
  */
-export const __SABHA_DOMAIN__ = 'sabha-domain';
+export * from './lib/sabha-kind-label';

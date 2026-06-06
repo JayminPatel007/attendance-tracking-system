@@ -1,0 +1,44 @@
+<section class="people">
+  <div class="people__filters">
+    <input
+      class="people__search"
+      type="search"
+      name="search"
+      placeholder="Search by name"
+      [(ngModel)]="search" />
+    <label class="people__toggle">
+      <input type="checkbox" [checked]="priorityOnly()" (change)="priorityOnly.set($any($event.target).checked)" />
+      Priority candidates only
+    </label>
+    <span class="people__count">{{ filtered().length }} shown</span>
+  </div>
+
+  <div class="people__table-wrap">
+    <table class="people__table">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>Home Sabha</th>
+          <th>Demographic</th>
+          <th class="num">Missed streak</th>
+          <th>Tier</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of filtered(); track row.personId) {
+          <tr>
+            <td>{{ row.personName }}</td>
+            <td>{{ kindLabel(row.sabhaKind) }} · {{ row.kshetraName }}</td>
+            <td>{{ demographicLabel(row.demographic) }}</td>
+            <td class="num">{{ row.missedStreak }}</td>
+            <td><app-tier-badge [tier]="row.tier" /></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="people__empty" colspan="5">No people match the current filters.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,35 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <h1>Re-engagement dashboard</h1>
+    <p class="dashboard__hint">
+      Members drifting from their Home Sabha, scoped to your authority. Refreshed periodically.
+    </p>
+  </header>
+
+  <nav class="dashboard__tabs" aria-label="Dashboard sections">
+    @for (item of tabs; track item.tab) {
+      <button
+        type="button"
+        class="dashboard__tab"
+        [class.dashboard__tab--active]="tab() === item.tab"
+        (click)="select(item.tab)">
+        {{ item.label }}
+      </button>
+    }
+  </nav>
+
+  <div class="dashboard__body">
+    @switch (tab()) {
+      @case ('overview') {
+        <app-dashboard-overview />
+        <app-threshold-editor />
+      }
+      @case ('people') {
+        <app-dashboard-people />
+      }
+      @case ('tree') {
+        <app-dashboard-sabha-tree />
+      }
+    }
+  </div>
+</section>

@@ -1,0 +1,68 @@
+.thresholds {
+  border: 1px solid #d8e2f0;
+  background: #f7faff;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.thresholds__title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.thresholds__hint {
+  margin: 0.2rem 0 0;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.thresholds__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.thresholds__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.thresholds__field input {
+  width: 6rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.thresholds__save {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.thresholds__save:disabled {
+  background: #a9bef0;
+  cursor: not-allowed;
+}
+
+.thresholds__error {
+  color: #b00020;
+  margin: 0;
+}
+
+.thresholds__saved {
+  color: #1a7f37;
+  margin: 0;
+}

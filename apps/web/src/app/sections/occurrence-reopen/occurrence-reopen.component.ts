@@ -2,25 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { kindLabel } from 'sabha-domain';
 
 import { OccurrenceReopenService } from './occurrence-reopen.service';
 import { OccurrenceListItem } from './occurrence-reopen.types';
-
-const DEMOGRAPHIC_LABELS: Record<string, string> = {
-  BAAL: 'Baal', BALIKA: 'Balika', YUVAK: 'Yuvak', YUVATI: 'Yuvati', SANYUKTA: 'Sanyukta',
-};
-
-/** Human label for a denormalized `TRACK_DEMOGRAPHIC` kind, e.g. "Yuvak (Regular)". */
-export function kindLabel(sabhaKind: string): string {
-  const underscore = sabhaKind.indexOf('_');
-  if (underscore < 0) {
-    return sabhaKind;
-  }
-  const track = sabhaKind.slice(0, underscore);
-  const demographic = sabhaKind.slice(underscore + 1);
-  const titleTrack = track.charAt(0) + track.slice(1).toLowerCase();
-  return `${DEMOGRAPHIC_LABELS[demographic] ?? demographic} (${titleTrack})`;
-}
 
 /**
  * Occurrence-reopen section (ADR-0001, Slice 13). Two-pane: the Occurrences the

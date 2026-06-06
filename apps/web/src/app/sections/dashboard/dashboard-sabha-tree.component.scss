@@ -1,0 +1,67 @@
+.tree {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tree__empty {
+  color: #777;
+  padding: 1.25rem;
+  margin: 0;
+}
+
+.tree__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tree__row--zone {
+  font-weight: 600;
+  background: #f6f8fa;
+}
+
+.tree__row--kshetra {
+  padding-left: 2rem;
+}
+
+.tree__row--sabha {
+  padding-left: 3.4rem;
+  cursor: default;
+  color: #444;
+}
+
+.tree__caret {
+  width: 1rem;
+  color: #888;
+}
+
+.tree__name {
+  flex: 1;
+}
+
+.tree__type {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+}
+
+.tree__count {
+  min-width: 1.75rem;
+  text-align: center;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
