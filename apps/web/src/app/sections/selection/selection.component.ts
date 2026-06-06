@@ -2,15 +2,19 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { demographicLabel } from 'sabha-domain';
 import { Observable } from 'rxjs';
 
 import { SelectionService } from './selection.service';
 import { PendingNomination, SelectedPerson } from './selection.types';
 
-/** A human label for the selective Sabha a Person joins, e.g. `Yuvak · YSS`. */
+/**
+ * A human label for the selective Sabha a Person joins, e.g. `Yuvak (YSS)` —
+ * reuses the canonical {@link demographicLabel} decoder and mirrors the
+ * `Demographic (Track)` shape `kindLabel` uses elsewhere.
+ */
 export function trackLabel(demographic: string, track: string): string {
-  const dem = demographic.charAt(0) + demographic.slice(1).toLowerCase();
-  return `${dem} · ${track}`;
+  return `${demographicLabel(demographic)} (${track})`;
 }
 
 /**
