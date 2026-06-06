@@ -6,6 +6,7 @@ import { RoleAppointmentComponent } from './sections/role-appointment/role-appoi
 import { SabhaDefinitionComponent } from './sections/sabha-definition/sabha-definition.component';
 import { SanchalakProxyComponent } from './sections/sanchalak-proxy/sanchalak-proxy.component';
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
+import { SelectionComponent } from './sections/selection/selection.component';
 import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
 import { SECTION_NAV } from './shell/section-nav';
 import { sectionGuard } from './shell/section.guard';
@@ -19,6 +20,7 @@ const SECTION_COMPONENTS = {
   SABHA_DEFINITION: SabhaDefinitionComponent,
   OCCURRENCE_REOPEN: OccurrenceReopenComponent,
   SANCHALAK_PROXY: SanchalakProxyComponent,
+  SELECTION: SelectionComponent,
 } as const;
 
 /** One guarded route per shell section, derived from the nav model. */

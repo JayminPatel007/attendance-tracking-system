@@ -9,4 +9,5 @@ export type Section =
   | 'STRUCTURAL_ADMIN'
   | 'SABHA_DEFINITION'
   | 'OCCURRENCE_REOPEN'
-  | 'SANCHALAK_PROXY';
+  | 'SANCHALAK_PROXY'
+  | 'SELECTION';
