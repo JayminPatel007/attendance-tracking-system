@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { OccurrenceReopenComponent, kindLabel } from './occurrence-reopen.component';
+import { OccurrenceReopenComponent } from './occurrence-reopen.component';
 import { OccurrenceReopenService } from './occurrence-reopen.service';
 import { OccurrenceListItem } from './occurrence-reopen.types';
 
@@ -98,9 +98,5 @@ describe('OccurrenceReopenComponent', () => {
 
     expect(c.error()).toContain('not authorized');
     expect(api.list).toHaveBeenCalledTimes(1);
-  });
-
-  it('labels a denormalized kind token for display', () => {
-    expect(kindLabel('REGULAR_YUVAK')).toBe('Yuvak (Regular)');
   });
 });

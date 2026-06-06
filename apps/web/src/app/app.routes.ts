@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { DashboardComponent } from './sections/dashboard/dashboard.component';
 import { OccurrenceReopenComponent } from './sections/occurrence-reopen/occurrence-reopen.component';
 import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
 import { SabhaDefinitionComponent } from './sections/sabha-definition/sabha-definition.component';
@@ -12,6 +13,7 @@ import { ShellComponent } from './shell/shell.component';
 
 /** Sections with a real screen; the rest fall back to the placeholder (later slices). */
 const SECTION_COMPONENTS = {
+  DASHBOARD: DashboardComponent,
   ROLE_APPOINTMENT: RoleAppointmentComponent,
   STRUCTURAL_ADMIN: StructuralAdminComponent,
   SABHA_DEFINITION: SabhaDefinitionComponent,

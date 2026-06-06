@@ -1,7 +1,7 @@
 /**
  * analytics-domain — frontend mirror of the backend analytics bounded context.
- * Read-model types for dashboards and the Re-engagement Candidate list.
- *
- * Placeholder for Slice 1.
+ * Read-model types and the BFF-backed DashboardService for the re-engagement
+ * dashboard (Slice 15, ADR-0010).
  */
-export const __ANALYTICS_DOMAIN__ = 'analytics-domain';
+export * from './lib/dashboard.types';
+export * from './lib/dashboard.service';

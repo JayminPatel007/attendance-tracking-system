@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { demographicLabel } from 'sabha-domain';
 
 import { suggestPassword, suggestUsername } from '../role-appointment/appointment.credentials';
 import { NameCandidate, PersonResponse } from '../role-appointment/appointment.types';
@@ -8,14 +9,9 @@ import { KshetraView, SabhaKindView, ZoneView } from '../structural-admin/struct
 import { SabhaDefinitionService } from './sabha-definition.service';
 import { AppointeePayload, DAYS_OF_WEEK, DayOfWeek, DefineSabhaRequest } from './sabha-definition.types';
 
-const DEMOGRAPHIC_LABELS: Record<string, string> = {
-  BAAL: 'Baal', BALIKA: 'Balika', YUVAK: 'Yuvak', YUVATI: 'Yuvati', SANYUKTA: 'Sanyukta',
-};
-
 /** Human label for a kind dropdown option, e.g. "Yuvak Sabha (YSS)". */
 export function kindLabel(kind: SabhaKindView): string {
-  const demographic = DEMOGRAPHIC_LABELS[kind.demographic] ?? kind.demographic;
-  return `${demographic} Sabha (${kind.track})`;
+  return `${demographicLabel(kind.demographic)} Sabha (${kind.track})`;
 }
 
 type Stage = 'editing' | 'done';

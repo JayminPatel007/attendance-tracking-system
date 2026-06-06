@@ -1,0 +1,96 @@
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.overview__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.kpi {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+
+.kpi__label {
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.kpi__value {
+  margin-top: 0.35rem;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.kpi__value--priority {
+  color: #b00020;
+}
+
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+}
+
+.card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.card__empty {
+  color: #777;
+  margin: 0.5rem 0 0;
+}
+
+.candidate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.candidate:last-child {
+  border-bottom: none;
+}
+
+.candidate__meta {
+  flex: 1;
+}
+
+.candidate__name {
+  font-weight: 600;
+}
+
+.candidate__sub {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.candidate__missed {
+  color: #777;
+  font-size: 0.85rem;
+  min-width: 5rem;
+  text-align: right;
+}

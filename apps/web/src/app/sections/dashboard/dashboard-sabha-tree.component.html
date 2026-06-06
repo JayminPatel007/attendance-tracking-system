@@ -1,0 +1,39 @@
+<section class="tree">
+  @if (zones().length === 0) {
+    <p class="tree__empty">No Sabhas with candidates in your scope.</p>
+  }
+
+  @for (zone of zones(); track zoneKey(zone)) {
+    <div class="tree__zone">
+      <button type="button" class="tree__row tree__row--zone" (click)="toggleZone(zoneKey(zone))">
+        <span class="tree__caret">{{ isZoneOpen(zoneKey(zone)) ? '▾' : '▸' }}</span>
+        <span class="tree__name">{{ zoneLabel(zone) }}</span>
+        <span class="tree__type">Zone</span>
+        <span class="tree__count">{{ zone.candidateCount }}</span>
+      </button>
+
+      @if (isZoneOpen(zoneKey(zone))) {
+        @for (kshetra of zone.kshetras; track kshetra.kshetraId) {
+          <div class="tree__kshetra">
+            <button type="button" class="tree__row tree__row--kshetra" (click)="toggleKshetra(kshetra.kshetraId)">
+              <span class="tree__caret">{{ isKshetraOpen(kshetra.kshetraId) ? '▾' : '▸' }}</span>
+              <span class="tree__name">{{ kshetra.kshetraName }}</span>
+              <span class="tree__type">Kshetra</span>
+              <span class="tree__count">{{ kshetra.candidateCount }}</span>
+            </button>
+
+            @if (isKshetraOpen(kshetra.kshetraId)) {
+              @for (sabha of kshetra.sabhas; track sabha.sabhaId) {
+                <div class="tree__row tree__row--sabha">
+                  <span class="tree__name">{{ kindLabel(sabha.sabhaKind) }}</span>
+                  <span class="tree__type">Sabha</span>
+                  <span class="tree__count">{{ sabha.candidateCount }}</span>
+                </div>
+              }
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</section>

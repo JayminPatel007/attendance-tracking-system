@@ -1,0 +1,38 @@
+<section class="overview">
+  <div class="overview__kpis">
+    <div class="kpi">
+      <div class="kpi__label">Re-engagement candidates</div>
+      <div class="kpi__value">{{ kpis()?.totalCandidates ?? 0 }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Priority candidates</div>
+      <div class="kpi__value kpi__value--priority">{{ kpis()?.priorityCandidates ?? 0 }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Sabhas with candidates</div>
+      <div class="kpi__value">{{ kpis()?.sabhasWithCandidates ?? 0 }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2 class="card__title">Re-engagement candidates</h2>
+    </div>
+    @if (headlineCandidates().length === 0) {
+      <p class="card__empty">No re-engagement candidates in your scope.</p>
+    } @else {
+      <ul class="candidate-list">
+        @for (candidate of headlineCandidates(); track candidate.personId) {
+          <li class="candidate">
+            <div class="candidate__meta">
+              <div class="candidate__name">{{ candidate.personName }}</div>
+              <div class="candidate__sub">{{ kindLabel(candidate.sabhaKind) }} · {{ candidate.kshetraName }}</div>
+            </div>
+            <app-tier-badge [tier]="candidate.tier" />
+            <span class="candidate__missed">missed {{ candidate.missedStreak }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

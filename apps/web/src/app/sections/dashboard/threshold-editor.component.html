@@ -1,0 +1,30 @@
+@if (isMk()) {
+  <form class="thresholds" (ngSubmit)="save()">
+    <div class="thresholds__head">
+      <h2 class="thresholds__title">Re-engagement thresholds</h2>
+      <p class="thresholds__hint">
+        Consecutive missed Sabhas before a Person becomes a candidate, then a priority.
+        Madhyastha Karyalaya only.
+      </p>
+    </div>
+
+    <div class="thresholds__fields">
+      <label class="thresholds__field">
+        <span>Candidate after</span>
+        <input type="number" name="candidate" min="1" [(ngModel)]="candidate" />
+      </label>
+      <label class="thresholds__field">
+        <span>Priority after</span>
+        <input type="number" name="priority" min="1" [(ngModel)]="priority" />
+      </label>
+      <button type="submit" class="thresholds__save" [disabled]="!valid() || saving()">Save</button>
+    </div>
+
+    @if (error()) {
+      <p class="thresholds__error" role="alert">{{ error() }}</p>
+    }
+    @if (saved()) {
+      <p class="thresholds__saved" role="status">Thresholds updated.</p>
+    }
+  </form>
+}
