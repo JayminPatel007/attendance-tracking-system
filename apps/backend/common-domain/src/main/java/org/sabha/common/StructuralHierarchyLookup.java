@@ -21,6 +21,19 @@ public interface StructuralHierarchyLookup {
     /** The Kshetra and {@code (demographic, track)} kind of the given Sabha. */
     Optional<SabhaScope> sabhaScope(UUID sabhaId);
 
+    /**
+     * The Sabha of the given {@code (demographic, track)} kind within the Kshetra,
+     * if one exists. Used by the BSS/YSS selection workflow (ADR-0006) to resolve
+     * the selective Sabha a nominee would additionally join from their Regular
+     * Sabha's Kshetra and demographic.
+     *
+     * <p>Defaulted to empty so the appointment/attendance test fakes that predate
+     * the selection workflow need not implement it; the JDBC adapter overrides.</p>
+     */
+    default Optional<UUID> selectiveSabhaIn(UUID kshetraId, String demographic, String track) {
+        return Optional.empty();
+    }
+
     /** The Zone the given Kshetra belongs to. */
     Optional<UUID> zoneOfKshetra(UUID kshetraId);
 

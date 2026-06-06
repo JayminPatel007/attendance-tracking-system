@@ -6,8 +6,12 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
+import org.sabha.identity.applicationservice.AlreadySelectedException;
+import org.sabha.identity.applicationservice.DuplicateNominationException;
+import org.sabha.identity.applicationservice.NominationNotAuthorizedException;
 import org.sabha.identity.applicationservice.OtpRateLimitExceededException;
 import org.sabha.identity.applicationservice.OtpResendCooldownException;
+import org.sabha.identity.applicationservice.SelectionDecisionNotAuthorizedException;
 import org.sabha.identity.applicationservice.TransferNotAuthorizedException;
 import org.sabha.identity.applicationservice.UsernameAlreadyTakenException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
@@ -74,6 +78,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> usernameAlreadyTaken(UsernameAlreadyTakenException ex) {
         return ResponseEntity.status(409)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), "USERNAME_TAKEN"));
+    }
+
+    @ExceptionHandler({NominationNotAuthorizedException.class, SelectionDecisionNotAuthorizedException.class})
+    public ResponseEntity<ErrorResponse> selectionNotAuthorized(RuntimeException ex) {
+        return ResponseEntity.status(403)
+                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    }
+
+    @ExceptionHandler({DuplicateNominationException.class, AlreadySelectedException.class})
+    public ResponseEntity<ErrorResponse> nominationConflict(RuntimeException ex) {
+        return ResponseEntity.status(409)
+                .body(ErrorResponse.of(409, "Conflict", ex.getMessage()));
     }
 
     @ExceptionHandler({OtpRateLimitExceededException.class, OtpResendCooldownException.class})
