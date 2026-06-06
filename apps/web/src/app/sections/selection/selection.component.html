@@ -1,0 +1,65 @@
+<section class="selection">
+  <header class="selection__header">
+    <h1>Selection</h1>
+    <p class="selection__hint">
+      Approve or reject Sanchalak nominations for BSS / YSS. Approving adds the
+      selective Home Sabha without removing the Regular one; deselecting removes only
+      the selective Home Sabha.
+    </p>
+  </header>
+
+  @if (error()) {
+    <p class="selection__error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="selection__group">
+    <h2>Pending nominations</h2>
+    <ul class="selection__list" aria-label="Pending nominations">
+      @if (pending().length === 0) {
+        <li class="selection__empty">No nominations awaiting your decision.</li>
+      }
+      @for (nom of pending(); track nom.nominationId) {
+        <li class="selection__item">
+          <div class="selection__info">
+            <span class="selection__name">{{ nom.personName }}</span>
+            <span class="selection__meta">{{ trackLabel(nom.demographic, nom.track) }}</span>
+            <span class="selection__sub">
+              Nominated by {{ nom.nominatedByName }} · {{ nom.nominatedAt | date: 'mediumDate' }}
+            </span>
+          </div>
+          <div class="selection__actions">
+            <button type="button" class="selection__approve" [disabled]="submitting()"
+                    (click)="approve(nom.nominationId)">Approve</button>
+            <label class="selection__reject">
+              <input #reason type="text" placeholder="Reason to reject" />
+              <button type="button" [disabled]="submitting()"
+                      (click)="reject(nom.nominationId, reason.value)">Reject</button>
+            </label>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="selection__group">
+    <h2>Currently selected</h2>
+    <ul class="selection__list" aria-label="Currently selected">
+      @if (selected().length === 0) {
+        <li class="selection__empty">No People are currently selected.</li>
+      }
+      @for (person of selected(); track person.nominationId) {
+        <li class="selection__item">
+          <div class="selection__info">
+            <span class="selection__name">{{ person.personName }}</span>
+            <span class="selection__meta">{{ trackLabel(person.demographic, person.track) }}</span>
+            <span class="selection__sub">
+              Approved by {{ person.decidedByName }} · {{ person.decidedAt | date: 'mediumDate' }}
+            </span>
+          </div>
+          <button type="button" class="selection__deselect" [disabled]="submitting()"
+                  (click)="deselect(person)">Deselect</button>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

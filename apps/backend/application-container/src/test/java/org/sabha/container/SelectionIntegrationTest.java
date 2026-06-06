@@ -113,6 +113,15 @@ class SelectionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
 
+        // The approved Person now appears in the Nirdeshak's selected list — the
+        // source the web deselect action acts on (carries person + selective Sabha).
+        mockMvc.perform(get("/bff/selection/selected")
+                        .with(oidcLogin().idToken(t -> t.subject(NIRDESHAK_SUBJECT))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].personId").value(ROSTER_PERSON.toString()))
+                .andExpect(jsonPath("$[0].selectiveSabhaId").value(SELECTIVE_SABHA.toString()))
+                .andExpect(jsonPath("$[0].track").value("YSS"));
+
         deselect();
 
         // Deselection removes only the selective Home Sabha; the Regular one stays.
@@ -120,6 +129,12 @@ class SelectionIntegrationTest {
                 .contains(REGULAR_SABHA.toString())
                 .doesNotContain(SELECTIVE_SABHA.toString());
         assertThat(nominationStatus(nominationId)).isEqualTo("DESELECTED");
+
+        // A deselected Person drops out of the selected list.
+        mockMvc.perform(get("/bff/selection/selected")
+                        .with(oidcLogin().idToken(t -> t.subject(NIRDESHAK_SUBJECT))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test

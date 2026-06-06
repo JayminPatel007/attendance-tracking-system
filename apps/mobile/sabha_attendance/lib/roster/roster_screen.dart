@@ -16,6 +16,7 @@ class RosterScreen extends StatefulWidget {
     this.onOpenAddPerson,
     this.onOpenWalkIn,
     this.onOpenHomeSabhaTransfer,
+    this.onOpenSelection,
     this.onOpenMonthlyOccurrence,
   });
 
@@ -26,6 +27,9 @@ class RosterScreen extends StatefulWidget {
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
   final VoidCallback? onOpenHomeSabhaTransfer;
+
+  /// Opens the BSS/YSS nominate screen (Slice 16) for the current Roster.
+  final VoidCallback? onOpenSelection;
 
   /// Opens the monthly-ad-hoc Occurrence screen (Slice 12). Reachable even with
   /// no current roster — a monthly Sabha with no Occurrence yet has none.
@@ -100,6 +104,7 @@ class _RosterScreenState extends State<RosterScreen> {
       onOpenAddPerson: widget.onOpenAddPerson,
       onOpenWalkIn: widget.onOpenWalkIn,
       onOpenHomeSabhaTransfer: widget.onOpenHomeSabhaTransfer,
+      onOpenSelection: widget.onOpenSelection,
       onOpenMonthlyOccurrence: widget.onOpenMonthlyOccurrence,
       onSignOut: widget.onSignOut,
     );
@@ -124,6 +129,7 @@ class _RosterBody extends StatelessWidget {
     required this.onOpenAddPerson,
     required this.onOpenWalkIn,
     required this.onOpenHomeSabhaTransfer,
+    required this.onOpenSelection,
     required this.onOpenMonthlyOccurrence,
     required this.onSignOut,
   });
@@ -136,6 +142,7 @@ class _RosterBody extends StatelessWidget {
   final VoidCallback? onOpenAddPerson;
   final VoidCallback? onOpenWalkIn;
   final VoidCallback? onOpenHomeSabhaTransfer;
+  final VoidCallback? onOpenSelection;
   final VoidCallback? onOpenMonthlyOccurrence;
   final VoidCallback? onSignOut;
 
@@ -172,6 +179,13 @@ class _RosterBody extends StatelessWidget {
               icon: const Icon(Icons.swap_horiz),
               tooltip: 'Home Sabha transfer',
               onPressed: onOpenHomeSabhaTransfer,
+            ),
+          if (onOpenSelection != null)
+            IconButton(
+              key: const Key('selection-button'),
+              icon: const Icon(Icons.how_to_reg),
+              tooltip: 'Nominate for BSS/YSS',
+              onPressed: onOpenSelection,
             ),
           if (onOpenOccurrenceControl != null)
             IconButton(

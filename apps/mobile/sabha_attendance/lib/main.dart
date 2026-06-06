@@ -21,6 +21,9 @@ import 'occurrence_control/occurrence_control_screen.dart';
 import 'roster/roster_api.dart';
 import 'roster/roster_controller.dart';
 import 'roster/roster_screen.dart';
+import 'selection/selection_api.dart';
+import 'selection/selection_controller.dart';
+import 'selection/selection_screen.dart';
 import 'sync/attendance_store.dart';
 import 'walk_in/walk_in_api.dart';
 import 'walk_in/walk_in_controller.dart';
@@ -108,6 +111,8 @@ class _AppShellState extends State<AppShell> {
                   WalkInApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final homeSabhaTransferApi =
                   HomeSabhaTransferApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
+              final selectionApi =
+                  SelectionApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               final monthlyOccurrenceApi =
                   MonthlyOccurrenceApi(baseUrl: widget.config.backendBaseUrl, accessToken: token);
               return _RosterShell(
@@ -116,6 +121,7 @@ class _AppShellState extends State<AppShell> {
                 addPersonApi: addPersonApi,
                 walkInApi: walkInApi,
                 homeSabhaTransferApi: homeSabhaTransferApi,
+                selectionApi: selectionApi,
                 monthlyOccurrenceApi: monthlyOccurrenceApi,
                 store: store,
                 onSignOut: widget.session.clear,
@@ -135,6 +141,7 @@ class _RosterShell extends StatefulWidget {
     required this.addPersonApi,
     required this.walkInApi,
     required this.homeSabhaTransferApi,
+    required this.selectionApi,
     required this.monthlyOccurrenceApi,
     required this.store,
     required this.onSignOut,
@@ -145,6 +152,7 @@ class _RosterShell extends StatefulWidget {
   final AddPersonApi addPersonApi;
   final WalkInApi walkInApi;
   final HomeSabhaTransferApi homeSabhaTransferApi;
+  final SelectionApi selectionApi;
   final MonthlyOccurrenceApi monthlyOccurrenceApi;
   final AttendanceStore store;
   final VoidCallback onSignOut;
@@ -267,6 +275,31 @@ class _RosterShellState extends State<_RosterShell> {
     ));
   }
 
+  void _openSelection() {
+    // Nominees are the current Roster's People; the Regular Sabha is the current
+    // Sabha and the selective Sabha is derived server-side (ADR-0006).
+    final roster = widget.controller.state.roster;
+    if (roster == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Load a roster first to nominate.')),
+      );
+      return;
+    }
+    final controller = SelectionController(
+      api: widget.selectionApi,
+      regularSabhaId: roster.occurrence.sabhaId,
+      people: roster.roster
+          .map((e) => Nominee(personId: e.personId, fullName: e.fullName))
+          .toList(),
+    );
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Nominate for BSS/YSS')),
+        body: SelectionScreen(controller: controller),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return RosterScreen(
@@ -277,6 +310,7 @@ class _RosterShellState extends State<_RosterShell> {
       onOpenAddPerson: _openAddPerson,
       onOpenWalkIn: _openWalkIn,
       onOpenHomeSabhaTransfer: _openHomeSabhaTransfer,
+      onOpenSelection: _openSelection,
       onOpenMonthlyOccurrence: _openMonthlyOccurrence,
     );
   }

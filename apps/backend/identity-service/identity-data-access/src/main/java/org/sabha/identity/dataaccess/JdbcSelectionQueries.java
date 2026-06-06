@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sabha.identity.applicationservice.PendingNominationItem;
+import org.sabha.identity.applicationservice.SelectedPersonItem;
 import org.sabha.identity.applicationservice.SelectionQueries;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -59,6 +60,41 @@ public class JdbcSelectionQueries implements SelectionQueries {
                         rs.getObject("nominated_by", UUID.class),
                         rs.getString("nominated_by_name"),
                         rs.getTimestamp("nominated_at").toInstant()))
+                .list();
+    }
+
+    @Override
+    public List<SelectedPersonItem> selectedFor(UUID nirdeshakUserId) {
+        return jdbc.sql("""
+                SELECT n.id, n.person_id, p.full_name AS person_name,
+                       n.selective_sabha_id, n.demographic, n.track,
+                       n.decided_by, du_p.full_name AS decided_by_name,
+                       n.decided_at
+                FROM selection_nominations n
+                JOIN persons p ON p.id = n.person_id
+                JOIN users du ON du.id = n.decided_by
+                JOIN persons du_p ON du_p.id = du.person_id
+                WHERE n.status = 'APPROVED'
+                  AND EXISTS (
+                      SELECT 1 FROM role_assignments ra
+                      WHERE ra.user_id = ?
+                        AND ra.role = 'NIRDESHAK'
+                        AND ra.kshetra_id = n.kshetra_id
+                        AND ra.demographic = n.demographic
+                  )
+                ORDER BY n.decided_at DESC
+                """)
+                .param(nirdeshakUserId)
+                .query((rs, rn) -> new SelectedPersonItem(
+                        rs.getObject("id", UUID.class),
+                        rs.getObject("person_id", UUID.class),
+                        rs.getString("person_name"),
+                        rs.getObject("selective_sabha_id", UUID.class),
+                        rs.getString("demographic"),
+                        rs.getString("track"),
+                        rs.getObject("decided_by", UUID.class),
+                        rs.getString("decided_by_name"),
+                        rs.getTimestamp("decided_at").toInstant()))
                 .list();
     }
 }

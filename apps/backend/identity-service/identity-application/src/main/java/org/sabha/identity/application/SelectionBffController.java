@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
 import org.sabha.identity.applicationservice.PendingNominationItem;
+import org.sabha.identity.applicationservice.SelectedPersonItem;
 import org.sabha.identity.applicationservice.SelectionQueries;
 import org.sabha.identity.applicationservice.SelectionService;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +56,14 @@ public class SelectionBffController {
         UUID subject = UUID.fromString(authentication.getName());
         return callers.resolveUserId(subject)
                 .map(userId -> ResponseEntity.ok(queries.pendingQueueFor(userId)))
+                .orElseGet(() -> ResponseEntity.status(403).build());
+    }
+
+    @GetMapping("/bff/selection/selected")
+    public ResponseEntity<List<SelectedPersonItem>> selected(Authentication authentication) {
+        UUID subject = UUID.fromString(authentication.getName());
+        return callers.resolveUserId(subject)
+                .map(userId -> ResponseEntity.ok(queries.selectedFor(userId)))
                 .orElseGet(() -> ResponseEntity.status(403).build());
     }
 

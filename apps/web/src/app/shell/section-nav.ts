@@ -19,4 +19,5 @@ export const SECTION_NAV: readonly SectionNavItem[] = [
   { section: 'SABHA_DEFINITION', path: 'sabha-definition', label: 'Sabha Definition' },
   { section: 'OCCURRENCE_REOPEN', path: 'occurrence-reopen', label: 'Occurrence Reopen' },
   { section: 'SANCHALAK_PROXY', path: 'sanchalak-proxy', label: 'Sanchalak Proxy' },
+  { section: 'SELECTION', path: 'selection', label: 'Selection' },
 ];

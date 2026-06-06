@@ -14,4 +14,10 @@ public interface SelectionQueries {
 
     /** The PENDING nominations the given user may decide as a demographic Nirdeshak. */
     List<PendingNominationItem> pendingQueueFor(UUID nirdeshakUserId);
+
+    /**
+     * The currently-selected People (APPROVED nominations) the given user oversees
+     * as a demographic Nirdeshak — the source for the web deselect action.
+     */
+    List<SelectedPersonItem> selectedFor(UUID nirdeshakUserId);
 }
