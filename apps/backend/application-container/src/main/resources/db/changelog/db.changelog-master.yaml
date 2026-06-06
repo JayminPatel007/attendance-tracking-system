@@ -29,3 +29,7 @@ databaseChangeLog:
       file: db/changelog/slice-14/001-sanchalak-proxy.sql
   - include:
       file: db/changelog/slice-14/002-seed.sql
+  - include:
+      file: db/changelog/slice-15/001-reengagement.sql
+  - include:
+      file: db/changelog/slice-15/002-candidate-projection.sql
