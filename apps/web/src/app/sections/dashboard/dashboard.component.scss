@@ -4,9 +4,26 @@
   gap: 1rem;
 }
 
+.dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .dashboard__header h1 {
   margin: 0;
   font-size: 1.4rem;
+}
+
+.dashboard__prompt {
+  margin: 0;
+  padding: 1.5rem;
+  border: 1px dashed #c7d2fe;
+  border-radius: 8px;
+  background: #f5f7ff;
+  color: #475569;
+  text-align: center;
 }
 
 .dashboard__hint {

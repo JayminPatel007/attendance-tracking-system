@@ -79,3 +79,21 @@ export interface Thresholds {
   candidate: number;
   priority: number;
 }
+
+/** One pickable City in the dashboard chip (Slice 17). Mirrors backend `CityOption`. */
+export interface CityOption {
+  id: string;
+  name: string;
+}
+
+/**
+ * What the dashboard City chip renders (Slice 17, mirror of backend
+ * `DashboardAccess.CityChip`). A Sant gets the full City list and their current
+ * pick and sees an interactive picker; every other role gets `sant: false` and
+ * an empty list, and the shell shows a non-interactive scope indicator instead.
+ */
+export interface DashboardScopeChip {
+  sant: boolean;
+  selectedCityId: string | null;
+  cities: CityOption[];
+}

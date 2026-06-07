@@ -58,4 +58,21 @@ describe('DashboardService', () => {
     expect(req.request.body).toEqual({ candidate: 2, priority: 5 });
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
+
+  it('reads the City-chip scope from the BFF', () => {
+    service.scope().subscribe();
+
+    const req = http.expectOne('/bff/dashboard/scope');
+    expect(req.request.method).toBe('GET');
+    req.flush({ sant: true, selectedCityId: null, cities: [] });
+  });
+
+  it('chooses a City via POST to the BFF', () => {
+    service.chooseCity('city-1').subscribe();
+
+    const req = http.expectOne('/bff/dashboard/city');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ cityId: 'city-1' });
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
 });
