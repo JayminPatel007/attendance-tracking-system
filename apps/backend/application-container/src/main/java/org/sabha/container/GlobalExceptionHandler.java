@@ -1,5 +1,6 @@
 package org.sabha.container;
 
+import org.sabha.analytics.applicationservice.NotASantException;
 import org.sabha.attendance.applicationservice.CallerUnknownException;
 import org.sabha.attendance.applicationservice.StaleRosterException;
 import org.sabha.common.AuthorizationDeniedException;
@@ -82,6 +83,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({NominationNotAuthorizedException.class, SelectionDecisionNotAuthorizedException.class})
     public ResponseEntity<ErrorResponse> selectionNotAuthorized(RuntimeException ex) {
+        return ResponseEntity.status(403)
+                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NotASantException.class)
+    public ResponseEntity<ErrorResponse> notASant(NotASantException ex) {
         return ResponseEntity.status(403)
                 .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
     }

@@ -5,8 +5,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.analytics.applicationservice.CandidateRow;
+import org.sabha.analytics.applicationservice.DashboardAccess;
 import org.sabha.analytics.applicationservice.DashboardOverview;
 import org.sabha.analytics.applicationservice.DashboardQueries;
+import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.ReEngagementProjectionScanner;
 import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
@@ -56,6 +58,7 @@ class ReEngagementDashboardIntegrationTest {
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b01");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b02");
     private static final UUID NIRDESHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b03");
+    private static final UUID SANT_USER = UUID.fromString("00000000-0000-0000-0000-000000000b04");
 
     @Container
     @ServiceConnection
@@ -71,6 +74,9 @@ class ReEngagementDashboardIntegrationTest {
     DashboardQueries dashboard;
 
     @Autowired
+    DashboardAccess access;
+
+    @Autowired
     ThresholdConfig thresholdConfig;
 
     @Autowired
@@ -81,12 +87,31 @@ class ReEngagementDashboardIntegrationTest {
         seedTwoSabhasEachWithACandidate();
         scanner.refresh();
 
-        assertThat(dashboard.people(SANCHALAK_USER)).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(new DashboardScope.RoleScoped(SANCHALAK_USER))).extracting(CandidateRow::personId)
                 .containsExactly(PERSON_1);
-        assertThat(dashboard.people(NIRDESHAK_USER)).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(new DashboardScope.RoleScoped(NIRDESHAK_USER))).extracting(CandidateRow::personId)
                 .containsExactly(PERSON_1);
-        assertThat(dashboard.people(MK_USER)).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(new DashboardScope.RoleScoped(MK_USER))).extracting(CandidateRow::personId)
                 .contains(PERSON_1, PERSON_2);
+    }
+
+    @Test
+    void aSantReadsAnyCityAcrossKshetrasAndTheirPickPersists() {
+        seedTwoSabhasEachWithACandidate();
+        santUser(SANT_USER, "sant-user");
+        scanner.refresh();
+
+        // Picking the City persists it as the default and scopes the view to it.
+        assertThat(access.selectCity(SANT_USER, CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
+
+        // Universal read: the Sant holds no role over either Kshetra, yet sees both
+        // candidates — the rejection that limited the Nirdeshak to PERSON_1 does not
+        // apply (ADR-0011 Sant exception).
+        assertThat(dashboard.people(access.viewFor(SANT_USER))).extracting(CandidateRow::personId)
+                .contains(PERSON_1, PERSON_2);
+
+        // The default survives a fresh resolution (across logins).
+        assertThat(access.viewFor(SANT_USER)).isEqualTo(new DashboardScope.CityScoped(CITY));
     }
 
     @Test
@@ -94,11 +119,11 @@ class ReEngagementDashboardIntegrationTest {
         seedTwoSabhasEachWithACandidate();
         scanner.refresh();
 
-        DashboardOverview sanchalakView = dashboard.overview(SANCHALAK_USER);
+        DashboardOverview sanchalakView = dashboard.overview(new DashboardScope.RoleScoped(SANCHALAK_USER));
         assertThat(sanchalakView.kpis()).isEqualTo(new DashboardOverview.Kpis(1, 0, 1));
         assertThat(sanchalakView.headlineCandidates()).extracting(CandidateRow::personId).containsExactly(PERSON_1);
 
-        SabhaTree.Zone zone = dashboard.sabhaTree(MK_USER).zones().stream()
+        SabhaTree.Zone zone = dashboard.sabhaTree(new DashboardScope.RoleScoped(MK_USER)).zones().stream()
                 .filter(z -> ZONE.equals(z.zoneId()))
                 .findFirst()
                 .orElseThrow();
@@ -165,6 +190,13 @@ class ReEngagementDashboardIntegrationTest {
     private void mkUser(UUID id, String username) {
         user(id, username);
         jdbc.sql("INSERT INTO role_assignments (id, user_id, role) VALUES (?, ?, 'MADHYASTHA_KARYALAYA')")
+                .params(UUID.randomUUID(), id).update();
+    }
+
+    /** A Sant: a role_assignments row with role = 'SANT' and no operational scope. */
+    private void santUser(UUID id, String username) {
+        user(id, username);
+        jdbc.sql("INSERT INTO role_assignments (id, user_id, role) VALUES (?, ?, 'SANT')")
                 .params(UUID.randomUUID(), id).update();
     }
 

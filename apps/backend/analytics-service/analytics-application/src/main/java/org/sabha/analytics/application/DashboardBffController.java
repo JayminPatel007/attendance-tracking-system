@@ -6,8 +6,10 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import org.sabha.analytics.applicationservice.CandidateRow;
+import org.sabha.analytics.applicationservice.DashboardAccess;
 import org.sabha.analytics.applicationservice.DashboardOverview;
 import org.sabha.analytics.applicationservice.DashboardQueries;
+import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
@@ -17,6 +19,7 @@ import org.sabha.common.MadhyasthaKaryalayaLookup;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,17 +36,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardBffController {
 
     private final DashboardQueries queries;
+    private final DashboardAccess access;
     private final ThresholdConfig thresholdConfig;
     private final ThresholdAdmin thresholdAdmin;
     private final CallerResolver callers;
     private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
     public DashboardBffController(DashboardQueries queries,
+                                  DashboardAccess access,
                                   ThresholdConfig thresholdConfig,
                                   ThresholdAdmin thresholdAdmin,
                                   CallerResolver callers,
                                   MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
         this.queries = queries;
+        this.access = access;
         this.thresholdConfig = thresholdConfig;
         this.thresholdAdmin = thresholdAdmin;
         this.callers = callers;
@@ -52,17 +58,44 @@ public class DashboardBffController {
 
     @GetMapping("/bff/dashboard/overview")
     public ResponseEntity<DashboardOverview> overview(Authentication authentication) {
-        return forCaller(authentication, queries::overview);
+        return forScope(authentication, queries::overview);
     }
 
     @GetMapping("/bff/dashboard/people")
     public ResponseEntity<List<CandidateRow>> people(Authentication authentication) {
-        return forCaller(authentication, queries::people);
+        return forScope(authentication, queries::people);
     }
 
     @GetMapping("/bff/dashboard/sabha-tree")
     public ResponseEntity<SabhaTree> sabhaTree(Authentication authentication) {
-        return forCaller(authentication, queries::sabhaTree);
+        return forScope(authentication, queries::sabhaTree);
+    }
+
+    /**
+     * What the City chip should render (Slice 17): for a Sant, the City list and
+     * their current pick; for everyone else an inert chip the web replaces with a
+     * static scope indicator.
+     */
+    @GetMapping("/bff/dashboard/scope")
+    public ResponseEntity<DashboardAccess.CityChip> scope(Authentication authentication) {
+        return forCaller(authentication, access::cityChip);
+    }
+
+    /**
+     * A Sant picks a City (Slice 17): persists it as their default and refilters.
+     * Non-Sant → 403 ({@code NotASantException}); unknown City → 404
+     * ({@code CityNotFoundException}); both via the global handler.
+     */
+    @PostMapping("/bff/dashboard/city")
+    public ResponseEntity<Void> chooseCity(@RequestBody ChooseCityRequest request,
+                                           Authentication authentication) {
+        UUID subject = UUID.fromString(authentication.getName());
+        Optional<UUID> userId = callers.resolveUserId(subject);
+        if (userId.isEmpty()) {
+            return ResponseEntity.status(403).build();
+        }
+        access.selectCity(userId.get(), request.cityId());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/bff/dashboard/thresholds")
@@ -91,6 +124,14 @@ public class DashboardBffController {
                 .orElseGet(() -> ResponseEntity.status(403).build());
     }
 
+    /** Resolves the caller's {@link DashboardScope} then runs a scope-filtered read. */
+    private <T> ResponseEntity<T> forScope(Authentication authentication, Function<DashboardScope, T> read) {
+        return forCaller(authentication, userId -> read.apply(access.viewFor(userId)));
+    }
+
     public record ThresholdsRequest(int candidate, int priority) {
+    }
+
+    public record ChooseCityRequest(UUID cityId) {
     }
 }
