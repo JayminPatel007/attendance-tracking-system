@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { CandidateRow, DashboardOverview, SabhaTree, Thresholds } from './dashboard.types';
+import { CandidateRow, DashboardOverview, DashboardScopeChip, SabhaTree, Thresholds } from './dashboard.types';
 
 /**
  * Outbound adapter to the re-engagement dashboard BFF endpoints (Slice 15,
@@ -34,5 +34,19 @@ export class DashboardService {
 
   updateThresholds(thresholds: Thresholds): Observable<void> {
     return this.http.put<void>('/bff/dashboard/thresholds', thresholds);
+  }
+
+  /** What the City chip should render for the signed-in caller (Slice 17). */
+  scope(): Observable<DashboardScopeChip> {
+    return this.http.get<DashboardScopeChip>('/bff/dashboard/scope');
+  }
+
+  /**
+   * A Sant picks a City: the BFF persists it as their default and the subsequent
+   * section reads reflect it. Server-side this is Sant-only (403) and the City
+   * must exist (404).
+   */
+  chooseCity(cityId: string): Observable<void> {
+    return this.http.post<void>('/bff/dashboard/city', { cityId });
   }
 }

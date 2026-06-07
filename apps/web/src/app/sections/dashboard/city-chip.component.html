@@ -1,0 +1,20 @@
+@if (sant()) {
+  <label class="city-chip city-chip--picker">
+    <span class="city-chip__label">City</span>
+    <select
+      class="city-chip__select"
+      [value]="selectedCityId() ?? ''"
+      (change)="choose($any($event.target).value)">
+      @if (selectedCityId() === null) {
+        <option value="" disabled selected>Select a city…</option>
+      }
+      @for (city of cities(); track city.id) {
+        <option [value]="city.id" [selected]="city.id === selectedCityId()">{{ city.name }}</option>
+      }
+    </select>
+  </label>
+} @else {
+  <span class="city-chip city-chip--indicator" aria-label="Scope">
+    Scoped to your assignments
+  </span>
+}

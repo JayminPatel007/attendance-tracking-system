@@ -1,0 +1,31 @@
+.city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.city-chip__label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.7rem;
+}
+
+.city-chip__select {
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.city-chip--indicator {
+  background: #f1f5f9;
+  color: #475569;
+  font-style: italic;
+}
