@@ -159,6 +159,23 @@
       ],
       "requiredActions": [],
       "realmRoles": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000072",
+      "username": "sant",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Seeded",
+      "lastName": "Sant",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme123!",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": []
     }
   ],
   "requiredActions": [
