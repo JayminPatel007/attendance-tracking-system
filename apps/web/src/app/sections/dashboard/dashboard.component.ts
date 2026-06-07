@@ -40,28 +40,27 @@ export class DashboardComponent {
   readonly tabs = TAB_LABELS;
   readonly tab = signal<Tab>('overview');
 
-  /** The chip's loaded scope: null until the chip reports, then drives the prompt. */
-  private readonly scope = signal<{ sant: boolean; selectedCityId: string | null } | null>(null);
+  /** The chip's loaded scope, mirrored so the shell can drive the prompt. */
+  private readonly sant = signal(false);
+  private readonly selectedCityId = signal<string | null>(null);
 
   /** Bumped on a City pick to remount (and so re-read) the section body. */
   readonly reloadToken = signal(0);
 
   /** A Sant who has not yet chosen a City: show a prompt, not empty sections. */
-  readonly showPrompt = computed(() => {
-    const s = this.scope();
-    return !!s && s.sant && !s.selectedCityId;
-  });
+  readonly showPrompt = computed(() => this.sant() && !this.selectedCityId());
 
   select(tab: Tab): void {
     this.tab.set(tab);
   }
 
   onScopeLoaded(scope: { sant: boolean; selectedCityId: string | null }): void {
-    this.scope.set(scope);
+    this.sant.set(scope.sant);
+    this.selectedCityId.set(scope.selectedCityId);
   }
 
   onCityPicked(cityId: string): void {
-    this.scope.update((prev) => ({ sant: prev?.sant ?? true, selectedCityId: cityId }));
+    this.selectedCityId.set(cityId);
     this.reloadToken.update((n) => n + 1);
   }
 }
