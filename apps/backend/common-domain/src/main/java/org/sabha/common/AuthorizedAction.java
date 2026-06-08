@@ -28,6 +28,7 @@ public enum AuthorizedAction {
     CREATE_KSHETRA,
     CREATE_SABHA,
     APPOINT_ROLE,
+    REISSUE_PASSWORD,
     REOPEN;
 
     public static final Set<AuthorizedAction> SABHA_SHAPING_ACTIONS =

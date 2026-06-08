@@ -350,6 +350,17 @@ class RoleAppointmentServiceTest {
         }
 
         @Override
+        public Optional<User> findByUsername(String username) {
+            return byPersonId.values().stream()
+                    .filter(u -> u.username().equals(username)).findFirst();
+        }
+
+        @Override
+        public Optional<User> findById(UUID userId) {
+            return saved.stream().filter(u -> u.id().equals(userId)).findFirst();
+        }
+
+        @Override
         public boolean existsByUsername(String username) {
             return usernames.contains(username)
                     || byPersonId.values().stream().anyMatch(u -> u.username().equals(username));
@@ -373,6 +384,11 @@ class RoleAppointmentServiceTest {
             this.createdUsername = username;
             this.createdPassword = rawPassword;
             return newKeycloakId;
+        }
+
+        @Override
+        public void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange) {
+            throw new UnsupportedOperationException("not used by role appointment");
         }
     }
 

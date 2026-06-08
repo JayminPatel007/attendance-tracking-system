@@ -50,6 +50,38 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByUsername(String username) {
+        return jdbc.sql("""
+                SELECT id, person_id, username, keycloak_user_id
+                FROM users
+                WHERE username = ?
+                """)
+                .param(username)
+                .query((rs, rowNum) -> new User(
+                        rs.getObject("id", UUID.class),
+                        rs.getObject("person_id", UUID.class),
+                        rs.getString("username"),
+                        rs.getObject("keycloak_user_id", UUID.class)))
+                .optional();
+    }
+
+    @Override
+    public Optional<User> findById(UUID userId) {
+        return jdbc.sql("""
+                SELECT id, person_id, username, keycloak_user_id
+                FROM users
+                WHERE id = ?
+                """)
+                .param(userId)
+                .query((rs, rowNum) -> new User(
+                        rs.getObject("id", UUID.class),
+                        rs.getObject("person_id", UUID.class),
+                        rs.getString("username"),
+                        rs.getObject("keycloak_user_id", UUID.class)))
+                .optional();
+    }
+
+    @Override
     public boolean existsByUsername(String username) {
         return jdbc.sql("SELECT EXISTS (SELECT 1 FROM users WHERE username = ?)")
                 .param(username)

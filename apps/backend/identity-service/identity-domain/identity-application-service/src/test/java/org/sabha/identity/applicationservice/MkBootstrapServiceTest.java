@@ -88,6 +88,11 @@ class MkBootstrapServiceTest {
             this.createdPassword = rawPassword;
             return KEYCLOAK_ID;
         }
+
+        @Override
+        public void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange) {
+            throw new UnsupportedOperationException("not used by MK bootstrap");
+        }
     }
 
     private static final class FakePersonRepository implements PersonRepository {
@@ -110,6 +115,16 @@ class MkBootstrapServiceTest {
         @Override
         public Optional<User> findByPersonId(UUID personId) {
             return saved.stream().filter(u -> u.personId().equals(personId)).findFirst();
+        }
+
+        @Override
+        public Optional<User> findByUsername(String username) {
+            return saved.stream().filter(u -> u.username().equals(username)).findFirst();
+        }
+
+        @Override
+        public Optional<User> findById(UUID userId) {
+            return saved.stream().filter(u -> u.id().equals(userId)).findFirst();
         }
 
         @Override

@@ -21,4 +21,14 @@ public interface IdentityProviderGateway {
      * @return the new user's id in the identity provider (the JWT {@code sub})
      */
     UUID createUserRequiringPasswordChange(String username, String rawPassword);
+
+    /**
+     * Sets a new password for an existing identity-provider user (ADR-0004).
+     * Self-service reset passes {@code requirePasswordChange = false} (the user
+     * chose the password); assigner-reissue passes {@code true} so the holder must
+     * change it on next login.
+     *
+     * @param keycloakUserId the identity provider's user id (the JWT {@code sub})
+     */
+    void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange);
 }
