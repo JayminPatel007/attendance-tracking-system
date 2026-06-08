@@ -75,6 +75,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        // Self-service password reset and the "who appointed me?" lookup are
+                        // reached from the login screen before the User can authenticate
+                        // (ADR-0004), so they are the one set of public business endpoints.
+                        .requestMatchers("/api/password-reset/**", "/api/who-appointed-me").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(rs -> rs.jwt(jwt -> {}));
         return http.build();

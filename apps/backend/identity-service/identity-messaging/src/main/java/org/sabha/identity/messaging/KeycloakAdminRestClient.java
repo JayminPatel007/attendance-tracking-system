@@ -8,6 +8,7 @@ import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
@@ -54,6 +55,26 @@ public class KeycloakAdminRestClient implements IdentityProviderGateway {
                 }
                 return UUID.fromString(CreatedResponseUtil.getCreatedId(response));
             }
+        }
+    }
+
+    @Override
+    public void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange) {
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(rawPassword);
+        credential.setTemporary(requirePasswordChange);
+
+        try (Keycloak admin = adminClient()) {
+            UserResource user = admin.realm(realm).users().get(keycloakUserId.toString());
+            user.resetPassword(credential);
+            UserRepresentation representation = user.toRepresentation();
+            if (requirePasswordChange) {
+                representation.setRequiredActions(List.of("UPDATE_PASSWORD"));
+            } else {
+                representation.setRequiredActions(List.of());
+            }
+            user.update(representation);
         }
     }
 

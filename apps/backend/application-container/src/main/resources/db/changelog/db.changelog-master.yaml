@@ -37,3 +37,5 @@ databaseChangeLog:
       file: db/changelog/slice-16/001-selection-nominations.sql
   - include:
       file: db/changelog/slice-17/001-sant-default-city.sql
+  - include:
+      file: db/changelog/slice-18/001-password-resets.sql

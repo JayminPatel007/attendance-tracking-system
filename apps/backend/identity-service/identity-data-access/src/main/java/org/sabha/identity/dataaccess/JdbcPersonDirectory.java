@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.sabha.identity.applicationservice.HomeSabhaDirectory;
 import org.sabha.identity.applicationservice.NameCandidate;
+import org.sabha.identity.applicationservice.PersonContactLookup;
 import org.sabha.identity.applicationservice.PersonDirectory;
 import org.sabha.identity.applicationservice.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Repository;
  * indexes from {@code slice-6/001-person-directory.sql}.
  */
 @Repository
-public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory {
+public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory, PersonContactLookup {
 
     private static final int MAX_EDIT_DISTANCE = 2;
 
@@ -33,6 +34,15 @@ public class JdbcPersonDirectory implements PersonDirectory, HomeSabhaDirectory 
 
     public JdbcPersonDirectory(JdbcClient jdbc) {
         this.jdbc = jdbc;
+    }
+
+    @Override
+    public Optional<String> mobileOf(UUID personId) {
+        return jdbc.sql("SELECT mobile FROM persons WHERE id = ?")
+                .param(personId)
+                .query((rs, n) -> rs.getString("mobile"))
+                .optional()
+                .filter(m -> m != null && !m.isBlank());
     }
 
     @Override
