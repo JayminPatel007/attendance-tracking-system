@@ -1,0 +1,39 @@
+<section class="lookup">
+  <h2>Who appointed me?</h2>
+  <p class="hint">
+    Lost your mobile and can't reset your password? Enter your username to find who can
+    issue you a fresh one.
+  </p>
+
+  <form (ngSubmit)="lookup()">
+    <label>
+      Username
+      <input [(ngModel)]="username" name="username" autocomplete="username" placeholder="your.username" />
+    </label>
+    <button type="submit" [disabled]="busy()">{{ busy() ? 'Looking up…' : 'Find my contact' }}</button>
+  </form>
+
+  @if (contacts(); as list) {
+    @if (list.length) {
+      <ul class="contacts">
+        @for (contact of list; track contact.mobile) {
+          <li>
+            <span class="name">{{ contact.name }}</span>
+            <a class="mobile" href="tel:{{ contact.mobile }}">{{ contact.mobile }}</a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="hint" role="status">No contact is on record — please reach out to your local Sanchalak.</p>
+    }
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <nav class="links">
+    <a routerLink="/forgot-password">Back to reset</a>
+    <a routerLink="/">Back to sign in</a>
+  </nav>
+</section>

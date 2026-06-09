@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { ForgotPasswordComponent } from './password-reset/forgot-password.component';
+import { WhoAppointedMeComponent } from './password-reset/who-appointed-me.component';
 import { DashboardComponent } from './sections/dashboard/dashboard.component';
 import { OccurrenceReopenComponent } from './sections/occurrence-reopen/occurrence-reopen.component';
 import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
@@ -33,6 +35,10 @@ const sectionRoutes: Routes = SECTION_NAV.map((item) => ({
 }));
 
 export const routes: Routes = [
+  // Public, unauthenticated reset routes (ADR-0004, Slice 18B) — matched before
+  // the shell so a locked-out user reaches them without an OIDC session.
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'who-appointed-me', component: WhoAppointedMeComponent },
   {
     path: '',
     component: ShellComponent,
