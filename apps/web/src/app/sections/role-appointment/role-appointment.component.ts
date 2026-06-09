@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AppointmentService } from './appointment.service';
 import { suggestPassword, suggestUsername } from './appointment.credentials';
+import { PasswordReissueComponent } from './password-reissue.component';
 import {
   AppointableRole,
   AppointmentRequest,
@@ -53,7 +54,7 @@ type Stage = 'editing' | 'done';
 @Component({
   selector: 'app-role-appointment',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PasswordReissueComponent],
   templateUrl: './role-appointment.component.html',
   styleUrl: './role-appointment.component.scss',
 })

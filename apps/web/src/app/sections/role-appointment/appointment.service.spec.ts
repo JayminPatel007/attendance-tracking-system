@@ -48,4 +48,16 @@ describe('AppointmentService', () => {
     expect(req.request.params.get('kshetraId')).toBe('ksh1');
     req.flush([]);
   });
+
+  it('reissues a password through the authenticated BFF endpoint', () => {
+    let done = false;
+    service.reissuePassword('u1', 'Forced123').subscribe(() => (done = true));
+
+    const req = http.expectOne('/bff/password-reissue');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ targetUserId: 'u1', newPassword: 'Forced123' });
+    req.flush(null);
+
+    expect(done).toBeTrue();
+  });
 });

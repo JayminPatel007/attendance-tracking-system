@@ -91,7 +91,11 @@ class _AppShellState extends State<AppShell> {
         valueListenable: widget.session.accessToken,
         builder: (context, token, _) {
           if (token == null) {
-            return LoginScreen(session: widget.session, auth: widget.auth);
+            return LoginScreen(
+              session: widget.session,
+              auth: widget.auth,
+              backendBaseUrl: widget.config.backendBaseUrl,
+            );
           }
           return FutureBuilder<AttendanceStore>(
             future: _storeFuture,
