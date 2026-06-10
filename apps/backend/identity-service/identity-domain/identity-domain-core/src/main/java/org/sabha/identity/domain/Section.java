@@ -12,5 +12,6 @@ public enum Section {
     SABHA_DEFINITION,
     OCCURRENCE_REOPEN,
     SANCHALAK_PROXY,
-    SELECTION
+    SELECTION,
+    AUDIT_LOG
 }

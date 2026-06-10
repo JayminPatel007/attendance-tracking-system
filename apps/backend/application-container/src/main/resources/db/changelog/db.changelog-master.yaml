@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/slice-17/001-sant-default-city.sql
   - include:
       file: db/changelog/slice-18/001-password-resets.sql
+  - include:
+      file: db/changelog/slice-19/001-audit-seed.sql
