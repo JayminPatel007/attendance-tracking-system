@@ -18,22 +18,26 @@ public class WebSessionService {
 
     private final UserRepository users;
     private final MadhyasthaKaryalayaMembership membership;
+    private final SantMembership sant;
     private final UserRolesLookup roles;
 
     public WebSessionService(
             UserRepository users,
             MadhyasthaKaryalayaMembership membership,
+            SantMembership sant,
             UserRolesLookup roles) {
         this.users = users;
         this.membership = membership;
+        this.sant = sant;
         this.roles = roles;
     }
 
     public Optional<WebSession> describe(UUID keycloakSubject) {
         return users.findByKeycloakUserId(keycloakSubject).map(user -> {
             boolean isMk = membership.isMember(user.id());
+            boolean isSant = sant.isSant(user.id());
             Set<Role> operationalRoles = roles.operationalRolesOf(user.id());
-            return new WebSession(user.username(), isMk, VisibleSections.forMember(isMk, operationalRoles));
+            return new WebSession(user.username(), isMk, VisibleSections.forMember(isMk, isSant, operationalRoles));
         });
     }
 }

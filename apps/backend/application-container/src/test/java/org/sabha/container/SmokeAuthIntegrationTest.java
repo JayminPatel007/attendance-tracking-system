@@ -69,7 +69,11 @@ class SmokeAuthIntegrationTest {
     void resetMutableTables() {
         // Tests share Postgres + Keycloak across the class; reset write-side tables
         // between tests so order doesn't matter. Seeded read-side rows are left alone.
+        // Clear an occurrence's transitions before the occurrence itself: the
+        // slice-19 audit seed is the first to seed occurrence_state_transitions, so
+        // deleting the parent rows now trips the FK without this (ADR-0023).
         jdbc.sql("DELETE FROM attendance_markings").update();
+        jdbc.sql("DELETE FROM occurrence_state_transitions WHERE occurrence_id <> '00000000-0000-0000-0000-000000000020'").update();
         jdbc.sql("DELETE FROM occurrences WHERE id <> '00000000-0000-0000-0000-000000000020'").update();
     }
 
