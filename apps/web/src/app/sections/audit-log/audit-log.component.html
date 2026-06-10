@@ -1,0 +1,86 @@
+<section class="audit">
+  <header class="audit__header">
+    <h1>Audit Log</h1>
+    <p class="audit__hint">Who did what, and when — newest first, scoped to your geography.</p>
+  </header>
+
+  <form class="audit__filters" (ngSubmit)="apply()">
+    <label class="audit__filter">
+      <span>Target type</span>
+      <select name="targetType" [(ngModel)]="targetType">
+        <option value="">All</option>
+        @for (type of targetTypes; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+    </label>
+    <label class="audit__filter">
+      <span>Action</span>
+      <input name="action" [(ngModel)]="action" placeholder="e.g. REOPENED" />
+    </label>
+    <label class="audit__filter">
+      <span>Actor user ID</span>
+      <input name="actorUserId" [(ngModel)]="actorUserId" placeholder="UUID" />
+    </label>
+    <label class="audit__filter">
+      <span>From</span>
+      <input type="date" name="from" [(ngModel)]="from" />
+    </label>
+    <label class="audit__filter">
+      <span>To</span>
+      <input type="date" name="to" [(ngModel)]="to" />
+    </label>
+    <label class="audit__filter audit__filter--toggle">
+      <input type="checkbox" name="proxyOnly" [(ngModel)]="proxyOnly" />
+      <span>Proxy actions only</span>
+    </label>
+    <button type="submit" class="audit__apply">Apply</button>
+  </form>
+
+  @if (targetId()) {
+    <p class="audit__drill" role="status">
+      Showing history for {{ targetType || 'entity' }} <code>{{ targetId() }}</code>
+      <button type="button" class="audit__drill-clear" (click)="clearDrillDown()">Show full feed</button>
+    </p>
+  }
+
+  @if (error()) {
+    <p class="audit__error" role="alert">{{ error() }}</p>
+  } @else if (entries().length === 0) {
+    <p class="audit__empty">No audit entries match these filters.</p>
+  } @else {
+    <table class="audit__table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Actor</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- id is not unique across the feed (ADR-0023): key on (id, action). -->
+        @for (entry of entries(); track entry.id + entry.action) {
+          <tr>
+            <td class="audit__at">{{ entry.at | date: 'medium' }}</td>
+            <td class="audit__actor">
+              {{ entry.actorName ?? 'system' }}
+              @if (entry.onBehalfOfUserId) {
+                <span class="audit__proxy-badge" title="Nirikshak-as-Sanchalak proxy action (Slice 14)">
+                  on behalf of {{ entry.onBehalfName ?? entry.onBehalfOfUserId }}
+                </span>
+              }
+            </td>
+            <td class="audit__action">{{ entry.action }}</td>
+            <td class="audit__target">
+              <span class="audit__target-type">{{ entry.targetType }}</span>
+              <code class="audit__target-id">{{ entry.targetId }}</code>
+            </td>
+            <td class="audit__detail">{{ entry.detail }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

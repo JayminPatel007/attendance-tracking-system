@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { kindLabel } from 'sabha-domain';
 
 import { OccurrenceReopenService } from './occurrence-reopen.service';
@@ -19,7 +20,7 @@ import { OccurrenceListItem } from './occurrence-reopen.types';
 @Component({
   selector: 'app-occurrence-reopen',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, RouterLink],
   templateUrl: './occurrence-reopen.component.html',
   styleUrl: './occurrence-reopen.component.scss',
 })

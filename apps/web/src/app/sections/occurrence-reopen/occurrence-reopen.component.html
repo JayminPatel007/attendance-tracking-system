@@ -37,6 +37,13 @@
           <dt>State</dt><dd>{{ occurrence.state }}</dd>
         </dl>
 
+        <a
+          class="reopen__audit-link"
+          [routerLink]="['/audit-log']"
+          [queryParams]="{ targetType: 'OCCURRENCE', targetId: occurrence.occurrenceId }">
+          View audit history
+        </a>
+
         @if (occurrence.reopened) {
           <p class="reopen__reopened-note">
             <span class="reopen__badge">reopened</span>

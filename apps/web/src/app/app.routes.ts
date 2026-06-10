@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { ForgotPasswordComponent } from './password-reset/forgot-password.component';
 import { WhoAppointedMeComponent } from './password-reset/who-appointed-me.component';
+import { AuditLogComponent } from './sections/audit-log/audit-log.component';
 import { DashboardComponent } from './sections/dashboard/dashboard.component';
 import { OccurrenceReopenComponent } from './sections/occurrence-reopen/occurrence-reopen.component';
 import { RoleAppointmentComponent } from './sections/role-appointment/role-appointment.component';
@@ -23,6 +24,7 @@ const SECTION_COMPONENTS = {
   OCCURRENCE_REOPEN: OccurrenceReopenComponent,
   SANCHALAK_PROXY: SanchalakProxyComponent,
   SELECTION: SelectionComponent,
+  AUDIT_LOG: AuditLogComponent,
 } as const;
 
 /** One guarded route per shell section, derived from the nav model. */
