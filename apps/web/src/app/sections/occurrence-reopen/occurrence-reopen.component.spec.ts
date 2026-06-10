@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { OccurrenceReopenComponent } from './occurrence-reopen.component';
@@ -34,7 +35,7 @@ function mount(items: OccurrenceListItem[]): {
   const api = apiSpy(items);
   TestBed.configureTestingModule({
     imports: [OccurrenceReopenComponent],
-    providers: [{ provide: OccurrenceReopenService, useValue: api }],
+    providers: [provideRouter([]), { provide: OccurrenceReopenService, useValue: api }],
   });
   const fixture = TestBed.createComponent(OccurrenceReopenComponent);
   fixture.detectChanges();
@@ -49,6 +50,15 @@ describe('OccurrenceReopenComponent', () => {
 
     expect(api.list).toHaveBeenCalled();
     expect(fixture.componentInstance.occurrences().length).toBe(1);
+  });
+
+  it('links the selected Occurrence to its filtered audit history (Slice 19)', () => {
+    const { fixture } = mount([finalized()]);
+    fixture.componentInstance.select('occ-1');
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.reopen__audit-link');
+    expect(link.getAttribute('href')).toBe('/audit-log?targetType=OCCURRENCE&targetId=occ-1');
   });
 
   it('cannot reopen until a Finalized Occurrence is selected and a reason is entered', () => {

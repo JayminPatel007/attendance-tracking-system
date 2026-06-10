@@ -67,6 +67,16 @@ describe('ShellComponent sidebar', () => {
     expect(labels).not.toContain('Structural Admin');
   });
 
+  it('shows the audit-log section to a user the BFF unlocks it for (Slice 19)', () => {
+    const fixture = render({
+      username: 'nirdeshak',
+      madhyasthaKaryalaya: false,
+      sections: ['DASHBOARD', 'AUDIT_LOG'],
+    });
+
+    expect(navLabels(fixture)).toContain('Audit Log');
+  });
+
   it('shows the signed-in username in the header', () => {
     const fixture = render({
       username: 'mk-admin',

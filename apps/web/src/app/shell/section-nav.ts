@@ -20,4 +20,5 @@ export const SECTION_NAV: readonly SectionNavItem[] = [
   { section: 'OCCURRENCE_REOPEN', path: 'occurrence-reopen', label: 'Occurrence Reopen' },
   { section: 'SANCHALAK_PROXY', path: 'sanchalak-proxy', label: 'Sanchalak Proxy' },
   { section: 'SELECTION', path: 'selection', label: 'Selection' },
+  { section: 'AUDIT_LOG', path: 'audit-log', label: 'Audit Log' },
 ];
