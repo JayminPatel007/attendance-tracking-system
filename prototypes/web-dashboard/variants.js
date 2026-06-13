@@ -5,6 +5,52 @@
   const D = window.__DATA;
   const candidates = D.roster.filter((p) => p.candidate);
 
+  // Viewer role — Sah-Nirdeshak sees the SAME analytics as the Nirdeshak, but read-only.
+  const VIEWER_KEY = 'proto_dash_viewer';
+  const VIEWERS = {
+    nirdeshak: { name: 'Yuvak Nirdeshak', user: 'Pratik Patel', readonly: false },
+    'sah-nirdeshak': { name: 'Yuvak Sah-Nirdeshak', user: 'Rohan Desai', readonly: true },
+  };
+  function getViewer() { return VIEWERS[sessionStorage.getItem(VIEWER_KEY)] ? sessionStorage.getItem(VIEWER_KEY) : 'nirdeshak'; }
+
+  // Applied after each section renders: sets identity chrome, injects the viewer toggle,
+  // and (for Sah-Nirdeshak) shows a read-only ribbon + disables every write action.
+  function decorate(root) {
+    const vk = getViewer();
+    const v = VIEWERS[vk];
+    const chip = document.querySelector('.topnav .role-chip');
+    if (chip) chip.textContent = `${v.name} · Kshetra Andheri-7`;
+    const user = document.querySelector('.topnav .user');
+    if (user) user.textContent = v.user;
+    const banner = document.getElementById('prototype-banner');
+    if (banner) banner.textContent = `PROTOTYPE · Web · Analytics — viewed as ${v.name}${v.readonly ? ' (read-only proxy)' : ''} — Kshetra Andheri-7`;
+
+    const head = root.querySelector('.page-head');
+    if (head) {
+      const toggle = document.createElement('div');
+      toggle.className = 'viewer-toggle';
+      toggle.innerHTML = `
+        <span class="vt-label">Viewing as</span>
+        <button data-viewer="nirdeshak" class="${vk === 'nirdeshak' ? 'active' : ''}">Nirdeshak</button>
+        <button data-viewer="sah-nirdeshak" class="${vk === 'sah-nirdeshak' ? 'active' : ''}">Sah-Nirdeshak</button>
+      `;
+      head.appendChild(toggle);
+      toggle.querySelectorAll('[data-viewer]').forEach((b) => {
+        b.addEventListener('click', () => { sessionStorage.setItem(VIEWER_KEY, b.dataset.viewer); location.reload(); });
+      });
+    }
+
+    if (v.readonly) {
+      const ribbon = document.createElement('div');
+      ribbon.className = 'readonly-ribbon';
+      ribbon.innerHTML = '👁 Read-only — Sah-Nirdeshak shares the Nirdeshak’s analytics view. No write actions (the proxy/reopen powers live in the Occurrence flows, not here).';
+      root.firstElementChild ? root.firstElementChild.prepend(ribbon) : root.prepend(ribbon);
+      // Disable every action button in the analytics view.
+      root.querySelectorAll('.btn').forEach((b) => { b.disabled = true; b.title = 'Read-only as Sah-Nirdeshak'; });
+      root.querySelectorAll('a.link, td a').forEach((a) => { a.style.pointerEvents = 'none'; a.style.opacity = '0.5'; });
+    }
+  }
+
   // Tiny inline SVG sparkline
   function sparkline(rates, width = 320, height = 60) {
     const max = 100;
@@ -133,6 +179,7 @@
         </div>
       </div>
     `;
+    decorate(root);
   }
 
   // ====== Section B — People analytics (filterable Directory table) ======
@@ -241,6 +288,7 @@
       </div>
       </div>
     `;
+    decorate(root);
   }
 
   // ====== Section C — Sabha analytics (hierarchical tree explorer) ======
@@ -340,6 +388,7 @@
           mount();
         });
       });
+      decorate(root);
     }
 
     mount();
