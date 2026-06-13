@@ -95,3 +95,60 @@ p.lead { font-size: 13px; color: var(--ink-dim); margin: 0 0 24px; }
   border: 1px dashed var(--line);
 }
 .vd .inline-create h4 { margin: 0 0 8px; font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* Actor switcher banner */
+.vd { max-width: 820px; }
+.actor-banner {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 12px;
+  margin-bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.actor-switcher { display: flex; gap: 4px; background: white; padding: 3px; border-radius: 999px; flex: 0 0 auto; }
+.actor-switcher button {
+  background: transparent; border: none; font-size: 11px; padding: 4px 9px;
+  border-radius: 999px; cursor: pointer; color: var(--ink-dim); white-space: nowrap;
+}
+.actor-switcher button.active { background: var(--accent); color: white; font-weight: 600; }
+
+.holders-section { font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-faint); margin: 0 0 12px; }
+
+/* Holders cards */
+.holders-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+.holders-head { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); }
+.holders-head .role-title { font-size: 13px; font-weight: 600; }
+.holders-head .scope { font-size: 11px; color: var(--ink-dim); margin-top: 3px; }
+.holders-head .cap {
+  display: inline-block; background: var(--line-soft); color: var(--ink-dim);
+  font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 999px; margin-left: 4px;
+}
+.holders-head .cap.full { background: var(--warn-soft); color: var(--warn); }
+.holder-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line-soft); }
+.holder-row:last-child { border-bottom: 0; }
+.holder-row .info { flex: 1; }
+.holder-row .name { font-size: 13px; font-weight: 500; }
+.holder-row .sub { font-size: 11px; color: var(--ink-dim); }
+.empty-holders { padding: 14px 16px; font-size: 12px; color: var(--ink-faint); }
+
+.btn.xs { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+.btn.ghost { border: 1px dashed var(--line); color: var(--ink-faint); cursor: not-allowed; }
+
+.cap-warning, .no-appoint {
+  background: var(--warn-soft); color: var(--warn);
+  padding: 10px 12px; border-radius: 8px; font-size: 12px; margin: 10px 0;
+}
+.no-appoint { background: var(--line-soft); color: var(--ink-dim); padding: 16px; }
+.field input:disabled { background: var(--line-soft); color: var(--ink-dim); }
+
+/* Authority log */
+.action-log { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; }
+.action-log h4 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-faint); }
+.action-log .log-row { font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+.action-log .log-row:last-child { border-bottom: 0; }
+.action-log .log-row .t { color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-right: 8px; }

@@ -70,6 +70,32 @@
   border-radius: var(--radius);
   overflow: hidden;
 }
+.entity-list.wide { max-width: 720px; }
+
+/* Inline expanding "+ Add" row */
+.add-trigger {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-left: 2px dashed transparent;
+}
+.add-trigger:hover { background: var(--accent-soft); border-left-color: var(--accent); }
+.add-inline {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.add-fields { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.add-field { flex: 1; min-width: 150px; }
+.add-field label { font-size: 11px; color: var(--ink-dim); display: block; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.add-field input, .add-field select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; background: var(--surface); }
+.add-field input:disabled { background: var(--line-soft); color: var(--ink-dim); }
+.add-hint { flex-basis: 100%; font-size: 11px; color: var(--ink-dim); margin-top: 4px; }
+.add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.btn.ghost-btn { background: transparent; border-color: var(--line); color: var(--ink-dim); }
 .entity-list .head {
   padding: 14px 18px;
   border-bottom: 1px solid var(--line);
@@ -143,3 +169,41 @@
   color: var(--ink-faint);
   font-size: 13px;
 }
+
+/* Scope-based delete affordances */
+.btn.xs { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+.btn.ghost.del {
+  font-size: 11px;
+  color: var(--ink-faint);
+  border: 1px dashed var(--line);
+  padding: 4px 10px;
+  cursor: not-allowed;
+}
+.btn.warn-btn {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-color: var(--warn-soft);
+}
+.entity-row.retired { opacity: 0.7; background: var(--line-soft); }
+
+.action-log {
+  margin-top: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+.action-log h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-faint);
+}
+.action-log .log-row {
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.action-log .log-row:last-child { border-bottom: 0; }
+.action-log .log-row .t { color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-right: 8px; }

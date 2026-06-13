@@ -24,9 +24,30 @@ h3.section { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; 
 }
 
 /* Page header used by all sections */
-.page-head { margin-bottom: 20px; }
+.page-head { margin-bottom: 20px; position: relative; }
 .page-head h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
 .page-head .sub { font-size: 13px; color: var(--ink-dim); }
+
+/* Viewer-role toggle (Nirdeshak ↔ Sah-Nirdeshak) */
+.viewer-toggle {
+  position: absolute; top: 0; right: 0;
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface); border: 1px solid var(--line);
+  padding: 3px; border-radius: 999px;
+}
+.viewer-toggle .vt-label { font-size: 11px; color: var(--ink-faint); padding: 0 6px; }
+.viewer-toggle button {
+  background: transparent; border: none; font-size: 11px; padding: 4px 10px;
+  border-radius: 999px; cursor: pointer; color: var(--ink-dim);
+}
+.viewer-toggle button.active { background: var(--accent); color: white; font-weight: 600; }
+
+/* Read-only ribbon for Sah-Nirdeshak */
+.readonly-ribbon {
+  background: var(--warn-soft); color: var(--warn);
+  border-radius: 8px; padding: 10px 14px; font-size: 12px;
+  margin-bottom: 16px; font-weight: 500;
+}
 
 /* ===== Variant A — KPI strip + card grid ===== */
 .va .kpis {
