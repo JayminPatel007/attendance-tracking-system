@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.sabha.identity.applicationservice.HomeSabhaTransferRepository;
 import org.sabha.identity.domain.HomeSabhaTransfer;
+import org.sabha.identity.domain.OtpChallenge;
 import org.sabha.identity.domain.TransferStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -29,6 +30,7 @@ public class JdbcHomeSabhaTransferRepository implements HomeSabhaTransferReposit
 
     @Override
     public void save(HomeSabhaTransfer transfer) {
+        OtpChallenge challenge = transfer.challenge();
         jdbc.sql("""
                 INSERT INTO home_sabha_transfers
                     (id, person_id, mobile, destination_sabha_id, initiating_user_id,
@@ -42,11 +44,11 @@ public class JdbcHomeSabhaTransferRepository implements HomeSabhaTransferReposit
                 .param(transfer.mobile())
                 .param(transfer.destinationSabhaId())
                 .param(transfer.initiatingUserId())
-                .param(transfer.otpCode())
+                .param(challenge.code())
                 .param(Timestamp.from(transfer.initiatedAt()))
-                .param(Timestamp.from(transfer.expiresAt()))
+                .param(Timestamp.from(challenge.expiresAt()))
                 .param(transfer.status().name())
-                .param(transfer.attempts())
+                .param(challenge.attempts())
                 .update();
     }
 
