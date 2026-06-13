@@ -1,5 +1,7 @@
 # Role Appointment Authority
 
+**Status**: accepted; **refined and partly superseded by [ADR-0025](0025-scope-based-appointment-rt-self-replication-sah-nirdeshak.md)**. The appointment chain below still holds, but: authority is exercised by *scope, not creator*; the Regional Team may appoint and revoke its own peers (last-one-out guard); and the Sah-Nirdeshak holds no appointment authority (operational/proxy backstop only, capped at 2 per Kshetra×demographic). Revocation/deletion semantics are in [ADR-0026](0026-deletion-model.md).
+
 Every Karyakar role and oversight role in the hierarchy has exactly one source of appointment. The chain is:
 
 | Role (appointee) | Appointee's scope | Appointed by | Appointer's scope |

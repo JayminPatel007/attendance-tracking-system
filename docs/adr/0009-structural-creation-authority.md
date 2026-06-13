@@ -1,5 +1,7 @@
 # Structural Creation Authority Lives at the Tier Above
 
+**Status**: accepted; **Zone row superseded by [ADR-0024](0024-zone-creation-moves-to-regional-team.md)** (Zone creation moved MK → Regional Team). The tier-above principle and all other rows below still stand. Deletion semantics for these entities are defined in [ADR-0026](0026-deletion-model.md).
+
 Each structural entity in the hierarchy is created by the role that owns the tier *above* it (or, for Madhyastha Karyalaya, owns one or two tiers above). Concretely:
 
 | Created entity | Created by |
