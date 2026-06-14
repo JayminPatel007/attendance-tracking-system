@@ -191,6 +191,18 @@
                         -->
                         <api.version>1.43</api.version>
                     </systemPropertyVariables>
+                    <environmentVariables>
+                        <!--
+                            Ryuk (Testcontainers' cleanup-reaper container) can't start on
+                            macOS Docker Desktop — the socket bind-mount it needs is unsupported
+                            (issue #72). Disabling it repo-side means a fresh clone runs green
+                            with no per-developer env-var setup. Our containers are JVM-lifetime
+                            singletons, so JVM shutdown reclaims them without Ryuk; ephemeral CI
+                            runners discard everything anyway. Disabling Ryuk is env-var-only in
+                            Testcontainers (no classpath-property equivalent), hence here.
+                        -->
+                        <TESTCONTAINERS_RYUK_DISABLED>true</TESTCONTAINERS_RYUK_DISABLED>
+                    </environmentVariables>
                 </configuration>
             </plugin>
         </plugins>

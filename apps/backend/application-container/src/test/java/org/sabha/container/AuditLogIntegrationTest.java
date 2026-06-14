@@ -1,20 +1,16 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,8 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class AuditLogIntegrationTest {
+@Transactional
+class AuditLogIntegrationTest extends KeycloakIntegrationTest {
 
     /** Slice-16 seed: Nirdeshak scoped to (Kshetra Tracer, YUVAK); slice-19 backfills its appointment audit. */
     private static final String NIRDESHAK_SUBJECT = "00000000-0000-0000-0000-000000000062";
@@ -48,29 +44,9 @@ class AuditLogIntegrationTest {
     /** The proxy occurrence the seeded transitions land on. */
     private static final String AUDIT_OCCURRENCE = "00000000-0000-0000-0000-0000000000b6";
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri", () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-
-        r.add("sabha.bootstrap.mk.username", () -> "mk-audit");
-        r.add("sabha.bootstrap.mk.password", () -> "changeme123!");
-        r.add("sabha.bootstrap.mk.full-name", () -> "Audit MK Member");
-        r.add("sabha.bootstrap.mk.gender", () -> "MALE");
-        r.add("sabha.bootstrap.mk.mobile", () -> "+919820134788");
+        registerMkBootstrap(r);
     }
 
     @Autowired

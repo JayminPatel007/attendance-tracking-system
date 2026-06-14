@@ -1,19 +1,15 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,36 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * role_assignment row (null scope, per the Slice 9 decision).
  */
 @SpringBootTest
-@Testcontainers
-class MkBootstrapIntegrationTest {
-
-    private static final String MK_USERNAME = "mk-bootstrap";
-    private static final String MK_FULL_NAME = "Bootstrap MK Member";
-    private static final String MK_MOBILE = "+919820111222";
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
+@Transactional
+class MkBootstrapIntegrationTest extends KeycloakIntegrationTest {
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri", () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-
-        r.add("sabha.bootstrap.mk.username", () -> MK_USERNAME);
-        r.add("sabha.bootstrap.mk.password", () -> "changeme123!");
-        r.add("sabha.bootstrap.mk.full-name", () -> MK_FULL_NAME);
-        r.add("sabha.bootstrap.mk.gender", () -> "MALE");
-        r.add("sabha.bootstrap.mk.mobile", () -> MK_MOBILE);
+        registerMkBootstrap(r);
     }
 
     @Autowired

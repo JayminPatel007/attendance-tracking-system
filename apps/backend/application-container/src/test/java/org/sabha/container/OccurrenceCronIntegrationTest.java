@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -9,7 +11,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sabha.attendance.applicationservice.AutoFinalizeScanner;
@@ -17,16 +18,12 @@ import org.sabha.attendance.applicationservice.AutoOpenScanner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,8 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "sabha.cron.auto-open=-",
         "sabha.cron.auto-finalize=-"
 })
-@Testcontainers
-class OccurrenceCronIntegrationTest {
+@Transactional
+class OccurrenceCronIntegrationTest extends PostgresIntegrationTest {
 
     private static final ZoneId KOLKATA = ZoneId.of("Asia/Kolkata");
 
@@ -53,10 +50,6 @@ class OccurrenceCronIntegrationTest {
     // 2026-05-24 was a Sunday — matches the seed's day_of_week=0.
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 24);
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000777");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;
@@ -85,12 +78,6 @@ class OccurrenceCronIntegrationTest {
                 .param(SABHA_ID)
                 .param(OCCURRENCE_DATE)
                 .update();
-    }
-
-    @AfterEach
-    void cleanup() {
-        jdbc.sql("DELETE FROM occurrence_state_transitions").update();
-        jdbc.sql("DELETE FROM occurrences").update();
     }
 
     @Test

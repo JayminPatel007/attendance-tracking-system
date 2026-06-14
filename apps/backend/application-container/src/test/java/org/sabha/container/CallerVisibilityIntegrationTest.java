@@ -12,16 +12,12 @@ import org.sabha.common.VisibilityTier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,9 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @Import(CallerVisibilityIntegrationTest.NoAuthConfig.class)
-@Testcontainers
 @Transactional
-class CallerVisibilityIntegrationTest {
+class CallerVisibilityIntegrationTest extends PostgresIntegrationTest {
 
     private static final UUID CITY = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
     private static final UUID ZONE = UUID.fromString("00000000-0000-0000-0000-0000000000c2");
@@ -46,10 +41,6 @@ class CallerVisibilityIntegrationTest {
     private static final UUID SABHA_1_YUVAK = UUID.fromString("00000000-0000-0000-0000-0000000000d1");
     private static final UUID SABHA_1_BALIKA = UUID.fromString("00000000-0000-0000-0000-0000000000d2");
     private static final UUID SABHA_2_YUVAK = UUID.fromString("00000000-0000-0000-0000-0000000000d3");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

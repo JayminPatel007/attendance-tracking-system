@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
@@ -11,15 +13,11 @@ import org.sabha.attendance.domain.Occurrence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @Import(JdbcOccurrenceRepositoryIntegrationTest.NoAuthConfig.class)
-@Testcontainers
-class JdbcOccurrenceRepositoryIntegrationTest {
+@Transactional
+class JdbcOccurrenceRepositoryIntegrationTest extends PostgresIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql.
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
@@ -43,10 +41,6 @@ class JdbcOccurrenceRepositoryIntegrationTest {
     private static final UUID PERSON_B = UUID.fromString("00000000-0000-0000-0000-000000000102");
     private static final UUID PERSON_C = UUID.fromString("00000000-0000-0000-0000-000000000103");
     private static final Instant SEEDED_MARKED_AT = Instant.parse("2026-05-20T19:00:00Z");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

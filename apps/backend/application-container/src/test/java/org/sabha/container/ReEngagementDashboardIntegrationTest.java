@@ -17,16 +17,12 @@ import org.sabha.analytics.domain.Thresholds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,9 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @Import(ReEngagementDashboardIntegrationTest.NoAuthConfig.class)
-@Testcontainers
 @Transactional
-class ReEngagementDashboardIntegrationTest {
+class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
 
     private static final UUID CITY = UUID.fromString("00000000-0000-0000-0000-0000000000d1");
     private static final UUID ZONE = UUID.fromString("00000000-0000-0000-0000-0000000000d2");
@@ -59,10 +54,6 @@ class ReEngagementDashboardIntegrationTest {
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b01");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b02");
     private static final UUID SANT_USER = UUID.fromString("00000000-0000-0000-0000-000000000b04");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

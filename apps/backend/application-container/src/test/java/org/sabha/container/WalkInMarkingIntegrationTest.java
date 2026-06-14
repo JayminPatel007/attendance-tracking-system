@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -9,21 +11,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dasniko.testcontainers.keycloak.KeycloakContainer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,8 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class WalkInMarkingIntegrationTest {
+@Transactional
+class WalkInMarkingIntegrationTest extends KeycloakIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql: today's OPEN_FOR_MARKING Occurrence of the
     // REGULAR_YUVAK tracer Sabha, and a Yuvak roster member.
@@ -51,37 +45,11 @@ class WalkInMarkingIntegrationTest {
     private static final UUID WALK_IN_PERSON = UUID.fromString("00000000-0000-0000-0000-000000000110");
     private static final UUID BAAL_HOME_SABHA = UUID.fromString("00000000-0000-0000-0000-000000000111");
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
-    @DynamicPropertySource
-    static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-    }
-
     @Autowired
     MockMvc mockMvc;
 
     @Autowired
     JdbcClient jdbc;
-
-    @AfterEach
-    void cleanUp() {
-        jdbc.sql("DELETE FROM attendance_markings WHERE occurrence_id = ?")
-                .param(OCCURRENCE_ID).update();
-    }
 
     @Test
     void walkingInAPersonPersistsAWalkInMarkingDistinguishableFromRosterMarkings() throws Exception {
@@ -158,7 +126,7 @@ class WalkInMarkingIntegrationTest {
 
         HttpResponse<String> resp = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder()
-                        .uri(URI.create(keycloak.getAuthServerUrl()
+                        .uri(URI.create(KEYCLOAK.getAuthServerUrl()
                                 + "/realms/sabha/protocol/openid-connect/token"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))

@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -15,15 +17,11 @@ import org.sabha.attendance.applicationservice.WeeklyMaterializationScanner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,15 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @Import(WeeklyMaterializationIntegrationTest.TestClockConfig.class)
-@Testcontainers
-class WeeklyMaterializationIntegrationTest {
+@Transactional
+class WeeklyMaterializationIntegrationTest extends PostgresIntegrationTest {
 
     private static final ZoneId KOLKATA = ZoneId.of("Asia/Kolkata");
     private static final UUID SEEDED_WEEKLY_SABHA = UUID.fromString("00000000-0000-0000-0000-000000000002");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

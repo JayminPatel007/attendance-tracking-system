@@ -1,22 +1,18 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 
 import jakarta.servlet.http.Cookie;
 
@@ -40,8 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class RoleAppointmentIntegrationTest {
+class RoleAppointmentIntegrationTest extends KeycloakIntegrationTest {
 
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID SABHA = UUID.fromString("00000000-0000-0000-0000-000000000002");
@@ -56,29 +51,9 @@ class RoleAppointmentIntegrationTest {
     private static final UUID EXISTING_PERSON = UUID.fromString("00000000-0000-0000-0000-00000011b001");
     private static final UUID EXISTING_USER = UUID.fromString("00000000-0000-0000-0000-00000011b002");
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri", () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-
-        r.add("sabha.bootstrap.mk.username", () -> "mk-appoint");
-        r.add("sabha.bootstrap.mk.password", () -> "changeme123!");
-        r.add("sabha.bootstrap.mk.full-name", () -> "Appointment MK Member");
-        r.add("sabha.bootstrap.mk.gender", () -> "MALE");
-        r.add("sabha.bootstrap.mk.mobile", () -> "+919820199888");
+        registerMkBootstrap(r);
     }
 
     @Autowired
@@ -87,6 +62,7 @@ class RoleAppointmentIntegrationTest {
     @Autowired
     JdbcClient jdbc;
 
+    @Transactional
     @Test
     void appointingAnExistingUserOnlyWritesTheRoleAssignmentWithItsAudit() throws Exception {
         seedNirdeshak();
@@ -108,6 +84,7 @@ class RoleAppointmentIntegrationTest {
         assertThat(rows).isEqualTo(1);
     }
 
+    @Transactional
     @Test
     void appointingANewPersonWritesPersonHomeSabhaUserAndRoleAssignmentTogether() throws Exception {
         seedNirdeshak();
@@ -143,6 +120,7 @@ class RoleAppointmentIntegrationTest {
         assertThat(roleRows).isEqualTo(1);
     }
 
+    @Transactional
     @Test
     void appointingFromOutsideTheNirdeshaksScopeIsForbidden() throws Exception {
         // The seeded Sanchalak holds no Nirdeshak role, so cannot appoint anyone.

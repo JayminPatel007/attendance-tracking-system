@@ -97,8 +97,11 @@ npm start        # serves http://localhost:4200 with auto-reload
 ## Backend integration tests on macOS
 
 The backend's integration tests start throwaway Postgres + Keycloak containers
-automatically (via Testcontainers). On macOS with Docker Desktop, two settings
-are needed the first time, both because of how Docker's socket works on a Mac.
+automatically (via Testcontainers). The whole suite shares one Postgres and one
+Keycloak per JVM (see `PostgresIntegrationTest` / `KeycloakIntegrationTest`), so
+a full run starts each container only once. On macOS with Docker Desktop, one
+setting is still needed the first time, because of how Docker's socket works on
+a Mac.
 
 ### 1. Point Testcontainers at the real Docker socket
 
@@ -114,19 +117,14 @@ testcontainers.reuse.enable=true
 (If you also run tests from your IDE, set the `DOCKER_HOST` environment variable
 to the same value.)
 
-### 2. Turn off Ryuk (the test cleanup container)
+> **Ryuk is already handled — no env var needed.** Ryuk (Testcontainers'
+> cleanup-reaper container) can't start on macOS Docker Desktop, so the build
+> disables it for you in `application-container/pom.xml` (surefire
+> `TESTCONTAINERS_RYUK_DISABLED=true`). A fresh clone runs green with no manual
+> `export`. The containers are JVM-lifetime singletons, so JVM shutdown reclaims
+> them without Ryuk, and ephemeral CI runners discard everything anyway.
 
-Ryuk is a helper container Testcontainers uses to clean up afterwards. It can't
-start on macOS Docker Desktop, so disable it:
-
-```sh
-export TESTCONTAINERS_RYUK_DISABLED=true
-```
-
-Add that line to your shell config (`~/.zshrc`) so you don't have to repeat it.
-**Linux and CI don't need this** — Ryuk works fine there.
-
-### 3. Don't remove the pinned Docker API version
+### 2. Don't remove the pinned Docker API version
 
 `apps/backend/application-container/pom.xml` pins `<api.version>1.43</api.version>`.
 Without it, the test Docker client is too old for modern Docker Desktop and
