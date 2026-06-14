@@ -12,16 +12,12 @@ import org.sabha.analytics.domain.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sabha.analytics.domain.OutcomeKind.ABSENT;
@@ -39,9 +35,8 @@ import static org.sabha.analytics.domain.OutcomeKind.WALK_IN_ELSEWHERE;
  */
 @SpringBootTest
 @Import(JdbcHomeSabhaOccurrenceHistoryIntegrationTest.NoAuthConfig.class)
-@Testcontainers
 @Transactional
-class JdbcHomeSabhaOccurrenceHistoryIntegrationTest {
+class JdbcHomeSabhaOccurrenceHistoryIntegrationTest extends PostgresIntegrationTest {
 
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID MARKED_BY = UUID.fromString("00000000-0000-0000-0000-000000000004");
@@ -50,10 +45,6 @@ class JdbcHomeSabhaOccurrenceHistoryIntegrationTest {
     private static final UUID OTHER_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000f0002");
     private static final UUID RAVI = UUID.fromString("00000000-0000-0000-0000-0000000f0101");
     private static final UUID NEWCOMER = UUID.fromString("00000000-0000-0000-0000-0000000f0102");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

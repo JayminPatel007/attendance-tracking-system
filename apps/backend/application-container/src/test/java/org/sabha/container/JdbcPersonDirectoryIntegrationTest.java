@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -14,16 +16,12 @@ import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,8 +34,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @SpringBootTest
 @Import(JdbcPersonDirectoryIntegrationTest.NoAuthConfig.class)
-@Testcontainers
-class JdbcPersonDirectoryIntegrationTest {
+@Transactional
+class JdbcPersonDirectoryIntegrationTest extends PostgresIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql and slice-6/001-person-directory.sql.
     private static final UUID KSHETRA_TRACER = UUID.fromString("00000000-0000-0000-0000-000000000001");
@@ -46,10 +44,6 @@ class JdbcPersonDirectoryIntegrationTest {
     private static final String RAMESH_MOBILE = "+910000000110";
     private static final UUID SANCHALAK_KEYCLOAK = UUID.fromString("00000000-0000-0000-0000-000000000005");
     private static final UUID OTHER_KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000009ff");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     JdbcClient jdbc;

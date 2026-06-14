@@ -1,9 +1,10 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.sabha.identity.applicationservice.SearchWalkInCandidatesUseCase;
 import org.sabha.identity.applicationservice.WalkInCandidate;
@@ -11,14 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @Import(WalkInSearchIntegrationTest.NoAuthConfig.class)
-@Testcontainers
-class WalkInSearchIntegrationTest {
+@Transactional
+class WalkInSearchIntegrationTest extends PostgresIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql and slice-6/001-person-directory.sql.
     private static final UUID KSHETRA_TRACER = UUID.fromString("00000000-0000-0000-0000-000000000001");
@@ -46,22 +43,11 @@ class WalkInSearchIntegrationTest {
     private static final UUID SANYUKTA_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000002a2");
     private static final String MULTI_HOME_MOBILE = "+910000000201";
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
     @Autowired
     SearchWalkInCandidatesUseCase searchWalkIn;
 
     @Autowired
     JdbcClient jdbc;
-
-    @AfterEach
-    void cleanUp() {
-        jdbc.sql("DELETE FROM home_sabhas WHERE person_id = ?").param(MULTI_HOME_PERSON).update();
-        jdbc.sql("DELETE FROM persons WHERE id = ?").param(MULTI_HOME_PERSON).update();
-        jdbc.sql("DELETE FROM sabhas WHERE id = ?").param(SANYUKTA_SABHA).update();
-    }
 
     @Test
     void aFuzzyNameSearchFindsACrossDemographicVisitorWithTheirHomeSabha() {

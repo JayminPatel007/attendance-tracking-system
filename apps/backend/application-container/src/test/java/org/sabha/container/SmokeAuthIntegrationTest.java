@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -12,21 +14,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dasniko.testcontainers.keycloak.KeycloakContainer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,46 +31,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class SmokeAuthIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
-    @DynamicPropertySource
-    static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-    }
+@Transactional
+class SmokeAuthIntegrationTest extends KeycloakIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;
 
     @Autowired
     JdbcClient jdbc;
-
-    @AfterEach
-    void resetMutableTables() {
-        // Tests share Postgres + Keycloak across the class; reset write-side tables
-        // between tests so order doesn't matter. Seeded read-side rows are left alone.
-        // Clear an occurrence's transitions before the occurrence itself: the
-        // slice-19 audit seed is the first to seed occurrence_state_transitions, so
-        // deleting the parent rows now trips the FK without this (ADR-0023).
-        jdbc.sql("DELETE FROM attendance_markings").update();
-        jdbc.sql("DELETE FROM occurrence_state_transitions WHERE occurrence_id <> '00000000-0000-0000-0000-000000000020'").update();
-        jdbc.sql("DELETE FROM occurrences WHERE id <> '00000000-0000-0000-0000-000000000020'").update();
-    }
 
     @Test
     void actuatorHealthIsPublicAndReportsUp() throws Exception {
@@ -142,7 +104,9 @@ class SmokeAuthIntegrationTest {
     void markingIsRejectedWhenOccurrenceIsNotOpenForMarking() throws Exception {
         String token = obtainSanchalakAccessToken();
 
-        UUID finalizedOccurrenceId = UUID.fromString("00000000-0000-0000-0000-000000000021");
+        // A test-private id (not a fixed seed id): the suite shares one DB, and the
+        // reopen seed already owns …0021. This row rolls back with the test transaction.
+        UUID finalizedOccurrenceId = UUID.randomUUID();
         jdbc.sql("""
                 INSERT INTO occurrences (id, sabha_id, occurrence_date, state)
                 VALUES (?, '00000000-0000-0000-0000-000000000002', CURRENT_DATE - 7, 'FINALIZED')
@@ -350,7 +314,7 @@ class SmokeAuthIntegrationTest {
 
         HttpResponse<String> resp = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder()
-                        .uri(URI.create(keycloak.getAuthServerUrl() + "/realms/sabha/protocol/openid-connect/token"))
+                        .uri(URI.create(KEYCLOAK.getAuthServerUrl() + "/realms/sabha/protocol/openid-connect/token"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build(),

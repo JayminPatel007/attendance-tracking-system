@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -9,22 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dasniko.testcontainers.keycloak.KeycloakContainer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -40,31 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class OccurrenceShapingIntegrationTest {
+@Transactional
+class OccurrenceShapingIntegrationTest extends KeycloakIntegrationTest {
 
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000040");
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
-    @DynamicPropertySource
-    static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-    }
 
     @Autowired
     MockMvc mockMvc;
@@ -81,13 +55,6 @@ class OccurrenceShapingIntegrationTest {
                 VALUES (?, ?, CURRENT_DATE + 7, 'SCHEDULED')
                 """)
                 .param(OCCURRENCE_ID).param(SABHA_ID).update();
-    }
-
-    @AfterEach
-    void cleanUp() {
-        jdbc.sql("DELETE FROM occurrence_state_transitions WHERE occurrence_id = ?")
-                .param(OCCURRENCE_ID).update();
-        jdbc.sql("DELETE FROM occurrences WHERE id = ?").param(OCCURRENCE_ID).update();
     }
 
     @Test
@@ -221,7 +188,7 @@ class OccurrenceShapingIntegrationTest {
 
         HttpResponse<String> resp = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder()
-                        .uri(URI.create(keycloak.getAuthServerUrl()
+                        .uri(URI.create(KEYCLOAK.getAuthServerUrl()
                                 + "/realms/sabha/protocol/openid-connect/token"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))

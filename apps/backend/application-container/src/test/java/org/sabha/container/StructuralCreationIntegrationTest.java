@@ -1,23 +1,19 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 
 import jakarta.servlet.http.Cookie;
 
@@ -38,8 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class StructuralCreationIntegrationTest {
+@Transactional
+class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
 
     /** Seeded Sanchalak (non-MK) Keycloak subject — infra/keycloak/realm-sabha.json. */
     private static final String SANCHALAK_SUBJECT = "00000000-0000-0000-0000-000000000005";
@@ -48,29 +44,9 @@ class StructuralCreationIntegrationTest {
     private static final UUID SANYOJAK_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000005a2");
     private static final UUID SANYOJAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000005a3");
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer()
-            .withRealmImportFile("/realm-sabha.json");
-
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri", () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-
-        r.add("sabha.bootstrap.mk.username", () -> "mk-struct");
-        r.add("sabha.bootstrap.mk.password", () -> "changeme123!");
-        r.add("sabha.bootstrap.mk.full-name", () -> "Structural MK Member");
-        r.add("sabha.bootstrap.mk.gender", () -> "MALE");
-        r.add("sabha.bootstrap.mk.mobile", () -> "+919820155666");
+        registerMkBootstrap(r);
     }
 
     @Autowired
@@ -81,8 +57,8 @@ class StructuralCreationIntegrationTest {
 
     @Test
     void mkMemberCreatesACityPersistedWithCreatedBySetToThemselves() throws Exception {
-        UUID mkUser = localUserId("mk-struct");
-        String mkSubject = keycloakSubject("mk-struct");
+        UUID mkUser = localUserId(MK_USERNAME);
+        String mkSubject = keycloakSubject(MK_USERNAME);
 
         String body = mockMvc.perform(authedPost(mkSubject, "/bff/structure/cities", "{\"name\":\"Surat\"}"))
                 .andExpect(status().isCreated())
@@ -97,7 +73,7 @@ class StructuralCreationIntegrationTest {
 
     @Test
     void mkMemberCreatesAZoneWithinACity() throws Exception {
-        String mkSubject = keycloakSubject("mk-struct");
+        String mkSubject = keycloakSubject(MK_USERNAME);
         UUID cityId = createCity(mkSubject, "Vadodara");
 
         mockMvc.perform(authedPost(mkSubject, "/bff/structure/zones",
@@ -111,7 +87,7 @@ class StructuralCreationIntegrationTest {
 
     @Test
     void mkMemberRegistersASabhaKind() throws Exception {
-        String mkSubject = keycloakSubject("mk-struct");
+        String mkSubject = keycloakSubject(MK_USERNAME);
 
         mockMvc.perform(authedPost(mkSubject, "/bff/structure/sabha-kinds",
                         "{\"demographic\":\"YUVATI\",\"track\":\"YSS\"}"))
@@ -124,7 +100,7 @@ class StructuralCreationIntegrationTest {
 
     @Test
     void theKindBuilderRejectsASanyuktaSelectiveKind() throws Exception {
-        String mkSubject = keycloakSubject("mk-struct");
+        String mkSubject = keycloakSubject(MK_USERNAME);
 
         mockMvc.perform(authedPost(mkSubject, "/bff/structure/sabha-kinds",
                         "{\"demographic\":\"SANYUKTA\",\"track\":\"BSS\"}"))
@@ -147,7 +123,7 @@ class StructuralCreationIntegrationTest {
 
     @Test
     void aSanyojakCreatesAKshetraWithinTheirZoneButNotOutsideIt() throws Exception {
-        String mkSubject = keycloakSubject("mk-struct");
+        String mkSubject = keycloakSubject(MK_USERNAME);
         UUID cityId = createCity(mkSubject, "Bhavnagar");
         UUID myZone = createZone(mkSubject, cityId, "BhavnagarCentral");
         UUID otherZone = createZone(mkSubject, cityId, "BhavnagarEast");

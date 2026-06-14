@@ -1,5 +1,7 @@
 package org.sabha.container;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -9,24 +11,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dasniko.testcontainers.keycloak.KeycloakContainer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import jakarta.servlet.http.Cookie;
 
@@ -47,8 +41,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class PasswordResetIntegrationTest {
+@Transactional
+class PasswordResetIntegrationTest extends KeycloakIntegrationTest {
 
     private static final UUID RESET_PERSON = UUID.fromString("00000000-0000-0000-0000-00000018a001");
     private static final UUID RESET_USER = UUID.fromString("00000000-0000-0000-0000-00000018a002");
@@ -61,24 +55,6 @@ class PasswordResetIntegrationTest {
     private static final UUID TARGET_PERSON = UUID.fromString("00000000-0000-0000-0000-00000018c001");
     private static final UUID TARGET_USER = UUID.fromString("00000000-0000-0000-0000-00000018c002");
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static KeycloakContainer keycloak = new KeycloakContainer().withRealmImportFile("/realm-sabha.json");
-
-    @DynamicPropertySource
-    static void registerProperties(DynamicPropertyRegistry r) {
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.issuer-uri", () -> keycloak.getAuthServerUrl() + "/realms/sabha");
-        r.add("sabha.keycloak.admin-base-url", keycloak::getAuthServerUrl);
-        r.add("sabha.keycloak.realm", () -> "sabha");
-        r.add("sabha.keycloak.admin-username", keycloak::getAdminUsername);
-        r.add("sabha.keycloak.admin-password", keycloak::getAdminPassword);
-    }
-
     @Autowired
     MockMvc mockMvc;
 
@@ -87,17 +63,6 @@ class PasswordResetIntegrationTest {
 
     @Autowired
     IdentityProviderGateway identityProvider;
-
-    @AfterEach
-    void cleanUp() {
-        jdbc.sql("DELETE FROM password_resets").update();
-        jdbc.sql("DELETE FROM role_assignments WHERE user_id IN (?, ?, ?)")
-                .param(RESET_USER).param(APPOINTER_USER).param(TARGET_USER).update();
-        jdbc.sql("DELETE FROM users WHERE id IN (?, ?, ?)")
-                .param(RESET_USER).param(APPOINTER_USER).param(TARGET_USER).update();
-        jdbc.sql("DELETE FROM persons WHERE id IN (?, ?, ?)")
-                .param(RESET_PERSON).param(APPOINTER_PERSON).param(TARGET_PERSON).update();
-    }
 
     @Test
     void selfServiceResetIsPublicAndChangesTheCredentialEndToEnd() throws Exception {
@@ -235,7 +200,7 @@ class PasswordResetIntegrationTest {
                 + "&scope=openid";
         HttpResponse<String> resp = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder()
-                        .uri(URI.create(keycloak.getAuthServerUrl() + "/realms/sabha/protocol/openid-connect/token"))
+                        .uri(URI.create(KEYCLOAK.getAuthServerUrl() + "/realms/sabha/protocol/openid-connect/token"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build(),
