@@ -1,7 +1,6 @@
 package org.sabha.identity.applicationservice;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -37,17 +36,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HomeSabhaTransferService {
 
-    /** Rolling window and cap for OTP sends per mobile (PRD-0001). */
-    private static final Duration RATE_LIMIT_WINDOW = Duration.ofHours(1);
-    private static final int MAX_OTPS_PER_WINDOW = 3;
-    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
-
     private final CallerResolver callerResolver;
     private final RoleAssignmentLookup roleAssignments;
     private final HomeSabhaDirectory directory;
     private final HomeSabhaTransferRepository transfers;
     private final OtpGateway otpGateway;
     private final OtpCodeGenerator otpCodeGenerator;
+    private final OtpSendPolicy otpSendPolicy;
     private final DomainEventPublisher events;
     private final Clock clock;
 
@@ -58,6 +53,7 @@ public class HomeSabhaTransferService {
             HomeSabhaTransferRepository transfers,
             OtpGateway otpGateway,
             OtpCodeGenerator otpCodeGenerator,
+            OtpSendPolicy otpSendPolicy,
             DomainEventPublisher events,
             Clock clock) {
         this.callerResolver = callerResolver;
@@ -66,6 +62,7 @@ public class HomeSabhaTransferService {
         this.transfers = transfers;
         this.otpGateway = otpGateway;
         this.otpCodeGenerator = otpCodeGenerator;
+        this.otpSendPolicy = otpSendPolicy;
         this.events = events;
         this.clock = clock;
     }
@@ -87,14 +84,7 @@ public class HomeSabhaTransferService {
         }
 
         Instant now = clock.instant();
-        transfers.lastInitiatedAt(mobile).ifPresent(last -> {
-            if (Duration.between(last, now).compareTo(RESEND_COOLDOWN) < 0) {
-                throw new OtpResendCooldownException(mobile);
-            }
-        });
-        if (transfers.sendCountSince(mobile, now.minus(RATE_LIMIT_WINDOW)) >= MAX_OTPS_PER_WINDOW) {
-            throw new OtpRateLimitExceededException(mobile);
-        }
+        otpSendPolicy.enforce(mobile, transfers, now);
 
         String code = otpCodeGenerator.generate();
         HomeSabhaTransfer transfer = HomeSabhaTransfer.initiate(

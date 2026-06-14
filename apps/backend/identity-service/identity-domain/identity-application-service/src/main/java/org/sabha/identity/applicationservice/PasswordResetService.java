@@ -1,7 +1,6 @@
 package org.sabha.identity.applicationservice;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -32,18 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PasswordResetService {
 
-    /** Rolling window and cap for reset OTP sends per mobile (PRD-0001). */
-    private static final Duration RATE_LIMIT_WINDOW = Duration.ofHours(1);
-    private static final int MAX_OTPS_PER_WINDOW = 3;
-
-    /** Resend cooldown between OTPs to the same mobile (PRD-0001). */
-    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(30);
-
     private final UserRepository users;
     private final PersonContactLookup contacts;
     private final PasswordResetRepository resets;
     private final OtpGateway otpGateway;
     private final OtpCodeGenerator otpCodeGenerator;
+    private final OtpSendPolicy otpSendPolicy;
     private final ResetTokenGenerator resetTokenGenerator;
     private final IdentityProviderGateway identityProvider;
     private final DomainEventPublisher events;
@@ -55,6 +48,7 @@ public class PasswordResetService {
             PasswordResetRepository resets,
             OtpGateway otpGateway,
             OtpCodeGenerator otpCodeGenerator,
+            OtpSendPolicy otpSendPolicy,
             ResetTokenGenerator resetTokenGenerator,
             IdentityProviderGateway identityProvider,
             DomainEventPublisher events,
@@ -64,6 +58,7 @@ public class PasswordResetService {
         this.resets = resets;
         this.otpGateway = otpGateway;
         this.otpCodeGenerator = otpCodeGenerator;
+        this.otpSendPolicy = otpSendPolicy;
         this.resetTokenGenerator = resetTokenGenerator;
         this.identityProvider = identityProvider;
         this.events = events;
@@ -79,14 +74,7 @@ public class PasswordResetService {
                 .orElseThrow(() -> new NoRegisteredMobileException(username));
 
         Instant now = clock.instant();
-        resets.lastInitiatedAt(mobile).ifPresent(last -> {
-            if (Duration.between(last, now).compareTo(RESEND_COOLDOWN) < 0) {
-                throw new OtpResendCooldownException(mobile);
-            }
-        });
-        if (resets.sendCountSince(mobile, now.minus(RATE_LIMIT_WINDOW)) >= MAX_OTPS_PER_WINDOW) {
-            throw new OtpRateLimitExceededException(mobile);
-        }
+        otpSendPolicy.enforce(mobile, resets, now);
 
         String code = otpCodeGenerator.generate();
         PasswordReset reset = PasswordReset.request(

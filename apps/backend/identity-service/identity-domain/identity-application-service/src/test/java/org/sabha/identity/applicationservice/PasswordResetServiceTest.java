@@ -90,33 +90,32 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void requestWithinResendCooldownIsRejected() {
+    void requestConsultsTheSendPolicyWithThisFlowsSendLogBeforeSending() {
         Fixture f = new Fixture();
         f.users.seed(new User(USER_ID, PERSON_ID, USERNAME, KEYCLOAK_USER_ID));
         f.contacts.seedMobile(PERSON_ID, MOBILE);
-        PasswordResetService service = f.service();
-        service.request(USERNAME);
+        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
+        f.otpSendPolicy = policy;
 
-        f.clock.advance(Duration.ofSeconds(20));
+        f.service().request(USERNAME);
 
-        assertThatThrownBy(() -> service.request(USERNAME))
-                .isInstanceOf(OtpResendCooldownException.class);
+        assertThat(policy.mobile).isEqualTo(MOBILE);
+        assertThat(policy.log).isSameAs(f.resets);
+        assertThat(policy.now).isEqualTo(f.clock.instant());
     }
 
     @Test
-    void requestIsRateLimitedToThreeOtpsPerHourPerMobile() {
+    void requestSendsNoOtpWhenTheSendPolicyDeniesTheSend() {
         Fixture f = new Fixture();
         f.users.seed(new User(USER_ID, PERSON_ID, USERNAME, KEYCLOAK_USER_ID));
         f.contacts.seedMobile(PERSON_ID, MOBILE);
-        PasswordResetService service = f.service();
+        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
+        policy.toThrow = new OtpRateLimitExceededException(MOBILE);
+        f.otpSendPolicy = policy;
 
-        for (int send = 0; send < 3; send++) {
-            service.request(USERNAME);
-            f.clock.advance(Duration.ofMinutes(1));
-        }
-
-        assertThatThrownBy(() -> service.request(USERNAME))
+        assertThatThrownBy(() -> f.service().request(USERNAME))
                 .isInstanceOf(OtpRateLimitExceededException.class);
+        assertThat(f.gateway.sentCode).isNull();
     }
 
     @Test
@@ -276,10 +275,12 @@ class PasswordResetServiceTest {
         final RecordingPublisher publisher = new RecordingPublisher();
         final MutableClock clock = new MutableClock(Instant.parse("2026-06-07T10:00:00Z"));
 
+        OtpSendPolicy otpSendPolicy = new OtpSendPolicy();
+
         PasswordResetService service() {
             return new PasswordResetService(
                     users, contacts, resets, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP),
+                    new FixedOtpCodeGenerator(FIXED_OTP), otpSendPolicy,
                     new FixedResetTokenGenerator(FIXED_RESET_TOKEN),
                     identityProvider, publisher, clock);
         }
@@ -384,6 +385,24 @@ class PasswordResetServiceTest {
         public void send(String mobile, String code) {
             this.sentTo = mobile;
             this.sentCode = code;
+        }
+    }
+
+    /** Captures what the service hands the policy, and optionally vetoes the send. */
+    static final class RecordingOtpSendPolicy extends OtpSendPolicy {
+        String mobile;
+        OtpSendLog log;
+        Instant now;
+        RuntimeException toThrow;
+
+        @Override
+        public void enforce(String mobile, OtpSendLog log, Instant now) {
+            this.mobile = mobile;
+            this.log = log;
+            this.now = now;
+            if (toThrow != null) {
+                throw toThrow;
+            }
         }
     }
 

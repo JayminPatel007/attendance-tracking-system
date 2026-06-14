@@ -199,31 +199,30 @@ class HomeSabhaTransferServiceTest {
     }
 
     @Test
-    void initiateIsRateLimitedToThreeOtpsPerHourPerMobile() {
+    void initiateConsultsTheSendPolicyWithThisFlowsSendLogBeforeSending() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        HomeSabhaTransferService service = f.service();
+        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
+        f.otpSendPolicy = policy;
 
-        for (int send = 0; send < 3; send++) {
-            service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
-            f.clock.advance(Duration.ofMinutes(1));
-        }
+        f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
 
-        assertThatThrownBy(() -> service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
-                .isInstanceOf(OtpRateLimitExceededException.class);
+        assertThat(policy.mobile).isEqualTo(PERSON_MOBILE);
+        assertThat(policy.log).isSameAs(f.transfers);
+        assertThat(policy.now).isEqualTo(f.clock.instant());
     }
 
     @Test
-    void initiateWithinResendCooldownIsRejected() {
+    void initiateSendsNoOtpWhenTheSendPolicyDeniesTheSend() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        HomeSabhaTransferService service = f.service();
-        service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
+        policy.toThrow = new OtpRateLimitExceededException(PERSON_MOBILE);
+        f.otpSendPolicy = policy;
 
-        f.clock.advance(Duration.ofSeconds(20));
-
-        assertThatThrownBy(() -> service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
-                .isInstanceOf(OtpResendCooldownException.class);
+        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
+                .isInstanceOf(OtpRateLimitExceededException.class);
+        assertThat(f.gateway.sentCode).isNull();
     }
 
     @Test
@@ -276,10 +275,12 @@ class HomeSabhaTransferServiceTest {
                     ? Optional.of(INITIATOR_USER) : Optional.empty();
         }
 
+        OtpSendPolicy otpSendPolicy = new OtpSendPolicy();
+
         HomeSabhaTransferService service() {
             return new HomeSabhaTransferService(
                     caller(), roleAssignments, directory, transfers, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP), publisher, clock);
+                    new FixedOtpCodeGenerator(FIXED_OTP), otpSendPolicy, publisher, clock);
         }
     }
 
@@ -384,6 +385,24 @@ class HomeSabhaTransferServiceTest {
         public void send(String mobile, String code) {
             this.sentTo = mobile;
             this.sentCode = code;
+        }
+    }
+
+    /** Captures what the service hands the policy, and optionally vetoes the send. */
+    static final class RecordingOtpSendPolicy extends OtpSendPolicy {
+        String mobile;
+        OtpSendLog log;
+        Instant now;
+        RuntimeException toThrow;
+
+        @Override
+        public void enforce(String mobile, OtpSendLog log, Instant now) {
+            this.mobile = mobile;
+            this.log = log;
+            this.now = now;
+            if (toThrow != null) {
+                throw toThrow;
+            }
         }
     }
 
