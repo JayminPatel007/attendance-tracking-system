@@ -1,0 +1,2783 @@
+{
+  "components" : {
+    "schemas" : {
+      "AddPersonRequest" : {
+        "properties" : {
+          "dateOfBirth" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "gender" : {
+            "enum" : [ "MALE", "FEMALE" ],
+            "type" : "string"
+          },
+          "guardianPersonId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "homeSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "mobile" : {
+            "type" : "string"
+          },
+          "overrideDuplicateWarning" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "AddPersonResponse" : {
+        "properties" : {
+          "candidates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NameCandidate"
+            },
+            "type" : "array"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "requiresOverride" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "AppointeePayload" : {
+        "properties" : {
+          "existingPersonId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "newPerson" : {
+            "$ref" : "#/components/schemas/NewPersonPayload"
+          },
+          "rawPassword" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AppointerContact" : {
+        "properties" : {
+          "mobile" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AppointmentRequest" : {
+        "properties" : {
+          "cityId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "demographic" : {
+            "type" : "string"
+          },
+          "existingPersonId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "kshetraId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "newPerson" : {
+            "$ref" : "#/components/schemas/NewPersonPayload"
+          },
+          "rawPassword" : {
+            "type" : "string"
+          },
+          "role" : {
+            "enum" : [ "SANCHALAK", "SAH_SANCHALAK", "NIRIKSHAK", "SAH_NIRDESHAK", "NIRDESHAK", "SANYOJAK", "REGIONAL_TEAM", "SANT" ],
+            "type" : "string"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "zoneId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AppointmentResponse" : {
+        "properties" : {
+          "assignmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "candidates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NameCandidate"
+            },
+            "type" : "array"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "requiresOverride" : {
+            "type" : "boolean"
+          },
+          "userId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AuditEntry" : {
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "actorName" : {
+            "type" : "string"
+          },
+          "actorUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "at" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "onBehalfName" : {
+            "type" : "string"
+          },
+          "onBehalfOfUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "targetId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "targetType" : {
+            "enum" : [ "OCCURRENCE", "SABHA", "ROLE_ASSIGNMENT", "STRUCTURAL", "PERSON" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CancelRequest" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CandidateRow" : {
+        "properties" : {
+          "demographic" : {
+            "type" : "string"
+          },
+          "homeSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "kshetraName" : {
+            "type" : "string"
+          },
+          "missedStreak" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personName" : {
+            "type" : "string"
+          },
+          "sabhaKind" : {
+            "type" : "string"
+          },
+          "tier" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ChooseCityRequest" : {
+        "properties" : {
+          "cityId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CityChip" : {
+        "properties" : {
+          "cities" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CityOption"
+            },
+            "type" : "array"
+          },
+          "sant" : {
+            "type" : "boolean"
+          },
+          "selectedCityId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CityOption" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CityView" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CompletePayload" : {
+        "properties" : {
+          "newPassword" : {
+            "type" : "string"
+          },
+          "resetToken" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ConfirmTransferRequest" : {
+        "properties" : {
+          "otpCode" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateCityRequest" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateKshetraRequest" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "zoneId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateOccurrenceRequest" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "endTime" : {
+            "type" : "string"
+          },
+          "startTime" : {
+            "type" : "string"
+          },
+          "venue" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateSabhaKindRequest" : {
+        "properties" : {
+          "demographic" : {
+            "enum" : [ "BAAL", "BALIKA", "YUVAK", "YUVATI", "SANYUKTA" ],
+            "type" : "string"
+          },
+          "track" : {
+            "enum" : [ "REGULAR", "BSS", "YSS" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateZoneRequest" : {
+        "properties" : {
+          "cityId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreatedOccurrenceResponse" : {
+        "properties" : {
+          "occurrenceId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreatedResponse" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CurrentOccurrence" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "rescheduledDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "rescheduledEndTime" : {
+            "type" : "string"
+          },
+          "rescheduledStartTime" : {
+            "type" : "string"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "state" : {
+            "enum" : [ "SCHEDULED", "RESCHEDULED", "OPEN_FOR_MARKING", "FINALIZED", "CANCELLED" ],
+            "type" : "string"
+          },
+          "venueOverride" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CurrentRoster" : {
+        "properties" : {
+          "occurrence" : {
+            "$ref" : "#/components/schemas/OccurrenceView"
+          },
+          "roster" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RosterEntry"
+            },
+            "type" : "array"
+          },
+          "rosterVersion" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "DashboardOverview" : {
+        "properties" : {
+          "headlineCandidates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CandidateRow"
+            },
+            "type" : "array"
+          },
+          "kpis" : {
+            "$ref" : "#/components/schemas/Kpis"
+          }
+        },
+        "type" : "object"
+      },
+      "DefineSabhaRequest" : {
+        "properties" : {
+          "dayOfWeek" : {
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ],
+            "type" : "string"
+          },
+          "endTime" : {
+            "type" : "string"
+          },
+          "kshetraId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sabhaKindId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sahSanchalak" : {
+            "$ref" : "#/components/schemas/AppointeePayload"
+          },
+          "sanchalak" : {
+            "$ref" : "#/components/schemas/AppointeePayload"
+          },
+          "standingVenue" : {
+            "type" : "string"
+          },
+          "startTime" : {
+            "type" : "string"
+          },
+          "weekly" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "DeselectRequest" : {
+        "properties" : {
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "selectiveSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "InitiateTransferRequest" : {
+        "properties" : {
+          "destinationSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "InitiateTransferResponse" : {
+        "properties" : {
+          "transferId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "Kpis" : {
+        "properties" : {
+          "priorityCandidates" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sabhasWithCandidates" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCandidates" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "Kshetra" : {
+        "properties" : {
+          "candidateCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "kshetraId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "kshetraName" : {
+            "type" : "string"
+          },
+          "sabhas" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Sabha"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "KshetraView" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "zoneId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "MarkRequest" : {
+        "properties" : {
+          "clientMarkedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "present" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "MarkingItem" : {
+        "properties" : {
+          "clientMarkedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "occurrenceId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "present" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "MonthlyComplianceResponse" : {
+        "properties" : {
+          "needsOccurrence" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "MonthlySabha" : {
+        "properties" : {
+          "needsOccurrence" : {
+            "type" : "boolean"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sabhaKind" : {
+            "type" : "string"
+          },
+          "standingVenue" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "NameCandidate" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "homeSabhas" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "NewPersonPayload" : {
+        "properties" : {
+          "dateOfBirth" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "gender" : {
+            "enum" : [ "MALE", "FEMALE" ],
+            "type" : "string"
+          },
+          "guardianPersonId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "homeSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "mobile" : {
+            "type" : "string"
+          },
+          "overrideDuplicateWarning" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "NominateRequest" : {
+        "properties" : {
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "regularSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "NominateResponse" : {
+        "properties" : {
+          "nominationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "OccurrenceView" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "state" : {
+            "enum" : [ "SCHEDULED", "RESCHEDULED", "OPEN_FOR_MARKING", "FINALIZED", "CANCELLED" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PendingNominationItem" : {
+        "properties" : {
+          "demographic" : {
+            "type" : "string"
+          },
+          "nominatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "nominatedBy" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "nominatedByName" : {
+            "type" : "string"
+          },
+          "nominationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personName" : {
+            "type" : "string"
+          },
+          "regularSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "selectiveSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "track" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PersonResponse" : {
+        "properties" : {
+          "dateOfBirth" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "gender" : {
+            "enum" : [ "MALE", "FEMALE" ],
+            "type" : "string"
+          },
+          "guardianPersonId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "mobile" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ProxyOccurrenceItem" : {
+        "properties" : {
+          "effectiveDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "venue" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ProxySabhaListItem" : {
+        "properties" : {
+          "lastSeenAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sabhaLabel" : {
+            "type" : "string"
+          },
+          "sanchalakName" : {
+            "type" : "string"
+          },
+          "sanchalakUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ReissueRequest" : {
+        "properties" : {
+          "newPassword" : {
+            "type" : "string"
+          },
+          "targetUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RejectRequest" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ReopenListItem" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "kshetraName" : {
+            "type" : "string"
+          },
+          "lastReopenReason" : {
+            "type" : "string"
+          },
+          "occurrenceId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "reopened" : {
+            "type" : "boolean"
+          },
+          "sabhaKind" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "venue" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ReopenRequest" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RequestPayload" : {
+        "properties" : {
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RequestResponse" : {
+        "properties" : {
+          "resetId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RescheduleRequest" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "endTime" : {
+            "type" : "string"
+          },
+          "startTime" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RosterEntry" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "present" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "Sabha" : {
+        "properties" : {
+          "candidateCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sabhaKind" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SabhaDefinitionResponse" : {
+        "properties" : {
+          "candidates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NameCandidate"
+            },
+            "type" : "array"
+          },
+          "requiresOverride" : {
+            "type" : "boolean"
+          },
+          "sabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sahSanchalakAssignmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sanchalakAssignmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SabhaKindView" : {
+        "properties" : {
+          "demographic" : {
+            "enum" : [ "BAAL", "BALIKA", "YUVAK", "YUVATI", "SANYUKTA" ],
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "track" : {
+            "enum" : [ "REGULAR", "BSS", "YSS" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SabhaTree" : {
+        "properties" : {
+          "zones" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Zone"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "SelectedPersonItem" : {
+        "properties" : {
+          "decidedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "decidedBy" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "decidedByName" : {
+            "type" : "string"
+          },
+          "demographic" : {
+            "type" : "string"
+          },
+          "nominationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "personName" : {
+            "type" : "string"
+          },
+          "selectiveSabhaId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "track" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SyncRequest" : {
+        "properties" : {
+          "markings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MarkingItem"
+            },
+            "type" : "array"
+          },
+          "rosterVersion" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SyncResponse" : {
+        "properties" : {
+          "appliedCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "Thresholds" : {
+        "properties" : {
+          "candidate" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "priority" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "ThresholdsRequest" : {
+        "properties" : {
+          "candidate" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "priority" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "VenueOverrideRequest" : {
+        "properties" : {
+          "venue" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "VerifyPayload" : {
+        "properties" : {
+          "otpCode" : {
+            "type" : "string"
+          },
+          "resetId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "VerifyResponse" : {
+        "properties" : {
+          "resetToken" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WalkInCandidate" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "homeSabhas" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WalkInRequest" : {
+        "properties" : {
+          "clientMarkedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WebSessionResponse" : {
+        "properties" : {
+          "madhyasthaKaryalaya" : {
+            "type" : "boolean"
+          },
+          "sections" : {
+            "items" : {
+              "enum" : [ "DASHBOARD", "ROLE_APPOINTMENT", "STRUCTURAL_ADMIN", "SABHA_DEFINITION", "OCCURRENCE_REOPEN", "SANCHALAK_PROXY", "SELECTION", "AUDIT_LOG" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WhoAmIResponse" : {
+        "properties" : {
+          "personId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WhoAppointedMeResponse" : {
+        "properties" : {
+          "contacts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AppointerContact"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "Zone" : {
+        "properties" : {
+          "candidateCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "kshetras" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Kshetra"
+            },
+            "type" : "array"
+          },
+          "zoneId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "zoneName" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ZoneView" : {
+        "properties" : {
+          "cityId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "cityName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      }
+    }
+  },
+  "info" : {
+    "description" : "Public /api Bearer chain and session-cookie /bff chain (ADR-0022).",
+    "title" : "Sabha Attendance API",
+    "version" : "0.1.0"
+  },
+  "openapi" : "3.1.0",
+  "paths" : {
+    "/api/directory/persons" : {
+      "get" : {
+        "operationId" : "search",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "mobile",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "name",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "kshetraId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "person-directory-rest-controller" ]
+      },
+      "post" : {
+        "operationId" : "add",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddPersonRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AddPersonResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "person-directory-rest-controller" ]
+      }
+    },
+    "/api/directory/persons/{id}" : {
+      "get" : {
+        "operationId" : "detail",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PersonResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "person-directory-rest-controller" ]
+      }
+    },
+    "/api/directory/walk-in-search" : {
+      "get" : {
+        "operationId" : "walkInSearch",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sabhaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/WalkInCandidate"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "person-directory-rest-controller" ]
+      }
+    },
+    "/api/home-sabha-transfers" : {
+      "post" : {
+        "operationId" : "initiate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InitiateTransferRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InitiateTransferResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "home-sabha-transfer-rest-controller" ]
+      }
+    },
+    "/api/home-sabha-transfers/{id}/confirm" : {
+      "post" : {
+        "operationId" : "confirm",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConfirmTransferRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "home-sabha-transfer-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/cancel" : {
+      "post" : {
+        "operationId" : "cancel_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CancelRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/markings" : {
+      "post" : {
+        "operationId" : "mark",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/reschedule" : {
+      "post" : {
+        "operationId" : "reschedule_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RescheduleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/revert" : {
+      "post" : {
+        "operationId" : "revert",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/venue-override" : {
+      "post" : {
+        "operationId" : "venueOverride_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VenueOverrideRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/occurrences/{occurrenceId}/walk-ins" : {
+      "post" : {
+        "operationId" : "walkIn",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WalkInRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/password-reset/complete" : {
+      "post" : {
+        "operationId" : "complete",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompletePayload"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "password-reset-rest-controller" ]
+      }
+    },
+    "/api/password-reset/request" : {
+      "post" : {
+        "operationId" : "request",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RequestPayload"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RequestResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "password-reset-rest-controller" ]
+      }
+    },
+    "/api/password-reset/verify" : {
+      "post" : {
+        "operationId" : "verify",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyPayload"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerifyResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "password-reset-rest-controller" ]
+      }
+    },
+    "/api/sabhas/{sabhaId}/monthly-compliance" : {
+      "get" : {
+        "operationId" : "monthlyCompliance",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "sabhaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MonthlyComplianceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/sabhas/{sabhaId}/occurrences" : {
+      "post" : {
+        "operationId" : "createMonthlyOccurrence",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "sabhaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateOccurrenceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedOccurrenceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/sanchalak/current-occurrence" : {
+      "get" : {
+        "operationId" : "currentOccurrence",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CurrentOccurrence"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/sanchalak/current-roster" : {
+      "get" : {
+        "operationId" : "currentRoster",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CurrentRoster"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/sanchalak/monthly-sabhas" : {
+      "get" : {
+        "operationId" : "monthlySabhas",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/MonthlySabha"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/sanchalak/nominations" : {
+      "post" : {
+        "operationId" : "nominate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NominateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NominateResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-rest-controller" ]
+      }
+    },
+    "/api/sync" : {
+      "post" : {
+        "operationId" : "sync",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SyncRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SyncResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-rest-controller" ]
+      }
+    },
+    "/api/who-appointed-me" : {
+      "get" : {
+        "operationId" : "whoAppointedMe",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhoAppointedMeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "who-appointed-me-rest-controller" ]
+      }
+    },
+    "/api/whoami" : {
+      "get" : {
+        "operationId" : "whoami",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhoAmIResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "identity-rest-controller" ]
+      }
+    },
+    "/bff/appointments" : {
+      "post" : {
+        "operationId" : "appoint",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "role-appointment-controller" ]
+      }
+    },
+    "/bff/audit-log" : {
+      "get" : {
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "targetType",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "OCCURRENCE", "SABHA", "ROLE_ASSIGNMENT", "STRUCTURAL", "PERSON" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "targetId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actorUserId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "proxyOnly",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/AuditEntry"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "audit-log-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/city" : {
+      "post" : {
+        "operationId" : "chooseCity",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChooseCityRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/overview" : {
+      "get" : {
+        "operationId" : "overview",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardOverview"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/people" : {
+      "get" : {
+        "operationId" : "people",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CandidateRow"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/sabha-tree" : {
+      "get" : {
+        "operationId" : "sabhaTree",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SabhaTree"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/scope" : {
+      "get" : {
+        "operationId" : "scope",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CityChip"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/dashboard/thresholds" : {
+      "get" : {
+        "operationId" : "thresholds",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Thresholds"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateThresholds",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ThresholdsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-bff-controller" ]
+      }
+    },
+    "/bff/directory/search" : {
+      "get" : {
+        "operationId" : "search_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "mobile",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "name",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "kshetraId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "directory-bff-controller" ]
+      }
+    },
+    "/bff/me" : {
+      "get" : {
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebSessionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "bff-session-controller" ]
+      }
+    },
+    "/bff/occurrences" : {
+      "get" : {
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ReopenListItem"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "occurrence-reopen-bff-controller" ]
+      }
+    },
+    "/bff/occurrences/{occurrenceId}/reopen" : {
+      "post" : {
+        "operationId" : "reopen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReopenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "occurrence-reopen-bff-controller" ]
+      }
+    },
+    "/bff/password-reissue" : {
+      "post" : {
+        "operationId" : "reissue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReissueRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "password-reissue-controller" ]
+      }
+    },
+    "/bff/proxy/occurrences/{occurrenceId}/cancel" : {
+      "post" : {
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CancelRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sanchalak-proxy-bff-controller" ]
+      }
+    },
+    "/bff/proxy/occurrences/{occurrenceId}/reschedule" : {
+      "post" : {
+        "operationId" : "reschedule",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RescheduleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sanchalak-proxy-bff-controller" ]
+      }
+    },
+    "/bff/proxy/occurrences/{occurrenceId}/venue-override" : {
+      "post" : {
+        "operationId" : "venueOverride",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "occurrenceId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VenueOverrideRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sanchalak-proxy-bff-controller" ]
+      }
+    },
+    "/bff/proxy/sabhas" : {
+      "get" : {
+        "operationId" : "sabhas",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProxySabhaListItem"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sanchalak-proxy-bff-controller" ]
+      }
+    },
+    "/bff/proxy/sabhas/{sabhaId}/occurrences" : {
+      "get" : {
+        "operationId" : "occurrences",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "sabhaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProxyOccurrenceItem"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sanchalak-proxy-bff-controller" ]
+      }
+    },
+    "/bff/sabhas" : {
+      "post" : {
+        "operationId" : "define",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DefineSabhaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SabhaDefinitionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sabha-definition-controller" ]
+      }
+    },
+    "/bff/selection/deselect" : {
+      "post" : {
+        "operationId" : "deselect",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeselectRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-bff-controller" ]
+      }
+    },
+    "/bff/selection/nominations" : {
+      "get" : {
+        "operationId" : "queue",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PendingNominationItem"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-bff-controller" ]
+      }
+    },
+    "/bff/selection/nominations/{id}/approve" : {
+      "post" : {
+        "operationId" : "approve",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-bff-controller" ]
+      }
+    },
+    "/bff/selection/nominations/{id}/reject" : {
+      "post" : {
+        "operationId" : "reject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-bff-controller" ]
+      }
+    },
+    "/bff/selection/selected" : {
+      "get" : {
+        "operationId" : "selected",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/SelectedPersonItem"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "selection-bff-controller" ]
+      }
+    },
+    "/bff/structure/cities" : {
+      "get" : {
+        "operationId" : "listCities",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CityView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      },
+      "post" : {
+        "operationId" : "createCity",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCityRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/kshetras" : {
+      "get" : {
+        "operationId" : "listKshetras",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "zoneId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/KshetraView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      },
+      "post" : {
+        "operationId" : "createKshetra",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateKshetraRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/my-zones" : {
+      "get" : {
+        "operationId" : "myZones",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ZoneView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/sabha-kinds" : {
+      "get" : {
+        "operationId" : "listSabhaKinds",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/SabhaKindView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      },
+      "post" : {
+        "operationId" : "createSabhaKind",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateSabhaKindRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/zones" : {
+      "get" : {
+        "operationId" : "listZones",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ZoneView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      },
+      "post" : {
+        "operationId" : "createZone",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateZoneRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    }
+  },
+  "servers" : [ {
+    "description" : "Generated server url",
+    "url" : "http://localhost"
+  } ]
+}
