@@ -6,8 +6,8 @@ import { demographicLabel } from 'sabha-domain';
 import { Observable } from 'rxjs';
 
 import { errorMessageFor } from '../../shared/http-error';
+import { PendingNominationItem, SelectedPersonItem } from '../../generated';
 import { SelectionService } from './selection.service';
-import { PendingNomination, SelectedPerson } from './selection.types';
 
 /**
  * A human label for the selective Sabha a Person joins, e.g. `Yuvak (YSS)` —
@@ -44,8 +44,8 @@ export class SelectionComponent implements OnInit {
 
   readonly trackLabel = trackLabel;
 
-  readonly pending = signal<PendingNomination[]>([]);
-  readonly selected = signal<SelectedPerson[]>([]);
+  readonly pending = signal<PendingNominationItem[]>([]);
+  readonly selected = signal<SelectedPersonItem[]>([]);
   readonly error = signal<string | null>(null);
   readonly submitting = signal<boolean>(false);
 
@@ -64,8 +64,8 @@ export class SelectionComponent implements OnInit {
     this.run(this.api.reject(nominationId, reason.trim()));
   }
 
-  deselect(person: SelectedPerson): void {
-    this.run(this.api.deselect(person.personId, person.selectiveSabhaId));
+  deselect(person: SelectedPersonItem): void {
+    this.run(this.api.deselect(person.personId!, person.selectiveSabhaId!));
   }
 
   private run(action: Observable<void>): void {

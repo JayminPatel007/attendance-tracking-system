@@ -22,18 +22,18 @@
         <li class="selection__item">
           <div class="selection__info">
             <span class="selection__name">{{ nom.personName }}</span>
-            <span class="selection__meta">{{ trackLabel(nom.demographic, nom.track) }}</span>
+            <span class="selection__meta">{{ trackLabel(nom.demographic!, nom.track!) }}</span>
             <span class="selection__sub">
               Nominated by {{ nom.nominatedByName }} · {{ nom.nominatedAt | date: 'mediumDate' }}
             </span>
           </div>
           <div class="selection__actions">
             <button type="button" class="selection__approve" [disabled]="submitting()"
-                    (click)="approve(nom.nominationId)">Approve</button>
+                    (click)="approve(nom.nominationId!)">Approve</button>
             <label class="selection__reject">
               <input #reason type="text" placeholder="Reason to reject" />
               <button type="button" [disabled]="submitting()"
-                      (click)="reject(nom.nominationId, reason.value)">Reject</button>
+                      (click)="reject(nom.nominationId!, reason.value)">Reject</button>
             </label>
           </div>
         </li>
@@ -51,7 +51,7 @@
         <li class="selection__item">
           <div class="selection__info">
             <span class="selection__name">{{ person.personName }}</span>
-            <span class="selection__meta">{{ trackLabel(person.demographic, person.track) }}</span>
+            <span class="selection__meta">{{ trackLabel(person.demographic!, person.track!) }}</span>
             <span class="selection__sub">
               Approved by {{ person.decidedByName }} · {{ person.decidedAt | date: 'mediumDate' }}
             </span>

@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { isPublicPath } from './password-reset/public-paths';
+import { provideApi } from './generated';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,6 +17,11 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
     ),
+    // The generated API client (issue #73) defaults its base path to the spec's
+    // server URL ("http://localhost"); pin it to "" so every request stays a
+    // same-origin relative path — the proxy in dev, the same host in prod — and
+    // keeps riding the session cookie + XSRF interceptor above.
+    provideApi({ basePath: '' }),
     // Resolve the BFF session before the app renders: 200 sets the session,
     // 401 redirects into the OIDC login, 403 surfaces the not-linked state. The
     // public reset routes are exempt — a session-less visitor must reach them

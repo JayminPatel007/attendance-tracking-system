@@ -7,7 +7,8 @@
     "build": "npm run build:libs && ng build web",
     "build:libs": "ng build shared-kernel && ng build shared-ui && ng build shared-data-access && ng build identity-domain && ng build sabha-domain && ng build attendance-domain && ng build analytics-domain",
     "watch": "ng build web --watch --configuration development",
-    "test": "npm run build:libs && ng test web --watch=false --browsers=ChromeHeadlessCI"
+    "test": "npm run build:libs && ng test web --watch=false --browsers=ChromeHeadlessCI",
+    "generate:api": "openapi-generator-cli generate -i ../backend/openapi.json -g typescript-angular -o src/app/generated --additional-properties=ngVersion=18.2.0,providedInRoot=true,fileNaming=kebab-case,useSingleRequestParameter=false"
   },
   "private": true,
   "dependencies": {
@@ -35,6 +36,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "ng-packagr": "^18.2.1",
-    "typescript": "~5.5.2"
+    "typescript": "~5.5.2",
+    "@openapitools/openapi-generator-cli": "^2.38.0"
   }
 }

@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { provideApi } from '../../generated';
 import { SelectionService } from './selection.service';
 
 describe('SelectionService', () => {
@@ -10,7 +11,10 @@ describe('SelectionService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      // provideApi pins the generated client's base path to "" so it issues the
+      // same relative URLs this spec asserts (it would otherwise default to the
+      // spec server "http://localhost").
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideApi({ basePath: '' })],
     });
     service = TestBed.inject(SelectionService);
     http = TestBed.inject(HttpTestingController);
