@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the Verified Home Sabha Transfer endpoints (Slice 8,
 /// ADR-0002). The whole flow is **online-only** (ADR-0007): the Person is found
 /// against the live Directory, and the OTP initiate/confirm must reach the
@@ -44,15 +46,12 @@ class HomeSabhaTransferApi {
     if (resp.statusCode == 200) {
       return (jsonDecode(resp.body) as Map<String, dynamic>)['transferId'] as String;
     }
-    if (resp.statusCode == 403) {
-      throw TransferNotAuthorizedException(
-          _messageOf(resp.body) ?? 'Only the destination Sabha\'s Sanchalak can do this.');
-    }
-    if (resp.statusCode == 429) {
-      throw TransferRateLimitedException(
-          _messageOf(resp.body) ?? 'Too many OTP requests — wait a moment and try again.');
-    }
-    throw HomeSabhaTransferApiException('POST home-sabha-transfers -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST home-sabha-transfers', {
+      403: (e) => TransferNotAuthorizedException(
+          e.message('Only the destination Sabha\'s Sanchalak can do this.')),
+      429: (e) => TransferRateLimitedException(
+          e.message('Too many OTP requests — wait a moment and try again.')),
+    }, fallback: HomeSabhaTransferApiException.new);
   }
 
   /// Step 3: submit the Person's OTP. On success (`200`) the Roster swap has
@@ -69,20 +68,9 @@ class HomeSabhaTransferApi {
       body: jsonEncode({'otpCode': otpCode}),
     );
     if (resp.statusCode == 200) return;
-    if (resp.statusCode == 422) {
-      throw TransferRejectedException(_messageOf(resp.body) ?? 'That OTP was rejected.');
-    }
-    throw HomeSabhaTransferApiException('POST confirm -> ${resp.statusCode}: ${resp.body}');
-  }
-
-  String? _messageOf(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
-    } on FormatException {
-      // non-JSON body
-    }
-    return null;
+    apiError(resp, 'POST confirm', {
+      422: (e) => TransferRejectedException(e.message('That OTP was rejected.')),
+    }, fallback: HomeSabhaTransferApiException.new);
   }
 }
 

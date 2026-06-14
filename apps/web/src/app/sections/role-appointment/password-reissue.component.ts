@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { AppointmentService } from './appointment.service';
 import { suggestPassword } from './appointment.credentials';
 
@@ -57,9 +58,11 @@ export class PasswordReissueComponent {
       error: (err: HttpErrorResponse) => {
         this.busy.set(false);
         this.error.set(
-          err.status === 403
-            ? 'You are not the appointer for that User (nor an MK member), so you cannot reissue their password.'
-            : 'Something went wrong — please try again.',
+          errorMessageFor(err, {
+            byStatus: {
+              403: 'You are not the appointer for that User (nor an MK member), so you cannot reissue their password.',
+            },
+          }),
         );
       },
     });

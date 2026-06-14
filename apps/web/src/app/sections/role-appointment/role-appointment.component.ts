@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { AppointmentService } from './appointment.service';
 import { suggestPassword, suggestUsername } from './appointment.credentials';
 import { PasswordReissueComponent } from './password-reissue.component';
@@ -215,16 +216,15 @@ export class RoleAppointmentComponent {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 409 && err.error?.code === 'USERNAME_TAKEN') {
-      return 'That username is already taken — choose another before submitting.';
-    }
-    if (err.status === 409) {
-      return 'That mobile number already belongs to someone in the Directory.';
-    }
-    if (err.status === 403) {
-      return 'You are not authorized to make this appointment in that scope.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byCode: {
+        USERNAME_TAKEN: 'That username is already taken — choose another before submitting.',
+      },
+      byStatus: {
+        409: 'That mobile number already belongs to someone in the Directory.',
+        403: 'You are not authorized to make this appointment in that scope.',
+      },
+    });
   }
 }
 

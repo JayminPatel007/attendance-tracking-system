@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { kindLabel } from 'sabha-domain';
 
+import { errorMessageFor } from '../../shared/http-error';
+
 import { OccurrenceReopenService } from './occurrence-reopen.service';
 import { OccurrenceListItem } from './occurrence-reopen.types';
 
@@ -87,12 +89,11 @@ export class OccurrenceReopenComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 403) {
-      return 'You are not authorized to reopen this Occurrence.';
-    }
-    if (err.status === 422) {
-      return 'A reason is required to reopen.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: {
+        403: 'You are not authorized to reopen this Occurrence.',
+        422: 'A reason is required to reopen.',
+      },
+    });
   }
 }

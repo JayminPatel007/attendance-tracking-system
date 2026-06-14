@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from 'analytics-domain';
 import { SessionService } from 'identity-domain';
 
+import { errorMessageFor } from '../../shared/http-error';
+
 /**
  * MK threshold editor (ADR-0010, Slice 15). Self-gating: it renders nothing — and
  * reads nothing — unless the session belongs to a Madhyastha Karyalaya member, the
@@ -69,12 +71,11 @@ export class ThresholdEditorComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 422) {
-      return 'Priority must be at least the candidate threshold, which must be at least 1.';
-    }
-    if (err.status === 403) {
-      return 'Only the Madhyastha Karyalaya may change the thresholds.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: {
+        422: 'Priority must be at least the candidate threshold, which must be at least 1.',
+        403: 'Only the Madhyastha Karyalaya may change the thresholds.',
+      },
+    });
   }
 }

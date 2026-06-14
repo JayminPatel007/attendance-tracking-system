@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
 import '../sync/pending_marking.dart';
 
 /// Thin wrapper over the two backend endpoints the mobile needs in Slice 2:
@@ -71,17 +72,10 @@ class RosterApi {
       final body = jsonDecode(resp.body) as Map<String, dynamic>;
       return body['appliedCount'] as int;
     }
-    if (resp.statusCode == 409) {
-      try {
-        final body = jsonDecode(resp.body) as Map<String, dynamic>;
-        if (body['code'] == 'ROSTER_STALE') {
-          throw StaleRosterException(body['detail'] as String? ?? 'roster stale');
-        }
-      } on FormatException {
-        // fall through to generic
-      }
-    }
-    throw RosterApiException('POST sync -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST sync', {
+      409: (e) =>
+          e.code == 'ROSTER_STALE' ? StaleRosterException(e.message('roster stale')) : null,
+    }, fallback: RosterApiException.new);
   }
 }
 
