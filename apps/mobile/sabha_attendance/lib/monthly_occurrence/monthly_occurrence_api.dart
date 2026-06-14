@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the monthly-ad-hoc surface (Slice 12, ADR-0012). A BSS/YSS
 /// Sanchalak lists the monthly Sabhas they preside over — each carrying the
 /// compliance nudge flag — and manually creates this month's Occurrence on a
@@ -48,26 +50,12 @@ class MonthlyOccurrenceApi {
     if (resp.statusCode == 201) {
       return (jsonDecode(resp.body) as Map<String, dynamic>)['occurrenceId'] as String;
     }
-    if (resp.statusCode == 403) {
-      throw MonthlyOccurrenceForbiddenException(
-          _messageOf(resp.body) ?? 'Only the Sabha\'s Sanchalak can create this Occurrence.');
-    }
-    if (resp.statusCode == 422) {
-      throw MonthlyOccurrenceRuleException(
-          _messageOf(resp.body) ?? 'That Occurrence can\'t be created right now.');
-    }
-    throw MonthlyOccurrenceApiException('POST occurrences -> ${resp.statusCode}: ${resp.body}');
-  }
-
-  /// Pulls the `message` field out of the uniform error body (ADR-0019), if any.
-  String? _messageOf(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
-    } on FormatException {
-      // non-JSON body — fall back to the generic message
-    }
-    return null;
+    apiError(resp, 'POST occurrences', {
+      403: (e) => MonthlyOccurrenceForbiddenException(
+          e.message('Only the Sabha\'s Sanchalak can create this Occurrence.')),
+      422: (e) => MonthlyOccurrenceRuleException(
+          e.message('That Occurrence can\'t be created right now.')),
+    }, fallback: MonthlyOccurrenceApiException.new);
   }
 }
 

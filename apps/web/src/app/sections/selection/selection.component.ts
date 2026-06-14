@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { demographicLabel } from 'sabha-domain';
 import { Observable } from 'rxjs';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { SelectionService } from './selection.service';
 import { PendingNomination, SelectedPerson } from './selection.types';
 
@@ -91,15 +92,12 @@ export class SelectionComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 403) {
-      return 'You are not authorized to decide this nomination.';
-    }
-    if (err.status === 409) {
-      return 'That Person has already been selected, or the nomination was already decided.';
-    }
-    if (err.status === 422) {
-      return 'That action can\'t be completed for this nomination.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: {
+        403: 'You are not authorized to decide this nomination.',
+        409: 'That Person has already been selected, or the nomination was already decided.',
+        422: 'That action can\'t be completed for this nomination.',
+      },
+    });
   }
 }

@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { demographicLabel } from 'sabha-domain';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { suggestPassword, suggestUsername } from '../role-appointment/appointment.credentials';
 import { NameCandidate, PersonResponse } from '../role-appointment/appointment.types';
 import { KshetraView, SabhaKindView, ZoneView } from '../structural-admin/structural.types';
@@ -230,12 +231,8 @@ export class SabhaDefinitionComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 409 && err.error?.code === 'USERNAME_TAKEN') {
-      return 'That username is already taken — choose another before submitting.';
-    }
-    if (err.status === 403) {
-      return 'You are not authorized to define a Sabha in that Kshetra.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: { 403: 'You are not authorized to define a Sabha in that Kshetra.' },
+    });
   }
 }

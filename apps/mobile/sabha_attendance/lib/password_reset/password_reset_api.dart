@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the self-service password-reset endpoints (ADR-0004, Slice
 /// 18). Unlike the rest of the app, these calls carry **no** auth — a locked-out
 /// user reaches them from the login screen before any token exists, so they sit
@@ -34,18 +36,13 @@ class PasswordResetApi {
     if (resp.statusCode == 200) {
       return (jsonDecode(resp.body) as Map<String, dynamic>)['resetId'] as String;
     }
-    if (resp.statusCode == 404) {
-      throw UnknownUsernameException(_messageOf(resp.body) ?? 'No such username.');
-    }
-    if (resp.statusCode == 422) {
-      throw NoRegisteredMobileException(
-          _messageOf(resp.body) ?? 'No mobile is registered for that user.');
-    }
-    if (resp.statusCode == 429) {
-      throw ResetRateLimitedException(
-          _messageOf(resp.body) ?? 'Too many OTP requests — wait a moment and try again.');
-    }
-    throw PasswordResetApiException('POST request -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST request', {
+      404: (e) => UnknownUsernameException(e.message('No such username.')),
+      422: (e) => NoRegisteredMobileException(
+          e.message('No mobile is registered for that user.')),
+      429: (e) => ResetRateLimitedException(
+          e.message('Too many OTP requests — wait a moment and try again.')),
+    }, fallback: PasswordResetApiException.new);
   }
 
   /// Step 2: exchange a correct OTP for a short-lived reset token. A `422` is a
@@ -59,10 +56,9 @@ class PasswordResetApi {
     if (resp.statusCode == 200) {
       return (jsonDecode(resp.body) as Map<String, dynamic>)['resetToken'] as String;
     }
-    if (resp.statusCode == 422) {
-      throw OtpRejectedException(_messageOf(resp.body) ?? 'That OTP was rejected.');
-    }
-    throw PasswordResetApiException('POST verify -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST verify', {
+      422: (e) => OtpRejectedException(e.message('That OTP was rejected.')),
+    }, fallback: PasswordResetApiException.new);
   }
 
   /// Step 3: set the new password against the reset token. A `404`/`422` means the
@@ -74,11 +70,10 @@ class PasswordResetApi {
       body: jsonEncode({'resetToken': resetToken, 'newPassword': newPassword}),
     );
     if (resp.statusCode == 200) return;
-    if (resp.statusCode == 404 || resp.statusCode == 422) {
-      throw ResetExpiredException(
-          _messageOf(resp.body) ?? 'That reset has expired — start again.');
-    }
-    throw PasswordResetApiException('POST complete -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST complete', {
+      404: (e) => ResetExpiredException(e.message('That reset has expired — start again.')),
+      422: (e) => ResetExpiredException(e.message('That reset has expired — start again.')),
+    }, fallback: PasswordResetApiException.new);
   }
 
   /// Lost-mobile lookup: who can reissue this username's password (their
@@ -93,20 +88,9 @@ class PasswordResetApi {
           .map((c) => AppointerContact.fromJson(c as Map<String, dynamic>))
           .toList(growable: false);
     }
-    if (resp.statusCode == 404) {
-      throw UnknownUsernameException(_messageOf(resp.body) ?? 'No such username.');
-    }
-    throw PasswordResetApiException('GET who-appointed-me -> ${resp.statusCode}: ${resp.body}');
-  }
-
-  String? _messageOf(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
-    } on FormatException {
-      // non-JSON body
-    }
-    return null;
+    apiError(resp, 'GET who-appointed-me', {
+      404: (e) => UnknownUsernameException(e.message('No such username.')),
+    }, fallback: PasswordResetApiException.new);
   }
 }
 

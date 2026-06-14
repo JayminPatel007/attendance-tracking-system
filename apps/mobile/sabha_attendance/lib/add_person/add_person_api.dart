@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the Person Directory endpoints (Slice 6, ADR-0013). The
 /// add flow is **online-only** (ADR-0007) — the de-dup check must hit the live
 /// Directory, so nothing here is ever queued offline.
@@ -43,32 +45,16 @@ class AddPersonApi {
     if (resp.statusCode == 201 || resp.statusCode == 200) {
       return AddPersonOutcome.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
     }
-    if (resp.statusCode == 409) {
-      final body = _decode(resp.body);
-      if (body?['code'] == 'MOBILE_ALREADY_REGISTERED') {
-        throw MobileAlreadyRegisteredException(
-          existingPersonId: body?['existingPersonId'] as String?,
-          message: body?['detail'] as String? ?? 'This mobile is already in the Directory.',
-        );
-      }
-    }
-    if (resp.statusCode == 422) {
-      throw DirectoryRuleException(_messageOf(resp.body) ?? 'That add was rejected.');
-    }
-    throw AddPersonApiException('POST persons -> ${resp.statusCode}: ${resp.body}');
+    apiError(resp, 'POST persons', {
+      409: (e) => e.code == 'MOBILE_ALREADY_REGISTERED'
+          ? MobileAlreadyRegisteredException(
+              existingPersonId: e.extension('existingPersonId'),
+              message: e.message('This mobile is already in the Directory.'),
+            )
+          : null,
+      422: (e) => DirectoryRuleException(e.message('That add was rejected.')),
+    }, fallback: AddPersonApiException.new);
   }
-
-  Map<String, dynamic>? _decode(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded;
-    } on FormatException {
-      // non-JSON body
-    }
-    return null;
-  }
-
-  String? _messageOf(String body) => _decode(body)?['detail'] as String?;
 }
 
 class AddPersonApiException implements Exception {

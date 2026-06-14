@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the Occurrence-shaping surface (Slice 5, ADR-0001). Reads
 /// the Sanchalak's currently-shapeable Occurrence and dispatches the four
 /// Sanchalak-only actions. These are **online-only** (ADR-0007) — never queued
@@ -60,24 +62,12 @@ class OccurrenceControlApi {
       body: body == null ? null : jsonEncode(body),
     );
     if (resp.statusCode == 200) return;
-    if (resp.statusCode == 403) {
-      throw OccurrenceForbiddenException(_messageOf(resp.body) ?? 'You are not allowed to perform this action.');
-    }
-    if (resp.statusCode == 422) {
-      throw OccurrenceRuleException(_messageOf(resp.body) ?? 'That action is not allowed right now.');
-    }
-    throw OccurrenceControlApiException('POST $path -> ${resp.statusCode}: ${resp.body}');
-  }
-
-  /// Pulls the `message` field out of the uniform error body (ADR-0019), if any.
-  String? _messageOf(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
-    } on FormatException {
-      // non-JSON body — fall back to the generic message
-    }
-    return null;
+    apiError(resp, 'POST $path', {
+      403: (e) => OccurrenceForbiddenException(
+          e.message('You are not allowed to perform this action.')),
+      422: (e) => OccurrenceRuleException(
+          e.message('That action is not allowed right now.')),
+    }, fallback: OccurrenceControlApiException.new);
   }
 }
 

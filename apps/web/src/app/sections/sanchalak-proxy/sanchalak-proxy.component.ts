@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { SanchalakProxyService } from './sanchalak-proxy.service';
 import { ProxyOccurrence, ProxySabha } from './sanchalak-proxy.types';
 
@@ -116,12 +117,11 @@ export class SanchalakProxyComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 403) {
-      return 'You are not authorized to act on this Sabha.';
-    }
-    if (err.status === 422) {
-      return 'That action is not allowed on this Occurrence.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: {
+        403: 'You are not authorized to act on this Sabha.',
+        422: 'That action is not allowed on this Occurrence.',
+      },
+    });
   }
 }

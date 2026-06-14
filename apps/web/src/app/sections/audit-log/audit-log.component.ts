@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
+import { errorMessageFor } from '../../shared/http-error';
 import { AuditLogService } from './audit-log.service';
 import { AuditEntry, AuditFilter, AuditTargetType, AUDIT_TARGET_TYPES } from './audit-log.types';
 
@@ -80,10 +81,9 @@ export class AuditLogComponent implements OnInit {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 403) {
-      return 'You are not authorized to view the audit log.';
-    }
-    return 'Something went wrong — please try again.';
+    return errorMessageFor(err, {
+      byStatus: { 403: 'You are not authorized to view the audit log.' },
+    });
   }
 
   private filter(): AuditFilter {

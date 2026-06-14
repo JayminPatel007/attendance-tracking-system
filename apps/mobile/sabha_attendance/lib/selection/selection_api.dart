@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_error.dart';
+
 /// Thin wrapper over the mobile BSS/YSS nomination endpoint (Slice 16, ADR-0006).
 /// The Regular Sanchalak nominates a Person from their Roster for the selective
 /// track; the selective Sabha is derived server-side. Online-only — a nomination
@@ -29,29 +31,14 @@ class SelectionApi {
     if (resp.statusCode == 200) {
       return (jsonDecode(resp.body) as Map<String, dynamic>)['nominationId'] as String;
     }
-    if (resp.statusCode == 403) {
-      throw NominationNotAuthorizedException(
-          _messageOf(resp.body) ?? 'Only this Sabha\'s Sanchalak can nominate.');
-    }
-    if (resp.statusCode == 409) {
-      throw AlreadyNominatedException(
-          _messageOf(resp.body) ?? 'This Person is already nominated or selected.');
-    }
-    if (resp.statusCode == 422) {
-      throw NominationRejectedException(
-          _messageOf(resp.body) ?? 'This Person can\'t be nominated.');
-    }
-    throw SelectionApiException('POST nominations -> ${resp.statusCode}: ${resp.body}');
-  }
-
-  String? _messageOf(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
-    } on FormatException {
-      // non-JSON body
-    }
-    return null;
+    apiError(resp, 'POST nominations', {
+      403: (e) => NominationNotAuthorizedException(
+          e.message('Only this Sabha\'s Sanchalak can nominate.')),
+      409: (e) => AlreadyNominatedException(
+          e.message('This Person is already nominated or selected.')),
+      422: (e) => NominationRejectedException(
+          e.message('This Person can\'t be nominated.')),
+    }, fallback: SelectionApiException.new);
   }
 }
 
