@@ -75,6 +75,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        // The OpenAPI document (issue #73) describes the contract every
+                        // client already calls — no data, no secrets — so it is public,
+                        // letting the spec be fetched as a build artifact for client codegen.
+                        .requestMatchers("/v3/api-docs/**").permitAll()
                         // Self-service password reset and the "who appointed me?" lookup are
                         // reached from the login screen before the User can authenticate
                         // (ADR-0004), so they are the one set of public business endpoints.

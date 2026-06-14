@@ -132,6 +132,38 @@ fails with "client version too old." Leave it as-is.
 
 ---
 
+## The API contract (OpenAPI)
+
+The REST surface — both the public `/api/**` Bearer chain and the session-cookie
+`/bff/**` chain ([ADR-0022](adr/0022-web-session-via-bff-http-only-cookie.md)) — is
+published as an OpenAPI document at **`apps/backend/openapi.json`**, checked into the
+repo (issue #73). It is generated from the live controllers by springdoc, and the
+typed web and mobile clients are generated from it (see those sections).
+
+You don't run a separate command to produce it: the
+`OpenApiContractIntegrationTest` drift gate regenerates the document from the
+running controllers on every `mvn test` and **fails the build if the committed
+`openapi.json` is out of date.** So a controller change that alters the contract
+makes the backend suite go red until the spec is regenerated.
+
+After an intentional contract change, regenerate and commit the spec:
+
+```sh
+cd apps/backend
+TESTCONTAINERS_RYUK_DISABLED=true \
+  mvn -pl application-container test \
+  -Dtest=OpenApiContractIntegrationTest -Dopenapi.regenerate=true
+```
+
+That rewrites `apps/backend/openapi.json` from the controllers. Review the diff,
+then commit it alongside the controller change.
+
+> springdoc serves the same document live at `http://localhost:8080/v3/api-docs`
+> when the backend is running. Only the JSON spec is exposed — there is no Swagger
+> UI page.
+
+---
+
 ## Mobile app (Flutter)
 
 > **New to mobile development? Read this first.** The mobile app is built with
