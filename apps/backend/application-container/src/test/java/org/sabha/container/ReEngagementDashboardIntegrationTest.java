@@ -32,12 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * End-to-end for the re-engagement read-model (Slice 15, ADR-0010): the projection
- * scanner runs the Calculator State-wide, then the dashboard queries serve each
- * tier only its own scope. Two Yuvak Sabhas in different Kshetras of one Zone, each
- * with one 3-missed candidate, let us pin that a Sanchalak sees only their Sabha, a
- * Nirdeshak only their Kshetra × demographic, and the MK both — and that the
- * Zone → Kshetra → Sabha tree rolls the counts up. Thresholds round-trip through the
- * admin port.
+ * scanner runs the Calculator State-wide, then the dashboard queries serve the caller
+ * only its own scope. Two Yuvak Sabhas in different Kshetras of one Zone, each with
+ * one 3-missed candidate, let us pin that the scope is applied through the projection —
+ * a Sanchalak sees only their Sabha, the MK both — and that the Zone → Kshetra → Sabha
+ * tree rolls the counts up. The per-tier predicate itself is covered canonically by
+ * {@link CallerVisibilityIntegrationTest}; this test does not re-enumerate every tier.
+ * Thresholds round-trip through the admin port.
  */
 @SpringBootTest
 @Import(ReEngagementDashboardIntegrationTest.NoAuthConfig.class)
@@ -57,7 +58,6 @@ class ReEngagementDashboardIntegrationTest {
 
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b01");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b02");
-    private static final UUID NIRDESHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b03");
     private static final UUID SANT_USER = UUID.fromString("00000000-0000-0000-0000-000000000b04");
 
     @Container
@@ -83,13 +83,14 @@ class ReEngagementDashboardIntegrationTest {
     ThresholdAdmin thresholdAdmin;
 
     @Test
-    void eachTierSeesOnlyItsOwnScopeAfterARefresh() {
+    void theProjectionIsServedThroughTheCallerScopeAfterARefresh() {
         seedTwoSabhasEachWithACandidate();
         scanner.refresh();
 
+        // A scoped caller is narrowed to their own Sabha; the unrestricted MK sees both —
+        // enough to prove the scope predicate is applied to the refreshed projection.
+        // Tier-by-tier scoping lives in CallerVisibilityIntegrationTest.
         assertThat(dashboard.people(new DashboardScope.RoleScoped(SANCHALAK_USER))).extracting(CandidateRow::personId)
-                .containsExactly(PERSON_1);
-        assertThat(dashboard.people(new DashboardScope.RoleScoped(NIRDESHAK_USER))).extracting(CandidateRow::personId)
                 .containsExactly(PERSON_1);
         assertThat(dashboard.people(new DashboardScope.RoleScoped(MK_USER))).extracting(CandidateRow::personId)
                 .contains(PERSON_1, PERSON_2);
@@ -149,7 +150,6 @@ class ReEngagementDashboardIntegrationTest {
         person(PERSON_2, "+910000000a02");
         mkUser(MK_USER, "mk-user");
         user(SANCHALAK_USER, "sanchalak-user");
-        user(NIRDESHAK_USER, "nirdeshak-user");
 
         city(CITY);
         zone(ZONE, CITY);
@@ -162,7 +162,6 @@ class ReEngagementDashboardIntegrationTest {
         candidate(PERSON_2, SABHA_2);
 
         roleAssignment(SANCHALAK_USER, "SANCHALAK", "sabha_id", SABHA_1, null);
-        roleAssignment(NIRDESHAK_USER, "NIRDESHAK", "kshetra_id", KSHETRA_1, "YUVAK");
     }
 
     /** Three Finalized Occurrences with no marking for the Person => a 3-missed streak. */

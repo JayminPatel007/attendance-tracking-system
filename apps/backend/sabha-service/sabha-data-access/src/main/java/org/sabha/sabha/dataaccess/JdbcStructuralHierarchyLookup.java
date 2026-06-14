@@ -3,6 +3,7 @@ package org.sabha.sabha.dataaccess;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sabha.common.SabhaKind;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Repository;
  * so the identity context's appointment Authorization Engine can resolve where a
  * role sits. A Sabha's {@code (demographic, track)} is carried denormalized in
  * {@code sabhas.sabha_kind} as {@code TRACK_DEMOGRAPHIC} (e.g. {@code REGULAR_YUVAK});
- * this splits it on the first underscore into the string tokens the engine matches.
+ * {@link SabhaKind} is the one definition of that encoding the engine matches against.
  */
 @Repository
 public class JdbcStructuralHierarchyLookup implements StructuralHierarchyLookup {
@@ -31,22 +32,17 @@ public class JdbcStructuralHierarchyLookup implements StructuralHierarchyLookup 
                 .param(sabhaId)
                 .query((rs, n) -> {
                     UUID kshetraId = rs.getObject("kshetra_id", UUID.class);
-                    String kind = rs.getString("sabha_kind");
-                    int split = kind.indexOf('_');
-                    String track = kind.substring(0, split);
-                    String demographic = kind.substring(split + 1);
-                    return new SabhaScope(kshetraId, demographic, track);
+                    SabhaKind kind = SabhaKind.parse(rs.getString("sabha_kind"));
+                    return new SabhaScope(kshetraId, kind.demographic(), kind.track());
                 })
                 .optional();
     }
 
     @Override
     public Optional<UUID> selectiveSabhaIn(UUID kshetraId, String demographic, String track) {
-        // A Sabha's (demographic, track) is carried denormalized in sabha_kind as
-        // TRACK_DEMOGRAPHIC (e.g. YSS_YUVAK), matching the split in sabhaScope.
         return jdbc.sql("SELECT id FROM sabhas WHERE kshetra_id = ? AND sabha_kind = ?")
                 .param(kshetraId)
-                .param(track + "_" + demographic)
+                .param(SabhaKind.encode(track, demographic))
                 .query((rs, n) -> rs.getObject("id", UUID.class))
                 .optional();
     }

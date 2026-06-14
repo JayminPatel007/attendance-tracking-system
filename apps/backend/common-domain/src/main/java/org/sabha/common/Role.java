@@ -24,7 +24,8 @@ public enum Role {
      * owns shaping, nor the oversight tiers (Sanyojak, Sant, MK). This is the one
      * canonical definition of the reopen authority set; the attendance
      * Authorization Engine (write path) and the web shell's section visibility
-     * both read it, and {@code JdbcOccurrenceReopenQueries} mirrors it in SQL.
+     * both read it, and the Occurrence-reopen read model grants exactly these tiers
+     * by passing the set to {@link CallerVisibility#tiersFor(java.util.Set)}.
      */
     public static final java.util.Set<Role> REOPEN_TIERS =
             java.util.Set.of(NIRIKSHAK, NIRDESHAK, SAH_NIRDESHAK);
