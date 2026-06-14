@@ -1,6 +1,14 @@
 spring:
   application:
     name: sabha-backend
+  threads:
+    # Virtual threads (issue #71, A1). The backend is request-per-thread and
+    # JDBC-heavy on Boot 3.5.6 / Java 21 — every BFF read blocks on Postgres,
+    # the textbook case for virtual threads. This also moves the @Scheduled cron
+    # scanners (ADR-0021) onto virtual threads; they remain correct as each pass
+    # re-derives its work and is self-healing.
+    virtual:
+      enabled: true
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:55432/sabha}
     username: ${SPRING_DATASOURCE_USERNAME:sabha}
