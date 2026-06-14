@@ -16,7 +16,6 @@ import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.OptimisticLockException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class JdbcOccurrenceRepository implements OccurrenceRepository, OccurrenceInsert {
@@ -94,7 +93,6 @@ public class JdbcOccurrenceRepository implements OccurrenceRepository, Occurrenc
     }
 
     @Override
-    @Transactional
     public void save(Occurrence occurrence) {
         int rows = jdbc.sql("""
                 UPDATE occurrences
