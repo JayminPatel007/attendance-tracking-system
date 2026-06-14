@@ -32,7 +32,7 @@ void main() {
     });
 
     test('throws unknown-username on 404', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'no user'}), 404));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'no user'}), 404));
       await expectLater(
         () => api.requestReset('ghost'),
         throwsA(isA<UnknownUsernameException>()),
@@ -40,7 +40,7 @@ void main() {
     });
 
     test('throws no-registered-mobile on 422', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'no mobile'}), 422));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'no mobile'}), 422));
       await expectLater(
         () => api.requestReset('ramesh.bhai'),
         throwsA(isA<NoRegisteredMobileException>()),
@@ -49,7 +49,7 @@ void main() {
 
     test('throws rate-limited with the backend message on 429', () async {
       final api = apiReturning(
-          (req) => http.Response(jsonEncode({'message': 'Wait 30s before retrying.'}), 429));
+          (req) => http.Response(jsonEncode({'detail': 'Wait 30s before retrying.'}), 429));
       await expectLater(
         () => api.requestReset('ramesh.bhai'),
         throwsA(isA<ResetRateLimitedException>()
@@ -75,7 +75,7 @@ void main() {
 
     test('throws OTP-rejected with the backend message on 422', () async {
       final api = apiReturning(
-          (req) => http.Response(jsonEncode({'message': 'Wrong OTP - 2 left.'}), 422));
+          (req) => http.Response(jsonEncode({'detail': 'Wrong OTP - 2 left.'}), 422));
       await expectLater(
         () => api.verify(resetId: 'r-1', otpCode: '000000'),
         throwsA(isA<OtpRejectedException>()
@@ -99,7 +99,7 @@ void main() {
     });
 
     test('throws reset-expired on 422', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'expired'}), 422));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'expired'}), 422));
       await expectLater(
         () => api.complete(resetToken: 'tok-1', newPassword: 'NewPass123'),
         throwsA(isA<ResetExpiredException>()),

@@ -54,7 +54,7 @@ void main() {
 
   testWidgets('a 409 surfaces the backend message inline for that Person', (tester) async {
     final controller = controllerReturning(
-        (req) => http.Response('{"message":"already selected"}', 409));
+        (req) => http.Response('{"detail":"already selected"}', 409));
     await pump(tester, controller);
 
     await tester.tap(find.byKey(const Key('nominate-p-1')));

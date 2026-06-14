@@ -35,7 +35,7 @@ class _FakeBackend {
           }
           final action = req.url.pathSegments.last;
           if (forbid == action) {
-            return http.Response(jsonEncode({'message': 'Only the Sanchalak can shape this Sabha.'}), 403);
+            return http.Response(jsonEncode({'detail': 'Only the Sanchalak can shape this Sabha.'}), 403);
           }
           switch (action) {
             case 'cancel':

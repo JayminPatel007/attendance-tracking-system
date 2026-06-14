@@ -36,10 +36,10 @@ class _FakeBackend {
           }
           final action = req.url.pathSegments.last;
           if (forbid == action) {
-            return http.Response(jsonEncode({'message': 'not allowed'}), 403);
+            return http.Response(jsonEncode({'detail': 'not allowed'}), 403);
           }
           if (reject == action) {
-            return http.Response(jsonEncode({'message': 'revert window expired'}), 422);
+            return http.Response(jsonEncode({'detail': 'revert window expired'}), 422);
           }
           switch (action) {
             case 'cancel':

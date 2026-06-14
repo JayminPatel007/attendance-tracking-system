@@ -37,7 +37,7 @@ void main() {
 
   test('surfaces the backend message when a Person is already selected', () async {
     final c = controllerReturning(
-        (req) => http.Response('{"message":"already selected"}', 409));
+        (req) => http.Response('{"detail":"already selected"}', 409));
 
     await c.nominate('p-1');
 
@@ -47,7 +47,7 @@ void main() {
 
   test('surfaces a domain rejection (422) for the Person', () async {
     final c = controllerReturning(
-        (req) => http.Response('{"message":"no selective track"}', 422));
+        (req) => http.Response('{"detail":"no selective track"}', 422));
 
     await c.nominate('p-2');
 

@@ -67,7 +67,7 @@ void main() {
 
   test('a 403 surfaces as MonthlyOccurrenceForbiddenException', () async {
     final api = apiReturning((req) => http.Response(
-          jsonEncode({'message': 'only the Sanchalak can create this'}),
+          jsonEncode({'detail': 'only the Sanchalak can create this'}),
           403,
         ));
 
@@ -79,7 +79,7 @@ void main() {
 
   test('a 422 surfaces the domain rule message (e.g. a weekly Sabha rejects manual create)', () async {
     final api = apiReturning((req) => http.Response(
-          jsonEncode({'message': 'weekly Sabhas materialize automatically'}),
+          jsonEncode({'detail': 'weekly Sabhas materialize automatically'}),
           422,
         ));
 

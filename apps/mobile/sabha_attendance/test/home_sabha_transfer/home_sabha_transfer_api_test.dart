@@ -65,7 +65,7 @@ void main() {
     });
 
     test('throws not-authorized on 403', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'not yours'}), 403));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'not yours'}), 403));
       await expectLater(
         () => api.initiate(personId: 'p-1', destinationSabhaId: 'sabha-2'),
         throwsA(isA<TransferNotAuthorizedException>()),
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('throws rate-limited on 429 with the server message', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'Too many OTPs'}), 429));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'Too many OTPs'}), 429));
       await expectLater(
         () => api.initiate(personId: 'p-1', destinationSabhaId: 'sabha-2'),
         throwsA(isA<TransferRateLimitedException>()
@@ -98,7 +98,7 @@ void main() {
     });
 
     test('throws rejected on 422 carrying the server message', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'Incorrect OTP'}), 422));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'Incorrect OTP'}), 422));
       await expectLater(
         () => api.confirm(transferId: 't-9', otpCode: '000000'),
         throwsA(isA<TransferRejectedException>()

@@ -146,7 +146,8 @@ export class ForgotPasswordComponent {
   }
 
   private backendMessage(err: HttpErrorResponse): string | null {
-    const message = err.error?.message;
-    return typeof message === 'string' && message.length > 0 ? message : null;
+    // RFC 9457 Problem Details (#70): the human-readable text is `detail`.
+    const detail = err.error?.detail;
+    return typeof detail === 'string' && detail.length > 0 ? detail : null;
   }
 }

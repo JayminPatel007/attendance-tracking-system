@@ -45,7 +45,7 @@ void main() {
 
     test('throws StaleRosterException when the backend responds 409 with code ROSTER_STALE', () async {
       final client = MockClient((req) async => http.Response(
-            jsonEncode({'code': 'ROSTER_STALE', 'status': 409, 'message': 'stale'}),
+            jsonEncode({'code': 'ROSTER_STALE', 'status': 409, 'detail': 'stale'}),
             409,
             headers: {'content-type': 'application/json'},
           ));

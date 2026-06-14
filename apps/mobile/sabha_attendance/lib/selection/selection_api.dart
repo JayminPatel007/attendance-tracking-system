@@ -47,7 +47,7 @@ class SelectionApi {
   String? _messageOf(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) return decoded['message'] as String?;
+      if (decoded is Map<String, dynamic>) return decoded['detail'] as String?;
     } on FormatException {
       // non-JSON body
     }

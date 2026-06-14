@@ -48,7 +48,7 @@ class AddPersonApi {
       if (body?['code'] == 'MOBILE_ALREADY_REGISTERED') {
         throw MobileAlreadyRegisteredException(
           existingPersonId: body?['existingPersonId'] as String?,
-          message: body?['message'] as String? ?? 'This mobile is already in the Directory.',
+          message: body?['detail'] as String? ?? 'This mobile is already in the Directory.',
         );
       }
     }
@@ -68,7 +68,7 @@ class AddPersonApi {
     return null;
   }
 
-  String? _messageOf(String body) => _decode(body)?['message'] as String?;
+  String? _messageOf(String body) => _decode(body)?['detail'] as String?;
 }
 
 class AddPersonApiException implements Exception {

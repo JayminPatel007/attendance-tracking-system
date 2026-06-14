@@ -16,7 +16,8 @@ import org.sabha.identity.applicationservice.SelectionDecisionNotAuthorizedExcep
 import org.sabha.identity.applicationservice.TransferNotAuthorizedException;
 import org.sabha.identity.applicationservice.UsernameAlreadyTakenException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -25,20 +26,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * single declared exception to its "no feature code" rule, because the wire
  * format is a deployment-tier concern. More specific exception subclasses must
  * be declared before their parents so Spring picks the most-specific handler.
+ *
+ * <p>Errors are rendered as RFC 9457 Problem Details: returning a
+ * {@link ProblemDetail} makes Spring serialize {@code type/title/status/detail}
+ * as {@code application/problem+json} with its {@code status} driving the HTTP
+ * status. The machine-readable {@code code} discriminator (and, for the
+ * Directory hard block, {@code existingPersonId}) is carried as an RFC 9457
+ * extension property that Jackson unwraps to a top-level field, so clients keep
+ * a stable thing to branch on.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> notFound(NotFoundException ex) {
-        return ResponseEntity.status(404)
-                .body(ErrorResponse.of(404, "Not Found", ex.getMessage()));
+    public ProblemDetail notFound(NotFoundException ex) {
+        return problem(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ErrorResponse> forbidden(AuthorizationDeniedException ex) {
-        return ResponseEntity.status(403)
-                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    public ProblemDetail forbidden(AuthorizationDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     /**
@@ -46,68 +53,73 @@ public class GlobalExceptionHandler {
      * not a server error — the canonical mapping so endpoints need not pre-check.
      */
     @ExceptionHandler(CallerUnknownException.class)
-    public ResponseEntity<ErrorResponse> callerUnknown(CallerUnknownException ex) {
-        return ResponseEntity.status(403)
-                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    public ProblemDetail callerUnknown(CallerUnknownException ex) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler(StaleRosterException.class)
-    public ResponseEntity<ErrorResponse> staleRoster(StaleRosterException ex) {
-        return ResponseEntity.status(409)
-                .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), "ROSTER_STALE"));
+    public ProblemDetail staleRoster(StaleRosterException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage(), "ROSTER_STALE");
     }
 
     @ExceptionHandler(ConcurrentModificationException.class)
-    public ResponseEntity<ErrorResponse> conflict(ConcurrentModificationException ex) {
-        return ResponseEntity.status(409)
-                .body(ErrorResponse.of(409, "Conflict", ex.getMessage()));
+    public ProblemDetail conflict(ConcurrentModificationException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
     @ExceptionHandler(MobileAlreadyRegisteredException.class)
-    public ResponseEntity<ErrorResponse> mobileAlreadyRegistered(MobileAlreadyRegisteredException ex) {
-        return ResponseEntity.status(409)
-                .body(ErrorResponse.mobileConflict(ex.getMessage(), ex.existing().id()));
+    public ProblemDetail mobileAlreadyRegistered(MobileAlreadyRegisteredException ex) {
+        ProblemDetail problem = problem(HttpStatus.CONFLICT, ex.getMessage(), "MOBILE_ALREADY_REGISTERED");
+        problem.setProperty("existingPersonId", ex.existing().id());
+        return problem;
     }
 
     @ExceptionHandler(TransferNotAuthorizedException.class)
-    public ResponseEntity<ErrorResponse> transferNotAuthorized(TransferNotAuthorizedException ex) {
-        return ResponseEntity.status(403)
-                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    public ProblemDetail transferNotAuthorized(TransferNotAuthorizedException ex) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler(UsernameAlreadyTakenException.class)
-    public ResponseEntity<ErrorResponse> usernameAlreadyTaken(UsernameAlreadyTakenException ex) {
-        return ResponseEntity.status(409)
-                .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), "USERNAME_TAKEN"));
+    public ProblemDetail usernameAlreadyTaken(UsernameAlreadyTakenException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage(), "USERNAME_TAKEN");
     }
 
     @ExceptionHandler({NominationNotAuthorizedException.class, SelectionDecisionNotAuthorizedException.class})
-    public ResponseEntity<ErrorResponse> selectionNotAuthorized(RuntimeException ex) {
-        return ResponseEntity.status(403)
-                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    public ProblemDetail selectionNotAuthorized(RuntimeException ex) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler(NotASantException.class)
-    public ResponseEntity<ErrorResponse> notASant(NotASantException ex) {
-        return ResponseEntity.status(403)
-                .body(ErrorResponse.of(403, "Forbidden", ex.getMessage()));
+    public ProblemDetail notASant(NotASantException ex) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler({DuplicateNominationException.class, AlreadySelectedException.class})
-    public ResponseEntity<ErrorResponse> nominationConflict(RuntimeException ex) {
-        return ResponseEntity.status(409)
-                .body(ErrorResponse.of(409, "Conflict", ex.getMessage()));
+    public ProblemDetail nominationConflict(RuntimeException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
     @ExceptionHandler({OtpRateLimitExceededException.class, OtpResendCooldownException.class})
-    public ResponseEntity<ErrorResponse> tooManyOtpRequests(RuntimeException ex) {
-        return ResponseEntity.status(429)
-                .body(ErrorResponse.of(429, "Too Many Requests", ex.getMessage()));
+    public ProblemDetail tooManyOtpRequests(RuntimeException ex) {
+        return problem(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), null);
     }
 
     @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ErrorResponse> domain(DomainException ex) {
-        return ResponseEntity.status(422)
-                .body(ErrorResponse.of(422, "Unprocessable Entity", ex.getMessage()));
+    public ProblemDetail domain(DomainException ex) {
+        return problem(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), null);
+    }
+
+    /**
+     * Build the RFC 9457 body. {@code title} and {@code type} default from the
+     * status ("about:blank" + the status reason phrase), so the visible titles
+     * stay exactly as before. {@code code}, when present, becomes the stable
+     * machine-readable extension property.
+     */
+    private static ProblemDetail problem(HttpStatus status, String detail, String code) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        if (code != null) {
+            problem.setProperty("code", code);
+        }
+        return problem;
     }
 }

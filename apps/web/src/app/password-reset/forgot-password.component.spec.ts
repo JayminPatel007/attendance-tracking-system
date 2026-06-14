@@ -49,19 +49,19 @@ describe('ForgotPasswordComponent', () => {
   });
 
   it('shows a not-found message when the username is unknown (404)', () => {
-    flushRequest(404, { message: 'no such user' });
+    flushRequest(404, { detail: 'no such user' });
     expect(component.stage()).toBe('username');
     expect(component.error()).toContain("couldn't find");
   });
 
   it('points a no-mobile user at the who-appointed-me lookup (422)', () => {
-    flushRequest(422, { message: 'no mobile' });
+    flushRequest(422, { detail: 'no mobile' });
     expect(component.stage()).toBe('username');
     expect(component.error()?.toLowerCase()).toContain('who appointed me');
   });
 
   it('surfaces the rate-limit / cooldown message on 429', () => {
-    flushRequest(429, { message: 'Too many OTP requests — wait a moment.' });
+    flushRequest(429, { detail: 'Too many OTP requests — wait a moment.' });
     expect(component.stage()).toBe('username');
     expect(component.error()).toContain('Too many OTP requests');
   });
@@ -72,7 +72,7 @@ describe('ForgotPasswordComponent', () => {
     component.verify();
     http
       .expectOne('/api/password-reset/verify')
-      .flush({ message: 'Wrong OTP — 2 attempts left.' }, { status: 422, statusText: '' });
+      .flush({ detail: 'Wrong OTP — 2 attempts left.' }, { status: 422, statusText: '' });
 
     expect(component.stage()).toBe('otp');
     expect(component.error()).toContain('Wrong OTP');
