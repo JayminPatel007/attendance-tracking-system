@@ -107,7 +107,7 @@ void main() {
 
   test('a 403 surfaces as OccurrenceForbiddenException (Sah-Sanchalak excluded)', () async {
     final api = apiReturning((req) => http.Response(
-          jsonEncode({'status': 403, 'error': 'Forbidden', 'message': 'not allowed to shape this Sabha'}),
+          jsonEncode({'status': 403, 'title': 'Forbidden', 'detail': 'not allowed to shape this Sabha'}),
           403,
         ));
 
@@ -119,7 +119,7 @@ void main() {
 
   test('a 422 surfaces the domain rule message via OccurrenceRuleException', () async {
     final api = apiReturning((req) => http.Response(
-          jsonEncode({'status': 422, 'error': 'Unprocessable Entity', 'message': 'revert window expired'}),
+          jsonEncode({'status': 422, 'title': 'Unprocessable Entity', 'detail': 'revert window expired'}),
           422,
         ));
 

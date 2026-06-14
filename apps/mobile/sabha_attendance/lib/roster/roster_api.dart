@@ -75,7 +75,7 @@ class RosterApi {
       try {
         final body = jsonDecode(resp.body) as Map<String, dynamic>;
         if (body['code'] == 'ROSTER_STALE') {
-          throw StaleRosterException(body['message'] as String? ?? 'roster stale');
+          throw StaleRosterException(body['detail'] as String? ?? 'roster stale');
         }
       } on FormatException {
         // fall through to generic

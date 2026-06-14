@@ -32,10 +32,10 @@ class _FakeBackend {
             );
           }
           if (forbid != null) {
-            return http.Response(jsonEncode({'message': forbid}), 403);
+            return http.Response(jsonEncode({'detail': forbid}), 403);
           }
           if (reject != null) {
-            return http.Response(jsonEncode({'message': reject}), 422);
+            return http.Response(jsonEncode({'detail': reject}), 422);
           }
           needsOccurrence = false;
           return http.Response(jsonEncode({'occurrenceId': 'occ-new'}), 201);

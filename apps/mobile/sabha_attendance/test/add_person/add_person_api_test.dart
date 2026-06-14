@@ -112,8 +112,8 @@ void main() {
       final api = apiReturning((req) => http.Response(
             jsonEncode({
               'status': 409,
-              'error': 'Conflict',
-              'message': 'Mobile already registered to Person person-9',
+              'title': 'Conflict',
+              'detail': 'Mobile already registered to Person person-9',
               'code': 'MOBILE_ALREADY_REGISTERED',
               'existingPersonId': 'person-9',
             }),
@@ -134,7 +134,7 @@ void main() {
 
     test('a 422 surfaces the domain rule message', () async {
       final api = apiReturning((req) => http.Response(
-            jsonEncode({'status': 422, 'error': 'Unprocessable Entity', 'message': 'guardian or mobile required'}),
+            jsonEncode({'status': 422, 'title': 'Unprocessable Entity', 'detail': 'guardian or mobile required'}),
             422,
           ));
 

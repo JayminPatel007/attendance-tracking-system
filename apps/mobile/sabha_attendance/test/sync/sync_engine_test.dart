@@ -81,7 +81,7 @@ void main() {
       baseUrl: 'http://test',
       accessToken: 'tok',
       client: MockClient((req) async => http.Response(
-            jsonEncode({'code': 'ROSTER_STALE', 'status': 409, 'message': 'stale'}),
+            jsonEncode({'code': 'ROSTER_STALE', 'status': 409, 'detail': 'stale'}),
             409,
             headers: {'content-type': 'application/json'},
           )),

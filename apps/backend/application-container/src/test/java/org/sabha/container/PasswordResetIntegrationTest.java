@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -138,7 +139,34 @@ class PasswordResetIntegrationTest {
         mockMvc.perform(post("/api/password-reset/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"no-such-user\"}"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.detail").exists());
+    }
+
+    @Test
+    void aSecondResetRequestWithinTheCooldownIs429ProblemJson() throws Exception {
+        // The request step is Postgres-only (Keycloak is touched only at `complete`),
+        // so seed a local User without provisioning a Keycloak account — that keeps
+        // this test isolated from the end-to-end test that owns this username there.
+        seedUser(RESET_PERSON, RESET_USER, RESET_USERNAME, RESET_MOBILE, UUID.randomUUID());
+
+        mockMvc.perform(post("/api/password-reset/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + RESET_USERNAME + "\"}"))
+                .andExpect(status().isOk());
+
+        // Immediately again, inside the 30s resend cooldown (OtpSendPolicy) → 429.
+        mockMvc.perform(post("/api/password-reset/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + RESET_USERNAME + "\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.title").value("Too Many Requests"))
+                .andExpect(jsonPath("$.detail").exists());
     }
 
     @Test

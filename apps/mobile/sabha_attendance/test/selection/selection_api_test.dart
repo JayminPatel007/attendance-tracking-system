@@ -33,7 +33,7 @@ void main() {
     });
 
     test('throws not-authorized on 403 with the server message', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'not a Sanchalak'}), 403));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'not a Sanchalak'}), 403));
       await expectLater(
         () => api.nominate(personId: 'p-1', regularSabhaId: 'sabha-2'),
         throwsA(isA<NominationNotAuthorizedException>()
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('throws already-nominated on 409 with the server message', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'already selected'}), 409));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'already selected'}), 409));
       await expectLater(
         () => api.nominate(personId: 'p-1', regularSabhaId: 'sabha-2'),
         throwsA(isA<AlreadyNominatedException>()
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('throws rejected on 422 carrying the server message', () async {
-      final api = apiReturning((req) => http.Response(jsonEncode({'message': 'no selective track'}), 422));
+      final api = apiReturning((req) => http.Response(jsonEncode({'detail': 'no selective track'}), 422));
       await expectLater(
         () => api.nominate(personId: 'p-1', regularSabhaId: 'sabha-2'),
         throwsA(isA<NominationRejectedException>()
