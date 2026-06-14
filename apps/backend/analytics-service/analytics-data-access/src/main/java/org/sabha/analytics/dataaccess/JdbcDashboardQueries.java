@@ -1,6 +1,7 @@
 package org.sabha.analytics.dataaccess;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,9 @@ import org.sabha.analytics.applicationservice.DashboardOverview;
 import org.sabha.analytics.applicationservice.DashboardQueries;
 import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.SabhaTree;
+import org.sabha.common.CallerVisibility;
+import org.sabha.common.SabhaKind;
+import org.sabha.common.VisibilityTier;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -20,16 +24,13 @@ import org.springframework.stereotype.Repository;
  * only rows inside the caller's scope.
  *
  * <p>The {@link DashboardScope} the engine resolved decides the WHERE predicate.
- * A {@code RoleScoped} read is one SQL predicate over {@code role_assignments}
- * (plus the Nirikshak's explicit Sabha assignments), mirroring the
- * Occurrence-reopen read: a Sanchalak sees their Sabha, a Nirdeshak their
- * Kshetra × demographic, a Sanyojak their Zone × demographic, the Regional Team
- * their City × demographic, and the MK everything. The demographic is the token
- * after the first underscore of {@code sabha_kind} ({@code TRACK_DEMOGRAPHIC}) —
- * the same derivation {@code JdbcOccurrenceReopenQueries} uses; keep them in
- * step. A {@code CityScoped} read is the Sant's universal-read exception (Slice
- * 17): every candidate in one City regardless of role. A {@code NoCity} read (a
- * Sant who has not picked yet) matches nothing.</p>
+ * A {@code RoleScoped} read is the canonical {@link CallerVisibility} predicate
+ * granted every tier: a Sanchalak sees their Sabha, a Nirdeshak their Kshetra ×
+ * demographic, a Sanyojak their Zone × demographic, the Regional Team their City ×
+ * demographic, the MK everything, and a Nirikshak the Sabhas explicitly assigned to
+ * them ({@link VisibilityTier#NIRIKSHAK_PROXY}). A {@code CityScoped} read is the
+ * Sant's universal-read exception (Slice 17): every candidate in one City regardless
+ * of role. A {@code NoCity} read (a Sant who has not picked yet) matches nothing.</p>
  */
 @Repository
 public class JdbcDashboardQueries implements DashboardQueries {
@@ -38,30 +39,29 @@ public class JdbcDashboardQueries implements DashboardQueries {
     private static final int PEOPLE_LIMIT = 500;
 
     /**
+     * The tiers the dashboard grants: every operational and oversight tier, with the
+     * Nirikshak resolving via its explicit proxy assignment ({@link
+     * VisibilityTier#NIRIKSHAK_PROXY}) rather than the role_assignments Kshetra-tier
+     * {@link VisibilityTier#NIRIKSHAK}. Listed explicitly (opt-in) so a tier added to
+     * {@link VisibilityTier} is not silently granted dashboard visibility — extending
+     * the grant is a deliberate edit here.
+     */
+    private static final EnumSet<VisibilityTier> GRANTED_TIERS = EnumSet.of(
+            VisibilityTier.SANCHALAK,
+            VisibilityTier.SAH_SANCHALAK,
+            VisibilityTier.NIRDESHAK,
+            VisibilityTier.SAH_NIRDESHAK,
+            VisibilityTier.SANYOJAK,
+            VisibilityTier.REGIONAL_TEAM,
+            VisibilityTier.MADHYASTHA_KARYALAYA,
+            VisibilityTier.NIRIKSHAK_PROXY);
+
+    /**
      * True for candidates whose Home Sabha {@code s} (with Kshetra {@code k}, Zone
      * {@code z}) falls inside the caller {@code :userId}'s granted role scope.
      */
-    private static final String ROLE_SCOPE = """
-            (
-              EXISTS (
-                SELECT 1 FROM role_assignments ra
-                WHERE ra.user_id = :userId AND (
-                       (ra.role IN ('SANCHALAK', 'SAH_SANCHALAK') AND ra.sabha_id = s.id)
-                    OR (ra.role IN ('NIRDESHAK', 'SAH_NIRDESHAK') AND ra.kshetra_id = s.kshetra_id
-                            AND ra.demographic = split_part(s.sabha_kind, '_', 2))
-                    OR (ra.role = 'SANYOJAK' AND ra.zone_id = k.zone_id
-                            AND ra.demographic = split_part(s.sabha_kind, '_', 2))
-                    OR (ra.role = 'REGIONAL_TEAM' AND ra.city_id = z.city_id
-                            AND ra.demographic = split_part(s.sabha_kind, '_', 2))
-                    OR (ra.role = 'MADHYASTHA_KARYALAYA')
-                )
-              )
-              OR EXISTS (
-                SELECT 1 FROM nirikshak_sabha_assignments na
-                WHERE na.nirikshak_user_id = :userId AND na.sabha_id = s.id
-              )
-            )
-            """;
+    private static final String ROLE_SCOPE = CallerVisibility.predicate(
+            new CallerVisibility.Aliases("s", "k", "z"), GRANTED_TIERS);
 
     /** The Sant's universal read: every candidate whose Zone belongs to one City. */
     private static final String CITY_SCOPE = "z.city_id = :cityId";
@@ -104,9 +104,9 @@ public class JdbcDashboardQueries implements DashboardQueries {
 
     private static final String PEOPLE_SQL = """
             SELECT rc.person_id, p.full_name, rc.home_sabha_id, s.sabha_kind,
-                   k.name AS kshetra_name, split_part(s.sabha_kind, '_', 2) AS demographic,
+                   k.name AS kshetra_name, %s AS demographic,
                    rc.missed_streak, rc.tier
-            """ + FROM_SCOPED + """
+            """.formatted(SabhaKind.demographicSql("s")) + FROM_SCOPED + """
             JOIN persons p ON p.id = rc.person_id
             WHERE %s
             ORDER BY rc.missed_streak DESC, p.full_name
