@@ -51,8 +51,7 @@ public class SabhaDefinitionService {
 
     @Transactional
     public SabhaDefinitionResult define(UUID keycloakSubject, SabhaDefinitionCommand command) {
-        UUID nirdeshak = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID nirdeshak = callerResolver.requireUserId(keycloakSubject);
 
         String demographic = provisioning.demographicOfKind(command.sabhaKindId())
                 .orElseThrow(() -> new SabhaKindNotFoundException(command.sabhaKindId()));

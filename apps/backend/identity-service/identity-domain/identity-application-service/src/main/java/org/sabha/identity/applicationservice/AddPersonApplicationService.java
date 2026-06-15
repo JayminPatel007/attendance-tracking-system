@@ -53,8 +53,7 @@ public class AddPersonApplicationService {
 
     @Transactional
     public AddResult add(UUID keycloakSubject, AddPersonCommand command) {
-        UUID adder = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID adder = callerResolver.requireUserId(keycloakSubject);
 
         if (hasMobile(command)) {
             directory.findByMobile(command.mobile()).ifPresent(existing -> {

@@ -41,8 +41,7 @@ public class SyncAttendanceApplicationService {
     }
 
     public SyncResult execute(UUID keycloakSubject, Instant clientRosterVersion, List<SyncRequestItem> items) {
-        UUID userId = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID userId = callerResolver.requireUserId(keycloakSubject);
 
         Instant now = clock.instant();
         Duration age = Duration.between(clientRosterVersion, now);

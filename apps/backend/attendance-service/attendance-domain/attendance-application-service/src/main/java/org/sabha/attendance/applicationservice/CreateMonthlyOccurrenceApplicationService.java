@@ -50,8 +50,7 @@ public class CreateMonthlyOccurrenceApplicationService {
     @Transactional
     public UUID create(UUID keycloakSubject, UUID sabhaId, LocalDate date,
                        LocalTime startTime, LocalTime endTime, String venue) {
-        UUID caller = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID caller = callerResolver.requireUserId(keycloakSubject);
 
         String shape = sabhaShapes.scheduleShapeOf(sabhaId)
                 .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
