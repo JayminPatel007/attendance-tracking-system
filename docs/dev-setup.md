@@ -162,6 +162,28 @@ then commit it alongside the controller change.
 > when the backend is running. Only the JSON spec is exposed — there is no Swagger
 > UI page.
 
+### Generated typed clients
+
+Both apps generate a typed client from `apps/backend/openapi.json` with
+[OpenAPI Generator](https://openapi-generator.tech) (version pinned per app), so the
+contract is consumed as code, not re-typed by hand. The generated code is committed,
+so a fresh checkout builds and tests without running the generator. Regenerate after
+the spec changes:
+
+```sh
+# Web (Angular) — outputs apps/web/src/app/generated
+cd apps/web && npm run generate:api
+```
+
+The generated client defaults its base path to the spec's server URL; the web app
+pins it to `""` via `provideApi({ basePath: '' })` in `app.config.ts` so every call
+stays a same-origin relative path on the session-cookie chain. Feature services
+migrate to the generated client incrementally — `sections/selection` is the first
+(see `selection.service.ts`). Error handling stays on the shared `http-error` seam
+(#67); the generated client only supplies request/response typing.
+
+The mobile client is covered in the [Mobile app](#mobile-app-flutter) section.
+
 ---
 
 ## Mobile app (Flutter)
@@ -241,6 +263,27 @@ Start the backend stack first (`docker compose up`), then from
     --dart-define=OIDC_ISSUER=http://10.0.2.2:58080/realms/sabha \
     --dart-define=BACKEND_BASE_URL=http://10.0.2.2:8080
   ```
+
+### Generated API client
+
+The typed Dart client lives in `apps/mobile/packages/sabha_api`, generated from
+`apps/backend/openapi.json` (see [The API contract](#the-api-contract-openapi)).
+Like the web client it is committed, so a fresh checkout works without running the
+generator. Regenerate after the spec changes (needs Node for `npx`):
+
+```sh
+cd apps/mobile
+melos run generate:api
+melos bootstrap
+```
+
+The package's `pubspec.yaml` and the generator's skeleton tests are excluded from
+regeneration via `packages/sabha_api/.openapi-generator-ignore`, so the SDK/`http`
+constraints stay aligned with the workspace. Feature clients adopt it incrementally:
+`lib/selection/selection_api.dart` is the first — it calls the generated
+`SelectionRestControllerApi` and keeps status-to-exception mapping on the shared
+`lib/api/api_error.dart` seam (#67) by bridging the client's `ApiException` back
+through `apiError`.
 
 ---
 

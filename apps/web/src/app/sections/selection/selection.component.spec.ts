@@ -2,11 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
+import { PendingNominationItem, SelectedPersonItem } from '../../generated';
 import { SelectionComponent } from './selection.component';
 import { SelectionService } from './selection.service';
-import { PendingNomination, SelectedPerson } from './selection.types';
 
-function nomination(overrides: Partial<PendingNomination> = {}): PendingNomination {
+function nomination(overrides: Partial<PendingNominationItem> = {}): PendingNominationItem {
   return {
     nominationId: 'nom-1',
     personId: 'person-1',
@@ -22,7 +22,7 @@ function nomination(overrides: Partial<PendingNomination> = {}): PendingNominati
   };
 }
 
-function selected(overrides: Partial<SelectedPerson> = {}): SelectedPerson {
+function selected(overrides: Partial<SelectedPersonItem> = {}): SelectedPersonItem {
   return {
     nominationId: 'nom-1',
     personId: 'person-1',
@@ -38,8 +38,8 @@ function selected(overrides: Partial<SelectedPerson> = {}): SelectedPerson {
 }
 
 function apiSpy(
-  pending: PendingNomination[],
-  selectedPeople: SelectedPerson[],
+  pending: PendingNominationItem[],
+  selectedPeople: SelectedPersonItem[],
 ): jasmine.SpyObj<SelectionService> {
   const spy = jasmine.createSpyObj<SelectionService>('SelectionService', [
     'queue',
@@ -57,8 +57,8 @@ function apiSpy(
 }
 
 function mount(
-  pending: PendingNomination[] = [],
-  selectedPeople: SelectedPerson[] = [],
+  pending: PendingNominationItem[] = [],
+  selectedPeople: SelectedPersonItem[] = [],
 ): { fixture: ComponentFixture<SelectionComponent>; api: jasmine.SpyObj<SelectionService> } {
   const api = apiSpy(pending, selectedPeople);
   TestBed.configureTestingModule({
