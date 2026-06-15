@@ -48,9 +48,9 @@ public class PasswordReset extends AggregateRoot<UUID> {
      * Registers {@link PasswordResetRequested}.
      */
     public static PasswordReset request(UUID id, UUID userId, UUID keycloakUserId, String mobile,
-                                        String otpCode, Instant now) {
+                                        String otpCode, Instant now, OtpHasher hasher) {
         PasswordReset reset = new PasswordReset(
-                id, userId, keycloakUserId, mobile, OtpChallenge.issue(id, otpCode, now), now);
+                id, userId, keycloakUserId, mobile, OtpChallenge.issue(id, otpCode, now, hasher), now);
         reset.registerEvent(new PasswordResetRequested(id, userId, now));
         return reset;
     }
@@ -90,8 +90,8 @@ public class PasswordReset extends AggregateRoot<UUID> {
      * (valid for {@link #RESET_TOKEN_TTL}), and registers {@link PasswordResetVerified}.
      * Wrong / expired / exhausted entries throw and leave no token.
      */
-    public void verify(String code, String resetToken, Instant now) {
-        challenge.verify(code, now);
+    public void verify(String code, String resetToken, Instant now, OtpHasher hasher) {
+        challenge.verify(code, now, hasher);
         this.resetToken = resetToken;
         this.resetTokenExpiresAt = now.plus(RESET_TOKEN_TTL);
         this.verified = true;

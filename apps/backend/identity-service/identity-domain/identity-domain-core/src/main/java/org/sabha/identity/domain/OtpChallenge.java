@@ -1,5 +1,7 @@
 package org.sabha.identity.domain;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -14,6 +16,10 @@ import java.util.UUID;
  * <p>The owning aggregate holds one of these and delegates code entry to
  * {@link #verify}; the typed exceptions it raises carry the aggregate's id so
  * callers and audit see the right subject.</p>
+ *
+ * <p>The plaintext code never lives here: {@link #issue} stores only the
+ * {@link OtpHasher} digest and {@link #verify} compares digests (issue #77), so a
+ * read of the persisted {@code otp_code} column yields a hash, not a live code.</p>
  */
 public final class OtpChallenge {
 
@@ -24,39 +30,48 @@ public final class OtpChallenge {
     public static final int MAX_ATTEMPTS = 5;
 
     private final UUID challengeId;
-    private final String code;
+    private final String codeHash;
     private final Instant expiresAt;
     private int attempts;
     private boolean locked;
     private boolean expired;
 
-    private OtpChallenge(UUID challengeId, String code, Instant expiresAt,
+    private OtpChallenge(UUID challengeId, String codeHash, Instant expiresAt,
                          int attempts, boolean locked, boolean expired) {
         this.challengeId = challengeId;
-        this.code = code;
+        this.codeHash = codeHash;
         this.expiresAt = expiresAt;
         this.attempts = attempts;
         this.locked = locked;
         this.expired = expired;
     }
 
-    /** Issues a fresh challenge valid for {@link #TTL} from {@code now}. */
-    public static OtpChallenge issue(UUID challengeId, String code, Instant now) {
-        return new OtpChallenge(challengeId, code, now.plus(TTL), 0, false, false);
+    /**
+     * Issues a fresh challenge valid for {@link #TTL} from {@code now}, storing only
+     * the {@code hasher} digest of {@code code} — the plaintext is never retained.
+     */
+    public static OtpChallenge issue(UUID challengeId, String code, Instant now, OtpHasher hasher) {
+        return new OtpChallenge(challengeId, hasher.hash(challengeId, code), now.plus(TTL), 0, false, false);
     }
 
-    /** Rebuilds a persisted challenge from its stored columns, registering nothing. */
-    public static OtpChallenge rehydrate(UUID challengeId, String code, Instant expiresAt,
+    /**
+     * Rebuilds a persisted challenge from its stored columns, registering nothing.
+     * {@code codeHash} is the already-hashed value read from storage, so this does
+     * <em>not</em> re-hash it.
+     */
+    public static OtpChallenge rehydrate(UUID challengeId, String codeHash, Instant expiresAt,
                                          int attempts, boolean locked, boolean expired) {
-        return new OtpChallenge(challengeId, code, expiresAt, attempts, locked, expired);
+        return new OtpChallenge(challengeId, codeHash, expiresAt, attempts, locked, expired);
     }
 
     /**
      * Consumes a code attempt. Returns normally when {@code candidate} matches
      * within TTL; otherwise records the consequence (expiry / incremented attempt
      * / lockout) and throws the matching {@link org.sabha.common.DomainException}.
+     * The candidate is hashed with the same {@code hasher} used at issue and the
+     * digests are compared in constant time.
      */
-    public void verify(String candidate, Instant now) {
+    public void verify(String candidate, Instant now, OtpHasher hasher) {
         if (locked) {
             throw new OtpAttemptsExhaustedException(challengeId);
         }
@@ -64,7 +79,7 @@ public final class OtpChallenge {
             expired = true;
             throw new OtpExpiredException(challengeId);
         }
-        if (!code.equals(candidate)) {
+        if (!matches(hasher.hash(challengeId, candidate))) {
             attempts++;
             if (attempts >= MAX_ATTEMPTS) {
                 locked = true;
@@ -74,8 +89,15 @@ public final class OtpChallenge {
         }
     }
 
-    public String code() {
-        return code;
+    private boolean matches(String candidateHash) {
+        return MessageDigest.isEqual(
+                codeHash.getBytes(StandardCharsets.UTF_8),
+                candidateHash.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** The hashed code as stored at rest — never the plaintext (issue #77). */
+    public String codeHash() {
+        return codeHash;
     }
 
     public Instant expiresAt() {

@@ -14,6 +14,7 @@ import org.sabha.identity.domain.HomeSabhaSwap;
 import org.sabha.identity.domain.HomeSabhaTransfer;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
+import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonHasNoMobileException;
 import org.sabha.identity.domain.WrongOtpException;
@@ -42,6 +43,7 @@ public class HomeSabhaTransferService {
     private final HomeSabhaTransferRepository transfers;
     private final OtpGateway otpGateway;
     private final OtpCodeGenerator otpCodeGenerator;
+    private final OtpHasher otpHasher;
     private final OtpSendPolicy otpSendPolicy;
     private final DomainEventPublisher events;
     private final Clock clock;
@@ -53,6 +55,7 @@ public class HomeSabhaTransferService {
             HomeSabhaTransferRepository transfers,
             OtpGateway otpGateway,
             OtpCodeGenerator otpCodeGenerator,
+            OtpHasher otpHasher,
             OtpSendPolicy otpSendPolicy,
             DomainEventPublisher events,
             Clock clock) {
@@ -62,6 +65,7 @@ public class HomeSabhaTransferService {
         this.transfers = transfers;
         this.otpGateway = otpGateway;
         this.otpCodeGenerator = otpCodeGenerator;
+        this.otpHasher = otpHasher;
         this.otpSendPolicy = otpSendPolicy;
         this.events = events;
         this.clock = clock;
@@ -89,7 +93,7 @@ public class HomeSabhaTransferService {
         String code = otpCodeGenerator.generate();
         HomeSabhaTransfer transfer = HomeSabhaTransfer.initiate(
                 UUID.randomUUID(), personId, mobile, destinationSabhaId,
-                initiatingUserId, code, now);
+                initiatingUserId, code, now, otpHasher);
 
         otpGateway.send(mobile, code);
         transfer.markOtpSent(now);
@@ -114,7 +118,7 @@ public class HomeSabhaTransferService {
         HomeSabhaTransfer transfer = transfers.findById(transferId).orElseThrow();
 
         try {
-            transfer.confirm(otpCode, clock.instant());
+            transfer.confirm(otpCode, clock.instant(), otpHasher);
         } catch (WrongOtpException | OtpExpiredException | OtpAttemptsExhaustedException rejected) {
             transfers.save(transfer);
             throw rejected;

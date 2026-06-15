@@ -44,7 +44,7 @@ public class JdbcHomeSabhaTransferRepository implements HomeSabhaTransferReposit
                 .param(transfer.mobile())
                 .param(transfer.destinationSabhaId())
                 .param(transfer.initiatingUserId())
-                .param(challenge.code())
+                .param(challenge.codeHash())
                 .param(Timestamp.from(transfer.initiatedAt()))
                 .param(Timestamp.from(challenge.expiresAt()))
                 .param(transfer.status().name())

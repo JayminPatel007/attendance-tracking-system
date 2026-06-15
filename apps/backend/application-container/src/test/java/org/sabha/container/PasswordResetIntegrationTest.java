@@ -42,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@org.springframework.context.annotation.Import(RecordingOtpGatewayConfig.class)
 class PasswordResetIntegrationTest extends KeycloakIntegrationTest {
 
     private static final UUID RESET_PERSON = UUID.fromString("00000000-0000-0000-0000-00000018a001");
@@ -64,6 +65,10 @@ class PasswordResetIntegrationTest extends KeycloakIntegrationTest {
     @Autowired
     IdentityProviderGateway identityProvider;
 
+    // Codes are hashed at rest (issue #77); read the plaintext OTP from the send port.
+    @Autowired
+    RecordingOtpGatewayConfig.RecordingOtpGateway otpGateway;
+
     @Test
     void selfServiceResetIsPublicAndChangesTheCredentialEndToEnd() throws Exception {
         UUID keycloakId = identityProvider.createUserRequiringPasswordChange(RESET_USERNAME, "InitPass1!");
@@ -77,8 +82,12 @@ class PasswordResetIntegrationTest extends KeycloakIntegrationTest {
                 .andReturn();
         UUID resetId = UUID.fromString(json(requested, "resetId"));
 
-        String otp = jdbc.sql("SELECT otp_code FROM password_resets WHERE id = ?")
+        String otp = otpGateway.lastCodeFor(RESET_MOBILE);
+
+        // What persists is a hash, never the live code (issue #77).
+        String storedCode = jdbc.sql("SELECT otp_code FROM password_resets WHERE id = ?")
                 .param(resetId).query((rs, n) -> rs.getString("otp_code")).single();
+        assertThat(storedCode).isNotEqualTo(otp);
 
         MvcResult verified = mockMvc.perform(post("/api/password-reset/verify")
                         .contentType(MediaType.APPLICATION_JSON)

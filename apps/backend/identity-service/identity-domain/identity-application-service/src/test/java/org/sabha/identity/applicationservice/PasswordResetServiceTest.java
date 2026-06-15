@@ -21,6 +21,7 @@ import org.sabha.identity.domain.PasswordResetRequested;
 import org.sabha.identity.domain.PasswordResetStatus;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
+import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.PasswordResetCompleted;
 import org.sabha.identity.domain.PasswordResetVerified;
 import org.sabha.identity.domain.ResetAlreadyCompletedException;
@@ -280,7 +281,7 @@ class PasswordResetServiceTest {
         PasswordResetService service() {
             return new PasswordResetService(
                     users, contacts, resets, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP), otpSendPolicy,
+                    new FixedOtpCodeGenerator(FIXED_OTP), new SaltedTestOtpHasher(), otpSendPolicy,
                     new FixedResetTokenGenerator(FIXED_RESET_TOKEN),
                     identityProvider, publisher, clock);
         }
@@ -416,6 +417,14 @@ class PasswordResetServiceTest {
         @Override
         public String generate() {
             return code;
+        }
+    }
+
+    /** Deterministic salted stand-in for the production HMAC hasher. */
+    static final class SaltedTestOtpHasher implements OtpHasher {
+        @Override
+        public String hash(UUID challengeId, String code) {
+            return "digest(" + challengeId + ":" + code + ")";
         }
     }
 

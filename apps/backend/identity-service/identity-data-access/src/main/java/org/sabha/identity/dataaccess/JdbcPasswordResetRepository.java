@@ -57,7 +57,7 @@ public class JdbcPasswordResetRepository implements PasswordResetRepository, Pas
                 .param(reset.keycloakUserId())
                 .param(SELF_SERVICE)
                 .param(reset.mobile())
-                .param(challenge.code())
+                .param(challenge.codeHash())
                 .param(Timestamp.from(reset.initiatedAt()))
                 .param(Timestamp.from(challenge.expiresAt()))
                 .param(challenge.attempts())
