@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.identity.applicationservice.AddPersonCommand;
 import org.sabha.identity.applicationservice.AppointableRole;
 import org.sabha.identity.applicationservice.AppointmentResult;
@@ -34,21 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoleAppointmentController {
 
     private final RoleAppointmentService appointments;
-    private final CallerResolver callers;
 
-    public RoleAppointmentController(RoleAppointmentService appointments, CallerResolver callers) {
+    public RoleAppointmentController(RoleAppointmentService appointments) {
         this.appointments = appointments;
-        this.callers = callers;
     }
 
     @PostMapping("/bff/appointments")
     public ResponseEntity<AppointmentResponse> appoint(
             @RequestBody AppointmentRequest req, Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        if (callers.resolveUserId(subject).isEmpty()) {
-            return ResponseEntity.status(403).build();
-        }
-
         AppointmentResult result = appointments.appoint(subject, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(AppointmentResponse.softWarn(result.candidates()));

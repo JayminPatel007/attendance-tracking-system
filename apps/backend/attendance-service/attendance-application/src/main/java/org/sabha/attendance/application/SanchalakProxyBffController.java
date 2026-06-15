@@ -55,18 +55,14 @@ public class SanchalakProxyBffController {
     @GetMapping("/bff/proxy/sabhas")
     public ResponseEntity<List<ProxySabhaListItem>> sabhas(Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(userId -> ResponseEntity.ok(queries.assignedSabhas(userId)))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        return ResponseEntity.ok(queries.assignedSabhas(callers.requireUserId(subject)));
     }
 
     @GetMapping("/bff/proxy/sabhas/{sabhaId}/occurrences")
     public ResponseEntity<List<ProxyOccurrenceItem>> occurrences(
             @PathVariable UUID sabhaId, Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(userId -> ResponseEntity.ok(queries.proxyOccurrences(userId, sabhaId)))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        return ResponseEntity.ok(queries.proxyOccurrences(callers.requireUserId(subject), sabhaId));
     }
 
     @PostMapping("/bff/proxy/occurrences/{occurrenceId}/cancel")

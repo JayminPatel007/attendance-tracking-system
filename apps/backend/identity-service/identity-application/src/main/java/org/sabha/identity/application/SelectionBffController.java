@@ -54,17 +54,13 @@ public class SelectionBffController {
     @GetMapping("/bff/selection/nominations")
     public ResponseEntity<List<PendingNominationItem>> queue(Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(userId -> ResponseEntity.ok(queries.pendingQueueFor(userId)))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        return ResponseEntity.ok(queries.pendingQueueFor(callers.requireUserId(subject)));
     }
 
     @GetMapping("/bff/selection/selected")
     public ResponseEntity<List<SelectedPersonItem>> selected(Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(userId -> ResponseEntity.ok(queries.selectedFor(userId)))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        return ResponseEntity.ok(queries.selectedFor(callers.requireUserId(subject)));
     }
 
     @PostMapping("/bff/selection/nominations/{id}/approve")

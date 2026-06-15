@@ -2,7 +2,6 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.identity.applicationservice.PasswordReissueService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,20 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class PasswordReissueController {
 
     private final PasswordReissueService reissues;
-    private final CallerResolver callers;
 
-    public PasswordReissueController(PasswordReissueService reissues, CallerResolver callers) {
+    public PasswordReissueController(PasswordReissueService reissues) {
         this.reissues = reissues;
-        this.callers = callers;
     }
 
     @PostMapping("/bff/password-reissue")
     public ResponseEntity<Void> reissue(@RequestBody ReissueRequest req, Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        if (callers.resolveUserId(subject).isEmpty()) {
-            return ResponseEntity.status(403).build();
-        }
-
         reissues.reissue(subject, req.targetUserId(), req.newPassword());
         return ResponseEntity.noContent().build();
     }

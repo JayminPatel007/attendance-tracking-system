@@ -11,7 +11,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -22,6 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * contexts, since {@code CallerUnknownException} is the one common-domain failure
  * mode of {@link org.sabha.common.CallerResolver}. Before this issue the identity
  * context threw its own copy that no advice mapped, so identity endpoints 500'd.
+ *
+ * <p>Issue #107 extends this to the web BFF: routing the unknown-caller 403
+ * through {@code requireUserId} (instead of a controller-local bodyless
+ * {@code 403.build()}) means every caller-unknown refusal — REST or BFF — carries
+ * the same RFC 9457 {@code problem+json} body.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,5 +66,14 @@ class ExceptionTaxonomyIntegrationTest extends KeycloakIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void callerUnknownOnAWebBffEndpointReturnsAProblemDetailNotABodylessForbidden() throws Exception {
+        mockMvc.perform(get("/bff/selection/nominations")
+                        .with(oidcLogin().idToken(t -> t.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").exists());
     }
 }

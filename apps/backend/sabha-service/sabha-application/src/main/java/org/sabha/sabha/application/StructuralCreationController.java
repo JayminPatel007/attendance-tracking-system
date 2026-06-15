@@ -1,7 +1,6 @@
 package org.sabha.sabha.application;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
@@ -49,33 +48,25 @@ public class StructuralCreationController {
     @PostMapping("/bff/structure/cities")
     public ResponseEntity<CreatedResponse> createCity(
             @RequestBody CreateCityRequest req, Authentication authentication) {
-        return caller(authentication)
-                .map(userId -> created(creation.createCity(userId, req.name())))
-                .orElseGet(StructuralCreationController::forbidden);
+        return created(creation.createCity(requireCaller(authentication), req.name()));
     }
 
     @PostMapping("/bff/structure/zones")
     public ResponseEntity<CreatedResponse> createZone(
             @RequestBody CreateZoneRequest req, Authentication authentication) {
-        return caller(authentication)
-                .map(userId -> created(creation.createZone(userId, req.cityId(), req.name())))
-                .orElseGet(StructuralCreationController::forbidden);
+        return created(creation.createZone(requireCaller(authentication), req.cityId(), req.name()));
     }
 
     @PostMapping("/bff/structure/sabha-kinds")
     public ResponseEntity<CreatedResponse> createSabhaKind(
             @RequestBody CreateSabhaKindRequest req, Authentication authentication) {
-        return caller(authentication)
-                .map(userId -> created(creation.createSabhaKind(userId, req.demographic(), req.track())))
-                .orElseGet(StructuralCreationController::forbidden);
+        return created(creation.createSabhaKind(requireCaller(authentication), req.demographic(), req.track()));
     }
 
     @PostMapping("/bff/structure/kshetras")
     public ResponseEntity<CreatedResponse> createKshetra(
             @RequestBody CreateKshetraRequest req, Authentication authentication) {
-        return caller(authentication)
-                .map(userId -> created(creation.createKshetra(userId, req.zoneId(), req.name())))
-                .orElseGet(StructuralCreationController::forbidden);
+        return created(creation.createKshetra(requireCaller(authentication), req.zoneId(), req.name()));
     }
 
     @GetMapping("/bff/structure/cities")
@@ -100,21 +91,16 @@ public class StructuralCreationController {
 
     @GetMapping("/bff/structure/my-zones")
     public ResponseEntity<List<StructuralQueries.ZoneView>> myZones(Authentication authentication) {
-        return caller(authentication)
-                .map(userId -> ResponseEntity.ok(queries.zonesByIds(sanyojakZones.zonesOf(userId))))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        UUID userId = requireCaller(authentication);
+        return ResponseEntity.ok(queries.zonesByIds(sanyojakZones.zonesOf(userId)));
     }
 
-    private Optional<UUID> caller(Authentication authentication) {
-        return callers.resolveUserId(UUID.fromString(authentication.getName()));
+    private UUID requireCaller(Authentication authentication) {
+        return callers.requireUserId(UUID.fromString(authentication.getName()));
     }
 
     private static ResponseEntity<CreatedResponse> created(UUID id) {
         return ResponseEntity.status(201).body(new CreatedResponse(id));
-    }
-
-    private static ResponseEntity<CreatedResponse> forbidden() {
-        return ResponseEntity.status(403).build();
     }
 
     public record CreateCityRequest(String name) {

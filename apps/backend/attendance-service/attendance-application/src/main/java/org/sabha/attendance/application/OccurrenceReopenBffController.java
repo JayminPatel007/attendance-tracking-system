@@ -48,9 +48,7 @@ public class OccurrenceReopenBffController {
     @GetMapping("/bff/occurrences")
     public ResponseEntity<List<ReopenListItem>> list(Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(userId -> ResponseEntity.ok(queries.listForReopener(userId)))
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        return ResponseEntity.ok(queries.listForReopener(callers.requireUserId(subject)));
     }
 
     @PostMapping("/bff/occurrences/{occurrenceId}/reopen")
