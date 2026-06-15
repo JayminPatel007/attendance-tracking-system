@@ -88,7 +88,11 @@ void main() {
               'personId': null,
               'requiresOverride': true,
               'candidates': [
-                {'personId': 'cand-1', 'fullName': 'Jai Mehta', 'homeSabhaName': 'REGULAR_YUVAK'},
+                {
+                  'personId': 'cand-1',
+                  'fullName': 'Jai Mehta',
+                  'homeSabhas': ['REGULAR_YUVAK', 'REGULAR_SANYUKTA'],
+                },
               ],
             }),
             200,
@@ -106,6 +110,7 @@ void main() {
       expect(outcome.candidates, hasLength(1));
       expect(outcome.candidates.single.personId, 'cand-1');
       expect(outcome.candidates.single.fullName, 'Jai Mehta');
+      expect(outcome.candidates.single.homeSabhas, ['REGULAR_YUVAK', 'REGULAR_SANYUKTA']);
     });
 
     test('a 409 hard block surfaces the existing Person id', () async {

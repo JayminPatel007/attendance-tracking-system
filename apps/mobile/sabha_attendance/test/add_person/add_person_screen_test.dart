@@ -45,7 +45,11 @@ class _FakeBackend {
                 'personId': null,
                 'requiresOverride': true,
                 'candidates': [
-                  {'personId': 'cand-1', 'fullName': 'Jai Mehta', 'homeSabhaName': 'REGULAR_YUVAK'},
+                  {
+                    'personId': 'cand-1',
+                    'fullName': 'Jai Mehta',
+                    'homeSabhas': ['REGULAR_YUVAK', 'REGULAR_SANYUKTA'],
+                  },
                 ],
               }),
               200,
@@ -129,8 +133,9 @@ void main() {
     await tester.tap(find.byKey(const Key('add-to-directory-button')));
     await tester.pumpAndSettle();
 
-    // Candidate surfaced, nothing created yet.
+    // Candidate surfaced with all their Home Sabha kinds, nothing created yet.
     expect(find.text('Jai Mehta'), findsOneWidget);
+    expect(find.text('REGULAR_YUVAK, REGULAR_SANYUKTA'), findsOneWidget);
     expect(ctx.created, isEmpty);
 
     await tester.tap(find.byKey(const Key('create-new-anyway-button')));

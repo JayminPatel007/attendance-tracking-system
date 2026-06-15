@@ -60,7 +60,7 @@ void main() {
     final controller = controllerWith(_FakeApi(
       onFind: (_) async => null,
       onAdd: (_) async => AddPersonOutcome(
-        candidates: [NameCandidate(personId: 'cand-1', fullName: 'Jai Mehta', homeSabhaName: 'REGULAR_YUVAK')],
+        candidates: [NameCandidate(personId: 'cand-1', fullName: 'Jai Mehta', homeSabhas: const ['REGULAR_YUVAK'])],
         requiresOverride: true,
       ),
     ));
@@ -82,7 +82,7 @@ void main() {
         overrides.add(req.overrideDuplicateWarning);
         if (!req.overrideDuplicateWarning) {
           return AddPersonOutcome(
-            candidates: [NameCandidate(personId: 'cand-1', fullName: 'Jai Mehta', homeSabhaName: 'REGULAR_YUVAK')],
+            candidates: [NameCandidate(personId: 'cand-1', fullName: 'Jai Mehta', homeSabhas: const ['REGULAR_YUVAK'])],
             requiresOverride: true,
           );
         }

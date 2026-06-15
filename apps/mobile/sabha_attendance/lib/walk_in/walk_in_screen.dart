@@ -94,7 +94,7 @@ class _WalkInScreenState extends State<WalkInScreen> {
               child: ListTile(
                 leading: const Icon(Icons.directions_walk),
                 title: Text(c.fullName),
-                subtitle: c.homeSabha.isEmpty ? null : Text('Home Sabha · ${c.homeSabha}'),
+                subtitle: c.homeSabhas.isEmpty ? null : Text('Home Sabha · ${c.homeSabhasLabel}'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => widget.controller.select(c),
               ),
@@ -112,9 +112,9 @@ class _WalkInScreenState extends State<WalkInScreen> {
           child: ListTile(
             leading: const CircleAvatar(child: Icon(Icons.person)),
             title: Text(person.fullName, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(person.homeSabha.isEmpty
+            subtitle: Text(person.homeSabhas.isEmpty
                 ? 'A visitor to this Sabha'
-                : 'Home Sabha · ${person.homeSabha} (away here)'),
+                : 'Home Sabha · ${person.homeSabhasLabel} (away here)'),
           ),
         ),
         const SizedBox(height: 8),
@@ -122,9 +122,9 @@ class _WalkInScreenState extends State<WalkInScreen> {
           'Recording a Walk-in marks them present here without changing their Home Sabha.',
           style: TextStyle(color: Colors.grey),
         ),
-        if (person.homeSabha.isNotEmpty) ...[
+        if (person.homeSabhas.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text(person.homeSabha, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(person.homeSabhasLabel, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
         if (state.error != null) ...[
           const SizedBox(height: 12),

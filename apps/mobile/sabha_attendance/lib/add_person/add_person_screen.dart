@@ -314,7 +314,7 @@ class _CandidatesCard extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.person_outline),
                 title: Text(c.fullName),
-                subtitle: Text(c.homeSabhaName),
+                subtitle: c.homeSabhas.isEmpty ? null : Text(c.homeSabhasLabel),
               )),
           const SizedBox(height: 8),
           Align(

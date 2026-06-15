@@ -52,7 +52,7 @@ void main() {
   test('an online search lists Directory candidates', () async {
     final controller = controllerWith(_FakeApi(onSearch: (sabhaId, query) async {
       expect(sabhaId, 'sabha-1');
-      return [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabha: 'REGULAR_BAAL')];
+      return [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabhas: const ['REGULAR_BAAL'])];
     }));
 
     await controller.search('Ramesh');
@@ -66,21 +66,21 @@ void main() {
   test('selecting a candidate moves to confirm and exposes their Home Sabha', () async {
     final controller = controllerWith(_FakeApi(
       onSearch: (_, __) async =>
-          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabha: 'REGULAR_BAAL')],
+          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabhas: const ['REGULAR_BAAL'])],
     ));
     await controller.search('Ramesh');
 
     controller.select(controller.state.results.single);
 
     expect(controller.state.view, WalkInView.confirm);
-    expect(controller.state.selected?.homeSabha, 'REGULAR_BAAL');
+    expect(controller.state.selected?.homeSabhas, const ['REGULAR_BAAL']);
   });
 
   test('recording a selected candidate posts and moves to recorded', () async {
     final recorded = <String>[];
     final controller = controllerWith(_FakeApi(
       onSearch: (_, __) async =>
-          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabha: 'REGULAR_BAAL')],
+          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabhas: const ['REGULAR_BAAL'])],
       onRecord: (occ, person) async => recorded.add('$occ/$person'),
     ));
     await controller.search('Ramesh');
