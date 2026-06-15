@@ -47,8 +47,11 @@ sabha:
   otp:
     # Server-side key for hashing OTP codes at rest (issue #77). Held outside the
     # database so a DB/backup reader cannot recompute a live 6-digit code; set a
-    # strong secret per environment via SABHA_OTP_HASH_SECRET. The dev default is
-    # intentionally weak and must not be used in production.
+    # strong secret per environment via SABHA_OTP_HASH_SECRET. The value below is a
+    # deliberate tripwire, not a usable default: HmacOtpHasher refuses to start the
+    # context if it sees this placeholder, so a deploy that forgets the env var
+    # fails loudly instead of hashing with a key that lives in the repo. The local
+    # stack supplies a real dev secret via docker-compose.
     hash-secret: ${SABHA_OTP_HASH_SECRET:dev-otp-hash-secret}
   keycloak:
     issuer-uri: ${SABHA_KEYCLOAK_ISSUER_URI:http://localhost:58080/realms/sabha}

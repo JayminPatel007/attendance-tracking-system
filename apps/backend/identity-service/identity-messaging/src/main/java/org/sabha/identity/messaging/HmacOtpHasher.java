@@ -22,15 +22,35 @@ import org.springframework.stereotype.Component;
  * identical codes never share a digest. The secret lives outside the database; if
  * it is ever rotated, in-flight challenges fail to verify and the caller simply
  * re-requests an OTP (the rows are at most minutes old).
+ *
+ * <p>The keying is the whole defence, so a misconfigured secret must not pass
+ * silently: the constructor refuses to start the context if the secret is unset,
+ * still the shipped dev placeholder, or too short to be a real key. This turns a
+ * forgotten {@code SABHA_OTP_HASH_SECRET} into a loud boot failure instead of a
+ * deployment that quietly hashes with a value sitting in the repo.</p>
  */
 @Component
 public class HmacOtpHasher implements OtpHasher {
 
     private static final String ALGORITHM = "HmacSHA256";
 
+    /** The placeholder shipped in {@code application.yml}; seeing it means the secret was never configured. */
+    static final String INSECURE_PLACEHOLDER = "dev-otp-hash-secret";
+
+    /** A real HMAC key should carry meaningful entropy, not a handful of characters. */
+    static final int MIN_SECRET_LENGTH = 16;
+
     private final byte[] secret;
 
     public HmacOtpHasher(@Value("${sabha.otp.hash-secret}") String secret) {
+        if (secret == null || secret.isBlank()
+                || secret.equals(INSECURE_PLACEHOLDER)
+                || secret.strip().length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException(
+                    "sabha.otp.hash-secret is unset, the dev placeholder, or shorter than "
+                    + MIN_SECRET_LENGTH + " characters. Set SABHA_OTP_HASH_SECRET to a strong, "
+                    + "environment-specific value so OTP codes are not hashed with a guessable key (issue #77).");
+        }
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
     }
 

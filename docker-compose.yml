@@ -62,6 +62,11 @@ services:
       SABHA_KEYCLOAK_REALM: sabha
       SABHA_KEYCLOAK_ADMIN_USERNAME: admin
       SABHA_KEYCLOAK_ADMIN_PASSWORD: admin
+      # Key for hashing OTP codes at rest (issue #77). HmacOtpHasher fails fast on
+      # the application.yml placeholder, so the local stack supplies a real dev key
+      # here; override SABHA_OTP_HASH_SECRET for anything shared. Never reuse this
+      # value in production.
+      SABHA_OTP_HASH_SECRET: ${SABHA_OTP_HASH_SECRET:-local-dev-otp-hash-secret}
       # Web BFF confidential client secret (ADR-0022); must match sabha-web in realm-sabha.json.
       SABHA_WEB_CLIENT_SECRET: ${SABHA_WEB_CLIENT_SECRET:-dev-web-secret}
       # Install-time Madhyastha Karyalaya bootstrap (ADR-0011). One-off + idempotent:
