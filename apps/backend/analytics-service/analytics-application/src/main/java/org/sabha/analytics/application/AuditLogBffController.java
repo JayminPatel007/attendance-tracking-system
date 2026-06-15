@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.sabha.analytics.applicationservice.AuditEntry;
@@ -63,11 +62,7 @@ public class AuditLogBffController {
             Authentication authentication) {
 
         UUID subject = UUID.fromString(authentication.getName());
-        Optional<UUID> userId = callers.resolveUserId(subject);
-        if (userId.isEmpty()) {
-            return ResponseEntity.status(403).build();
-        }
-        AuditScope scope = access.scopeFor(userId.get());
+        AuditScope scope = access.scopeFor(callers.requireUserId(subject));
         if (scope instanceof AuditScope.Denied) {
             return ResponseEntity.status(403).build();
         }

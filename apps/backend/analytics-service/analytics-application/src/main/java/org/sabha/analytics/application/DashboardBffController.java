@@ -1,7 +1,6 @@
 package org.sabha.analytics.application;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -90,11 +89,7 @@ public class DashboardBffController {
     public ResponseEntity<Void> chooseCity(@RequestBody ChooseCityRequest request,
                                            Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        Optional<UUID> userId = callers.resolveUserId(subject);
-        if (userId.isEmpty()) {
-            return ResponseEntity.status(403).build();
-        }
-        access.selectCity(userId.get(), request.cityId());
+        access.selectCity(callers.requireUserId(subject), request.cityId());
         return ResponseEntity.noContent().build();
     }
 
@@ -106,22 +101,18 @@ public class DashboardBffController {
     @PutMapping("/bff/dashboard/thresholds")
     public ResponseEntity<Void> updateThresholds(@RequestBody ThresholdsRequest request,
                                                  Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        Optional<UUID> mkMember = callers.resolveUserId(subject).filter(madhyasthaKaryalaya::isMember);
-        if (mkMember.isEmpty()) {
+        UUID userId = callers.requireUserId(UUID.fromString(authentication.getName()));
+        if (!madhyasthaKaryalaya.isMember(userId)) {
             return ResponseEntity.status(403).build();
         }
         // Invalid thresholds surface as 422 via the domain invariant on Thresholds.
-        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), mkMember.get());
+        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), userId);
         return ResponseEntity.noContent().build();
     }
 
     private <T> ResponseEntity<T> forCaller(Authentication authentication, Function<UUID, T> read) {
-        UUID subject = UUID.fromString(authentication.getName());
-        return callers.resolveUserId(subject)
-                .map(read)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(403).build());
+        UUID userId = callers.requireUserId(UUID.fromString(authentication.getName()));
+        return ResponseEntity.ok(read.apply(userId));
     }
 
     /** Resolves the caller's {@link DashboardScope} then runs a scope-filtered read. */

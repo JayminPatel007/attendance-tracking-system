@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.identity.applicationservice.AddPersonCommand;
 import org.sabha.identity.applicationservice.Appointee;
 import org.sabha.identity.applicationservice.NameCandidate;
@@ -34,21 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class SabhaDefinitionController {
 
     private final SabhaDefinitionService sabhaDefinition;
-    private final CallerResolver callers;
 
-    public SabhaDefinitionController(SabhaDefinitionService sabhaDefinition, CallerResolver callers) {
+    public SabhaDefinitionController(SabhaDefinitionService sabhaDefinition) {
         this.sabhaDefinition = sabhaDefinition;
-        this.callers = callers;
     }
 
     @PostMapping("/bff/sabhas")
     public ResponseEntity<SabhaDefinitionResponse> define(
             @RequestBody DefineSabhaRequest req, Authentication authentication) {
         UUID subject = UUID.fromString(authentication.getName());
-        if (callers.resolveUserId(subject).isEmpty()) {
-            return ResponseEntity.status(403).build();
-        }
-
         SabhaDefinitionResult result = sabhaDefinition.define(subject, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(SabhaDefinitionResponse.softWarn(result.candidates()));
