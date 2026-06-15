@@ -132,7 +132,7 @@ class WalkInController extends ChangeNotifier {
     if (needle.isEmpty) return const [];
     return cached.roster
         .where((e) => e.fullName.toLowerCase().contains(needle))
-        .map((e) => WalkInCandidate(personId: e.personId, fullName: e.fullName, homeSabha: ''))
+        .map((e) => WalkInCandidate(personId: e.personId, fullName: e.fullName))
         .toList();
   }
 

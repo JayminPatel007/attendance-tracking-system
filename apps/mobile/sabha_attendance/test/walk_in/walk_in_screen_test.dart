@@ -45,8 +45,13 @@ void main() {
   testWidgets('searching lists candidates and tapping one shows the confirm sheet with Home Sabha',
       (tester) async {
     final controller = controllerWith(_FakeApi(
-      onSearch: (_, __) async =>
-          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabha: 'REGULAR_BAAL')],
+      onSearch: (_, __) async => [
+        WalkInCandidate(
+          personId: 'p-110',
+          fullName: 'Ramesh Shah',
+          homeSabhas: const ['REGULAR_BAAL', 'REGULAR_SANYUKTA'],
+        ),
+      ],
     ));
     await pump(tester, controller);
 
@@ -60,15 +65,18 @@ void main() {
     await tester.tap(find.text('Ramesh Shah'));
     await tester.pumpAndSettle();
 
-    expect(find.text('REGULAR_BAAL'), findsOneWidget);
+    // Both Home Sabha kinds render on the confirm sheet (a Person has one per
+    // kind: their demographic Sabha + Sanyukta).
+    expect(find.text('REGULAR_BAAL, REGULAR_SANYUKTA'), findsOneWidget);
     expect(find.byKey(const Key('record-walk-in-button')), findsOneWidget);
   });
 
   testWidgets('recording a Walk-in shows the success state', (tester) async {
     final recorded = <String>[];
     final controller = controllerWith(_FakeApi(
-      onSearch: (_, __) async =>
-          [WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabha: 'REGULAR_BAAL')],
+      onSearch: (_, __) async => [
+        WalkInCandidate(personId: 'p-110', fullName: 'Ramesh Shah', homeSabhas: const ['REGULAR_BAAL']),
+      ],
       onRecord: (occ, person) async => recorded.add(person),
     ));
     await pump(tester, controller);

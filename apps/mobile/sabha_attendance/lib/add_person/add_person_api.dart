@@ -1,11 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:sabha_api/api.dart' as api;
 
 import '../api/api_error.dart';
 
 /// Thin wrapper over the Person Directory endpoints (Slice 6, ADR-0013). The
 /// add flow is **online-only** (ADR-0007) — the de-dup check must hit the live
 /// Directory, so nothing here is ever queued offline.
+///
+/// Responses are deserialized through the generated typed models (issue #73) —
+/// `AddPersonResponse`/`NameCandidate` — so the soft-warn candidate shape can
+/// never silently drift from the backend the way the old hand-rolled parser did
+/// (issue #75). The *request* is still built by hand: `dateOfBirth` is a
+/// free-text passthrough and `gender` a plain string, neither of which survives
+/// the generated `AddPersonRequest` cleanly (its `DateTime` serializer applies
+/// `.toUtc()`, shifting birthdates, and `gender` is a closed enum). `findByMobile`
+/// likewise stays hand-rolled: the spec types that response as an untyped object.
 class AddPersonApi {
   AddPersonApi({required this.baseUrl, required this.accessToken, http.Client? client})
       : _client = client ?? http.Client();
@@ -43,7 +53,7 @@ class AddPersonApi {
       body: jsonEncode(req.toJson()),
     );
     if (resp.statusCode == 201 || resp.statusCode == 200) {
-      return AddPersonOutcome.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+      return AddPersonOutcome.fromResponse(api.AddPersonResponse.fromJson(jsonDecode(resp.body))!);
     }
     apiError(resp, 'POST persons', {
       409: (e) => e.code == 'MOBILE_ALREADY_REGISTERED'
@@ -138,32 +148,39 @@ class AddPersonOutcome {
 
   bool get created => createdPersonId != null;
 
-  factory AddPersonOutcome.fromJson(Map<String, dynamic> json) {
+  factory AddPersonOutcome.fromResponse(api.AddPersonResponse r) {
     return AddPersonOutcome(
-      createdPersonId: json['personId'] as String?,
-      requiresOverride: json['requiresOverride'] as bool? ?? false,
-      candidates: ((json['candidates'] as List<dynamic>?) ?? const [])
-          .map((e) => NameCandidate.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      createdPersonId: r.personId,
+      requiresOverride: r.requiresOverride ?? false,
+      candidates: r.candidates.map(NameCandidate._fromApi).toList(),
     );
   }
 }
 
-/// A possible duplicate surfaced by the name soft-warn.
+/// A possible duplicate surfaced by the name soft-warn. [homeSabhas] carries all
+/// of the Person's current Home Sabha kinds — a Person has one per Sabha kind
+/// they qualify for (typically their demographic Sabha + Sanyukta, CONTEXT.md) —
+/// so the adder sees the demographic Sabha and not just whichever sorts first.
+/// Elements are `sabha_kind` strings.
+///
+/// A non-null view model: the API seam asserts the backend's contract (id + name
+/// always present) once here, so the soft-warn card never deals with nulls.
 class NameCandidate {
-  NameCandidate({required this.personId, required this.fullName, required this.homeSabhaName});
+  NameCandidate({required this.personId, required this.fullName, this.homeSabhas = const []});
 
   final String personId;
   final String fullName;
-  final String homeSabhaName;
+  final List<String> homeSabhas;
 
-  factory NameCandidate.fromJson(Map<String, dynamic> json) {
-    return NameCandidate(
-      personId: json['personId'] as String,
-      fullName: json['fullName'] as String,
-      homeSabhaName: json['homeSabhaName'] as String? ?? '',
-    );
-  }
+  /// The Home Sabha kinds as a single line for the soft-warn, e.g.
+  /// `REGULAR_YUVAK, REGULAR_SANYUKTA`. Empty when the Person has none.
+  String get homeSabhasLabel => homeSabhas.join(', ');
+
+  factory NameCandidate._fromApi(api.NameCandidate c) => NameCandidate(
+        personId: c.personId!,
+        fullName: c.fullName!,
+        homeSabhas: c.homeSabhas,
+      );
 }
 
 /// A Person's Directory profile, as returned by the mobile lookup / detail

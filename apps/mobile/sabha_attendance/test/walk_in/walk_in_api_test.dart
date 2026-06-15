@@ -25,7 +25,11 @@ void main() {
         expect(req.headers['Authorization'], 'Bearer tok');
         return http.Response(
           jsonEncode([
-            {'personId': 'p-110', 'fullName': 'Ramesh Shah', 'homeSabha': 'REGULAR_BAAL'},
+            {
+              'personId': 'p-110',
+              'fullName': 'Ramesh Shah',
+              'homeSabhas': ['REGULAR_BAAL', 'REGULAR_SANYUKTA'],
+            },
           ]),
           200,
         );
@@ -36,7 +40,20 @@ void main() {
       expect(results, hasLength(1));
       expect(results.single.personId, 'p-110');
       expect(results.single.fullName, 'Ramesh Shah');
-      expect(results.single.homeSabha, 'REGULAR_BAAL');
+      expect(results.single.homeSabhas, ['REGULAR_BAAL', 'REGULAR_SANYUKTA']);
+    });
+
+    test('parses a candidate with no Home Sabha as an empty list', () async {
+      final api = apiReturning((req) => http.Response(
+            jsonEncode([
+              {'personId': 'p-111', 'fullName': 'No Home', 'homeSabhas': <String>[]},
+            ]),
+            200,
+          ));
+
+      final results = await api.search(sabhaId: 'sabha-1', query: 'No Home');
+
+      expect(results.single.homeSabhas, isEmpty);
     });
 
     test('returns an empty list when the Directory has no match', () async {
@@ -65,7 +82,7 @@ void main() {
 
       expect(captured.method, 'POST');
       expect(captured.url.path, '/api/occurrences/occ-1/walk-ins');
-      expect(jsonDecode(captured.body), {'personId': 'p-110'});
+      expect((jsonDecode(captured.body) as Map)['personId'], 'p-110');
     });
 
     test('throws on a non-200', () async {
