@@ -47,10 +47,10 @@ public class HomeSabhaTransfer extends AggregateRoot<UUID> {
      */
     public static HomeSabhaTransfer initiate(UUID id, UUID personId, String mobile,
                                              UUID destinationSabhaId, UUID initiatingUserId,
-                                             String otpCode, Instant now) {
+                                             String otpCode, Instant now, OtpHasher hasher) {
         HomeSabhaTransfer transfer = new HomeSabhaTransfer(
                 id, personId, mobile, destinationSabhaId, initiatingUserId,
-                OtpChallenge.issue(id, otpCode, now), now);
+                OtpChallenge.issue(id, otpCode, now, hasher), now);
         transfer.registerEvent(new HomeSabhaTransferInitiated(
                 id, personId, destinationSabhaId, initiatingUserId, now));
         return transfer;
@@ -90,8 +90,8 @@ public class HomeSabhaTransfer extends AggregateRoot<UUID> {
      * {@link TransferOtpConfirmed}. Wrong / expired / exhausted entries throw the
      * typed OTP exception (carrying this transfer's id) and leave it unconfirmed.
      */
-    public void confirm(String code, Instant now) {
-        challenge.verify(code, now);
+    public void confirm(String code, Instant now, OtpHasher hasher) {
+        challenge.verify(code, now, hasher);
         confirmed = true;
         registerEvent(new TransferOtpConfirmed(id, personId, now));
     }

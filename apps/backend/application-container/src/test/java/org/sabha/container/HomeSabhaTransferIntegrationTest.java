@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@org.springframework.context.annotation.Import(RecordingOtpGatewayConfig.class)
 class HomeSabhaTransferIntegrationTest extends KeycloakIntegrationTest {
 
     // Seeded by slice-2/002-seed.sql: the REGULAR_YUVAK tracer Sabha and its Sanchalak.
@@ -41,6 +42,7 @@ class HomeSabhaTransferIntegrationTest extends KeycloakIntegrationTest {
     // Seeded by slice-8/001: a Person with their own mobile whose REGULAR_YUVAK Home
     // Sabha is in a different Kshetra — the lateral-transfer subject.
     private static final UUID TRANSFER_PERSON = UUID.fromString("00000000-0000-0000-0000-000000000303");
+    private static final String TRANSFER_MOBILE = "+910000000303";
     private static final UUID OTHER_YUVAK_SABHA = UUID.fromString("00000000-0000-0000-0000-000000000302");
 
     @Autowired
@@ -49,13 +51,22 @@ class HomeSabhaTransferIntegrationTest extends KeycloakIntegrationTest {
     @Autowired
     JdbcClient jdbc;
 
+    // Codes are hashed at rest (issue #77), so we read the plaintext OTP from the
+    // send port rather than from otp_code.
+    @Autowired
+    RecordingOtpGatewayConfig.RecordingOtpGateway otpGateway;
+
     @Test
     void verifiedTransferSwapsThePersonsHomeSabhaForThatDemographic() throws Exception {
         String token = token("sanchalak");
 
         UUID transferId = initiate(token);
-        String otp = jdbc.sql("SELECT otp_code FROM home_sabha_transfers WHERE id = ?")
+        String otp = otpGateway.lastCodeFor(TRANSFER_MOBILE);
+
+        // What persists is a hash, never the live code (issue #77).
+        String storedCode = jdbc.sql("SELECT otp_code FROM home_sabha_transfers WHERE id = ?")
                 .param(transferId).query((rs, n) -> rs.getString("otp_code")).single();
+        assertThat(storedCode).isNotEqualTo(otp);
 
         mockMvc.perform(post("/api/home-sabha-transfers/" + transferId + "/confirm")
                         .header("Authorization", "Bearer " + token)

@@ -27,6 +27,7 @@ import org.sabha.identity.domain.HomeSabhaTransferInitiated;
 import org.sabha.identity.domain.NoMatchingHomeSabhaException;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
+import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.PersonHasNoMobileException;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.TransferOtpConfirmed;
@@ -280,7 +281,8 @@ class HomeSabhaTransferServiceTest {
         HomeSabhaTransferService service() {
             return new HomeSabhaTransferService(
                     caller(), roleAssignments, directory, transfers, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP), otpSendPolicy, publisher, clock);
+                    new FixedOtpCodeGenerator(FIXED_OTP), new SaltedTestOtpHasher(),
+                    otpSendPolicy, publisher, clock);
         }
     }
 
@@ -416,6 +418,14 @@ class HomeSabhaTransferServiceTest {
         @Override
         public String generate() {
             return code;
+        }
+    }
+
+    /** Deterministic salted stand-in for the production HMAC hasher. */
+    static final class SaltedTestOtpHasher implements OtpHasher {
+        @Override
+        public String hash(UUID challengeId, String code) {
+            return "digest(" + challengeId + ":" + code + ")";
         }
     }
 

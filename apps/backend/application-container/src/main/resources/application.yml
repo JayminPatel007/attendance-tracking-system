@@ -44,6 +44,12 @@ spring:
             user-name-attribute: sub
 
 sabha:
+  otp:
+    # Server-side key for hashing OTP codes at rest (issue #77). Held outside the
+    # database so a DB/backup reader cannot recompute a live 6-digit code; set a
+    # strong secret per environment via SABHA_OTP_HASH_SECRET. The dev default is
+    # intentionally weak and must not be used in production.
+    hash-secret: ${SABHA_OTP_HASH_SECRET:dev-otp-hash-secret}
   keycloak:
     issuer-uri: ${SABHA_KEYCLOAK_ISSUER_URI:http://localhost:58080/realms/sabha}
     admin-base-url: ${SABHA_KEYCLOAK_ADMIN_BASE_URL:http://localhost:58080}

@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
+import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.PasswordReset;
 import org.sabha.identity.domain.User;
 import org.sabha.identity.domain.WrongOtpException;
@@ -36,6 +37,7 @@ public class PasswordResetService {
     private final PasswordResetRepository resets;
     private final OtpGateway otpGateway;
     private final OtpCodeGenerator otpCodeGenerator;
+    private final OtpHasher otpHasher;
     private final OtpSendPolicy otpSendPolicy;
     private final ResetTokenGenerator resetTokenGenerator;
     private final IdentityProviderGateway identityProvider;
@@ -48,6 +50,7 @@ public class PasswordResetService {
             PasswordResetRepository resets,
             OtpGateway otpGateway,
             OtpCodeGenerator otpCodeGenerator,
+            OtpHasher otpHasher,
             OtpSendPolicy otpSendPolicy,
             ResetTokenGenerator resetTokenGenerator,
             IdentityProviderGateway identityProvider,
@@ -58,6 +61,7 @@ public class PasswordResetService {
         this.resets = resets;
         this.otpGateway = otpGateway;
         this.otpCodeGenerator = otpCodeGenerator;
+        this.otpHasher = otpHasher;
         this.otpSendPolicy = otpSendPolicy;
         this.resetTokenGenerator = resetTokenGenerator;
         this.identityProvider = identityProvider;
@@ -78,7 +82,7 @@ public class PasswordResetService {
 
         String code = otpCodeGenerator.generate();
         PasswordReset reset = PasswordReset.request(
-                UUID.randomUUID(), user.id(), user.keycloakUserId(), mobile, code, now);
+                UUID.randomUUID(), user.id(), user.keycloakUserId(), mobile, code, now, otpHasher);
 
         otpGateway.send(mobile, code);
         reset.markOtpSent(now);
@@ -102,7 +106,7 @@ public class PasswordResetService {
 
         String resetToken = resetTokenGenerator.generate();
         try {
-            reset.verify(otpCode, resetToken, clock.instant());
+            reset.verify(otpCode, resetToken, clock.instant(), otpHasher);
         } catch (WrongOtpException | OtpExpiredException | OtpAttemptsExhaustedException rejected) {
             resets.save(reset);
             throw rejected;
