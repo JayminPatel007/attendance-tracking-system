@@ -12,13 +12,12 @@ on:
       - 'infra/keycloak/**'
       - '.github/workflows/backend.yml'
 
-defaults:
-  run:
-    working-directory: apps/backend
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
     steps:
       - uses: actions/checkout@v4
 
@@ -39,5 +38,66 @@ jobs:
           docker pull quay.io/keycloak/keycloak:26.2
           docker pull postgres:16-alpine
 
+      # `verify` runs the tests (JaCoCo agent records exec data per module) and
+      # then the coverage-aggregate module merges it into one cross-module report.
       - name: Build + test
         run: mvn -B -ntp verify
+
+      # Hand the aggregated report to the coverage gate so it doesn't rebuild.
+      - name: Upload aggregated coverage report
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-aggregate
+          path: apps/backend/coverage-aggregate/target/site/jacoco-aggregate/jacoco.xml
+          if-no-files-found: error
+
+  # New-code coverage gate: fails the PR unless 85% of the *changed lines* are
+  # covered. Make this a required status check in branch protection to block merge.
+  coverage-new-code:
+    needs: build-and-test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      # Full history + the base branch are needed so diff-cover can compute the
+      # set of changed lines (git diff against the merge-base with the base branch).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch --no-tags origin ${{ github.base_ref }}
+
+      - name: Download aggregated coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-aggregate
+          path: coverage
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install diff-cover
+        run: pip install diff-cover
+
+      # JaCoCo reports identify sources by package path only, so diff-cover needs
+      # every module's src/main/java as a source root to map them back to repo
+      # paths and line them up with the git diff.
+      - name: Enforce 85% coverage on new code
+        run: |
+          SRC_ROOTS=$(find apps/backend -type d -path '*/src/main/java' | tr '\n' ' ')
+          diff-cover coverage/jacoco.xml \
+            --src-roots $SRC_ROOTS \
+            --compare-branch origin/${{ github.base_ref }} \
+            --fail-under 85 \
+            --markdown-report diff-cover-report.md
+
+      - name: Upload diff coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff-cover-report
+          path: diff-cover-report.md
+          if-no-files-found: ignore
