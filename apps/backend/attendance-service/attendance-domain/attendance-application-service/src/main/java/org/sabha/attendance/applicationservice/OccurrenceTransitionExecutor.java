@@ -66,8 +66,7 @@ public class OccurrenceTransitionExecutor {
      */
     public void execute(UUID keycloakSubject, UUID occurrenceId, AuthorizedAction authAction,
                         OccurrenceAction auditAction, String reason, Consumer<Occurrence> mutation) {
-        UUID userId = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID userId = callerResolver.requireUserId(keycloakSubject);
 
         OptimisticLockException lastConflict = null;
         for (int attempt = 0; attempt < MAX_OPTIMISTIC_LOCK_ATTEMPTS; attempt++) {

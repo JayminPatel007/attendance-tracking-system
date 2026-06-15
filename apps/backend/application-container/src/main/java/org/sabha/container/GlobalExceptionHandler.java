@@ -1,20 +1,12 @@
 package org.sabha.container;
 
-import org.sabha.analytics.applicationservice.NotASantException;
-import org.sabha.attendance.applicationservice.CallerUnknownException;
-import org.sabha.attendance.applicationservice.StaleRosterException;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
+import org.sabha.common.ConflictException;
 import org.sabha.common.DomainException;
 import org.sabha.common.NotFoundException;
-import org.sabha.identity.applicationservice.AlreadySelectedException;
-import org.sabha.identity.applicationservice.DuplicateNominationException;
-import org.sabha.identity.applicationservice.NominationNotAuthorizedException;
 import org.sabha.identity.applicationservice.OtpRateLimitExceededException;
 import org.sabha.identity.applicationservice.OtpResendCooldownException;
-import org.sabha.identity.applicationservice.SelectionDecisionNotAuthorizedException;
-import org.sabha.identity.applicationservice.TransferNotAuthorizedException;
-import org.sabha.identity.applicationservice.UsernameAlreadyTakenException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -43,27 +35,32 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
+    /**
+     * The whole 403 family (issue #78): every per-action authorization refusal,
+     * plus {@link org.sabha.common.CallerUnknownException} for an authenticated
+     * caller whose subject maps to no local User — forbidden, not a server error,
+     * so endpoints need not pre-check. They all extend
+     * {@link AuthorizationDeniedException}, so this one mapping covers them
+     * without importing any feature exception.
+     */
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ProblemDetail forbidden(AuthorizationDeniedException ex) {
         return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     /**
-     * An authenticated caller whose subject maps to no local User is forbidden,
-     * not a server error — the canonical mapping so endpoints need not pre-check.
+     * The whole 409 family (issue #78): duplicates, taken names, stale snapshots.
+     * Each {@link ConflictException} subclass supplies its own machine-readable
+     * {@code code} (e.g. {@code ROSTER_STALE}, {@code USERNAME_TAKEN}) or none, so
+     * the one mapping preserves each flow's discriminator without per-type advice.
      */
-    @ExceptionHandler(CallerUnknownException.class)
-    public ProblemDetail callerUnknown(CallerUnknownException ex) {
-        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(StaleRosterException.class)
-    public ProblemDetail staleRoster(StaleRosterException ex) {
-        return problem(HttpStatus.CONFLICT, ex.getMessage(), "ROSTER_STALE");
+    @ExceptionHandler(ConflictException.class)
+    public ProblemDetail conflict(ConflictException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage(), ex.code());
     }
 
     @ExceptionHandler(ConcurrentModificationException.class)
-    public ProblemDetail conflict(ConcurrentModificationException ex) {
+    public ProblemDetail concurrentModification(ConcurrentModificationException ex) {
         return problem(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
@@ -72,31 +69,6 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = problem(HttpStatus.CONFLICT, ex.getMessage(), "MOBILE_ALREADY_REGISTERED");
         problem.setProperty("existingPersonId", ex.existing().id());
         return problem;
-    }
-
-    @ExceptionHandler(TransferNotAuthorizedException.class)
-    public ProblemDetail transferNotAuthorized(TransferNotAuthorizedException ex) {
-        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(UsernameAlreadyTakenException.class)
-    public ProblemDetail usernameAlreadyTaken(UsernameAlreadyTakenException ex) {
-        return problem(HttpStatus.CONFLICT, ex.getMessage(), "USERNAME_TAKEN");
-    }
-
-    @ExceptionHandler({NominationNotAuthorizedException.class, SelectionDecisionNotAuthorizedException.class})
-    public ProblemDetail selectionNotAuthorized(RuntimeException ex) {
-        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(NotASantException.class)
-    public ProblemDetail notASant(NotASantException ex) {
-        return problem(HttpStatus.FORBIDDEN, ex.getMessage(), null);
-    }
-
-    @ExceptionHandler({DuplicateNominationException.class, AlreadySelectedException.class})
-    public ProblemDetail nominationConflict(RuntimeException ex) {
-        return problem(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
     @ExceptionHandler({OtpRateLimitExceededException.class, OtpResendCooldownException.class})

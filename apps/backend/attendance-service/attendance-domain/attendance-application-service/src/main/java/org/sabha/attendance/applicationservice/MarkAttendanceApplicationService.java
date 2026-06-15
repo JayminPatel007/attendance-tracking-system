@@ -47,8 +47,7 @@ public class MarkAttendanceApplicationService {
      */
     @Transactional
     public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
-        UUID markedBy = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID markedBy = callerResolver.requireUserId(keycloakSubject);
 
         OptimisticLockException lastConflict = null;
         for (int attempt = 0; attempt < MAX_OPTIMISTIC_LOCK_ATTEMPTS; attempt++) {

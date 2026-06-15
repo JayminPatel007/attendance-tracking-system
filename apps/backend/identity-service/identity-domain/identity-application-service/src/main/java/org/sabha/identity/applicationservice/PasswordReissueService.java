@@ -52,8 +52,7 @@ public class PasswordReissueService {
 
     @Transactional
     public void reissue(UUID keycloakSubject, UUID targetUserId, String newPassword) {
-        UUID actor = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID actor = callerResolver.requireUserId(keycloakSubject);
 
         if (!canReissue(actor, targetUserId)) {
             throw new AuthorizationDeniedException(actor, AuthorizedAction.REISSUE_PASSWORD);

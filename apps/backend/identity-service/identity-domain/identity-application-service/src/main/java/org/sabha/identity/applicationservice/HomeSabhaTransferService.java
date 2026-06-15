@@ -73,8 +73,7 @@ public class HomeSabhaTransferService {
 
     @Transactional
     public UUID initiate(UUID keycloakSubject, UUID personId, UUID destinationSabhaId) {
-        UUID initiatingUserId = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID initiatingUserId = callerResolver.requireUserId(keycloakSubject);
 
         Set<Role> roles = roleAssignments.rolesForUserOnSabha(initiatingUserId, destinationSabhaId);
         if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {

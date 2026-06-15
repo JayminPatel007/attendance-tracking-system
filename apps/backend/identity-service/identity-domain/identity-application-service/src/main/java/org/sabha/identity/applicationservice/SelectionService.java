@@ -138,8 +138,7 @@ public class SelectionService {
     }
 
     private UUID resolveCaller(UUID keycloakSubject) {
-        return callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        return callerResolver.requireUserId(keycloakSubject);
     }
 
     /**

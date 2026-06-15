@@ -17,6 +17,7 @@ import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.CallerResolver;
+import org.sabha.common.CallerUnknownException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.OptimisticLockException;

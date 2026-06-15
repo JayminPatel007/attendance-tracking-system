@@ -62,8 +62,7 @@ public class RoleAppointmentService implements AppointRole {
     @Override
     @Transactional
     public AppointmentResult appoint(UUID keycloakSubject, RoleAppointmentCommand command) {
-        UUID appointer = callerResolver.resolveUserId(keycloakSubject)
-                .orElseThrow(() -> new CallerUnknownException(keycloakSubject));
+        UUID appointer = callerResolver.requireUserId(keycloakSubject);
 
         if (!authz.canAppoint(appointer, command.scope())) {
             throw new AuthorizationDeniedException(appointer, AuthorizedAction.APPOINT_ROLE);
