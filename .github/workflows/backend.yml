@@ -92,7 +92,7 @@ jobs:
             --src-roots $SRC_ROOTS \
             --compare-branch origin/${{ github.base_ref }} \
             --fail-under 85 \
-            --markdown-report diff-cover-report.md
+            --format markdown:diff-cover-report.md
 
       - name: Upload diff coverage report
         if: always()
