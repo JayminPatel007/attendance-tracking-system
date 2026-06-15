@@ -1,0 +1,15 @@
+name: sabha_api
+description: Typed Dart client generated from the Sabha Attendance OpenAPI spec (issue #73).
+publish_to: 'none'
+version: 0.1.0
+
+# Hand-stabilized (excluded from regeneration via .openapi-generator-ignore) so the
+# SDK + http constraints track the workspace instead of the generator's defaults.
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  collection: ^1.18.0
+  http: ^1.2.0
+  intl: any
+  meta: ^1.11.0

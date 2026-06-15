@@ -16,3 +16,14 @@ scripts:
   test:
     description: Run `flutter test` (or `dart test`) across every package that has a test/ directory.
     run: melos exec --dir-exists=test -- "flutter test"
+
+  generate:api:
+    description: >
+      Regenerate the typed Dart client (packages/sabha_api) from the backend
+      OpenAPI spec (issue #73). The generator version is pinned in openapitools.json;
+      the package's pubspec and skeleton tests are excluded via
+      packages/sabha_api/.openapi-generator-ignore. Run `melos bootstrap` afterwards.
+    run: >
+      npx --yes @openapitools/openapi-generator-cli generate
+      -i ../backend/openapi.json -g dart -o packages/sabha_api
+      --additional-properties=pubName=sabha_api,pubVersion=0.1.0

@@ -264,6 +264,27 @@ Start the backend stack first (`docker compose up`), then from
     --dart-define=BACKEND_BASE_URL=http://10.0.2.2:8080
   ```
 
+### Generated API client
+
+The typed Dart client lives in `apps/mobile/packages/sabha_api`, generated from
+`apps/backend/openapi.json` (see [The API contract](#the-api-contract-openapi)).
+Like the web client it is committed, so a fresh checkout works without running the
+generator. Regenerate after the spec changes (needs Node for `npx`):
+
+```sh
+cd apps/mobile
+melos run generate:api
+melos bootstrap
+```
+
+The package's `pubspec.yaml` and the generator's skeleton tests are excluded from
+regeneration via `packages/sabha_api/.openapi-generator-ignore`, so the SDK/`http`
+constraints stay aligned with the workspace. Feature clients adopt it incrementally:
+`lib/selection/selection_api.dart` is the first — it calls the generated
+`SelectionRestControllerApi` and keeps status-to-exception mapping on the shared
+`lib/api/api_error.dart` seam (#67) by bridging the client's `ApiException` back
+through `apiError`.
+
 ---
 
 ## Troubleshooting

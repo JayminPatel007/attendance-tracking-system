@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:sabha_api/api.dart';
 
 import '../api/api_error.dart';
 
@@ -7,38 +7,49 @@ import '../api/api_error.dart';
 /// The Regular Sanchalak nominates a Person from their Roster for the selective
 /// track; the selective Sabha is derived server-side. Online-only — a nomination
 /// is never queued offline.
+///
+/// Delegates to the generated typed client ([SelectionRestControllerApi], issue
+/// #73): the request/response shapes are the generated `NominateRequest` /
+/// `NominateResponse` models. Status-to-exception mapping stays on the shared
+/// [apiError] seam (#67) — the generated client's [ApiException] is bridged back
+/// to an [http.Response] so feature error handling is unchanged.
 class SelectionApi {
-  SelectionApi({required this.baseUrl, required this.accessToken, http.Client? client})
-      : _client = client ?? http.Client();
+  SelectionApi({required String baseUrl, required String accessToken, http.Client? client})
+      : _api = SelectionRestControllerApi(_apiClient(baseUrl, accessToken, client));
 
-  final String baseUrl;
-  final String accessToken;
-  final http.Client _client;
+  final SelectionRestControllerApi _api;
+
+  static ApiClient _apiClient(String baseUrl, String accessToken, http.Client? client) {
+    final apiClient = ApiClient(
+      basePath: baseUrl,
+      authentication: HttpBearerAuth()..accessToken = accessToken,
+    );
+    if (client != null) {
+      apiClient.client = client;
+    }
+    return apiClient;
+  }
 
   /// Nominate the Roster Person for the selective track. Returns the new
   /// nomination id. A `403` means the caller is not the Sabha's Sanchalak; a
   /// `409` that the Person already has an open nomination or is already selected;
   /// a `422` a domain rejection (not on roster, no selective track/Sabha).
   Future<String> nominate({required String personId, required String regularSabhaId}) async {
-    final resp = await _client.post(
-      Uri.parse('$baseUrl/api/sanchalak/nominations'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'personId': personId, 'regularSabhaId': regularSabhaId}),
-    );
-    if (resp.statusCode == 200) {
-      return (jsonDecode(resp.body) as Map<String, dynamic>)['nominationId'] as String;
+    try {
+      final response = await _api.nominate(
+        NominateRequest(personId: personId, regularSabhaId: regularSabhaId),
+      );
+      return response!.nominationId!;
+    } on ApiException catch (e) {
+      apiError(http.Response(e.message ?? '', e.code), 'POST nominations', {
+        403: (err) => NominationNotAuthorizedException(
+            err.message('Only this Sabha\'s Sanchalak can nominate.')),
+        409: (err) => AlreadyNominatedException(
+            err.message('This Person is already nominated or selected.')),
+        422: (err) => NominationRejectedException(
+            err.message('This Person can\'t be nominated.')),
+      }, fallback: SelectionApiException.new);
     }
-    apiError(resp, 'POST nominations', {
-      403: (e) => NominationNotAuthorizedException(
-          e.message('Only this Sabha\'s Sanchalak can nominate.')),
-      409: (e) => AlreadyNominatedException(
-          e.message('This Person is already nominated or selected.')),
-      422: (e) => NominationRejectedException(
-          e.message('This Person can\'t be nominated.')),
-    }, fallback: SelectionApiException.new);
   }
 }
 

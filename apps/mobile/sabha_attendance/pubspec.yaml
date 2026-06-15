@@ -17,6 +17,11 @@ dependencies:
   # Backend HTTP client.
   http: ^1.2.0
 
+  # Typed client generated from the backend OpenAPI spec (issue #73). Feature
+  # clients migrate onto its models/operations incrementally; selection is first.
+  sabha_api:
+    path: ../packages/sabha_api
+
   # Local SQLite store for offline roster cache + pending-marking queue (ADR-0007).
   sqflite: ^2.3.0
   path: ^1.9.0
