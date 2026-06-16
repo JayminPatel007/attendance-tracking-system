@@ -38,6 +38,10 @@
         <module>analytics-service</module>
 
         <module>application-container</module>
+
+        <!-- Builds last: aggregates JaCoCo exec data from every module above into a
+             single cross-module coverage report (see coverage-aggregate/pom.xml). -->
+        <module>coverage-aggregate</module>
     </modules>
 
     <dependencyManagement>
@@ -163,5 +167,22 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- Instruments every module's tests so each produces target/jacoco.exec.
+                 The coverage-aggregate module merges these into one report. Plugin
+                 version is managed by spring-boot-starter-parent. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 </project>
