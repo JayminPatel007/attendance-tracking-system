@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.Role;
+import org.sabha.common.SantLookup;
 import org.sabha.identity.domain.VisibleSections;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +19,13 @@ public class WebSessionService {
 
     private final UserRepository users;
     private final MadhyasthaKaryalayaMembership membership;
-    private final SantMembership sant;
+    private final SantLookup sant;
     private final UserRolesLookup roles;
 
     public WebSessionService(
             UserRepository users,
             MadhyasthaKaryalayaMembership membership,
-            SantMembership sant,
+            SantLookup sant,
             UserRolesLookup roles) {
         this.users = users;
         this.membership = membership;

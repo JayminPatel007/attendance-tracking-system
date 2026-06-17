@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.sabha.common.SantLookup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,7 +25,7 @@ class DashboardAccessTest {
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
     private static final UUID CITY_A = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
 
-    private final FakeSantDirectory sants = new FakeSantDirectory();
+    private final FakeSantLookup sants = new FakeSantLookup();
     private final FakeDefaultCity defaults = new FakeDefaultCity();
     private final FakeCityDirectory cities = new FakeCityDirectory();
     private final DashboardAccess access = new DashboardAccess(sants, defaults, cities);
@@ -102,7 +103,7 @@ class DashboardAccessTest {
         assertThat(chip.cities()).isEmpty();
     }
 
-    private static final class FakeSantDirectory implements SantDirectory {
+    private static final class FakeSantLookup implements SantLookup {
         private final Set<UUID> sants = new HashSet<>();
 
         void add(UUID userId) {

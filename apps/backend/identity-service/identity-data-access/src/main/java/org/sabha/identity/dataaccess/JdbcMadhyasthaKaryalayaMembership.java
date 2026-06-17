@@ -3,6 +3,7 @@ package org.sabha.identity.dataaccess;
 import java.util.UUID;
 
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.OversightRole;
 import org.sabha.identity.applicationservice.MadhyasthaKaryalayaMembership;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -24,8 +25,6 @@ import org.springframework.stereotype.Repository;
 public class JdbcMadhyasthaKaryalayaMembership
         implements MadhyasthaKaryalayaMembership, MadhyasthaKaryalayaLookup {
 
-    private static final String MK_ROLE = "MADHYASTHA_KARYALAYA";
-
     private final JdbcClient jdbc;
 
     public JdbcMadhyasthaKaryalayaMembership(JdbcClient jdbc) {
@@ -35,7 +34,7 @@ public class JdbcMadhyasthaKaryalayaMembership
     @Override
     public boolean anyMemberExists() {
         return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE role = ?)")
-                .param(MK_ROLE)
+                .param(OversightRole.MADHYASTHA_KARYALAYA.wireValue())
                 .query(Boolean.class)
                 .single();
     }
@@ -48,7 +47,7 @@ public class JdbcMadhyasthaKaryalayaMembership
                 """)
                 .param(UUID.randomUUID())
                 .param(userId)
-                .param(MK_ROLE)
+                .param(OversightRole.MADHYASTHA_KARYALAYA.wireValue())
                 .update();
     }
 
@@ -56,7 +55,7 @@ public class JdbcMadhyasthaKaryalayaMembership
     public boolean isMember(UUID userId) {
         return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ?)")
                 .param(userId)
-                .param(MK_ROLE)
+                .param(OversightRole.MADHYASTHA_KARYALAYA.wireValue())
                 .query(Boolean.class)
                 .single();
     }

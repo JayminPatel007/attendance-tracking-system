@@ -3,6 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.common.SantLookup;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,11 +17,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class DashboardAccess {
 
-    private final SantDirectory sants;
+    private final SantLookup sants;
     private final SantDefaultCity defaultCity;
     private final CityDirectory cities;
 
-    public DashboardAccess(SantDirectory sants, SantDefaultCity defaultCity, CityDirectory cities) {
+    public DashboardAccess(SantLookup sants, SantDefaultCity defaultCity, CityDirectory cities) {
         this.sants = sants;
         this.defaultCity = defaultCity;
         this.cities = cities;

@@ -3,6 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.UUID;
 
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.SantLookup;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,11 +24,11 @@ import org.springframework.stereotype.Service;
 public class AuditLogAccess {
 
     private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
-    private final SantDirectory sants;
+    private final SantLookup sants;
     private final AuditScopeLookup scopes;
 
     public AuditLogAccess(MadhyasthaKaryalayaLookup madhyasthaKaryalaya,
-                          SantDirectory sants,
+                          SantLookup sants,
                           AuditScopeLookup scopes) {
         this.madhyasthaKaryalaya = madhyasthaKaryalaya;
         this.sants = sants;
