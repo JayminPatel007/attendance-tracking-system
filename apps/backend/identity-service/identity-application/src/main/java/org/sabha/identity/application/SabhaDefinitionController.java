@@ -6,12 +6,12 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.AddPersonCommand;
-import org.sabha.identity.applicationservice.Appointee;
-import org.sabha.identity.applicationservice.NameCandidate;
-import org.sabha.identity.applicationservice.SabhaDefinitionCommand;
-import org.sabha.identity.applicationservice.SabhaDefinitionResult;
-import org.sabha.identity.applicationservice.SabhaDefinitionService;
+import org.sabha.identity.applicationservice.directory.AddPersonCommand;
+import org.sabha.identity.applicationservice.appointment.Appointee;
+import org.sabha.identity.applicationservice.directory.NameCandidate;
+import org.sabha.identity.applicationservice.sabhadefinition.SabhaDefinitionCommand;
+import org.sabha.identity.applicationservice.sabhadefinition.SabhaDefinitionResult;
+import org.sabha.identity.applicationservice.sabhadefinition.SabhaDefinitionService;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

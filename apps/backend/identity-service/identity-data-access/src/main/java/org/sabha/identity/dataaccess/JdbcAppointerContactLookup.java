@@ -3,8 +3,8 @@ package org.sabha.identity.dataaccess;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.AppointerContact;
-import org.sabha.identity.applicationservice.AppointerContactLookup;
+import org.sabha.identity.applicationservice.appointment.AppointerContact;
+import org.sabha.identity.applicationservice.appointment.AppointerContactLookup;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

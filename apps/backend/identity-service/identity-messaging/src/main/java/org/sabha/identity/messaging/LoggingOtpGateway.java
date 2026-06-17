@@ -3,7 +3,7 @@ package org.sabha.identity.messaging;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
-import org.sabha.identity.applicationservice.OtpGateway;
+import org.sabha.identity.applicationservice.otp.OtpGateway;
 import org.springframework.stereotype.Component;
 
 /**

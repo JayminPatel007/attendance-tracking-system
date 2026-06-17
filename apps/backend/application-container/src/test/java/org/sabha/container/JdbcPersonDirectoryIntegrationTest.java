@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.identity.applicationservice.AddPersonApplicationService;
-import org.sabha.identity.applicationservice.AddPersonCommand;
-import org.sabha.identity.applicationservice.AddResult;
-import org.sabha.identity.applicationservice.NameCandidate;
-import org.sabha.identity.applicationservice.PersonDirectory;
+import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
+import org.sabha.identity.applicationservice.directory.AddPersonCommand;
+import org.sabha.identity.applicationservice.directory.AddResult;
+import org.sabha.identity.applicationservice.directory.NameCandidate;
+import org.sabha.identity.applicationservice.directory.PersonDirectory;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.springframework.beans.factory.annotation.Autowired;

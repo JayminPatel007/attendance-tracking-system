@@ -3,7 +3,7 @@ package org.sabha.identity.messaging;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-import org.sabha.identity.applicationservice.ResetTokenGenerator;
+import org.sabha.identity.applicationservice.passwordreset.ResetTokenGenerator;
 import org.springframework.stereotype.Component;
 
 /**

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.HomeSabhaTransferRepository;
+import org.sabha.identity.applicationservice.transfer.HomeSabhaTransferRepository;
 import org.sabha.identity.domain.HomeSabhaTransfer;
 import org.sabha.identity.domain.OtpChallenge;
 import org.sabha.identity.domain.TransferStatus;

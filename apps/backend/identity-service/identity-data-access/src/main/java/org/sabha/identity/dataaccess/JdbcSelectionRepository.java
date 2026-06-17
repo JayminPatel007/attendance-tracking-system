@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.SelectionRepository;
+import org.sabha.identity.applicationservice.selection.SelectionRepository;
 import org.sabha.identity.domain.NominationStatus;
 import org.sabha.identity.domain.SelectionNomination;
 import org.springframework.jdbc.core.simple.JdbcClient;

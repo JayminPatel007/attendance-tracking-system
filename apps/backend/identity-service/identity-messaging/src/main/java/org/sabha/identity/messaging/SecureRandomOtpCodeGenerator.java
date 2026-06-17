@@ -2,7 +2,7 @@ package org.sabha.identity.messaging;
 
 import java.security.SecureRandom;
 
-import org.sabha.identity.applicationservice.OtpCodeGenerator;
+import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
 import org.springframework.stereotype.Component;
 
 /**

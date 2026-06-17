@@ -2,7 +2,7 @@ package org.sabha.identity.dataaccess;
 
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.SelectionRoster;
+import org.sabha.identity.applicationservice.selection.SelectionRoster;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

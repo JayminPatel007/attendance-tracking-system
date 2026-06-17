@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
-import org.sabha.identity.applicationservice.PendingNominationItem;
-import org.sabha.identity.applicationservice.SelectedPersonItem;
-import org.sabha.identity.applicationservice.SelectionQueries;
-import org.sabha.identity.applicationservice.SelectionService;
+import org.sabha.identity.applicationservice.selection.PendingNominationItem;
+import org.sabha.identity.applicationservice.selection.SelectedPersonItem;
+import org.sabha.identity.applicationservice.selection.SelectionQueries;
+import org.sabha.identity.applicationservice.selection.SelectionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;

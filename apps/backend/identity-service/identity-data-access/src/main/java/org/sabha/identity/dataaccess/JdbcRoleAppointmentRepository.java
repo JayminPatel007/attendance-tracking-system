@@ -2,9 +2,9 @@ package org.sabha.identity.dataaccess;
 
 import java.sql.Timestamp;
 
-import org.sabha.identity.applicationservice.AppointmentScope;
-import org.sabha.identity.applicationservice.RoleAppointmentRepository;
-import org.sabha.identity.applicationservice.RoleAppointmentRow;
+import org.sabha.identity.applicationservice.appointment.AppointmentScope;
+import org.sabha.identity.applicationservice.appointment.RoleAppointmentRepository;
+import org.sabha.identity.applicationservice.appointment.RoleAppointmentRow;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

@@ -3,9 +3,9 @@ package org.sabha.identity.dataaccess;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.PendingNominationItem;
-import org.sabha.identity.applicationservice.SelectedPersonItem;
-import org.sabha.identity.applicationservice.SelectionQueries;
+import org.sabha.identity.applicationservice.selection.PendingNominationItem;
+import org.sabha.identity.applicationservice.selection.SelectedPersonItem;
+import org.sabha.identity.applicationservice.selection.SelectionQueries;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

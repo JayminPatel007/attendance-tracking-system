@@ -1,6 +1,6 @@
 package org.sabha.identity.dataaccess;
 
-import org.sabha.identity.applicationservice.PersonRepository;
+import org.sabha.identity.applicationservice.directory.PersonRepository;
 import org.sabha.identity.domain.Person;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
