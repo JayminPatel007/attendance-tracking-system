@@ -48,7 +48,7 @@ State-level entries with no resolvable geography (a `sabha_kind` creation, an MK
 
 The decision is encoded as `AuditLogAccess` (the Authorization Engine), which maps a caller to a sealed `AuditScope` (`Unrestricted` | `Scoped(kshetras, zones, cities)` | `Denied`) using the existing `MadhyasthaKaryalayaLookup` and `SantDirectory` ports plus a new `AuditScopeLookup` that reads the geographic role rows. A caller who resolves to no scope at all is `Denied` — the same outcome as a sub-Nirdeshak role, reached without enumerating the forbidden roles. The engine is stateless apart from its ports, so the rule is exercised without a database, mirroring `DashboardAccess`.
 
-The web shell gains an `AUDIT_LOG` `Section`; `VisibleSections` unlocks it for the same authority set, so the sidebar nav and the BFF agree on who sees it from one source of truth (Slice 9 pattern).
+The web shell gains an `AUDIT_LOG` `Section`. The sidebar gate and the BFF read **one** authority: `VisibleSections` does not re-enumerate the audit tiers — the web session resolves the section through the `AuditReadAccess` port (a common-domain seam implemented over `AuditLogAccess`, folding its `AuditScope` to "admitted unless `Denied`"), so the nav admits exactly the set the engine admits. The original Slice 19 cut instead mirrored the tier set as a `Role`-only constant in `VisibleSections`, which silently omitted the Regional Team (not an operational `Role`) and so drifted from the BFF; issue #80 replaced that mirror with the derive-from-scope port, closing the gap structurally.
 
 ## Consequences
 

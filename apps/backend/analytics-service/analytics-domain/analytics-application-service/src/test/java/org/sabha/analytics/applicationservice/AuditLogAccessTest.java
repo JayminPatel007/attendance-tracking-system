@@ -25,8 +25,10 @@ class AuditLogAccessTest {
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a3");
     private static final UUID SANYOJAK = UUID.fromString("00000000-0000-0000-0000-0000000000a4");
     private static final UUID SANCHALAK = UUID.fromString("00000000-0000-0000-0000-0000000000a5");
+    private static final UUID REGIONAL_TEAM = UUID.fromString("00000000-0000-0000-0000-0000000000a6");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
     private static final UUID ZONE = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+    private static final UUID CITY = UUID.fromString("00000000-0000-0000-0000-0000000000b3");
 
     private final FakeMk mk = new FakeMk();
     private final FakeSants sants = new FakeSants();
@@ -61,6 +63,17 @@ class AuditLogAccessTest {
 
         assertThat(access.scopeFor(SANYOJAK))
                 .isEqualTo(new AuditScope.Scoped(Set.of(), Set.of(ZONE), Set.of()));
+    }
+
+    @Test
+    void aRegionalTeamMemberReadsTheirResolvedCityScope() {
+        // The City-scoped Regional Team is admitted just like the Kshetra/Zone tiers,
+        // even though it is not an operational Role — the engine folds purely on the
+        // resolved geographic scope (issue #80, ADR-0023).
+        scopes.put(REGIONAL_TEAM, new AuditScope.Scoped(Set.of(), Set.of(), Set.of(CITY)));
+
+        assertThat(access.scopeFor(REGIONAL_TEAM))
+                .isEqualTo(new AuditScope.Scoped(Set.of(), Set.of(), Set.of(CITY)));
     }
 
     @Test

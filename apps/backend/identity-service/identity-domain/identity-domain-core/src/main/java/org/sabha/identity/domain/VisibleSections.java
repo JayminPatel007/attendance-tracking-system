@@ -18,28 +18,28 @@ import org.sabha.common.Role;
  * Nirikshak (Slice 14). The Selection section — the BSS/YSS nomination queue —
  * belongs to the demographic Nirdeshak, who alone approves selections (ADR-0006,
  * Slice 16). The Audit-log section is the oversight read surface (ADR-0023, Slice
- * 19): Nirdeshak-and-above — the Kshetra tiers Nirdeshak / Sah-Nirdeshak, the Zone
- * Sanyojak, a Sant, and the MK — never the Sanchalak / Sah-Sanchalak / Nirikshak,
- * whose work flows through their own screens. Everyone with a web login sees the
- * Dashboard.
+ * 19): whoever the BFF's audit Authorization Engine ({@code AuditLogAccess}) admits
+ * to a scope may see it — the Kshetra tiers Nirdeshak / Sah-Nirdeshak, the Zone
+ * Sanyojak, the City Regional Team, a Sant, and the MK — never the Sanchalak /
+ * Sah-Sanchalak / Nirikshak, whose work flows through their own screens. Everyone
+ * with a web login sees the Dashboard.
  *
- * <p>The web nav gate and the BFF Authorization Engine ({@code AuditLogAccess})
- * agree on this set; the BFF additionally honours the Regional Team's City scope,
- * which is not yet modelled in the web session, so a Regional Team member is
- * authorised at the BFF but does not yet get the sidebar entry.</p>
+ * <p>The nav gate does not enumerate the audit tiers itself: the application
+ * service resolves {@code canReadAudit} through the same scope-resolution the BFF
+ * uses (the {@code AuditReadAccess} port over {@code AuditLogAccess}) and hands the
+ * decision in. The sidebar therefore admits exactly the set the engine admits —
+ * including the Regional Team, which is not an operational {@link Role} — with no
+ * hand-maintained mirror to drift (issue #80).</p>
  *
  * <p>Stateless: the application service loads the membership flags and roles and
  * passes them in — the domain service never touches a repository (ADR-0019).</p>
  */
 public final class VisibleSections {
 
-    /** The Kshetra-and-up operational tiers that may read the audit surface (ADR-0023). */
-    private static final Set<Role> AUDIT_TIERS = Set.of(Role.NIRDESHAK, Role.SAH_NIRDESHAK, Role.SANYOJAK);
-
     private VisibleSections() {
     }
 
-    public static Set<Section> forMember(boolean isMadhyasthaKaryalaya, boolean isSant, Set<Role> operationalRoles) {
+    public static Set<Section> forMember(boolean isMadhyasthaKaryalaya, boolean canReadAudit, Set<Role> operationalRoles) {
         EnumSet<Section> sections = EnumSet.of(Section.DASHBOARD);
         if (isMadhyasthaKaryalaya) {
             sections.add(Section.ROLE_APPOINTMENT);
@@ -58,7 +58,7 @@ public final class VisibleSections {
         if (!Collections.disjoint(operationalRoles, Role.REOPEN_TIERS)) {
             sections.add(Section.OCCURRENCE_REOPEN);
         }
-        if (isMadhyasthaKaryalaya || isSant || !Collections.disjoint(operationalRoles, AUDIT_TIERS)) {
+        if (canReadAudit) {
             sections.add(Section.AUDIT_LOG);
         }
         return sections;
