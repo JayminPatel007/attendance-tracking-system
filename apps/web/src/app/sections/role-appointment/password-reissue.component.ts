@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { suggestPassword } from 'identity-domain';
+
 import { errorMessageFor } from '../../shared/http-error';
 import { AppointmentService } from './appointment.service';
-import { suggestPassword } from './appointment.credentials';
 
 type Stage = 'editing' | 'done';
 

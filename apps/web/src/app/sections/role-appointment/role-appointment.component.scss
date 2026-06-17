@@ -38,55 +38,22 @@
     }
   }
 
-  .search-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-    margin-bottom: 10px;
-
-    input {
-      flex: 1;
-    }
-
-    button {
-      flex: 0 0 auto;
-      padding: 8px 14px;
-    }
+  // The "+ Create new Person" escape sits below the picker's candidate list.
+  .create-new {
+    width: 100%;
+    margin-top: 8px;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px dashed #e5e7eb;
+    border-radius: 6px;
+    background: #fff;
+    color: #2563eb;
+    cursor: pointer;
   }
 
-  .candidates {
-    list-style: none;
-    margin: 8px 0 0;
-    padding: 0;
-
-    li {
-      margin: 0 0 6px;
-
-      button {
-        width: 100%;
-        text-align: left;
-        padding: 10px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        background: #fff;
-        cursor: pointer;
-
-        small {
-          color: #6b7280;
-          margin-left: 8px;
-        }
-      }
-
-      &.selected button {
-        border-color: #2563eb;
-        background: #eff6ff;
-      }
-
-      &.create-new button {
-        border-style: dashed;
-        color: #2563eb;
-      }
-    }
+  .new-person .cancel {
+    margin-top: 4px;
+    padding: 6px 12px;
   }
 
   .hint {

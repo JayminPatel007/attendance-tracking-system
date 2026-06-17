@@ -49,13 +49,4 @@ describe('SabhaDefinitionService', () => {
     expect(req.request.params.get('zoneId')).toBe('zone1');
     req.flush([]);
   });
-
-  it('searches the Directory by name within a Kshetra for the Sanchalak picker', () => {
-    service.searchByName('ksh1', 'Pratik').subscribe();
-
-    const req = http.expectOne((r) => r.url === '/bff/directory/search');
-    expect(req.request.params.get('name')).toBe('Pratik');
-    expect(req.request.params.get('kshetraId')).toBe('ksh1');
-    req.flush([]);
-  });
 });

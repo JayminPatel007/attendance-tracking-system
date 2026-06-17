@@ -47,43 +47,21 @@
       }
     </fieldset>
 
-    <!-- 2. Find the appointee in the Directory -->
-    <fieldset class="search">
-      <legend>Appointee</legend>
-
-      <div class="search-row">
-        <input [(ngModel)]="searchMobile" placeholder="Search by mobile" />
-        <button type="button" (click)="searchByMobile()">Find</button>
-      </div>
-      <div class="search-row">
-        <input [(ngModel)]="searchName" placeholder="Search by name" />
-        <input [(ngModel)]="searchKshetraId" placeholder="within Kshetra id" />
-        <button type="button" (click)="searchByName()">Find</button>
-      </div>
-
-      <ul class="candidates">
-        @if (mobileMatch(); as m) {
-          <li [class.selected]="selectedPersonId() === m.id">
-            <button type="button" (click)="pickExisting(m.id)">
-              {{ m.fullName }} <small>{{ m.mobile }}</small>
-            </button>
-          </li>
+    @if (!creatingNew()) {
+      <!-- 2. Find the appointee in the Directory -->
+      <fieldset class="search">
+        <legend>Appointee</legend>
+        <label class="search-kshetra">
+          Search within Kshetra
+          <input [(ngModel)]="searchKshetraId" placeholder="Kshetra id" />
+        </label>
+        <app-person-picker [kshetraId]="searchKshetraId" [clearable]="true" (picked)="onPicked()" />
+        @if (!picker()?.selectedId()) {
+          <button type="button" class="create-new" (click)="startCreateNew()">+ Create new Person</button>
         }
-        @for (c of nameCandidates(); track c.personId) {
-          <li [class.selected]="selectedPersonId() === c.personId">
-            <button type="button" (click)="pickExisting(c.personId)">
-              {{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small>
-            </button>
-          </li>
-        }
-        <li class="create-new">
-          <button type="button" (click)="startCreateNew()">+ Create new Person</button>
-        </li>
-      </ul>
-    </fieldset>
-
-    <!-- 3. Inline new Person -->
-    @if (creatingNew()) {
+      </fieldset>
+    } @else {
+      <!-- 3. Inline new Person -->
       <fieldset class="new-person">
         <legend>New Person</legend>
         <label>Full name
@@ -98,16 +76,15 @@
         <label>Date of birth <input type="date" [(ngModel)]="newPerson.dateOfBirth" /></label>
         <label>Mobile <input [(ngModel)]="newPerson.mobile" placeholder="+91…" /></label>
         <label>Home Sabha <input [(ngModel)]="newPerson.homeSabhaId" placeholder="Sabha id" /></label>
+        <button type="button" class="cancel" (click)="cancelCreateNew()">Cancel — pick an existing Person</button>
       </fieldset>
-    }
 
-    <!-- 4. Credentials -->
-    @if (selectedPersonId() || creatingNew()) {
+      <!-- 4. Credentials -->
       <fieldset class="credentials">
         <legend>Login</legend>
-        <label>Username <input [(ngModel)]="username" /></label>
-        <label>Initial password <input [(ngModel)]="rawPassword" /></label>
-        <p class="hint">The appointee changes this on first login. Skipped if they already have a login.</p>
+        <label>Username <input [(ngModel)]="newUsername" /></label>
+        <label>Initial password <input [(ngModel)]="newPassword" /></label>
+        <p class="hint">The appointee changes this on first login.</p>
       </fieldset>
     }
 

@@ -1,10 +1,12 @@
 /**
  * Frontend mirror of the identity context's appointment DTOs (ADR-0011). The
- * JSON shapes match `RoleAppointmentController` — `AppointmentRequest`,
- * `AppointmentResponse`, the directory `PersonResponse`, and `NameCandidate`.
+ * JSON shapes match `RoleAppointmentController` — `AppointmentRequest` and
+ * `AppointmentResponse`. The shared directory DTOs (`NameCandidate`,
+ * `PersonResponse`, `Gender`) live in identity-domain.
  */
+import { Gender, NameCandidate } from 'identity-domain';
+
 export type Demographic = 'BAAL' | 'BALIKA' | 'YUVAK' | 'YUVATI' | 'SANYUKTA';
-export type Gender = 'MALE' | 'FEMALE';
 
 export const DEMOGRAPHICS: readonly Demographic[] = ['BAAL', 'BALIKA', 'YUVAK', 'YUVATI', 'SANYUKTA'];
 
@@ -57,21 +59,6 @@ export interface AppointmentRequest {
   newPerson?: NewPersonPayload | null;
   username: string;
   rawPassword: string;
-}
-
-export interface NameCandidate {
-  personId: string;
-  fullName: string;
-  homeSabhas: string[];
-}
-
-export interface PersonResponse {
-  id: string;
-  fullName: string;
-  gender: Gender;
-  dateOfBirth: string | null;
-  mobile: string | null;
-  guardianPersonId: string | null;
 }
 
 export interface AppointmentResponse {

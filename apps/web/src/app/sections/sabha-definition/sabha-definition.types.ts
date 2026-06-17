@@ -4,7 +4,7 @@
  * defines the standing Sabha and appoints its Sanchalak (and optional
  * Sah-Sanchalak) in a single transaction.
  */
-import { NameCandidate } from '../role-appointment/appointment.types';
+import { NameCandidate } from 'identity-domain';
 
 /** Java `DayOfWeek` is serialized by its enum name. */
 export type DayOfWeek =

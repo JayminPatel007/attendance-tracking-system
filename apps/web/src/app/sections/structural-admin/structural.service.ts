@@ -9,7 +9,7 @@ import {
   SabhaKindView,
   Track,
   ZoneView,
-} from './structural.types';
+} from 'sabha-domain';
 
 interface CreatedResponse {
   id: string;

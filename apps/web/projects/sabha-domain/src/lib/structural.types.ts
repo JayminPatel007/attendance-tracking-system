@@ -1,6 +1,7 @@
 /**
  * Frontend mirror of the sabha context's structural read/write DTOs (ADR-0009).
  * The JSON shapes match `StructuralCreationController` and `StructuralQueries`.
+ * Shared by the structural-admin and Sabha-definition screens.
  */
 export type Demographic = 'BAAL' | 'BALIKA' | 'YUVAK' | 'YUVATI' | 'SANYUKTA';
 export type Track = 'REGULAR' | 'BSS' | 'YSS';

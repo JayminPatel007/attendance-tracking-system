@@ -1,12 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { demographicLabel } from 'sabha-domain';
+import { PersonPickerComponent } from 'identity-domain';
+import { KshetraView, SabhaKindView, ZoneView, demographicLabel } from 'sabha-domain';
 
 import { errorMessageFor } from '../../shared/http-error';
-import { suggestPassword, suggestUsername } from '../role-appointment/appointment.credentials';
-import { NameCandidate, PersonResponse } from '../role-appointment/appointment.types';
-import { KshetraView, SabhaKindView, ZoneView } from '../structural-admin/structural.types';
 import { SabhaDefinitionService } from './sabha-definition.service';
 import { AppointeePayload, DAYS_OF_WEEK, DayOfWeek, DefineSabhaRequest } from './sabha-definition.types';
 
@@ -18,45 +16,17 @@ export function kindLabel(kind: SabhaKindView): string {
 type Stage = 'editing' | 'done';
 
 /**
- * One appointee slot of the definition form — the Sanchalak, and the optional
- * Sah-Sanchalak. Directory-first (Slice 11): search by name within the chosen
- * Kshetra or by mobile, pick an existing Person, and the initial credentials are
- * auto-suggested from their name (editable; uniqueness is the backend's call).
+ * The appointee payload from a person picker, or `null` until a Person and
+ * credentials are in place. Mirrors the backend `AppointeePayload` (the inline
+ * new-Person path is omitted — the standing Sabha has no Occurrence to home a
+ * brand-new Person against yet).
  */
-export class AppointeePicker {
-  nameQuery = '';
-  mobileQuery = '';
-  readonly candidates = signal<NameCandidate[]>([]);
-  readonly mobileMatch = signal<PersonResponse | null>(null);
-  readonly selectedId = signal<string | null>(null);
-  selectedName = '';
-  username = '';
-  rawPassword = '';
-
-  pick(personId: string, fullName: string): void {
-    this.selectedId.set(personId);
-    this.selectedName = fullName;
-    this.username = suggestUsername(fullName);
-    this.rawPassword = suggestPassword();
+function payloadOf(picker: PersonPickerComponent): AppointeePayload | null {
+  const id = picker.selectedId();
+  if (!id || !picker.username.trim() || !picker.rawPassword) {
+    return null;
   }
-
-  clear(): void {
-    this.selectedId.set(null);
-    this.selectedName = '';
-    this.username = '';
-    this.rawPassword = '';
-    this.candidates.set([]);
-    this.mobileMatch.set(null);
-  }
-
-  /** The request payload, or `null` until a Person and credentials are in place. */
-  payload(): AppointeePayload | null {
-    const id = this.selectedId();
-    if (!id || !this.username.trim() || !this.rawPassword) {
-      return null;
-    }
-    return { existingPersonId: id, username: this.username.trim(), rawPassword: this.rawPassword };
-  }
+  return { existingPersonId: id, username: picker.username.trim(), rawPassword: picker.rawPassword };
 }
 
 /**
@@ -65,13 +35,14 @@ export class AppointeePicker {
  * choose the schedule shape (weekly carries a fixed day/time the system
  * materializes from; monthly ad-hoc has none — the Sanchalak adds each Occurrence
  * by hand), give the standing venue, and pick the Sanchalak (and optional
- * Sah-Sanchalak) from the Directory. Authority over the (Kshetra, demographic)
- * scope is the backend's call — a denial surfaces as a 403 here.
+ * Sah-Sanchalak) from the Directory via the shared person picker. Authority over
+ * the (Kshetra, demographic) scope is the backend's call — a denial surfaces as a
+ * 403 here.
  */
 @Component({
   selector: 'app-sabha-definition',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PersonPickerComponent],
   templateUrl: './sabha-definition.component.html',
   styleUrl: './sabha-definition.component.scss',
 })
@@ -95,9 +66,6 @@ export class SabhaDefinitionComponent implements OnInit {
   endTime = '20:30';
   standingVenue = '';
 
-  readonly sanchalak = new AppointeePicker();
-  readonly sah = new AppointeePicker();
-
   readonly stage = signal<Stage>('editing');
   readonly error = signal<string | null>(null);
 
@@ -120,75 +88,30 @@ export class SabhaDefinitionComponent implements OnInit {
     this.weekly.set(weekly);
   }
 
-  searchSanchalakByName(): void {
-    this.searchByName(this.sanchalak);
-  }
-
-  searchSanchalakByMobile(): void {
-    this.searchByMobile(this.sanchalak);
-  }
-
-  pickSanchalak(personId: string, fullName: string): void {
-    this.sanchalak.pick(personId, fullName);
+  /** Clears the error banner once an appointee is chosen. */
+  onPicked(): void {
     this.error.set(null);
-  }
-
-  searchSahByName(): void {
-    this.searchByName(this.sah);
-  }
-
-  searchSahByMobile(): void {
-    this.searchByMobile(this.sah);
-  }
-
-  pickSah(personId: string, fullName: string): void {
-    this.sah.pick(personId, fullName);
-  }
-
-  clearSah(): void {
-    this.sah.clear();
-  }
-
-  private searchByName(picker: AppointeePicker): void {
-    const name = picker.nameQuery.trim();
-    const kshetraId = this.kshetraId.trim();
-    if (!name || !kshetraId) {
-      return;
-    }
-    picker.mobileMatch.set(null);
-    this.api.searchByName(kshetraId, name).subscribe((c) => picker.candidates.set(c));
-  }
-
-  private searchByMobile(picker: AppointeePicker): void {
-    const mobile = picker.mobileQuery.trim();
-    if (!mobile) {
-      return;
-    }
-    picker.candidates.set([]);
-    this.api.searchByMobile(mobile).subscribe({
-      next: (person) => picker.mobileMatch.set(person),
-      error: () => picker.mobileMatch.set(null),
-    });
   }
 
   /**
    * Whether the form is ready to submit. A plain method, not a `computed`: it
-   * reads plain template-bound fields (kind/Kshetra/venue/times) that are not
-   * signals, so memoization would capture no dependencies and never refresh.
+   * reads plain template-bound fields (kind/Kshetra/venue/times) and the picker's
+   * credential fields that are not signals, so memoization would capture no
+   * dependencies and never refresh.
    */
-  canSubmit(): boolean {
+  canSubmit(sanchalak: PersonPickerComponent): boolean {
     if (!this.sabhaKindId || !this.kshetraId || !this.standingVenue.trim()) {
       return false;
     }
     if (this.weekly() && (!this.dayOfWeek || !this.startTime || !this.endTime)) {
       return false;
     }
-    return this.sanchalak.payload() !== null;
+    return payloadOf(sanchalak) !== null;
   }
 
-  submit(): void {
+  submit(sanchalak: PersonPickerComponent, sah: PersonPickerComponent): void {
     this.error.set(null);
-    const request = this.buildRequest();
+    const request = this.buildRequest(sanchalak, sah);
     if (!request) {
       return;
     }
@@ -205,15 +128,14 @@ export class SabhaDefinitionComponent implements OnInit {
     this.kshetras.set([]);
     this.weekly.set(true);
     this.standingVenue = '';
-    this.sanchalak.clear();
-    this.sah.clear();
     this.error.set(null);
+    // Toggling back to 'editing' remounts fresh pickers, clearing their state.
     this.stage.set('editing');
   }
 
-  private buildRequest(): DefineSabhaRequest | null {
-    const sanchalak = this.sanchalak.payload();
-    if (!sanchalak) {
+  private buildRequest(sanchalak: PersonPickerComponent, sah: PersonPickerComponent): DefineSabhaRequest | null {
+    const sanchalakPayload = payloadOf(sanchalak);
+    if (!sanchalakPayload) {
       return null;
     }
     const weekly = this.weekly();
@@ -225,8 +147,8 @@ export class SabhaDefinitionComponent implements OnInit {
       startTime: weekly ? this.startTime : null,
       endTime: weekly ? this.endTime : null,
       standingVenue: this.standingVenue.trim(),
-      sanchalak,
-      sahSanchalak: this.sah.payload(),
+      sanchalak: sanchalakPayload,
+      sahSanchalak: payloadOf(sah),
     };
   }
 

@@ -95,72 +95,20 @@
     <!-- 4. Sanchalak -->
     <fieldset class="appointee">
       <legend>Sanchalak</legend>
-      @if (sanchalak.selectedId()) {
-        <div class="chosen" role="status">
-          ✓ Chosen: <strong>{{ sanchalak.selectedName }}</strong>
-        </div>
-        <div class="credentials">
-          <label>Username <input [(ngModel)]="sanchalak.username" /></label>
-          <label>Initial password <input [(ngModel)]="sanchalak.rawPassword" /></label>
-          <small class="hint">Handed to the Sanchalak — they change it on first login (ADR-0011).</small>
-        </div>
-      } @else {
-        <div class="search-row">
-          <input [(ngModel)]="sanchalak.nameQuery" placeholder="Search by name" />
-          <button type="button" (click)="searchSanchalakByName()" [disabled]="!kshetraId">Find</button>
-        </div>
-        <div class="search-row">
-          <input [(ngModel)]="sanchalak.mobileQuery" placeholder="Search by mobile" />
-          <button type="button" (click)="searchSanchalakByMobile()">Find</button>
-        </div>
-        <ul class="candidates">
-          @if (sanchalak.mobileMatch(); as m) {
-            <li><button type="button" (click)="pickSanchalak(m.id, m.fullName)">{{ m.fullName }} <small>{{ m.mobile }}</small></button></li>
-          }
-          @for (c of sanchalak.candidates(); track c.personId) {
-            <li><button type="button" (click)="pickSanchalak(c.personId, c.fullName)">{{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small></button></li>
-          }
-        </ul>
-      }
+      <app-person-picker #sanchalak [kshetraId]="kshetraId" (picked)="onPicked()" />
     </fieldset>
 
     <!-- 5. Sah-Sanchalak (optional) -->
     <fieldset class="appointee optional">
       <legend>Sah-Sanchalak (optional)</legend>
-      @if (sah.selectedId()) {
-        <div class="chosen" role="status">
-          ✓ Chosen: <strong>{{ sah.selectedName }}</strong>
-          <button type="button" class="clear" (click)="clearSah()">Clear</button>
-        </div>
-        <div class="credentials">
-          <label>Username <input [(ngModel)]="sah.username" /></label>
-          <label>Initial password <input [(ngModel)]="sah.rawPassword" /></label>
-        </div>
-      } @else {
-        <div class="search-row">
-          <input [(ngModel)]="sah.nameQuery" placeholder="Search by name" />
-          <button type="button" (click)="searchSahByName()" [disabled]="!kshetraId">Find</button>
-        </div>
-        <div class="search-row">
-          <input [(ngModel)]="sah.mobileQuery" placeholder="Search by mobile" />
-          <button type="button" (click)="searchSahByMobile()">Find</button>
-        </div>
-        <ul class="candidates">
-          @if (sah.mobileMatch(); as m) {
-            <li><button type="button" (click)="pickSah(m.id, m.fullName)">{{ m.fullName }} <small>{{ m.mobile }}</small></button></li>
-          }
-          @for (c of sah.candidates(); track c.personId) {
-            <li><button type="button" (click)="pickSah(c.personId, c.fullName)">{{ c.fullName }} <small>{{ c.homeSabhas.join(', ') }}</small></button></li>
-          }
-        </ul>
-      }
+      <app-person-picker #sah [kshetraId]="kshetraId" [clearable]="true" />
     </fieldset>
 
     @if (error(); as e) {
       <p class="error" role="alert">{{ e }}</p>
     }
 
-    <button type="button" class="submit" [disabled]="!canSubmit()" (click)="submit()">
+    <button type="button" class="submit" [disabled]="!canSubmit(sanchalak)" (click)="submit(sanchalak, sah)">
       Create Sabha
     </button>
   }

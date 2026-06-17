@@ -1,20 +1,23 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  Gender,
+  NameCandidate,
+  PersonPickerComponent,
+  suggestPassword,
+  suggestUsername,
+} from 'identity-domain';
 
 import { errorMessageFor } from '../../shared/http-error';
 import { AppointmentService } from './appointment.service';
-import { suggestPassword, suggestUsername } from './appointment.credentials';
 import { PasswordReissueComponent } from './password-reissue.component';
 import {
   AppointableRole,
   AppointmentRequest,
   DEMOGRAPHICS,
   Demographic,
-  Gender,
-  NameCandidate,
   NewPersonPayload,
-  PersonResponse,
   ROLE_SCOPE,
   ScopeKind,
 } from './appointment.types';
@@ -46,16 +49,17 @@ type Stage = 'editing' | 'done';
 /**
  * Role appointment section (ADR-0011, Slice 11): the unified web flow that
  * searches the Directory first and creates a Person inline when no match exists.
- * One long form — pick the role and its scope, find the appointee by mobile or
- * name (de-dup reuse, Slice 6) or "+ Create new Person", confirm the
- * auto-suggested credentials, and submit one appointment. Authority, the mobile
- * hard block, the name soft-warn, and username uniqueness are decided by the
- * backend; this surfaces each outcome before/at commit.
+ * Pick the role and its scope, then either find the appointee with the shared
+ * person picker (Directory-first, with auto-suggested credentials) or "+ Create
+ * new Person" — the inline-create and its name soft-warn (Slice 6) stay
+ * feature-private here. Authority, the mobile hard block, the name soft-warn, and
+ * username uniqueness are decided by the backend; this surfaces each outcome
+ * before/at commit.
  */
 @Component({
   selector: 'app-role-appointment',
   standalone: true,
-  imports: [FormsModule, PasswordReissueComponent],
+  imports: [FormsModule, PersonPickerComponent, PasswordReissueComponent],
   templateUrl: './role-appointment.component.html',
   styleUrl: './role-appointment.component.scss',
 })
@@ -76,21 +80,17 @@ export class RoleAppointmentComponent {
   cityId = '';
   demographic: Demographic | '' = '';
 
-  // Directory-first search.
-  searchMobile = '';
-  searchName = '';
+  /** The Kshetra the directory picker searches names within (distinct from a Kshetra-scoped role's `kshetraId`). */
   searchKshetraId = '';
-  readonly mobileMatch = signal<PersonResponse | null>(null);
-  readonly nameCandidates = signal<NameCandidate[]>([]);
 
-  // Appointee selection.
-  readonly selectedPersonId = signal<string | null>(null);
+  /** The shared Directory picker, rendered only while not creating a new Person. */
+  readonly picker = viewChild(PersonPickerComponent);
+
+  // Inline new-Person create (feature-private), with its own auto-suggested credentials.
   readonly creatingNew = signal<boolean>(false);
   newPerson: NewPersonPayload = blankNewPerson();
-
-  // Credentials (auto-suggested, editable).
-  username = '';
-  rawPassword = '';
+  newUsername = '';
+  newPassword = '';
 
   readonly stage = signal<Stage>('editing');
   readonly error = signal<string | null>(null);
@@ -101,57 +101,41 @@ export class RoleAppointmentComponent {
     this.resetSelection();
   }
 
-  searchByMobile(): void {
-    const mobile = this.searchMobile.trim();
-    if (!mobile) {
-      return;
-    }
-    this.nameCandidates.set([]);
-    this.api.searchByMobile(mobile).subscribe({
-      next: (person) => this.mobileMatch.set(person),
-      error: () => this.mobileMatch.set(null),
-    });
-  }
-
-  searchByName(): void {
-    const name = this.searchName.trim();
-    const kshetraId = this.searchKshetraId.trim();
-    if (!name || !kshetraId) {
-      return;
-    }
-    this.mobileMatch.set(null);
-    this.api.searchByName(kshetraId, name).subscribe((c) => this.nameCandidates.set(c));
-  }
-
-  pickExisting(personId: string): void {
-    this.selectedPersonId.set(personId);
-    this.creatingNew.set(false);
+  /** Clears the error banner once an appointee is picked from the Directory. */
+  onPicked(): void {
     this.error.set(null);
   }
 
   startCreateNew(): void {
     this.creatingNew.set(true);
-    this.selectedPersonId.set(null);
     this.newPerson = blankNewPerson();
-    this.suggestCredentials('');
+    this.suggestNewCredentials('');
+  }
+
+  cancelCreateNew(): void {
+    this.creatingNew.set(false);
+    this.newPerson = blankNewPerson();
+    this.newUsername = '';
+    this.newPassword = '';
   }
 
   /** Re-suggest the username/password from the new Person's name as it is typed. */
   onNewPersonNameChange(): void {
-    this.suggestCredentials(this.newPerson.fullName);
+    this.suggestNewCredentials(this.newPerson.fullName);
   }
 
-  private suggestCredentials(fullName: string): void {
-    this.username = suggestUsername(fullName);
-    this.rawPassword = suggestPassword();
+  private suggestNewCredentials(fullName: string): void {
+    this.newUsername = suggestUsername(fullName);
+    this.newPassword = suggestPassword();
   }
 
-  readonly canSubmit = computed(() => {
-    if (!this.username || !this.rawPassword) {
-      return false;
+  canSubmit(): boolean {
+    if (this.creatingNew()) {
+      return !!this.newUsername.trim() && !!this.newPassword;
     }
-    return this.selectedPersonId() !== null || this.creatingNew();
-  });
+    const picker = this.picker();
+    return !!picker && picker.selectedId() !== null && !!picker.username.trim() && !!picker.rawPassword;
+  }
 
   submit(overrideDuplicateWarning = false): void {
     this.error.set(null);
@@ -183,36 +167,44 @@ export class RoleAppointmentComponent {
   }
 
   private resetSelection(): void {
-    this.mobileMatch.set(null);
-    this.nameCandidates.set([]);
-    this.selectedPersonId.set(null);
-    this.creatingNew.set(false);
+    this.picker()?.clear();
+    this.searchKshetraId = '';
+    this.cancelCreateNew();
     this.softWarn.set([]);
     this.error.set(null);
-    this.newPerson = blankNewPerson();
-    this.username = '';
-    this.rawPassword = '';
   }
 
   private buildRequest(overrideDuplicateWarning: boolean): AppointmentRequest | null {
-    const base: AppointmentRequest = {
+    if (this.creatingNew()) {
+      return {
+        ...this.scope(),
+        username: this.newUsername.trim(),
+        rawPassword: this.newPassword,
+        newPerson: { ...this.newPerson, overrideDuplicateWarning },
+      };
+    }
+    const picker = this.picker();
+    if (picker?.selectedId()) {
+      return {
+        ...this.scope(),
+        username: picker.username.trim(),
+        rawPassword: picker.rawPassword,
+        existingPersonId: picker.selectedId(),
+      };
+    }
+    return null;
+  }
+
+  /** The role + scope half of the request, shared by both the existing and new-Person paths. */
+  private scope(): Omit<AppointmentRequest, 'username' | 'rawPassword'> {
+    return {
       role: this.role(),
       sabhaId: this.scopeKind() === 'SABHA' ? this.sabhaId.trim() : null,
       kshetraId: this.scopeKind() === 'KSHETRA' ? this.kshetraId.trim() : null,
       zoneId: this.scopeKind() === 'ZONE' ? this.zoneId.trim() : null,
       cityId: this.scopeKind() === 'CITY' ? this.cityId.trim() : null,
       demographic: this.scopeKind() === 'SABHA' ? null : (this.demographic || null),
-      username: this.username.trim(),
-      rawPassword: this.rawPassword,
     };
-
-    if (this.selectedPersonId()) {
-      return { ...base, existingPersonId: this.selectedPersonId() };
-    }
-    if (this.creatingNew()) {
-      return { ...base, newPerson: { ...this.newPerson, overrideDuplicateWarning } };
-    }
-    return null;
   }
 
   private messageFor(err: HttpErrorResponse): string {
