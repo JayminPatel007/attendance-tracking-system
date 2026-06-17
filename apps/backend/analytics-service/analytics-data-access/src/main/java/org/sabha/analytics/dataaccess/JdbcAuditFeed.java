@@ -3,9 +3,7 @@ package org.sabha.analytics.dataaccess;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.sabha.analytics.applicationservice.AuditEntry;
@@ -13,6 +11,7 @@ import org.sabha.analytics.applicationservice.AuditFilter;
 import org.sabha.analytics.applicationservice.AuditLogQueries;
 import org.sabha.analytics.applicationservice.AuditScope;
 import org.sabha.analytics.applicationservice.AuditTargetType;
+import org.sabha.common.WhereClause;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.core.simple.JdbcClient.StatementSpec;
 import org.springframework.stereotype.Repository;
@@ -147,10 +146,8 @@ public class JdbcAuditFeed implements AuditLogQueries {
 
     /**
      * The scoped/filtered query over {@link #FEED}: joins {@code users} for the
-     * display names, then applies the assembled predicate through the single
-     * {@code %s} slot, newest first. A trailing {@code %s} on the {@code WHERE}
-     * line keeps the space between {@code WHERE} and the predicate structural,
-     * which a text block would otherwise strip.
+     * display names, then interpolates the assembled {@link WhereClause} through the
+     * single {@code %s} slot, newest first.
      */
     private static final String SELECT_FROM_FEED = """
             SELECT f.id, f.at, f.actor_user_id, ua.username AS actor_name,
@@ -161,7 +158,7 @@ public class JdbcAuditFeed implements AuditLogQueries {
             ) f
             LEFT JOIN users ua ON ua.id = f.actor_user_id
             LEFT JOIN users ub ON ub.id = f.on_behalf_of_user_id
-            WHERE %s
+            %s
             ORDER BY f.at DESC NULLS LAST
             LIMIT :limit
             """;
@@ -177,19 +174,13 @@ public class JdbcAuditFeed implements AuditLogQueries {
         if (scope instanceof AuditScope.Denied) {
             return List.of();
         }
-        List<String> conditions = new ArrayList<>();
-        Map<String, Object> params = new HashMap<>();
-        appendScope(scope, conditions, params);
-        appendFilters(filter, conditions, params);
+        WhereClause where = WhereClause.create();
+        appendScope(scope, where);
+        appendFilters(filter, where);
 
-        // The dynamic predicate goes through a `WHERE %s` slot rather than string
-        // concatenation: a text block strips trailing whitespace, so a literal
-        // "WHERE " + predicate silently yields "WHEREpredicate". Keeping %s on the
-        // line makes the space structural (the slice-17 lesson).
-        String sql = SELECT_FROM_FEED.formatted(String.join(" AND ", conditions));
-
+        String sql = SELECT_FROM_FEED.formatted(where.sql());
         StatementSpec spec = jdbc.sql(sql).param("limit", filter.limit());
-        params.forEach(spec::param);
+        where.params().forEach(spec::param);
         return spec.query((rs, n) -> new AuditEntry(
                         rs.getObject("id", UUID.class),
                         instant(rs.getTimestamp("at")),
@@ -211,59 +202,49 @@ public class JdbcAuditFeed implements AuditLogQueries {
      * non-empty set; a NULL geography column matches no IN list, so state-level
      * rows stay invisible to scoped callers without a special case.
      */
-    private static void appendScope(AuditScope scope, List<String> conditions, Map<String, Object> params) {
+    private static void appendScope(AuditScope scope, WhereClause where) {
         if (!(scope instanceof AuditScope.Scoped scoped)) {
             return;
         }
         List<String> ors = new ArrayList<>();
         if (!scoped.kshetraIds().isEmpty()) {
             ors.add("f.kshetra_id IN (:kshetraIds)");
-            params.put("kshetraIds", scoped.kshetraIds());
+            where.param("kshetraIds", scoped.kshetraIds());
         }
         if (!scoped.zoneIds().isEmpty()) {
             ors.add("f.zone_id IN (:zoneIds)");
-            params.put("zoneIds", scoped.zoneIds());
+            where.param("zoneIds", scoped.zoneIds());
         }
         if (!scoped.cityIds().isEmpty()) {
             ors.add("f.city_id IN (:cityIds)");
-            params.put("cityIds", scoped.cityIds());
+            where.param("cityIds", scoped.cityIds());
         }
         // A non-empty Scoped is guaranteed by AuditLogAccess (empty ⇒ Denied),
         // so `ors` is never empty here.
-        conditions.add("(" + String.join(" OR ", ors) + ")");
+        where.and("(" + String.join(" OR ", ors) + ")");
     }
 
-    private static void appendFilters(AuditFilter filter, List<String> conditions, Map<String, Object> params) {
+    private static void appendFilters(AuditFilter filter, WhereClause where) {
         if (filter.targetType() != null) {
-            conditions.add("f.target_type = :targetType");
-            params.put("targetType", filter.targetType().name());
+            where.and("f.target_type = :targetType", "targetType", filter.targetType().name());
         }
         if (filter.targetId() != null) {
-            conditions.add("f.target_id = :targetId");
-            params.put("targetId", filter.targetId());
+            where.and("f.target_id = :targetId", "targetId", filter.targetId());
         }
         if (filter.actorUserId() != null) {
-            conditions.add("f.actor_user_id = :actorUserId");
-            params.put("actorUserId", filter.actorUserId());
+            where.and("f.actor_user_id = :actorUserId", "actorUserId", filter.actorUserId());
         }
         if (filter.action() != null) {
-            conditions.add("f.action = :action");
-            params.put("action", filter.action());
+            where.and("f.action = :action", "action", filter.action());
         }
         if (filter.from() != null) {
-            conditions.add("f.at >= :from");
-            params.put("from", Timestamp.from(filter.from()));
+            where.and("f.at >= :from", "from", Timestamp.from(filter.from()));
         }
         if (filter.to() != null) {
-            conditions.add("f.at < :to");
-            params.put("to", Timestamp.from(filter.to()));
+            where.and("f.at < :to", "to", Timestamp.from(filter.to()));
         }
         if (filter.proxyOnly()) {
-            conditions.add("f.on_behalf_of_user_id IS NOT NULL");
-        }
-        // A scope-only query still needs a WHERE body for an Unrestricted caller.
-        if (conditions.isEmpty()) {
-            conditions.add("1 = 1");
+            where.and("f.on_behalf_of_user_id IS NOT NULL");
         }
     }
 
