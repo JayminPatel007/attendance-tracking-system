@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.SantLookup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,7 +90,7 @@ class AuditLogAccessTest {
         }
     }
 
-    private static final class FakeSants implements SantDirectory {
+    private static final class FakeSants implements SantLookup {
         private final Set<UUID> sants = new HashSet<>();
 
         void add(UUID id) {

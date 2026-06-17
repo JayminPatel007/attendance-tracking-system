@@ -8,14 +8,13 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Reads the assigner-reissue authority from {@code role_assignments} (ADR-0004 /
- * ADR-0011): whether the caller is the recorded appointer of the target, and
- * whether the target is a Sant (the {@code SANT} role string, which lives outside
- * the operational {@code Role} enum).
+ * ADR-0011): whether the caller is the recorded appointer of the target. The
+ * Sant branch of that authorization now goes through the common-domain
+ * {@link org.sabha.common.SantLookup} (issue #79), so this adapter no longer
+ * knows the {@code SANT} role string.
  */
 @Repository
 public class JdbcReissueAuthorityLookup implements ReissueAuthorityLookup {
-
-    private static final String SANT_ROLE = "SANT";
 
     private final JdbcClient jdbc;
 
@@ -33,15 +32,6 @@ public class JdbcReissueAuthorityLookup implements ReissueAuthorityLookup {
                 """)
                 .param(targetUserId)
                 .param(appointerUserId)
-                .query(Boolean.class)
-                .single();
-    }
-
-    @Override
-    public boolean isSant(UUID userId) {
-        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ?)")
-                .param(userId)
-                .param(SANT_ROLE)
                 .query(Boolean.class)
                 .single();
     }

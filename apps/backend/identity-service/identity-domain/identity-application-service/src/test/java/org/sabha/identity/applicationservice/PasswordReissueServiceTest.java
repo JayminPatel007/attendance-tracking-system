@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.SantLookup;
 import org.sabha.identity.domain.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +54,7 @@ class PasswordReissueServiceTest {
     void madhyasthaKaryalayaMemberCanReissueForASant() {
         Fixture f = new Fixture();
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "sant.user", TARGET_KEYCLOAK));
-        f.authority.markSant(TARGET_USER);
+        f.sants.markSant(TARGET_USER);
         f.mkMembership.grant(MK_USER);
 
         f.service().reissue(MK_SUBJECT, TARGET_USER, "fresh-secret-2");
@@ -81,7 +82,7 @@ class PasswordReissueServiceTest {
     void reissuingASantWithoutMkMembershipIsDenied() {
         Fixture f = new Fixture();
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "sant.user", TARGET_KEYCLOAK));
-        f.authority.markSant(TARGET_USER);
+        f.sants.markSant(TARGET_USER);
         // APPOINTER_SUBJECT (APPOINTER_USER) is not an MK member.
 
         assertThatThrownBy(() -> f.service().reissue(APPOINTER_SUBJECT, TARGET_USER, "fresh-secret-4"))
@@ -96,6 +97,7 @@ class PasswordReissueServiceTest {
     static final class Fixture {
         final InMemoryUserRepository users = new InMemoryUserRepository();
         final InMemoryReissueAuthority authority = new InMemoryReissueAuthority();
+        final InMemorySantLookup sants = new InMemorySantLookup();
         final InMemoryMkMembership mkMembership = new InMemoryMkMembership();
         final InMemoryReissueAuditLog audit = new InMemoryReissueAuditLog();
         final RecordingIdentityProvider identityProvider = new RecordingIdentityProvider();
@@ -115,7 +117,7 @@ class PasswordReissueServiceTest {
 
         PasswordReissueService service() {
             return new PasswordReissueService(
-                    caller(), authority, mkMembership, users, identityProvider, audit, clock);
+                    caller(), authority, sants, mkMembership, users, identityProvider, audit, clock);
         }
     }
 
@@ -159,19 +161,22 @@ class PasswordReissueServiceTest {
 
     static final class InMemoryReissueAuthority implements ReissueAuthorityLookup {
         private final Map<UUID, UUID> appointers = new HashMap<>();
-        private final Set<UUID> sants = new HashSet<>();
 
         void recordAppointment(UUID targetUserId, UUID appointerUserId) {
             appointers.put(targetUserId, appointerUserId);
         }
 
-        void markSant(UUID userId) {
-            sants.add(userId);
-        }
-
         @Override
         public boolean wasAppointedBy(UUID targetUserId, UUID appointerUserId) {
             return appointerUserId.equals(appointers.get(targetUserId));
+        }
+    }
+
+    static final class InMemorySantLookup implements SantLookup {
+        private final Set<UUID> sants = new HashSet<>();
+
+        void markSant(UUID userId) {
+            sants.add(userId);
         }
 
         @Override

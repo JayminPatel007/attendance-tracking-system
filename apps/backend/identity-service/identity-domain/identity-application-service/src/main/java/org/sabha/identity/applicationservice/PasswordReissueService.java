@@ -7,6 +7,7 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.SantLookup;
 import org.sabha.identity.domain.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class PasswordReissueService {
 
     private final CallerResolver callerResolver;
     private final ReissueAuthorityLookup authority;
+    private final SantLookup sants;
     private final MadhyasthaKaryalayaLookup mkMembership;
     private final UserRepository users;
     private final IdentityProviderGateway identityProvider;
@@ -36,6 +38,7 @@ public class PasswordReissueService {
     public PasswordReissueService(
             CallerResolver callerResolver,
             ReissueAuthorityLookup authority,
+            SantLookup sants,
             MadhyasthaKaryalayaLookup mkMembership,
             UserRepository users,
             IdentityProviderGateway identityProvider,
@@ -43,6 +46,7 @@ public class PasswordReissueService {
             Clock clock) {
         this.callerResolver = callerResolver;
         this.authority = authority;
+        this.sants = sants;
         this.mkMembership = mkMembership;
         this.users = users;
         this.identityProvider = identityProvider;
@@ -67,6 +71,6 @@ public class PasswordReissueService {
         if (authority.wasAppointedBy(targetUserId, actor)) {
             return true;
         }
-        return authority.isSant(targetUserId) && mkMembership.isMember(actor);
+        return sants.isSant(targetUserId) && mkMembership.isMember(actor);
     }
 }
