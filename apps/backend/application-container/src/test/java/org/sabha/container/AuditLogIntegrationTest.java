@@ -107,6 +107,41 @@ class AuditLogIntegrationTest extends KeycloakIntegrationTest {
     }
 
     @Test
+    void filteringByActionKeepsOnlyEntriesWithThatAction() throws Exception {
+        mockMvc.perform(get("/bff/audit-log?action=CANCEL")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(Matchers.greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$[*].action").value(Matchers.everyItem(Matchers.equalTo("CANCEL"))));
+    }
+
+    @Test
+    void filteringByActorKeepsOnlyThatActorsEntries() throws Exception {
+        String actor = jdbc.sql("""
+                SELECT appointed_by FROM role_assignments
+                WHERE appointed_at IS NOT NULL AND appointed_by IS NOT NULL LIMIT 1
+                """).query(String.class).single();
+        mockMvc.perform(get("/bff/audit-log?actorUserId=" + actor)
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(Matchers.greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$[*].actorUserId").value(Matchers.everyItem(Matchers.equalTo(actor))));
+    }
+
+    @Test
+    void aDateWindowOutsideTheFeedReturnsNothing() throws Exception {
+        // The seed is recorded well after 2000 and before 2999, so each bound alone empties the feed.
+        mockMvc.perform(get("/bff/audit-log?from=2999-01-01")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(get("/bff/audit-log?to=2000-01-01")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
     void aNirikshakIsForbidden() throws Exception {
         mockMvc.perform(get("/bff/audit-log").with(oidcLogin().idToken(t -> t.subject(NIRIKSHAK_SUBJECT))))
                 .andExpect(status().isForbidden());
