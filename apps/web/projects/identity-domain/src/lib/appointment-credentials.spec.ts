@@ -1,4 +1,4 @@
-import { suggestPassword, suggestUsername } from './appointment.credentials';
+import { suggestPassword, suggestUsername } from './appointment-credentials';
 
 describe('appointment credential suggestions', () => {
   it('derives a lowercase dotted username from a full name', () => {

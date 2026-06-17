@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { DirectoryService, PersonPickerComponent } from 'identity-domain';
 import { of, throwError } from 'rxjs';
 
 import { SabhaDefinitionComponent } from './sabha-definition.component';
@@ -15,12 +17,17 @@ function created(): DefineSabhaResponse {
 
 function apiSpy(): jasmine.SpyObj<SabhaDefinitionService> {
   const spy = jasmine.createSpyObj<SabhaDefinitionService>('SabhaDefinitionService', [
-    'define', 'listSabhaKinds', 'listZones', 'listKshetras', 'searchByName', 'searchByMobile',
+    'define', 'listSabhaKinds', 'listZones', 'listKshetras',
   ]);
   spy.define.and.returnValue(of(created()));
   spy.listSabhaKinds.and.returnValue(of([{ id: 'kind1', demographic: 'YUVAK', track: 'REGULAR' }]));
   spy.listZones.and.returnValue(of([{ id: 'zone1', name: 'Andheri', cityId: 'c1', cityName: 'Mumbai' }]));
   spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'zone1' }]));
+  return spy;
+}
+
+function directorySpy(): jasmine.SpyObj<DirectoryService> {
+  const spy = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['searchByName', 'searchByMobile']);
   spy.searchByName.and.returnValue(of([{ personId: 'cand-1', fullName: 'Pratik Patel', homeSabhas: [] }]));
   spy.searchByMobile.and.returnValue(of({
     id: 'm-1', fullName: 'Mobile Match', gender: 'MALE', dateOfBirth: null,
@@ -29,26 +36,49 @@ function apiSpy(): jasmine.SpyObj<SabhaDefinitionService> {
   return spy;
 }
 
-function mount(): { fixture: ComponentFixture<SabhaDefinitionComponent>; api: jasmine.SpyObj<SabhaDefinitionService> } {
+interface Mounted {
+  fixture: ComponentFixture<SabhaDefinitionComponent>;
+  api: jasmine.SpyObj<SabhaDefinitionService>;
+  directory: jasmine.SpyObj<DirectoryService>;
+}
+
+function mount(): Mounted {
   const api = apiSpy();
+  const directory = directorySpy();
   TestBed.configureTestingModule({
     imports: [SabhaDefinitionComponent],
-    providers: [{ provide: SabhaDefinitionService, useValue: api }],
+    providers: [
+      { provide: SabhaDefinitionService, useValue: api },
+      { provide: DirectoryService, useValue: directory },
+    ],
   });
   const fixture = TestBed.createComponent(SabhaDefinitionComponent);
   fixture.detectChanges();
-  return { fixture, api };
+  return { fixture, api, directory };
+}
+
+/** The composed pickers, in template order: [Sanchalak, Sah-Sanchalak]. */
+function pickers(fixture: ComponentFixture<SabhaDefinitionComponent>): PersonPickerComponent[] {
+  fixture.detectChanges();
+  return fixture.debugElement
+    .queryAll(By.directive(PersonPickerComponent))
+    .map((d) => d.componentInstance as PersonPickerComponent);
 }
 
 /** Fills the minimum required fields and picks a Sanchalak, leaving the schedule shape untouched. */
-function fillRequired(c: SabhaDefinitionComponent): void {
+function fillRequired(fixture: ComponentFixture<SabhaDefinitionComponent>): { sanchalak: PersonPickerComponent; sah: PersonPickerComponent } {
+  const c = fixture.componentInstance;
   c.sabhaKindId = 'kind1';
   c.onZoneChange('zone1');
   c.kshetraId = 'ksh1';
   c.standingVenue = 'Sansthan Hall';
-  c.sanchalak.nameQuery = 'Pratik';
-  c.searchSanchalakByName();
-  c.pickSanchalak('cand-1', 'Pratik Patel');
+  fixture.detectChanges();
+  const [sanchalak, sah] = pickers(fixture);
+  sanchalak.nameQuery = 'Pratik';
+  sanchalak.searchByName();
+  sanchalak.pick('cand-1', 'Pratik Patel');
+  fixture.detectChanges();
+  return { sanchalak, sah };
 }
 
 describe('SabhaDefinitionComponent', () => {
@@ -79,27 +109,29 @@ describe('SabhaDefinitionComponent', () => {
     const { fixture } = mount();
     const c = fixture.componentInstance;
     c.kshetraId = 'ksh1';
-    c.sanchalak.nameQuery = 'Pratik';
+    fixture.detectChanges();
+    const [sanchalak] = pickers(fixture);
+    sanchalak.nameQuery = 'Pratik';
 
-    c.searchSanchalakByName();
-    expect(c.sanchalak.candidates().length).toBe(1);
+    sanchalak.searchByName();
+    expect(sanchalak.candidates().length).toBe(1);
 
-    c.pickSanchalak('cand-1', 'Pratik Patel');
-    expect(c.sanchalak.selectedId()).toBe('cand-1');
-    expect(c.sanchalak.username).toBe('pratik.patel');
-    expect(c.sanchalak.rawPassword.length).toBe(12);
+    sanchalak.pick('cand-1', 'Pratik Patel');
+    expect(sanchalak.selectedId()).toBe('cand-1');
+    expect(sanchalak.username).toBe('pratik.patel');
+    expect(sanchalak.rawPassword.length).toBe(12);
   });
 
   it('submits a weekly definition carrying the schedule slot', () => {
     const { fixture, api } = mount();
     const c = fixture.componentInstance;
-    fillRequired(c);
+    const { sanchalak, sah } = fillRequired(fixture);
     c.dayOfWeek = 'SUNDAY';
     c.startTime = '09:00';
     c.endTime = '10:30';
 
-    expect(c.canSubmit()).toBeTrue();
-    c.submit();
+    expect(c.canSubmit(sanchalak)).toBeTrue();
+    c.submit(sanchalak, sah);
 
     const request = api.define.calls.mostRecent().args[0];
     expect(request.weekly).toBeTrue();
@@ -116,10 +148,10 @@ describe('SabhaDefinitionComponent', () => {
   it('submits a monthly ad-hoc definition without schedule fields', () => {
     const { fixture, api } = mount();
     const c = fixture.componentInstance;
-    fillRequired(c);
+    const { sanchalak, sah } = fillRequired(fixture);
     c.setWeekly(false);
 
-    c.submit();
+    c.submit(sanchalak, sah);
 
     const request = api.define.calls.mostRecent().args[0];
     expect(request.weekly).toBeFalse();
@@ -131,10 +163,10 @@ describe('SabhaDefinitionComponent', () => {
   it('includes an optional Sah-Sanchalak when one is picked', () => {
     const { fixture, api } = mount();
     const c = fixture.componentInstance;
-    fillRequired(c);
-    c.pickSah('cand-2', 'Sah Helper');
+    const { sanchalak, sah } = fillRequired(fixture);
+    sah.pick('cand-2', 'Sah Helper');
 
-    c.submit();
+    c.submit(sanchalak, sah);
 
     const request = api.define.calls.mostRecent().args[0];
     expect(request.sahSanchalak?.existingPersonId).toBe('cand-2');
@@ -144,9 +176,9 @@ describe('SabhaDefinitionComponent', () => {
     const { fixture, api } = mount();
     const c = fixture.componentInstance;
     api.define.and.returnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-    fillRequired(c);
+    const { sanchalak, sah } = fillRequired(fixture);
 
-    c.submit();
+    c.submit(sanchalak, sah);
 
     expect(c.error()).toContain('not authorized');
     expect(c.stage()).toBe('editing');

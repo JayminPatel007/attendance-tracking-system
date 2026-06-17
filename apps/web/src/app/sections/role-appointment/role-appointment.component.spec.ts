@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { DirectoryService, PersonPickerComponent } from 'identity-domain';
 import { of, throwError } from 'rxjs';
 
 import { AppointmentService } from './appointment.service';
@@ -11,27 +13,44 @@ function appointed(): AppointmentResponse {
 }
 
 function apiSpy(): jasmine.SpyObj<AppointmentService> {
-  const spy = jasmine.createSpyObj<AppointmentService>('AppointmentService', [
-    'appoint', 'searchByMobile', 'searchByName',
-  ]);
+  const spy = jasmine.createSpyObj<AppointmentService>('AppointmentService', ['appoint']);
   spy.appoint.and.returnValue(of(appointed()));
+  return spy;
+}
+
+function directorySpy(): jasmine.SpyObj<DirectoryService> {
+  const spy = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['searchByName', 'searchByMobile']);
+  spy.searchByName.and.returnValue(of([{ personId: 'cand-1', fullName: 'Close Match', homeSabhas: [] }]));
   spy.searchByMobile.and.returnValue(of({
     id: 'existing-1', fullName: 'Existing One', gender: 'MALE', dateOfBirth: null,
     mobile: '+919820000001', guardianPersonId: null,
   }));
-  spy.searchByName.and.returnValue(of([{ personId: 'cand-1', fullName: 'Close Match', homeSabhas: [] }]));
   return spy;
 }
 
-function mount(): { fixture: ComponentFixture<RoleAppointmentComponent>; api: jasmine.SpyObj<AppointmentService> } {
+interface Mounted {
+  fixture: ComponentFixture<RoleAppointmentComponent>;
+  api: jasmine.SpyObj<AppointmentService>;
+}
+
+function mount(): Mounted {
   const api = apiSpy();
   TestBed.configureTestingModule({
     imports: [RoleAppointmentComponent],
-    providers: [{ provide: AppointmentService, useValue: api }],
+    providers: [
+      { provide: AppointmentService, useValue: api },
+      { provide: DirectoryService, useValue: directorySpy() },
+    ],
   });
   const fixture = TestBed.createComponent(RoleAppointmentComponent);
   fixture.detectChanges();
   return { fixture, api };
+}
+
+/** The composed Directory picker, present only while not creating a new Person. */
+function picker(fixture: ComponentFixture<RoleAppointmentComponent>): PersonPickerComponent {
+  fixture.detectChanges();
+  return fixture.debugElement.query(By.directive(PersonPickerComponent)).componentInstance as PersonPickerComponent;
 }
 
 describe('RoleAppointmentComponent', () => {
@@ -48,22 +67,29 @@ describe('RoleAppointmentComponent', () => {
     expect(c.scopeKind()).toBe('CITY');
   });
 
-  it('reuses the existing Person when one is picked from the search results', () => {
+  it('reuses the existing Person picked from the directory, with auto-suggested credentials', () => {
     const { fixture, api } = mount();
     const c = fixture.componentInstance;
     c.sabhaId = 'sabha-1';
-    c.username = 'someone';
-    c.rawPassword = 'pw';
+    c.searchKshetraId = 'ksh1';
+    fixture.detectChanges();
 
-    c.searchByName();
-    c.pickExisting('cand-1');
+    const p = picker(fixture);
+    p.nameQuery = 'Close';
+    p.searchByName();
+    expect(p.candidates().length).toBe(1);
+    p.pick('cand-1', 'Close Match');
+    fixture.detectChanges();
+
+    expect(c.canSubmit()).toBeTrue();
     c.submit();
 
     const request = api.appoint.calls.mostRecent().args[0];
     expect(request.existingPersonId).toBe('cand-1');
     expect(request.newPerson).toBeFalsy();
     expect(request.sabhaId).toBe('sabha-1');
-    expect(fixture.componentInstance.stage()).toBe('done');
+    expect(request.username).toBe('close.match');
+    expect(c.stage()).toBe('done');
   });
 
   it('auto-suggests a username when starting an inline create and sends the new Person', () => {
@@ -74,8 +100,8 @@ describe('RoleAppointmentComponent', () => {
     c.startCreateNew();
     c.newPerson.fullName = 'Fresh Sanchalak';
     c.onNewPersonNameChange();
-    expect(c.username).toBe('fresh.sanchalak');
-    expect(c.rawPassword.length).toBe(12);
+    expect(c.newUsername).toBe('fresh.sanchalak');
+    expect(c.newPassword.length).toBe(12);
 
     c.newPerson.mobile = '+919820000123';
     c.newPerson.homeSabhaId = 'sabha-1';
@@ -84,6 +110,7 @@ describe('RoleAppointmentComponent', () => {
     const request = api.appoint.calls.mostRecent().args[0];
     expect(request.existingPersonId).toBeFalsy();
     expect(request.newPerson?.fullName).toBe('Fresh Sanchalak');
+    expect(request.username).toBe('fresh.sanchalak');
   });
 
   it('surfaces a username collision (409) before commit', () => {

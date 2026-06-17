@@ -1,5 +1,5 @@
 /**
- * Auto-suggested credentials for the appointment form (ADR-0011): a username
+ * Auto-suggested credentials for the appointment flows (ADR-0011): a username
  * derived from the appointee's name and a throwaway initial password the
  * appointee is forced to change on first login. Both are editable by the
  * appointer; username uniqueness is the backend's call (409 on collision).

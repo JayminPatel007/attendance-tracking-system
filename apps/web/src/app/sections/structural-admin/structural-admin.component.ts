@@ -1,8 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SessionService } from 'identity-domain';
-
-import { StructuralService } from './structural.service';
 import {
   CityView,
   DEMOGRAPHICS,
@@ -13,7 +11,9 @@ import {
   Track,
   ZoneView,
   isAllowedKind,
-} from './structural.types';
+} from 'sabha-domain';
+
+import { StructuralService } from './structural.service';
 
 type Tab = 'cities' | 'zones' | 'sabha-kinds' | 'kshetras';
 
