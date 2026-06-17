@@ -7,8 +7,8 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.PasswordReissueAuditLog;
-import org.sabha.identity.applicationservice.PasswordResetRepository;
+import org.sabha.identity.applicationservice.passwordreset.PasswordReissueAuditLog;
+import org.sabha.identity.applicationservice.passwordreset.PasswordResetRepository;
 import org.sabha.identity.domain.OtpChallenge;
 import org.sabha.identity.domain.PasswordReset;
 import org.sabha.identity.domain.PasswordResetStatus;

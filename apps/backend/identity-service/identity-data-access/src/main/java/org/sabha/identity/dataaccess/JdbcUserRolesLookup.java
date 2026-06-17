@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.Role;
-import org.sabha.identity.applicationservice.UserRolesLookup;
+import org.sabha.identity.applicationservice.session.UserRolesLookup;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

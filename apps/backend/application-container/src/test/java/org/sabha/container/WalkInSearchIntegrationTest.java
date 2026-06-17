@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.identity.applicationservice.SearchWalkInCandidatesUseCase;
-import org.sabha.identity.applicationservice.WalkInCandidate;
+import org.sabha.identity.applicationservice.directory.SearchWalkInCandidatesUseCase;
+import org.sabha.identity.applicationservice.directory.WalkInCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.boot.test.context.SpringBootTest;

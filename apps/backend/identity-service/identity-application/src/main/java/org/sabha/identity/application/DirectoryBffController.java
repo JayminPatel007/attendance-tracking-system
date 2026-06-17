@@ -3,7 +3,7 @@ package org.sabha.identity.application;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.SearchDirectoryUseCase;
+import org.sabha.identity.applicationservice.directory.SearchDirectoryUseCase;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.Person;
 import org.springframework.http.ResponseEntity;

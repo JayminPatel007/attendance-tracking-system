@@ -2,8 +2,8 @@ package org.sabha.identity.application;
 
 import java.util.List;
 
-import org.sabha.identity.applicationservice.AppointerContact;
-import org.sabha.identity.applicationservice.WhoAppointedMeService;
+import org.sabha.identity.applicationservice.appointment.AppointerContact;
+import org.sabha.identity.applicationservice.appointment.WhoAppointedMeService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;

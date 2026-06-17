@@ -2,7 +2,7 @@ package org.sabha.identity.dataaccess;
 
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.AppointerAuthorityLookup;
+import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

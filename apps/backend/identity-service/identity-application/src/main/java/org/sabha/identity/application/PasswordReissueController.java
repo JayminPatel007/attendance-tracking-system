@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.PasswordReissueService;
+import org.sabha.identity.applicationservice.passwordreset.PasswordReissueService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;

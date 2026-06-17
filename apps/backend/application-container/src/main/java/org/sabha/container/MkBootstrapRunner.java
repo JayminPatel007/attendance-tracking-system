@@ -1,7 +1,7 @@
 package org.sabha.container;
 
-import org.sabha.identity.applicationservice.BootstrapMkCommand;
-import org.sabha.identity.applicationservice.MkBootstrapService;
+import org.sabha.identity.applicationservice.bootstrap.BootstrapMkCommand;
+import org.sabha.identity.applicationservice.bootstrap.MkBootstrapService;
 import org.sabha.identity.domain.Gender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

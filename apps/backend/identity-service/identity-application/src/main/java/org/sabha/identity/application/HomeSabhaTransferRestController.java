@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.HomeSabhaTransferService;
+import org.sabha.identity.applicationservice.transfer.HomeSabhaTransferService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;

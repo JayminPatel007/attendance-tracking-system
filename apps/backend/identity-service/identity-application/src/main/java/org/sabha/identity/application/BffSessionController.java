@@ -3,7 +3,7 @@ package org.sabha.identity.application;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.WebSessionService;
+import org.sabha.identity.applicationservice.session.WebSessionService;
 import org.sabha.identity.domain.Section;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

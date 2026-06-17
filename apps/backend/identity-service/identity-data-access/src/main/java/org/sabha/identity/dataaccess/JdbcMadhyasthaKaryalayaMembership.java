@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.sabha.common.MadhyasthaKaryalayaLookup;
 import org.sabha.common.OversightRole;
-import org.sabha.identity.applicationservice.MadhyasthaKaryalayaMembership;
+import org.sabha.identity.applicationservice.bootstrap.MadhyasthaKaryalayaMembership;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

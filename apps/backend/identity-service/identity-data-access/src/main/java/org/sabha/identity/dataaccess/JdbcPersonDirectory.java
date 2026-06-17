@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sabha.identity.applicationservice.HomeSabhaDirectory;
-import org.sabha.identity.applicationservice.NameCandidate;
-import org.sabha.identity.applicationservice.PersonContactLookup;
-import org.sabha.identity.applicationservice.PersonDirectory;
-import org.sabha.identity.applicationservice.WalkInCandidate;
+import org.sabha.identity.applicationservice.transfer.HomeSabhaDirectory;
+import org.sabha.identity.applicationservice.directory.NameCandidate;
+import org.sabha.identity.applicationservice.directory.PersonContactLookup;
+import org.sabha.identity.applicationservice.directory.PersonDirectory;
+import org.sabha.identity.applicationservice.directory.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.HomeSabhaRef;
 import org.sabha.identity.domain.Person;
