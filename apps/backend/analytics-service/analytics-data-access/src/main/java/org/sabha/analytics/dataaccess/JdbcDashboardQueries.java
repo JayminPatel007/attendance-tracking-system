@@ -15,6 +15,7 @@ import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.common.CallerVisibility;
 import org.sabha.common.SabhaKind;
 import org.sabha.common.VisibilityTier;
+import org.sabha.common.WhereClause;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -77,18 +78,17 @@ public class JdbcDashboardQueries implements DashboardQueries {
             """;
 
     /*
-     * The three section queries, with a single {@code %s} slot for the scope
-     * predicate (filled via {@link #bind}). Keeping {@code WHERE %s} on its own
-     * line makes the spacing around the predicate structural rather than
-     * incidental, so a predicate never has to know about the whitespace of the
-     * clause that follows it.
+     * The three section queries, with a single {@code %s} slot for the scope's
+     * {@link WhereClause} (filled via {@link #bind}). The clause carries its own
+     * {@code WHERE} keyword, so the slot is a bare {@code %s} and no template has to
+     * keep the keyword and the predicate spaced apart by hand.
      */
     private static final String OVERVIEW_KPIS_SQL = """
             SELECT COUNT(*) AS total,
                    COUNT(*) FILTER (WHERE rc.tier = 'PRIORITY') AS priority,
                    COUNT(DISTINCT rc.home_sabha_id) AS sabhas
             """ + FROM_SCOPED + """
-            WHERE %s
+            %s
             """;
 
     private static final String SABHA_TREE_SQL = """
@@ -97,7 +97,7 @@ public class JdbcDashboardQueries implements DashboardQueries {
                    s.id AS sabha_id, s.sabha_kind,
                    COUNT(*) AS candidate_count
             """ + FROM_SCOPED + """
-            WHERE %s
+            %s
             GROUP BY z.id, z.name, k.id, k.name, s.id, s.sabha_kind
             ORDER BY z.name NULLS LAST, k.name, s.sabha_kind
             """;
@@ -108,7 +108,7 @@ public class JdbcDashboardQueries implements DashboardQueries {
                    rc.missed_streak, rc.tier
             """.formatted(SabhaKind.demographicSql("s")) + FROM_SCOPED + """
             JOIN persons p ON p.id = rc.person_id
-            WHERE %s
+            %s
             ORDER BY rc.missed_streak DESC, p.full_name
             LIMIT :limit
             """;
@@ -121,9 +121,9 @@ public class JdbcDashboardQueries implements DashboardQueries {
 
     @Override
     public DashboardOverview overview(DashboardScope scope) {
-        ScopeBinding binding = bind(scope);
-        DashboardOverview.Kpis kpis = jdbc.sql(OVERVIEW_KPIS_SQL.formatted(binding.where()))
-                .params(binding.params())
+        WhereClause where = bind(scope);
+        DashboardOverview.Kpis kpis = jdbc.sql(OVERVIEW_KPIS_SQL.formatted(where.sql()))
+                .params(where.params())
                 .query((rs, n) -> new DashboardOverview.Kpis(
                         rs.getInt("total"), rs.getInt("priority"), rs.getInt("sabhas")))
                 .single();
@@ -137,9 +137,9 @@ public class JdbcDashboardQueries implements DashboardQueries {
 
     @Override
     public SabhaTree sabhaTree(DashboardScope scope) {
-        ScopeBinding binding = bind(scope);
-        List<TreeRow> rows = jdbc.sql(SABHA_TREE_SQL.formatted(binding.where()))
-                .params(binding.params())
+        WhereClause where = bind(scope);
+        List<TreeRow> rows = jdbc.sql(SABHA_TREE_SQL.formatted(where.sql()))
+                .params(where.params())
                 .query((rs, n) -> new TreeRow(
                         rs.getObject("zone_id", UUID.class), rs.getString("zone_name"),
                         rs.getObject("kshetra_id", UUID.class), rs.getString("kshetra_name"),
@@ -150,9 +150,9 @@ public class JdbcDashboardQueries implements DashboardQueries {
     }
 
     private List<CandidateRow> candidateRows(DashboardScope scope, int limit) {
-        ScopeBinding binding = bind(scope);
-        return jdbc.sql(PEOPLE_SQL.formatted(binding.where()))
-                .params(binding.params())
+        WhereClause where = bind(scope);
+        return jdbc.sql(PEOPLE_SQL.formatted(where.sql()))
+                .params(where.params())
                 .param("limit", limit)
                 .query((rs, n) -> new CandidateRow(
                         rs.getObject("person_id", UUID.class),
@@ -166,16 +166,14 @@ public class JdbcDashboardQueries implements DashboardQueries {
                 .list();
     }
 
-    /** The WHERE fragment and its named params for one {@link DashboardScope}. */
-    private static ScopeBinding bind(DashboardScope scope) {
+    /** The WHERE clause and its named params for one {@link DashboardScope}. */
+    private static WhereClause bind(DashboardScope scope) {
         return switch (scope) {
-            case DashboardScope.RoleScoped r -> new ScopeBinding(ROLE_SCOPE, Map.of("userId", r.userId()));
-            case DashboardScope.CityScoped c -> new ScopeBinding(CITY_SCOPE, Map.of("cityId", c.cityId()));
-            case DashboardScope.NoCity ignored -> new ScopeBinding(NO_SCOPE, Map.of());
+            case DashboardScope.RoleScoped r ->
+                    WhereClause.create().and(ROLE_SCOPE, CallerVisibility.USER_PARAM, r.userId());
+            case DashboardScope.CityScoped c -> WhereClause.create().and(CITY_SCOPE, "cityId", c.cityId());
+            case DashboardScope.NoCity ignored -> WhereClause.create().and(NO_SCOPE);
         };
-    }
-
-    private record ScopeBinding(String where, Map<String, Object> params) {
     }
 
     /** Folds the flat, pre-ordered grouping rows into the nested Zone → Kshetra → Sabha tree. */
