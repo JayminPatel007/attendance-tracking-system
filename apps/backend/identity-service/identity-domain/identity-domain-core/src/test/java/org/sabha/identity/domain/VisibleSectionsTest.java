@@ -84,24 +84,22 @@ class VisibleSectionsTest {
     }
 
     @Test
-    void theNirdeshakAndAboveTiersSeeTheAuditLogSection() {
-        // Operational tiers Nirdeshak-and-above (ADR-0023, Slice 19).
-        for (Role tier : Set.of(Role.NIRDESHAK, Role.SAH_NIRDESHAK, Role.SANYOJAK)) {
-            assertThat(VisibleSections.forMember(false, false, Set.of(tier)))
-                    .as("%s should see the Audit log", tier)
-                    .contains(Section.AUDIT_LOG);
-        }
-        // The two oversight bodies see it too.
-        assertThat(VisibleSections.forMember(true, false, Set.of())).contains(Section.AUDIT_LOG);
-        assertThat(VisibleSections.forMember(false, true, Set.of())).contains(Section.AUDIT_LOG);
+    void aMemberWhoCanReadTheAuditLogSeesTheAuditLogSection() {
+        // The web gate no longer enumerates audit tiers itself: it trusts the BFF's
+        // audit-scope resolution (AuditLogAccess) handed in as canReadAudit, so the
+        // sidebar admits exactly the set the engine admits — including the Regional
+        // Team, which is not an operational Role (issue #80, ADR-0023). Which tiers
+        // resolve to read access is asserted in AuditLogAccessTest, the one authority.
+        assertThat(VisibleSections.forMember(false, true, Set.of()))
+                .contains(Section.AUDIT_LOG);
     }
 
     @Test
-    void theTiersBelowNirdeshakDoNotSeeTheAuditLogSection() {
-        for (Role tier : Set.of(Role.SANCHALAK, Role.SAH_SANCHALAK, Role.NIRIKSHAK)) {
-            assertThat(VisibleSections.forMember(false, false, Set.of(tier)))
-                    .as("%s must not see the Audit log", tier)
-                    .doesNotContain(Section.AUDIT_LOG);
-        }
+    void aMemberWhoCannotReadTheAuditLogDoesNotSeeTheAuditLogSection() {
+        // Even a Nirdeshak — the tier the old hand-maintained AUDIT_TIERS fold
+        // unlocked from the role set alone — gets no section when canReadAudit is
+        // false. There is no enumeration left to drift from the engine.
+        assertThat(VisibleSections.forMember(false, false, Set.of(Role.NIRDESHAK)))
+                .doesNotContain(Section.AUDIT_LOG);
     }
 }
