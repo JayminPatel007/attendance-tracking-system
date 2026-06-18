@@ -62,6 +62,14 @@ describe('StructuralService', () => {
     req.flush({ id: 'ksh9' });
   });
 
+  it('reads the cities the caller is a Regional Team member of', () => {
+    service.myCities().subscribe();
+
+    const req = http.expectOne('/bff/structure/my-cities');
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 'c1', name: 'Mumbai' }]);
+  });
+
   it('reads the zones the caller is a Sanyojak of', () => {
     service.myZones().subscribe();
 

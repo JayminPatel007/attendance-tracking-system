@@ -9,7 +9,7 @@ import { ThresholdEditorComponent } from './threshold-editor.component';
 
 function sessionStub(madhyasthaKaryalaya: boolean): Partial<SessionService> {
   return {
-    session: signal<WebSession | null>({ username: 'u', madhyasthaKaryalaya, sections: ['DASHBOARD'] }),
+    session: signal<WebSession | null>({ username: 'u', madhyasthaKaryalaya, regionalTeam: false, sections: ['DASHBOARD'] }),
   } as Partial<SessionService>;
 }
 

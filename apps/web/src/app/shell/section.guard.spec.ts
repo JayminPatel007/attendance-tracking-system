@@ -15,6 +15,7 @@ function configure(sections: Section[]): Router {
   const session: WebSession = {
     username: 'u',
     madhyasthaKaryalaya: true,
+    regionalTeam: false,
     sections,
   };
   TestBed.configureTestingModule({

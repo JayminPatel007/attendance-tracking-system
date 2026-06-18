@@ -17,6 +17,9 @@ import { StructuralService } from './structural.service';
 
 type Tab = 'cities' | 'zones' | 'sabha-kinds' | 'kshetras';
 
+/** Which structural creator the signed-in member is, within this section. */
+type Actor = 'mk' | 'regional-team' | 'sanyojak';
+
 const TAB_LABELS: Record<Tab, string> = {
   cities: 'Cities',
   zones: 'Zones',
@@ -24,11 +27,19 @@ const TAB_LABELS: Record<Tab, string> = {
   kshetras: 'Kshetras',
 };
 
+/** The tabs each actor may use — the same authority split the backend enforces. */
+const TABS_BY_ACTOR: Record<Actor, Tab[]> = {
+  mk: ['cities', 'sabha-kinds'],
+  'regional-team': ['zones'],
+  sanyojak: ['kshetras'],
+};
+
 /**
- * Structural admin section (ADR-0009, Slice 10): role-scoped tabs over the BFF.
- * A Madhyastha Karyalaya member creates Cities, Zones, and Sabha Kinds; a
- * Sanyojak creates Kshetras within their own Zone. The tab set is decided by the
- * session's authority — the same authority the backend enforces — not the client.
+ * Structural admin section (ADR-0009, ADR-0024): role-scoped tabs over the BFF.
+ * A Madhyastha Karyalaya member creates Cities and Sabha Kinds; a Regional Team
+ * member creates Zones within a City they belong to (ADR-0024); a Sanyojak
+ * creates Kshetras within their own Zone. The tab set is decided by the session's
+ * authority — the same authority the backend enforces — not the client.
  */
 @Component({
   selector: 'app-structural-admin',
@@ -45,15 +56,23 @@ export class StructuralAdminComponent implements OnInit {
   readonly demographics = DEMOGRAPHICS;
   readonly tracks = TRACKS;
 
-  readonly isMk = computed(() => this.sessions.session()?.madhyasthaKaryalaya ?? false);
-  readonly tabs = computed<Tab[]>(() =>
-    this.isMk() ? ['cities', 'zones', 'sabha-kinds'] : ['kshetras'],
-  );
+  readonly actor = computed<Actor>(() => {
+    const session = this.sessions.session();
+    if (session?.madhyasthaKaryalaya) {
+      return 'mk';
+    }
+    if (session?.regionalTeam) {
+      return 'regional-team';
+    }
+    return 'sanyojak';
+  });
+  readonly tabs = computed(() => TABS_BY_ACTOR[this.actor()]);
   readonly activeTab = signal<Tab>('cities');
 
   readonly cities = signal<CityView[]>([]);
   readonly zones = signal<ZoneView[]>([]);
   readonly sabhaKinds = signal<SabhaKindView[]>([]);
+  readonly myCities = signal<CityView[]>([]);
   readonly myZones = signal<ZoneView[]>([]);
   readonly kshetras = signal<KshetraView[]>([]);
 
@@ -67,16 +86,25 @@ export class StructuralAdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.activeTab.set(this.tabs()[0]);
-    if (this.isMk()) {
-      this.refreshCities();
-      this.refreshZones();
-      this.refreshSabhaKinds();
-    } else {
-      this.api.myZones().subscribe((z) => {
-        this.myZones.set(z);
-        this.selectedZoneId = z[0]?.id ?? '';
-        this.refreshKshetras();
-      });
+    switch (this.actor()) {
+      case 'mk':
+        this.refreshCities();
+        this.refreshSabhaKinds();
+        break;
+      case 'regional-team':
+        this.refreshZones();
+        this.api.myCities().subscribe((c) => {
+          this.myCities.set(c);
+          this.newZoneCityId = c[0]?.id ?? '';
+        });
+        break;
+      case 'sanyojak':
+        this.api.myZones().subscribe((z) => {
+          this.myZones.set(z);
+          this.selectedZoneId = z[0]?.id ?? '';
+          this.refreshKshetras();
+        });
+        break;
     }
   }
 

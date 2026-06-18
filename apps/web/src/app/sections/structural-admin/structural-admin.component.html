@@ -2,8 +2,9 @@
   <header class="page-head">
     <h1>Structural Admin</h1>
     <p class="sub">
-      Create Cities, Zones, and Sabha Kinds (Madhyastha Karyalaya) or Kshetras (Sanyojak).
-      Authority per ADR-0009 — every creation is attributed to you.
+      Create Cities and Sabha Kinds (Madhyastha Karyalaya), Zones (Regional Team),
+      or Kshetras (Sanyojak). Authority per ADR-0009 and ADR-0024 — every creation
+      is attributed to you.
     </p>
   </header>
 
@@ -50,23 +51,27 @@
             <li class="empty">No Zones yet.</li>
           }
         </ul>
-        <form class="create-card" (ngSubmit)="createZone()">
-          <h3>Add Zone</h3>
-          <label>
-            Zone name
-            <input name="zoneName" [(ngModel)]="newZoneName" placeholder="e.g., Mumbai South" />
-          </label>
-          <label>
-            Parent City
-            <select name="zoneCity" [(ngModel)]="newZoneCityId">
-              <option value="">— pick City —</option>
-              @for (city of cities(); track city.id) {
-                <option [value]="city.id">{{ city.name }}</option>
-              }
-            </select>
-          </label>
-          <button type="submit" [disabled]="!newZoneName.trim() || !newZoneCityId">Create Zone</button>
-        </form>
+        @if (myCities().length === 0) {
+          <p class="empty">You are not on the Regional Team of any City.</p>
+        } @else {
+          <form class="create-card" (ngSubmit)="createZone()">
+            <h3>Add Zone</h3>
+            <label>
+              Zone name
+              <input name="zoneName" [(ngModel)]="newZoneName" placeholder="e.g., Mumbai South" />
+            </label>
+            <label>
+              Parent City
+              <select name="zoneCity" [(ngModel)]="newZoneCityId">
+                <option value="">— pick City —</option>
+                @for (city of myCities(); track city.id) {
+                  <option [value]="city.id">{{ city.name }}</option>
+                }
+              </select>
+            </label>
+            <button type="submit" [disabled]="!newZoneName.trim() || !newZoneCityId">Create Zone</button>
+          </form>
+        }
       </div>
     }
 
