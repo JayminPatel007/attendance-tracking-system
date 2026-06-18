@@ -11,6 +11,7 @@
 
 export interface WebSessionResponse { 
     madhyasthaKaryalaya?: boolean;
+    regionalTeam?: boolean;
     sections?: Set<WebSessionResponse.SectionsEnum>;
     username?: string;
 }

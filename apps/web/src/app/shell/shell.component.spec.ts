@@ -44,6 +44,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'mk-admin',
       madhyasthaKaryalaya: true,
+      regionalTeam: false,
       sections: ['DASHBOARD', 'STRUCTURAL_ADMIN', 'SABHA_DEFINITION'],
     });
 
@@ -58,6 +59,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'sanchalak',
       madhyasthaKaryalaya: false,
+      regionalTeam: false,
       sections: ['DASHBOARD', 'SANCHALAK_PROXY'],
     });
 
@@ -71,6 +73,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'nirdeshak',
       madhyasthaKaryalaya: false,
+      regionalTeam: false,
       sections: ['DASHBOARD', 'AUDIT_LOG'],
     });
 
@@ -81,6 +84,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'mk-admin',
       madhyasthaKaryalaya: true,
+      regionalTeam: false,
       sections: ['DASHBOARD'],
     });
 
@@ -92,6 +96,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'mk-admin',
       madhyasthaKaryalaya: true,
+      regionalTeam: false,
       sections: ['DASHBOARD'],
     });
     const sessions = TestBed.inject(SessionService);
@@ -106,6 +111,7 @@ describe('ShellComponent sidebar', () => {
     const fixture = render({
       username: 'mk-admin',
       madhyasthaKaryalaya: true,
+      regionalTeam: false,
       sections: ['DASHBOARD'],
     });
     const sessions = TestBed.inject(SessionService);

@@ -48,6 +48,10 @@ export class StructuralService {
     return this.http.post<CreatedResponse>('/bff/structure/sabha-kinds', { demographic, track });
   }
 
+  myCities(): Observable<CityView[]> {
+    return this.http.get<CityView[]>('/bff/structure/my-cities');
+  }
+
   myZones(): Observable<ZoneView[]> {
     return this.http.get<ZoneView[]>('/bff/structure/my-zones');
   }
