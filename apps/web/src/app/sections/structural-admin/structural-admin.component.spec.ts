@@ -37,8 +37,12 @@ function apiSpy(): jasmine.SpyObj<StructuralService> {
   return spy;
 }
 
-function mount(authority: Authority): { fixture: ComponentFixture<StructuralAdminComponent>; api: jasmine.SpyObj<StructuralService> } {
+function mount(
+  authority: Authority,
+  configure?: (api: jasmine.SpyObj<StructuralService>) => void,
+): { fixture: ComponentFixture<StructuralAdminComponent>; api: jasmine.SpyObj<StructuralService> } {
   const api = apiSpy();
+  configure?.(api);
   TestBed.configureTestingModule({
     imports: [StructuralAdminComponent],
     providers: [
@@ -106,6 +110,14 @@ describe('StructuralAdminComponent', () => {
 
     expect(api.createZone).toHaveBeenCalledWith('c1', 'Mumbai South');
     expect(api.listZones).toHaveBeenCalled();
+  });
+
+  it('tells a Regional Team member of no City that they cannot create Zones', () => {
+    const { fixture } = mount('regional-team', (api) => api.myCities.and.returnValue(of([])));
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.create-card')).toBeNull();
+    expect(el.querySelector('p.empty')?.textContent).toContain('not on the Regional Team of any City');
   });
 
   it('disallows a Sanyukta selective kind in the builder but allows the regular one', () => {
