@@ -155,6 +155,57 @@ class AppointmentAuthorizationTest {
     }
 
     @Test
+    void aRegionalTeamMemberMayAppointAPeerInTheSameCityAndDemographic() {
+        // Self-replication (ADR-0025 §2): an existing RT member of (City, Baal)
+        // appoints another RT member for (City, Baal) — no MK round-trip.
+        Fixture f = new Fixture();
+        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, BAAL));
+
+        boolean allowed = f.engine().canAppoint(REGIONAL,
+                AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void aRegionalTeamMemberMayNotAppointAPeerInAnotherCity() {
+        // RT authority is bound to (City, demographic): holding (OTHER_CITY, Baal)
+        // grants nothing over (CITY, Baal).
+        Fixture f = new Fixture();
+        f.authority.regionalTeamScopes.add(scope(REGIONAL, OTHER_CITY, BAAL));
+
+        boolean allowed = f.engine().canAppoint(REGIONAL,
+                AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
+
+        assertThat(allowed).isFalse();
+    }
+
+    @Test
+    void aRegionalTeamMemberMayNotAppointAPeerForAnotherDemographic() {
+        // RT authority does not cross demographics: a (CITY, Yuvak) member cannot
+        // appoint into (CITY, Baal).
+        Fixture f = new Fixture();
+        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, YUVAK));
+
+        boolean allowed = f.engine().canAppoint(REGIONAL,
+                AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
+
+        assertThat(allowed).isFalse();
+    }
+
+    @Test
+    void aRegionalTeamMemberMayNotCreateASant() {
+        // Self-replication is RT-only; Sant remains an MK-only administrative act.
+        Fixture f = new Fixture();
+        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, BAAL));
+
+        boolean allowed = f.engine().canAppoint(REGIONAL,
+                AppointmentScope.onCity(AppointableRole.SANT, CITY, BAAL));
+
+        assertThat(allowed).isFalse();
+    }
+
+    @Test
     void nonMkMayNotAppointRegionalTeamMembersOrCreateSants() {
         Fixture f = new Fixture();
         f.mkMember = MK;
