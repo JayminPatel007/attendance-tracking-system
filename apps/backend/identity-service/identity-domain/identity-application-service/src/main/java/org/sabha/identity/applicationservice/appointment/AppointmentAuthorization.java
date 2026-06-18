@@ -37,8 +37,19 @@ public class AppointmentAuthorization {
                     appointer.holdsNirdeshak(appointerId, scope.kshetraId(), scope.demographic());
             case NIRDESHAK -> sanyojakOverKshetra(appointerId, scope.kshetraId(), scope.demographic());
             case SANYOJAK -> regionalTeamOverZone(appointerId, scope.zoneId(), scope.demographic());
-            case REGIONAL_TEAM, SANT -> madhyasthaKaryalaya.isMember(appointerId);
+            case REGIONAL_TEAM -> regionalTeamPeerOrMk(appointerId, scope.cityId(), scope.demographic());
+            case SANT -> madhyasthaKaryalaya.isMember(appointerId);
         };
+    }
+
+    /**
+     * The Regional Team is self-replicating (ADR-0025 §2): a peer already holding
+     * a Regional Team role for the same (City, demographic) may appoint another,
+     * in addition to the Madhyastha Karyalaya's bootstrap path (ADR-0011).
+     */
+    private boolean regionalTeamPeerOrMk(UUID appointerId, UUID cityId, String demographic) {
+        return madhyasthaKaryalaya.isMember(appointerId)
+                || appointer.holdsRegionalTeam(appointerId, cityId, demographic);
     }
 
     private boolean nirdeshakOverSabha(UUID appointerId, UUID sabhaId) {
