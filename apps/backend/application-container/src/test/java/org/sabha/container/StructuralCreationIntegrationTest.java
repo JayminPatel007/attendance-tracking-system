@@ -3,6 +3,7 @@ package org.sabha.container;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
     private static final UUID SANYOJAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000005a1");
     private static final UUID SANYOJAK_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000005a2");
     private static final UUID SANYOJAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000005a3");
+
+    /** Hands each seeded Person a unique mobile (the column is system-wide UNIQUE). */
+    private static final AtomicInteger MOBILE_SEQ = new AtomicInteger();
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry r) {
@@ -215,7 +219,7 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
         UUID person = UUID.randomUUID();
         UUID user = UUID.randomUUID();
         jdbc.sql("INSERT INTO persons (id, full_name, gender, mobile) VALUES (?, 'RT Member', 'MALE', ?)")
-                .param(person).param("+9198201" + String.format("%05d", Math.abs(person.hashCode()) % 100000)).update();
+                .param(person).param(String.format("+9198201%05d", MOBILE_SEQ.getAndIncrement())).update();
         jdbc.sql("INSERT INTO users (id, person_id, username, keycloak_user_id) VALUES (?, ?, ?, ?)")
                 .param(user).param(person).param("rt-struct-" + tag).param(subject).update();
         jdbc.sql("INSERT INTO role_assignments (id, user_id, role, city_id, demographic) VALUES (?, ?, 'REGIONAL_TEAM', ?, 'YUVAK')")

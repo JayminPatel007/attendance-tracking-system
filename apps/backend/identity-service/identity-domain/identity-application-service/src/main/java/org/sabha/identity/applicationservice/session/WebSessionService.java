@@ -1,14 +1,13 @@
 package org.sabha.identity.applicationservice.session;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.AuditReadAccess;
 import org.sabha.common.RegionalTeamCityLookup;
-import org.sabha.common.Role;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.bootstrap.MadhyasthaKaryalayaMembership;
+import org.sabha.identity.domain.MemberAuthority;
 import org.sabha.identity.domain.VisibleSections;
 import org.springframework.stereotype.Service;
 
@@ -50,15 +49,16 @@ public class WebSessionService {
 
     public Optional<WebSession> describe(UUID keycloakSubject) {
         return users.findByKeycloakUserId(keycloakSubject).map(user -> {
-            boolean isMk = membership.isMember(user.id());
-            boolean isRegionalTeam = !regionalTeamCities.citiesOf(user.id()).isEmpty();
-            boolean canReadAudit = auditReadAccess.canRead(user.id());
-            Set<Role> operationalRoles = roles.operationalRolesOf(user.id());
+            MemberAuthority authority = new MemberAuthority(
+                    membership.isMember(user.id()),
+                    !regionalTeamCities.citiesOf(user.id()).isEmpty(),
+                    auditReadAccess.canRead(user.id()),
+                    roles.operationalRolesOf(user.id()));
             return new WebSession(
                     user.username(),
-                    isMk,
-                    isRegionalTeam,
-                    VisibleSections.forMember(isMk, isRegionalTeam, canReadAudit, operationalRoles));
+                    authority.madhyasthaKaryalaya(),
+                    authority.regionalTeam(),
+                    VisibleSections.forMember(authority));
         });
     }
 }

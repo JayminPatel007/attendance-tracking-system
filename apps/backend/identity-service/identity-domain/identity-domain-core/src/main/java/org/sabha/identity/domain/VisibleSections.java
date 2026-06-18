@@ -41,18 +41,15 @@ public final class VisibleSections {
     private VisibleSections() {
     }
 
-    public static Set<Section> forMember(
-            boolean isMadhyasthaKaryalaya,
-            boolean isRegionalTeam,
-            boolean canReadAudit,
-            Set<Role> operationalRoles) {
+    public static Set<Section> forMember(MemberAuthority authority) {
+        Set<Role> operationalRoles = authority.operationalRoles();
         EnumSet<Section> sections = EnumSet.of(Section.DASHBOARD);
-        if (isMadhyasthaKaryalaya) {
+        if (authority.madhyasthaKaryalaya()) {
             sections.add(Section.ROLE_APPOINTMENT);
             sections.add(Section.STRUCTURAL_ADMIN);
             sections.add(Section.SABHA_DEFINITION);
         }
-        if (isRegionalTeam) {
+        if (authority.regionalTeam()) {
             // Zone creation moved MK -> Regional Team (ADR-0024); the RT reaches
             // Structural Admin for it, but holds none of the MK-only sections.
             sections.add(Section.STRUCTURAL_ADMIN);
@@ -69,7 +66,7 @@ public final class VisibleSections {
         if (!Collections.disjoint(operationalRoles, Role.REOPEN_TIERS)) {
             sections.add(Section.OCCURRENCE_REOPEN);
         }
-        if (canReadAudit) {
+        if (authority.canReadAudit()) {
             sections.add(Section.AUDIT_LOG);
         }
         return sections;
