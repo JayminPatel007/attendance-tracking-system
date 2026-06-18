@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.CallerResolver;
+import org.sabha.common.ConflictException;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
@@ -41,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RoleAppointmentServiceTest {
 
     private static final String YUVAK = "YUVAK";
+    private static final String KISHORE = "KISHORE";
 
     private static final UUID NIRDESHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f1");
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
@@ -173,6 +175,70 @@ class RoleAppointmentServiceTest {
     }
 
     @Test
+    void appointingAThirdSahNirdeshakForAKshetraDemographicIsRejected() {
+        Fixture f = new Fixture();
+        UUID personId = f.existingUser("Third Wheel");
+        f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
+
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+                RoleAppointmentCommand.forExistingPerson(
+                        AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, YUVAK),
+                        personId, "x", "x")))
+                .isInstanceOf(SahNirdeshakCapReachedException.class)
+                .satisfies(e -> assertThat(((ConflictException) e).code()).isEqualTo("SAH_NIRDESHAK_CAP_REACHED"));
+
+        assertThat(f.appointments.saved).isEmpty();
+    }
+
+    @Test
+    void theSecondSahNirdeshakForAKshetraDemographicIsStillWithinTheCap() {
+        Fixture f = new Fixture();
+        UUID personId = f.existingUser("Second Sah-Nirdeshak");
+        f.sahNirdeshakCount.set(KSHETRA, YUVAK, 1);
+
+        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+                RoleAppointmentCommand.forExistingPerson(
+                        AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, YUVAK),
+                        personId, "x", "x"));
+
+        assertThat(result.appointed()).isTrue();
+        assertThat(f.appointments.saved).hasSize(1);
+        assertThat(f.appointments.saved.get(0).scope().role()).isEqualTo(AppointableRole.SAH_NIRDESHAK);
+    }
+
+    @Test
+    void theCapIsCountedPerDemographicWithinTheSameKshetra() {
+        Fixture f = new Fixture();
+        UUID personId = f.existingUser("Kishore Sah-Nirdeshak");
+        // Yuvak is full, but Kishore in the same Kshetra has its own independent count.
+        f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
+        f.authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + KISHORE);
+
+        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+                RoleAppointmentCommand.forExistingPerson(
+                        AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, KISHORE),
+                        personId, "x", "x"));
+
+        assertThat(result.appointed()).isTrue();
+        assertThat(f.appointments.saved).hasSize(1);
+    }
+
+    @Test
+    void theCapDoesNotConstrainOtherKshetraScopedRoles() {
+        Fixture f = new Fixture();
+        UUID personId = f.existingUser("Nirikshak");
+        f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
+
+        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+                RoleAppointmentCommand.forExistingPerson(
+                        AppointmentScope.onKshetra(AppointableRole.NIRIKSHAK, KSHETRA, YUVAK),
+                        personId, "x", "x"));
+
+        assertThat(result.appointed()).isTrue();
+        assertThat(f.appointments.saved).hasSize(1);
+    }
+
+    @Test
     void aNameSoftWarnShortCircuitsAppointmentWithoutCreatingAnything() {
         Fixture f = new Fixture();
         f.users.markStart();
@@ -200,6 +266,7 @@ class RoleAppointmentServiceTest {
         final FakeUserRepository users = new FakeUserRepository();
         final FakeIdentityProvider identityProvider = new FakeIdentityProvider();
         final FakeAppointments appointments = new FakeAppointments();
+        final FakeSahNirdeshakCount sahNirdeshakCount = new FakeSahNirdeshakCount();
         final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
         Fixture() {
@@ -237,7 +304,7 @@ class RoleAppointmentServiceTest {
             AddPersonApplicationService addPerson = new AddPersonApplicationService(
                     callers, directory, events -> { }, clock);
             return new RoleAppointmentService(
-                    callers, authz, addPerson, users, identityProvider, appointments, clock);
+                    callers, authz, addPerson, users, identityProvider, appointments, sahNirdeshakCount, clock);
         }
     }
 
@@ -405,6 +472,19 @@ class RoleAppointmentServiceTest {
         @Override
         public void save(RoleAppointmentRow row) {
             saved.add(row);
+        }
+    }
+
+    private static final class FakeSahNirdeshakCount implements SahNirdeshakCountLookup {
+        final Map<String, Integer> counts = new HashMap<>();
+
+        void set(UUID kshetraId, String demographic, int count) {
+            counts.put(kshetraId + "|" + demographic, count);
+        }
+
+        @Override
+        public int activeCount(UUID kshetraId, String demographic) {
+            return counts.getOrDefault(kshetraId + "|" + demographic, 0);
         }
     }
 }
