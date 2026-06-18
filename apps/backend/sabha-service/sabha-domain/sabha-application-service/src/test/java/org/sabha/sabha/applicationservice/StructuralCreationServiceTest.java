@@ -21,6 +21,7 @@ class StructuralCreationServiceTest {
 
     private static final UUID MK = UUID.fromString("00000000-0000-0000-0000-0000000000aa");
     private static final UUID SANYOJAK = UUID.fromString("00000000-0000-0000-0000-0000000000bb");
+    private static final UUID REGIONAL_TEAM = UUID.fromString("00000000-0000-0000-0000-0000000000dd");
     private static final UUID ZONE = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
 
     private final FakeCities cities = new FakeCities();
@@ -28,10 +29,14 @@ class StructuralCreationServiceTest {
     private final FakeKshetras kshetras = new FakeKshetras();
     private final FakeSabhaKinds sabhaKinds = new FakeSabhaKinds();
 
+    /** Cities the REGIONAL_TEAM user is a member of — populated per test after createCity. */
+    private final List<UUID> regionalTeamCities = new ArrayList<>();
+
     private final StructuralCreationService service = new StructuralCreationService(
             new StructuralCreationAuthorization(
                     userId -> userId.equals(MK),
-                    userId -> userId.equals(SANYOJAK) ? java.util.List.of(ZONE) : java.util.List.of()),
+                    userId -> userId.equals(SANYOJAK) ? List.of(ZONE) : List.of(),
+                    userId -> userId.equals(REGIONAL_TEAM) ? List.copyOf(regionalTeamCities) : List.of()),
             cities, zones, kshetras, sabhaKinds);
 
     @Test
@@ -52,15 +57,36 @@ class StructuralCreationServiceTest {
     }
 
     @Test
-    void mkMemberCreatesAZoneWithinAnExistingCity() {
+    void regionalTeamMemberCreatesAZoneWithinTheirCityAttributedToThemselves() {
         UUID cityId = service.createCity(MK, "Mumbai");
+        regionalTeamCities.add(cityId);
 
-        UUID zoneId = service.createZone(MK, cityId, "Mumbai South");
+        UUID zoneId = service.createZone(REGIONAL_TEAM, cityId, "Mumbai South");
 
         Zone saved = zones.saved.get(0);
         assertThat(saved.id()).isEqualTo(zoneId);
         assertThat(saved.cityId()).isEqualTo(cityId);
-        assertThat(saved.createdBy()).isEqualTo(MK);
+        assertThat(saved.createdBy()).isEqualTo(REGIONAL_TEAM);
+    }
+
+    @Test
+    void mkCreatingAZoneIsDeniedAndNothingIsPersisted() {
+        // Zone creation moved MK -> Regional Team (ADR-0024); MK has no path at all.
+        UUID cityId = service.createCity(MK, "Mumbai");
+
+        assertThatThrownBy(() -> service.createZone(MK, cityId, "Mumbai South"))
+                .isInstanceOf(AuthorizationDeniedException.class);
+        assertThat(zones.saved).isEmpty();
+    }
+
+    @Test
+    void regionalTeamMemberOfAnotherCityCannotCreateAZoneHere() {
+        UUID cityId = service.createCity(MK, "Mumbai");
+        // REGIONAL_TEAM is a member of some *other* City, not this one.
+
+        assertThatThrownBy(() -> service.createZone(REGIONAL_TEAM, cityId, "Mumbai South"))
+                .isInstanceOf(AuthorizationDeniedException.class);
+        assertThat(zones.saved).isEmpty();
     }
 
     @Test

@@ -1158,6 +1158,9 @@
           "madhyasthaKaryalaya" : {
             "type" : "boolean"
           },
+          "regionalTeam" : {
+            "type" : "boolean"
+          },
           "sections" : {
             "items" : {
               "enum" : [ "DASHBOARD", "ROLE_APPOINTMENT", "STRUCTURAL_ADMIN", "SABHA_DEFINITION", "OCCURRENCE_REOPEN", "SANCHALAK_PROXY", "SELECTION", "AUDIT_LOG" ],
@@ -2651,6 +2654,27 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CreatedResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/my-cities" : {
+      "get" : {
+        "operationId" : "myCities",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CityView"
+                  },
+                  "type" : "array"
                 }
               }
             },

@@ -82,4 +82,15 @@ public class JdbcStructuralQueries implements StructuralQueries {
                         rs.getString("city_name")))
                 .list();
     }
+
+    @Override
+    public List<CityView> citiesByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.sql("SELECT id, name FROM cities WHERE id IN (:ids) ORDER BY name")
+                .param("ids", ids)
+                .query((rs, n) -> new CityView(rs.getObject("id", UUID.class), rs.getString("name")))
+                .list();
+    }
 }

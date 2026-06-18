@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Orchestrates structural creation (ADR-0009): authorize the caller via the
+ * Orchestrates structural creation (ADR-0009, ADR-0024): authorize the caller via the
  * {@link StructuralCreationAuthorization} engine, build the aggregate (which
  * enforces its own invariants and stamps {@code createdBy} with the caller),
  * then persist. A denied decision becomes an
@@ -57,7 +57,7 @@ public class StructuralCreationService {
 
     @Transactional
     public UUID createZone(UUID caller, UUID cityId, String name) {
-        if (!authz.canCreateStateStructure(caller)) {
+        if (!authz.canCreateZone(caller, cityId)) {
             throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_ZONE);
         }
         if (!cities.existsById(cityId)) {
