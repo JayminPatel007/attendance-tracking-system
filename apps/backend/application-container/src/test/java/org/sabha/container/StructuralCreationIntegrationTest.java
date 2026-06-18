@@ -26,10 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Structural creation end-to-end over the BFF (ADR-0009, ADR-0022). Proves the
- * authority chain through real HTTP + Postgres: an MK member creates Cities,
- * Zones, and Sabha Kinds; a Sanyojak creates Kshetras only within their Zone;
- * non-authorized callers are rejected by the Authorization Engine; and the
+ * Structural creation end-to-end over the BFF (ADR-0009, ADR-0024, ADR-0022).
+ * Proves the authority chain through real HTTP + Postgres: an MK member creates
+ * Cities and Sabha Kinds; a Regional Team member creates Zones only within their
+ * own City (the authority that moved down from MK — ADR-0024); a Sanyojak creates
+ * Kshetras only within their Zone; non-authorized callers (including an MK
+ * attempting a Zone) are rejected by the Authorization Engine; and the
  * Sanyukta-Regular-only invariant holds at the wire.
  */
 @SpringBootTest
@@ -72,17 +74,51 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
     }
 
     @Test
-    void mkMemberCreatesAZoneWithinACity() throws Exception {
+    void aRegionalTeamMemberCreatesAZoneWithinTheirCityAttributedToThemselves() throws Exception {
+        String mkSubject = keycloakSubject(MK_USERNAME);
+        UUID cityId = createCity(mkSubject, "Vadodara");
+        RegionalTeamMember rt = seedRegionalTeamMember(cityId, "vad");
+
+        mockMvc.perform(authedPost(rt.subject().toString(), "/bff/structure/zones",
+                        "{\"cityId\":\"" + cityId + "\",\"name\":\"VadodaraNorth\"}"))
+                .andExpect(status().isCreated());
+
+        UUID createdBy = jdbc.sql("SELECT created_by FROM zones WHERE city_id = ? AND name = 'VadodaraNorth'")
+                .param(cityId).query((rs, n) -> rs.getObject("created_by", UUID.class)).single();
+        assertThat(createdBy).isEqualTo(rt.userId());
+    }
+
+    @Test
+    void anMkMemberCannotCreateAZone() throws Exception {
+        // Zone creation moved MK -> Regional Team (ADR-0024); MK has no path at all.
         String mkSubject = keycloakSubject(MK_USERNAME);
         UUID cityId = createCity(mkSubject, "Vadodara");
 
         mockMvc.perform(authedPost(mkSubject, "/bff/structure/zones",
                         "{\"cityId\":\"" + cityId + "\",\"name\":\"VadodaraNorth\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isForbidden());
 
-        Long zones = jdbc.sql("SELECT count(*) FROM zones WHERE city_id = ? AND name = 'VadodaraNorth'")
-                .param(cityId).query(Long.class).single();
-        assertThat(zones).isEqualTo(1L);
+        Long zones = jdbc.sql("SELECT count(*) FROM zones WHERE city_id = ?").param(cityId).query(Long.class).single();
+        assertThat(zones).isEqualTo(0L);
+    }
+
+    @Test
+    void aRegionalTeamMemberOfAnotherCityCannotCreateAZoneHere() throws Exception {
+        String mkSubject = keycloakSubject(MK_USERNAME);
+        UUID myCity = createCity(mkSubject, "Vadodara");
+        UUID otherCity = createCity(mkSubject, "Anand");
+        RegionalTeamMember rtOfOtherCity = seedRegionalTeamMember(otherCity, "anand");
+
+        mockMvc.perform(authedPost(rtOfOtherCity.subject().toString(), "/bff/structure/zones",
+                        "{\"cityId\":\"" + myCity + "\",\"name\":\"VadodaraNorth\"}"))
+                .andExpect(status().isForbidden());
+
+        // ...but the my-cities scope of their create form is exactly the City they hold.
+        mockMvc.perform(get("/bff/structure/my-cities")
+                        .with(oidcLogin().idToken(t -> t.subject(rtOfOtherCity.subject().toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(otherCity.toString()));
     }
 
     @Test
@@ -125,8 +161,9 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
     void aSanyojakCreatesAKshetraWithinTheirZoneButNotOutsideIt() throws Exception {
         String mkSubject = keycloakSubject(MK_USERNAME);
         UUID cityId = createCity(mkSubject, "Bhavnagar");
-        UUID myZone = createZone(mkSubject, cityId, "BhavnagarCentral");
-        UUID otherZone = createZone(mkSubject, cityId, "BhavnagarEast");
+        String rtSubject = seedRegionalTeamMember(cityId, "bhav").subject().toString();
+        UUID myZone = createZone(rtSubject, cityId, "BhavnagarCentral");
+        UUID otherZone = createZone(rtSubject, cityId, "BhavnagarEast");
         seedSanyojak(myZone);
 
         mockMvc.perform(authedPost(SANYOJAK_SUBJECT.toString(), "/bff/structure/kshetras",
@@ -158,12 +195,35 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
         return UUID.fromString(body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1"));
     }
 
-    private UUID createZone(String mkSubject, UUID cityId, String name) throws Exception {
-        String body = mockMvc.perform(authedPost(mkSubject, "/bff/structure/zones",
+    /** Creates a Zone over the BFF as a Regional Team member (Zone authority, ADR-0024). */
+    private UUID createZone(String regionalTeamSubject, UUID cityId, String name) throws Exception {
+        String body = mockMvc.perform(authedPost(regionalTeamSubject, "/bff/structure/zones",
                         "{\"cityId\":\"" + cityId + "\",\"name\":\"" + name + "\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return UUID.fromString(body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1"));
+    }
+
+    /**
+     * Seeds a Regional Team member of {@code cityId} — a Person, their User, and a
+     * {@code REGIONAL_TEAM} role_assignment carrying the City scope (the demographic
+     * is irrelevant to Zone authority — ADR-0024). The Keycloak subject is the
+     * seeded User's {@code keycloak_user_id}, so {@code oidcLogin} resolves to it.
+     */
+    private RegionalTeamMember seedRegionalTeamMember(UUID cityId, String tag) {
+        UUID subject = UUID.randomUUID();
+        UUID person = UUID.randomUUID();
+        UUID user = UUID.randomUUID();
+        jdbc.sql("INSERT INTO persons (id, full_name, gender, mobile) VALUES (?, 'RT Member', 'MALE', ?)")
+                .param(person).param("+9198201" + String.format("%05d", Math.abs(person.hashCode()) % 100000)).update();
+        jdbc.sql("INSERT INTO users (id, person_id, username, keycloak_user_id) VALUES (?, ?, ?, ?)")
+                .param(user).param(person).param("rt-struct-" + tag).param(subject).update();
+        jdbc.sql("INSERT INTO role_assignments (id, user_id, role, city_id, demographic) VALUES (?, ?, 'REGIONAL_TEAM', ?, 'YUVAK')")
+                .param(UUID.randomUUID()).param(user).param(cityId).update();
+        return new RegionalTeamMember(subject, user);
+    }
+
+    private record RegionalTeamMember(UUID subject, UUID userId) {
     }
 
     private void seedSanyojak(UUID zoneId) {

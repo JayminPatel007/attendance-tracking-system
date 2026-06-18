@@ -11,7 +11,9 @@ import org.sabha.common.Role;
  * they may see (Slice 9 role-based visibility). State-level oversight
  * (Madhyastha Karyalaya) unlocks the structural / appointment sections per
  * ADR-0009 and ADR-0011; a Sanyojak also reaches Structural Admin, but only for
- * Kshetra creation within their Zone (ADR-0009, Slice 10). The Occurrence-reopen
+ * Kshetra creation within their Zone (ADR-0009, Slice 10), and a Regional Team
+ * member reaches it for Zone creation within their City after that authority
+ * moved down from MK (ADR-0024, issue #84). The Occurrence-reopen
  * section belongs to the Kshetra tiers (Nirikshak / Nirdeshak / Sah-Nirdeshak),
  * who alone may reopen a Finalized Occurrence — never MK or the other oversight
  * tiers (ADR-0001, Slice 13). The Sanchalak-proxy section belongs to the
@@ -39,12 +41,21 @@ public final class VisibleSections {
     private VisibleSections() {
     }
 
-    public static Set<Section> forMember(boolean isMadhyasthaKaryalaya, boolean canReadAudit, Set<Role> operationalRoles) {
+    public static Set<Section> forMember(
+            boolean isMadhyasthaKaryalaya,
+            boolean isRegionalTeam,
+            boolean canReadAudit,
+            Set<Role> operationalRoles) {
         EnumSet<Section> sections = EnumSet.of(Section.DASHBOARD);
         if (isMadhyasthaKaryalaya) {
             sections.add(Section.ROLE_APPOINTMENT);
             sections.add(Section.STRUCTURAL_ADMIN);
             sections.add(Section.SABHA_DEFINITION);
+        }
+        if (isRegionalTeam) {
+            // Zone creation moved MK -> Regional Team (ADR-0024); the RT reaches
+            // Structural Admin for it, but holds none of the MK-only sections.
+            sections.add(Section.STRUCTURAL_ADMIN);
         }
         if (operationalRoles.contains(Role.SANYOJAK)) {
             sections.add(Section.STRUCTURAL_ADMIN);

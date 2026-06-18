@@ -67,6 +67,7 @@ class WebBffIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value(MK_USERNAME))
                 .andExpect(jsonPath("$.madhyasthaKaryalaya").value(true))
+                .andExpect(jsonPath("$.regionalTeam").value(false))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("STRUCTURAL_ADMIN")))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("DASHBOARD")));
     }
@@ -85,11 +86,12 @@ class WebBffIntegrationTest extends KeycloakIntegrationTest {
     }
 
     @Test
-    void bffMeGivesARegionalTeamMemberTheAuditLogSection() throws Exception {
+    void bffMeGivesARegionalTeamMemberTheStructuralAdminAndAuditLogSections() throws Exception {
         // A Regional Team member is not an operational Role, so the old nav gate
-        // never surfaced the section though the BFF authorised their City scope
-        // (issue #80). With the gate now deriving from the same scope resolution,
-        // a REGIONAL_TEAM role-assignment row unlocks the sidebar entry end-to-end.
+        // never surfaced the audit section though the BFF authorised their City
+        // scope (issue #80). Zone creation has also moved MK -> Regional Team
+        // (ADR-0024, issue #84), so a REGIONAL_TEAM role-assignment row now flags
+        // the session and unlocks Structural Admin end-to-end.
         UUID subject = UUID.randomUUID();
         UUID rtUser = seedUser(subject, "regional-team-member");
         UUID city = seedCity(rtUser);
@@ -99,6 +101,8 @@ class WebBffIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("regional-team-member"))
                 .andExpect(jsonPath("$.madhyasthaKaryalaya").value(false))
+                .andExpect(jsonPath("$.regionalTeam").value(true))
+                .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("STRUCTURAL_ADMIN")))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("AUDIT_LOG")))
                 .andExpect(jsonPath("$.sections", org.hamcrest.Matchers.hasItem("DASHBOARD")));
     }

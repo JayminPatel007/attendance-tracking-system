@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
+import org.sabha.common.RegionalTeamCityLookup;
 import org.sabha.common.SanyojakZoneLookup;
 import org.sabha.sabha.applicationservice.StructuralCreationService;
 import org.sabha.sabha.applicationservice.StructuralQueries;
@@ -18,8 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Structural-admin BFF endpoints (ADR-0009, ADR-0022): the Angular web shell
- * creates and lists Cities, Zones, Sabha Kinds (MK) and Kshetras (Sanyojak).
+ * Structural-admin BFF endpoints (ADR-0009, ADR-0024, ADR-0022): the Angular web
+ * shell creates and lists Cities and Sabha Kinds (MK), Zones (Regional Team,
+ * within their City), and Kshetras (Sanyojak, within their Zone).
  * These are web requests authenticated by the server-side OIDC session, so the
  * caller is the Keycloak subject in {@link Authentication#getName()}, resolved
  * to the local User via {@link CallerResolver}. Authority is arbitrated by the
@@ -33,16 +35,19 @@ public class StructuralCreationController {
     private final StructuralQueries queries;
     private final CallerResolver callers;
     private final SanyojakZoneLookup sanyojakZones;
+    private final RegionalTeamCityLookup regionalTeamCities;
 
     public StructuralCreationController(
             StructuralCreationService creation,
             StructuralQueries queries,
             CallerResolver callers,
-            SanyojakZoneLookup sanyojakZones) {
+            SanyojakZoneLookup sanyojakZones,
+            RegionalTeamCityLookup regionalTeamCities) {
         this.creation = creation;
         this.queries = queries;
         this.callers = callers;
         this.sanyojakZones = sanyojakZones;
+        this.regionalTeamCities = regionalTeamCities;
     }
 
     @PostMapping("/bff/structure/cities")
@@ -93,6 +98,12 @@ public class StructuralCreationController {
     public ResponseEntity<List<StructuralQueries.ZoneView>> myZones(Authentication authentication) {
         UUID userId = requireCaller(authentication);
         return ResponseEntity.ok(queries.zonesByIds(sanyojakZones.zonesOf(userId)));
+    }
+
+    @GetMapping("/bff/structure/my-cities")
+    public ResponseEntity<List<StructuralQueries.CityView>> myCities(Authentication authentication) {
+        UUID userId = requireCaller(authentication);
+        return ResponseEntity.ok(queries.citiesByIds(regionalTeamCities.citiesOf(userId)));
     }
 
     private UUID requireCaller(Authentication authentication) {
