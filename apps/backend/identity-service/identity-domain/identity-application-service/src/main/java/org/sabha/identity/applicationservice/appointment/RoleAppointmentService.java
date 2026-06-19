@@ -38,16 +38,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RoleAppointmentService implements AppointRole {
 
-    /** ADR-0025 §3: at most two active Sah-Nirdeshaks per (Kshetra, demographic). */
-    static final int MAX_SAH_NIRDESHAK_PER_KSHETRA_DEMOGRAPHIC = 2;
-
     private final CallerResolver callerResolver;
     private final AppointmentAuthorization authz;
     private final AddPersonApplicationService addPerson;
     private final UserRepository users;
     private final IdentityProviderGateway identityProvider;
     private final RoleAppointmentRepository appointments;
-    private final SahNirdeshakCountLookup sahNirdeshakCount;
+    private final SahNirdeshakCap sahNirdeshakCap;
     private final Clock clock;
 
     public RoleAppointmentService(
@@ -57,7 +54,7 @@ public class RoleAppointmentService implements AppointRole {
             UserRepository users,
             IdentityProviderGateway identityProvider,
             RoleAppointmentRepository appointments,
-            SahNirdeshakCountLookup sahNirdeshakCount,
+            SahNirdeshakCap sahNirdeshakCap,
             Clock clock) {
         this.callerResolver = callerResolver;
         this.authz = authz;
@@ -65,7 +62,7 @@ public class RoleAppointmentService implements AppointRole {
         this.users = users;
         this.identityProvider = identityProvider;
         this.appointments = appointments;
-        this.sahNirdeshakCount = sahNirdeshakCount;
+        this.sahNirdeshakCap = sahNirdeshakCap;
         this.clock = clock;
     }
 
@@ -109,9 +106,8 @@ public class RoleAppointmentService implements AppointRole {
      */
     private void enforceSahNirdeshakCap(AppointmentScope scope) {
         if (scope.role() == AppointableRole.SAH_NIRDESHAK
-                && sahNirdeshakCount.activeCount(scope.kshetraId(), scope.demographic())
-                        >= MAX_SAH_NIRDESHAK_PER_KSHETRA_DEMOGRAPHIC) {
-            throw new SahNirdeshakCapReachedException(MAX_SAH_NIRDESHAK_PER_KSHETRA_DEMOGRAPHIC);
+                && sahNirdeshakCap.statusFor(scope.kshetraId(), scope.demographic()).reached()) {
+            throw new SahNirdeshakCapReachedException(SahNirdeshakCap.CAP);
         }
     }
 

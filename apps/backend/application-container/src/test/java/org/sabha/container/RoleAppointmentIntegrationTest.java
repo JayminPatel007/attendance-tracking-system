@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -182,6 +183,21 @@ class RoleAppointmentIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(status().isCreated());
 
         assertThat(sahNirdeshakCount()).isEqualTo(2);
+    }
+
+    @Transactional
+    @Test
+    void theSahNirdeshakCapEndpointReportsTheActiveCountAgainstTheCap() throws Exception {
+        seedSahNirdeshaks(1);
+
+        mockMvc.perform(get("/bff/appointments/sah-nirdeshak-cap")
+                        .param("kshetraId", KSHETRA.toString())
+                        .param("demographic", "YUVAK")
+                        .with(oidcLogin().idToken(t -> t.subject(NIRDESHAK_SUBJECT.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(1))
+                .andExpect(jsonPath("$.cap").value(2))
+                .andExpect(jsonPath("$.reached").value(false));
     }
 
     // --- helpers -----------------------------------------------------------

@@ -83,6 +83,7 @@ model/sabha-definition-response.ts
 model/sabha-kind-view.ts
 model/sabha-tree.ts
 model/sabha.ts
+model/sah-nirdeshak-cap-response.ts
 model/selected-person-item.ts
 model/sync-request.ts
 model/sync-response.ts
