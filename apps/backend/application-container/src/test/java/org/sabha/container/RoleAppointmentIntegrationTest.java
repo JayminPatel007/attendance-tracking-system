@@ -151,7 +151,69 @@ class RoleAppointmentIntegrationTest extends KeycloakIntegrationTest {
         assertThat(persons).isZero();
     }
 
+    @Transactional
+    @Test
+    void appointingAThirdSahNirdeshakForAKshetraDemographicIsRejectedWith409() throws Exception {
+        seedNirdeshak();
+        seedExistingUser();
+        seedSahNirdeshaks(2);
+
+        String body = "{\"role\":\"SAH_NIRDESHAK\",\"kshetraId\":\"" + KSHETRA + "\","
+                + "\"demographic\":\"YUVAK\",\"existingPersonId\":\"" + EXISTING_PERSON + "\"}";
+
+        mockMvc.perform(authedPost(NIRDESHAK_SUBJECT.toString(), "/bff/appointments", body))
+                .andExpect(status().isConflict());
+
+        // The third was rejected before commit: still exactly the two seeded.
+        assertThat(sahNirdeshakCount()).isEqualTo(2);
+    }
+
+    @Transactional
+    @Test
+    void appointingASecondSahNirdeshakForAKshetraDemographicSucceeds() throws Exception {
+        seedNirdeshak();
+        seedExistingUser();
+        seedSahNirdeshaks(1);
+
+        String body = "{\"role\":\"SAH_NIRDESHAK\",\"kshetraId\":\"" + KSHETRA + "\","
+                + "\"demographic\":\"YUVAK\",\"existingPersonId\":\"" + EXISTING_PERSON + "\"}";
+
+        mockMvc.perform(authedPost(NIRDESHAK_SUBJECT.toString(), "/bff/appointments", body))
+                .andExpect(status().isCreated());
+
+        assertThat(sahNirdeshakCount()).isEqualTo(2);
+    }
+
     // --- helpers -----------------------------------------------------------
+
+    private int sahNirdeshakCount() {
+        return jdbc.sql("""
+                SELECT COUNT(*) FROM role_assignments
+                WHERE role = 'SAH_NIRDESHAK' AND kshetra_id = ? AND demographic = 'YUVAK'
+                """)
+                .param(KSHETRA).query(Integer.class).single();
+    }
+
+    private void seedSahNirdeshaks(int count) {
+        for (int i = 0; i < count; i++) {
+            UUID id = UUID.fromString("00000000-0000-0000-0000-00000011c00" + i);
+            jdbc.sql("""
+                    INSERT INTO persons (id, full_name, gender, mobile)
+                    VALUES (?, 'Seeded Sah-Nirdeshak', 'MALE', ?)
+                    ON CONFLICT (id) DO NOTHING
+                    """).param(id).param("+91982033300" + i).update();
+            jdbc.sql("""
+                    INSERT INTO users (id, person_id, username, keycloak_user_id)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT (id) DO NOTHING
+                    """).param(id).param(id).param("seeded-sah-nirdeshak-" + i).param(UUID.randomUUID()).update();
+            jdbc.sql("""
+                    INSERT INTO role_assignments (id, user_id, role, kshetra_id, demographic)
+                    VALUES (?, ?, 'SAH_NIRDESHAK', ?, 'YUVAK')
+                    ON CONFLICT (id) DO NOTHING
+                    """).param(id).param(id).param(KSHETRA).update();
+        }
+    }
 
     private void seedNirdeshak() {
         jdbc.sql("""
