@@ -304,7 +304,8 @@ class RoleAppointmentServiceTest {
             AddPersonApplicationService addPerson = new AddPersonApplicationService(
                     callers, directory, events -> { }, clock);
             return new RoleAppointmentService(
-                    callers, authz, addPerson, users, identityProvider, appointments, sahNirdeshakCount, clock);
+                    callers, authz, addPerson, users, identityProvider, appointments,
+                    new SahNirdeshakCap(sahNirdeshakCount), clock);
         }
     }
 

@@ -1007,6 +1007,22 @@
         },
         "type" : "object"
       },
+      "SahNirdeshakCapResponse" : {
+        "properties" : {
+          "active" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "cap" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reached" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
       "SelectedPersonItem" : {
         "properties" : {
           "decidedAt" : {
@@ -1928,6 +1944,40 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/AppointmentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "role-appointment-controller" ]
+      }
+    },
+    "/bff/appointments/sah-nirdeshak-cap" : {
+      "get" : {
+        "operationId" : "sahNirdeshakCap",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "kshetraId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "demographic",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SahNirdeshakCapResponse"
                 }
               }
             },

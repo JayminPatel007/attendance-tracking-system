@@ -13,8 +13,9 @@ function appointed(): AppointmentResponse {
 }
 
 function apiSpy(): jasmine.SpyObj<AppointmentService> {
-  const spy = jasmine.createSpyObj<AppointmentService>('AppointmentService', ['appoint']);
+  const spy = jasmine.createSpyObj<AppointmentService>('AppointmentService', ['appoint', 'sahNirdeshakCap']);
   spy.appoint.and.returnValue(of(appointed()));
+  spy.sahNirdeshakCap.and.returnValue(of({ active: 1, cap: 2, reached: false }));
   return spy;
 }
 
@@ -128,6 +129,65 @@ describe('RoleAppointmentComponent', () => {
 
     expect(c.error()).toContain('username is already taken');
     expect(c.stage()).toBe('editing');
+  });
+
+  it('shows the 2/2 cap and blocks appointing a third Sah-Nirdeshak', () => {
+    const { fixture, api } = mount();
+    const c = fixture.componentInstance;
+    api.sahNirdeshakCap.and.returnValue(of({ active: 2, cap: 2, reached: true }));
+
+    c.onRoleChange('SAH_NIRDESHAK');
+    c.kshetraId = 'ksh1';
+    c.demographic = 'YUVAK';
+    c.searchKshetraId = 'ksh1';
+    c.refreshSahNirdeshakCap();
+    fixture.detectChanges();
+
+    expect(api.sahNirdeshakCap).toHaveBeenCalledWith('ksh1', 'YUVAK');
+    expect(c.capReached()).toBeTrue();
+
+    // The 2/2 chip is shown with the cap-reached styling.
+    const chip = fixture.debugElement.query(By.css('.cap'));
+    expect(chip.nativeElement.textContent).toContain('2 / 2');
+    expect(chip.classes['full']).toBeTrue();
+
+    // Even with an appointee fully picked, the cap keeps the appoint action disabled.
+    const p = picker(fixture);
+    p.pick('cand-1', 'Close Match');
+    fixture.detectChanges();
+    expect(c.canSubmit()).toBeFalse();
+  });
+
+  it('allows appointing a Sah-Nirdeshak while below the cap', () => {
+    const { fixture } = mount(); // default cap status: 1 / 2, not reached
+    const c = fixture.componentInstance;
+
+    c.onRoleChange('SAH_NIRDESHAK');
+    c.kshetraId = 'ksh1';
+    c.demographic = 'YUVAK';
+    c.searchKshetraId = 'ksh1';
+    c.refreshSahNirdeshakCap();
+    fixture.detectChanges();
+
+    const p = picker(fixture);
+    p.pick('cand-1', 'Close Match');
+    fixture.detectChanges();
+
+    expect(c.capReached()).toBeFalse();
+    expect(c.canSubmit()).toBeTrue();
+  });
+
+  it('does not query the cap for roles other than Sah-Nirdeshak', () => {
+    const { fixture, api } = mount();
+    const c = fixture.componentInstance;
+
+    c.onRoleChange('NIRDESHAK');
+    c.kshetraId = 'ksh1';
+    c.demographic = 'YUVAK';
+    c.refreshSahNirdeshakCap();
+
+    expect(api.sahNirdeshakCap).not.toHaveBeenCalled();
+    expect(c.capStatus()).toBeNull();
   });
 
   it('shows the name soft-warn candidates and resubmits with an override', () => {

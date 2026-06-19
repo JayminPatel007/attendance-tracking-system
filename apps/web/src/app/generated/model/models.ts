@@ -55,6 +55,7 @@ export * from './sabha';
 export * from './sabha-definition-response';
 export * from './sabha-kind-view';
 export * from './sabha-tree';
+export * from './sah-nirdeshak-cap-response';
 export * from './selected-person-item';
 export * from './sync-request';
 export * from './sync-response';

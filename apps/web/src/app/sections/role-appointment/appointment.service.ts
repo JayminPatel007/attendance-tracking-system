@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AppointmentRequest, AppointmentResponse } from './appointment.types';
+import { AppointmentRequest, AppointmentResponse, SahNirdeshakCapStatus } from './appointment.types';
 
 /**
  * Outbound adapter to the role-appointment BFF endpoints (ADR-0011, ADR-0022).
@@ -16,6 +16,16 @@ export class AppointmentService {
 
   appoint(request: AppointmentRequest): Observable<AppointmentResponse> {
     return this.http.post<AppointmentResponse>('/bff/appointments', request);
+  }
+
+  /**
+   * Active Sah-Nirdeshak count for a (Kshetra, demographic) against the cap of
+   * two (ADR-0025 §3), so the console can show the 2/2 indicator and disable the
+   * appoint action before the appointer submits.
+   */
+  sahNirdeshakCap(kshetraId: string, demographic: string): Observable<SahNirdeshakCapStatus> {
+    const params = new HttpParams().set('kshetraId', kshetraId).set('demographic', demographic);
+    return this.http.get<SahNirdeshakCapStatus>('/bff/appointments/sah-nirdeshak-cap', { params });
   }
 
   /**

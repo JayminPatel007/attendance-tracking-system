@@ -24,7 +24,9 @@
           <label>Sabha <input [(ngModel)]="sabhaId" placeholder="Sabha id" /></label>
         }
         @case ('KSHETRA') {
-          <label>Kshetra <input [(ngModel)]="kshetraId" placeholder="Kshetra id" /></label>
+          <label>Kshetra
+            <input [(ngModel)]="kshetraId" (ngModelChange)="refreshSahNirdeshakCap()" placeholder="Kshetra id" />
+          </label>
         }
         @case ('ZONE') {
           <label>Zone <input [(ngModel)]="zoneId" placeholder="Zone id" /></label>
@@ -37,13 +39,24 @@
       @if (scopeKind() !== 'SABHA') {
         <label>
           Demographic
-          <select [(ngModel)]="demographic">
+          <select [(ngModel)]="demographic" (ngModelChange)="refreshSahNirdeshakCap()">
             <option value="" disabled>Choose…</option>
             @for (d of demographics; track d) {
               <option [value]="d">{{ d }}</option>
             }
           </select>
         </label>
+      }
+
+      <!-- Sah-Nirdeshak cap (ADR-0025 §3): show the 2/2 indicator once Kshetra + demographic are chosen. -->
+      @if (role() === 'SAH_NIRDESHAK' && capStatus(); as cap) {
+        <p class="cap" [class.full]="cap.reached">Sah-Nirdeshaks: {{ cap.active }} / {{ cap.cap }}</p>
+        @if (cap.reached) {
+          <p class="cap-warning" role="alert">
+            Cap reached — {{ cap.cap }} Sah-Nirdeshaks already in this Kshetra and demographic.
+            Revoke one before appointing another.
+          </p>
+        }
       }
     </fieldset>
 

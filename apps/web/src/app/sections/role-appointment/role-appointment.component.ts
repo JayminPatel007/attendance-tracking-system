@@ -19,6 +19,7 @@ import {
   Demographic,
   NewPersonPayload,
   ROLE_SCOPE,
+  SahNirdeshakCapStatus,
   ScopeKind,
 } from './appointment.types';
 
@@ -96,9 +97,30 @@ export class RoleAppointmentComponent {
   readonly error = signal<string | null>(null);
   readonly softWarn = signal<NameCandidate[]>([]);
 
+  /** Sah-Nirdeshak cap status for the current (Kshetra, demographic); null until both are chosen. */
+  readonly capStatus = signal<SahNirdeshakCapStatus | null>(null);
+  readonly capReached = computed<boolean>(() => this.capStatus()?.reached ?? false);
+
   onRoleChange(role: AppointableRole): void {
     this.role.set(role);
     this.resetSelection();
+    this.refreshSahNirdeshakCap();
+  }
+
+  /**
+   * Refresh the Sah-Nirdeshak 2/2 indicator (ADR-0025 §3) whenever the Kshetra or
+   * demographic changes. Only Sah-Nirdeshak is capped, so other roles clear it.
+   */
+  refreshSahNirdeshakCap(): void {
+    this.capStatus.set(null);
+    const kshetraId = this.kshetraId.trim();
+    if (this.role() !== 'SAH_NIRDESHAK' || !kshetraId || !this.demographic) {
+      return;
+    }
+    this.api.sahNirdeshakCap(kshetraId, this.demographic).subscribe({
+      next: (status) => this.capStatus.set(status),
+      error: () => this.capStatus.set(null),
+    });
   }
 
   /** Clears the error banner once an appointee is picked from the Directory. */
@@ -130,6 +152,9 @@ export class RoleAppointmentComponent {
   }
 
   canSubmit(): boolean {
+    if (this.capReached()) {
+      return false;
+    }
     if (this.creatingNew()) {
       return !!this.newUsername.trim() && !!this.newPassword;
     }
@@ -172,6 +197,7 @@ export class RoleAppointmentComponent {
     this.cancelCreateNew();
     this.softWarn.set([]);
     this.error.set(null);
+    this.capStatus.set(null);
   }
 
   private buildRequest(overrideDuplicateWarning: boolean): AppointmentRequest | null {

@@ -11,11 +11,14 @@ import org.sabha.identity.applicationservice.appointment.AppointmentScope;
 import org.sabha.identity.applicationservice.directory.NameCandidate;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentCommand;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentService;
+import org.sabha.identity.applicationservice.appointment.SahNirdeshakCap;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -33,9 +36,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoleAppointmentController {
 
     private final RoleAppointmentService appointments;
+    private final SahNirdeshakCap sahNirdeshakCap;
 
-    public RoleAppointmentController(RoleAppointmentService appointments) {
+    public RoleAppointmentController(RoleAppointmentService appointments, SahNirdeshakCap sahNirdeshakCap) {
         this.appointments = appointments;
+        this.sahNirdeshakCap = sahNirdeshakCap;
     }
 
     @PostMapping("/bff/appointments")
@@ -48,6 +53,21 @@ public class RoleAppointmentController {
         }
         return ResponseEntity.status(201).body(
                 AppointmentResponse.appointed(result.personId(), result.userId(), result.assignmentId()));
+    }
+
+    /**
+     * Active Sah-Nirdeshak count for a (Kshetra, demographic) against the cap of
+     * two (ADR-0025 §3), so the web role console can show the 2/2 indicator and
+     * disable the appoint action at the limit before the appointer submits.
+     */
+    @GetMapping("/bff/appointments/sah-nirdeshak-cap")
+    public SahNirdeshakCapResponse sahNirdeshakCap(
+            @RequestParam UUID kshetraId, @RequestParam String demographic) {
+        SahNirdeshakCap.CapStatus status = sahNirdeshakCap.statusFor(kshetraId, demographic);
+        return new SahNirdeshakCapResponse(status.active(), status.cap(), status.reached());
+    }
+
+    public record SahNirdeshakCapResponse(int active, int cap, boolean reached) {
     }
 
     public record AppointmentRequest(

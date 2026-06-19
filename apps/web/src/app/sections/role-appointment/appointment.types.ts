@@ -68,3 +68,14 @@ export interface AppointmentResponse {
   candidates: NameCandidate[];
   requiresOverride: boolean;
 }
+
+/**
+ * Active Sah-Nirdeshak count for a (Kshetra, demographic) against the cap of two
+ * (ADR-0025 §3). Mirrors `RoleAppointmentController.SahNirdeshakCapResponse`; the
+ * console renders `active / cap` and disables the appoint action when `reached`.
+ */
+export interface SahNirdeshakCapStatus {
+  active: number;
+  cap: number;
+  reached: boolean;
+}
