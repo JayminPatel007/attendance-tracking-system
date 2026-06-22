@@ -36,6 +36,14 @@ public class JdbcSabhaProvisioning implements SabhaProvisioning {
     }
 
     @Override
+    public boolean isKindRetired(UUID sabhaKindId) {
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM sabha_kinds WHERE id = ? AND retired_at IS NOT NULL)")
+                .param(sabhaKindId)
+                .query(Boolean.class)
+                .single();
+    }
+
+    @Override
     public UUID createWeekly(UUID kshetraId, UUID sabhaKindId, DayOfWeek dayOfWeek,
                              LocalTime startTime, LocalTime endTime, String standingVenue, UUID createdBy) {
         Sabha sabha = Sabha.weekly(kshetraId, sabhaKindId, dayOfWeek, startTime, endTime, standingVenue, createdBy);

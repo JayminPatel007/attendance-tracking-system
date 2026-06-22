@@ -173,5 +173,15 @@ class StructuralCreationServiceTest {
         public boolean exists(Demographic demographic, Track track) {
             return saved.stream().anyMatch(k -> k.demographic() == demographic && k.track() == track);
         }
+
+        @Override
+        public java.util.Optional<SabhaKind> findById(UUID id) {
+            return saved.stream().filter(k -> k.id().equals(id)).findFirst();
+        }
+
+        @Override
+        public void update(SabhaKind kind) {
+            saved.replaceAll(k -> k.id().equals(kind.id()) ? kind : k);
+        }
     }
 }

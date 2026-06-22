@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.Appointee;
@@ -25,6 +26,7 @@ class SabhaDefinitionServiceTest {
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000d0");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
+    private static final UUID RETIRED_KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a3");
     private static final UUID SANCHALAK_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
     private static final UUID NEW_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000e1");
 
@@ -134,6 +136,15 @@ class SabhaDefinitionServiceTest {
         assertThat(provisioning.created).isFalse();
     }
 
+    @Test
+    void definingAgainstARetiredSabhaKindIsRejectedAndNoSabhaIsProvisioned() {
+        assertThatThrownBy(() -> service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+                KSHETRA, RETIRED_KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
+                Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null)))
+                .isInstanceOf(SabhaKindRetiredException.class);
+        assertThat(provisioning.created).isFalse();
+    }
+
     /** Only NIRDESHAK holds Nirdeshak over (KSHETRA, YUVAK). */
     private static final class FakeNirdeshakAuthority implements AppointerAuthorityLookup {
         @Override
@@ -165,7 +176,13 @@ class SabhaDefinitionServiceTest {
 
         @Override
         public Optional<String> demographicOfKind(UUID sabhaKindId) {
-            return sabhaKindId.equals(KIND) ? Optional.of("YUVAK") : Optional.empty();
+            return sabhaKindId.equals(KIND) || sabhaKindId.equals(RETIRED_KIND)
+                    ? Optional.of("YUVAK") : Optional.empty();
+        }
+
+        @Override
+        public boolean isKindRetired(UUID sabhaKindId) {
+            return sabhaKindId.equals(RETIRED_KIND);
         }
 
         @Override

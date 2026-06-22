@@ -7,10 +7,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
+import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.SabhaScope;
+import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.GuardianOrMobileRequiredException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
@@ -125,6 +131,18 @@ class AddPersonApplicationServiceTest {
                 .isInstanceOf(GuardianOrMobileRequiredException.class);
     }
 
+    @Test
+    void blocksAddingWhenTheHomeSabhaKindIsRetired() {
+        InMemoryDirectory directory = directoryAt(KSHETRA);
+        FakeHierarchy hierarchy = new FakeHierarchy();
+        hierarchy.retiredSabhas.add(HOME_SABHA);
+        AddPersonApplicationService service = service(directory, new RecordingPublisher(), hierarchy);
+
+        assertThatThrownBy(() -> service.add(KEYCLOAK_SUBJECT, addCommand("Ravi Patel", "+919820111000")))
+                .isInstanceOf(SabhaKindRetiredException.class);
+        assertThat(directory.findByMobile("+919820111000")).isEmpty();
+    }
+
     private static AddPersonCommand addCommand(String fullName, String mobile) {
         return new AddPersonCommand(fullName, Gender.MALE, null, mobile, null, HOME_SABHA, false);
     }
@@ -136,9 +154,40 @@ class AddPersonApplicationServiceTest {
     }
 
     private AddPersonApplicationService service(PersonDirectory directory, DomainEventPublisher publisher) {
+        return service(directory, publisher, new FakeHierarchy());
+    }
+
+    private AddPersonApplicationService service(
+            PersonDirectory directory, DomainEventPublisher publisher, StructuralHierarchyLookup hierarchy) {
         CallerResolver caller = subject ->
                 subject.equals(KEYCLOAK_SUBJECT) ? Optional.of(ADDER_USER) : Optional.empty();
-        return new AddPersonApplicationService(caller, directory, publisher, java.time.Clock.systemUTC());
+        return new AddPersonApplicationService(
+                caller, directory, hierarchy, publisher, java.time.Clock.systemUTC());
+    }
+
+    /** Cross-context structural lookup fake — only retirement matters here. */
+    static final class FakeHierarchy implements StructuralHierarchyLookup {
+        final Set<UUID> retiredSabhas = new HashSet<>();
+
+        @Override
+        public boolean isSabhaKindRetired(UUID sabhaId) {
+            return retiredSabhas.contains(sabhaId);
+        }
+
+        @Override
+        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> cityOfZone(UUID zoneId) {
+            return Optional.empty();
+        }
     }
 
     /** In-memory {@link PersonDirectory} fake driven entirely through the public port. */

@@ -48,6 +48,14 @@ export class StructuralService {
     return this.http.post<CreatedResponse>('/bff/structure/sabha-kinds', { demographic, track });
   }
 
+  retireSabhaKind(id: string): Observable<void> {
+    return this.http.post<void>(`/bff/structure/sabha-kinds/${id}/retire`, {});
+  }
+
+  reactivateSabhaKind(id: string): Observable<void> {
+    return this.http.post<void>(`/bff/structure/sabha-kinds/${id}/reactivate`, {});
+  }
+
   myCities(): Observable<CityView[]> {
     return this.http.get<CityView[]>('/bff/structure/my-cities');
   }

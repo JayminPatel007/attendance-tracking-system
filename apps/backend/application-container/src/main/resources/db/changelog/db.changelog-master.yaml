@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/slice-19/001-audit-seed.sql
   - include:
       file: db/changelog/issue-77/001-hash-otp-at-rest.sql
+  - include:
+      file: db/changelog/issue-87/001-sabha-kind-retire.sql

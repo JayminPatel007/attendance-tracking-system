@@ -54,6 +54,22 @@ describe('StructuralService', () => {
     req.flush({ id: 'k9' });
   });
 
+  it('retires a sabha kind via POST /bff/structure/sabha-kinds/:id/retire', () => {
+    service.retireSabhaKind('k9').subscribe();
+
+    const req = http.expectOne('/bff/structure/sabha-kinds/k9/retire');
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
+  it('reactivates a sabha kind via POST /bff/structure/sabha-kinds/:id/reactivate', () => {
+    service.reactivateSabhaKind('k9').subscribe();
+
+    const req = http.expectOne('/bff/structure/sabha-kinds/k9/reactivate');
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
   it('creates a kshetra within a zone', () => {
     service.createKshetra('z1', 'Goregaon-2').subscribe();
 

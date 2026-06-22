@@ -39,6 +39,19 @@ public class JdbcStructuralHierarchyLookup implements StructuralHierarchyLookup 
     }
 
     @Override
+    public boolean isSabhaKindRetired(UUID sabhaId) {
+        return jdbc.sql("""
+                SELECT EXISTS (
+                    SELECT 1 FROM sabhas s
+                    JOIN sabha_kinds sk ON sk.id = s.sabha_kind_id
+                    WHERE s.id = ? AND sk.retired_at IS NOT NULL)
+                """)
+                .param(sabhaId)
+                .query(Boolean.class)
+                .single();
+    }
+
+    @Override
     public Optional<UUID> selectiveSabhaIn(UUID kshetraId, String demographic, String track) {
         return jdbc.sql("SELECT id FROM sabhas WHERE kshetra_id = ? AND sabha_kind = ?")
                 .param(kshetraId)

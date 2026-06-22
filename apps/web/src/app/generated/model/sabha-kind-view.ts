@@ -12,6 +12,7 @@
 export interface SabhaKindView { 
     demographic?: SabhaKindView.DemographicEnum;
     id?: string;
+    retiredAt?: string;
     track?: SabhaKindView.TrackEnum;
 }
 export namespace SabhaKindView {

@@ -25,6 +25,16 @@ public interface SabhaProvisioning {
      */
     Optional<String> demographicOfKind(UUID sabhaKindId);
 
+    /**
+     * Whether the given Sabha Kind has been soft-retired (ADR-0026). The
+     * definition flow rejects creating a new Sabha of a retired kind. Defaulted to
+     * {@code false} so test fakes that predate soft-retire need not implement it;
+     * the JDBC adapter overrides.
+     */
+    default boolean isKindRetired(UUID sabhaKindId) {
+        return false;
+    }
+
     /** Creates a weekly-recurring Sabha with its standing slot; returns its id. */
     UUID createWeekly(UUID kshetraId, UUID sabhaKindId, DayOfWeek dayOfWeek,
                       LocalTime startTime, LocalTime endTime, String standingVenue, UUID createdBy);

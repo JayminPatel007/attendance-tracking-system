@@ -1,5 +1,7 @@
 package org.sabha.sabha.dataaccess;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -44,11 +46,12 @@ public class JdbcStructuralQueries implements StructuralQueries {
 
     @Override
     public List<SabhaKindView> listSabhaKinds() {
-        return jdbc.sql("SELECT id, demographic, track FROM sabha_kinds ORDER BY demographic, track")
+        return jdbc.sql("SELECT id, demographic, track, retired_at FROM sabha_kinds ORDER BY demographic, track")
                 .query((rs, n) -> new SabhaKindView(
                         rs.getObject("id", UUID.class),
                         Demographic.valueOf(rs.getString("demographic")),
-                        Track.valueOf(rs.getString("track"))))
+                        Track.valueOf(rs.getString("track")),
+                        toInstant(rs.getTimestamp("retired_at"))))
                 .list();
     }
 
@@ -92,5 +95,9 @@ public class JdbcStructuralQueries implements StructuralQueries {
                 .param("ids", ids)
                 .query((rs, n) -> new CityView(rs.getObject("id", UUID.class), rs.getString("name")))
                 .list();
+    }
+
+    private static Instant toInstant(Timestamp ts) {
+        return ts == null ? null : ts.toInstant();
     }
 }

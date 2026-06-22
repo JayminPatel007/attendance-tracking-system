@@ -1,5 +1,6 @@
 package org.sabha.sabha.applicationservice;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +41,8 @@ public interface StructuralQueries {
     record ZoneView(UUID id, String name, UUID cityId, String cityName) {
     }
 
-    record SabhaKindView(UUID id, Demographic demographic, Track track) {
+    /** {@code retiredAt} is null while the kind is active; set once soft-retired (ADR-0026). */
+    record SabhaKindView(UUID id, Demographic demographic, Track track, Instant retiredAt) {
     }
 
     record KshetraView(UUID id, String name, UUID zoneId) {
