@@ -79,7 +79,19 @@
       <div class="panel">
         <ul class="entity-list">
           @for (kind of sabhaKinds(); track kind.id) {
-            <li>{{ kind.demographic }} <span class="muted">({{ kind.track }})</span></li>
+            <li [class.retired]="isRetired(kind)">
+              <span>
+                {{ kind.demographic }} <span class="muted">({{ kind.track }})</span>
+                @if (isRetired(kind)) {
+                  <span class="pill muted">retired — draining, no new allowed</span>
+                }
+              </span>
+              @if (isRetired(kind)) {
+                <button type="button" (click)="reactivateSabhaKind(kind)">Reactivate</button>
+              } @else {
+                <button type="button" (click)="retireSabhaKind(kind)">Soft-retire</button>
+              }
+            </li>
           } @empty {
             <li class="empty">No Sabha Kinds yet.</li>
           }

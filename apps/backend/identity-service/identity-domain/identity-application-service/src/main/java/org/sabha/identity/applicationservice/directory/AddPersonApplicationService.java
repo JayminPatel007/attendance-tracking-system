@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
+import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonAddedOverDuplicateWarning;
@@ -37,16 +39,19 @@ public class AddPersonApplicationService {
 
     private final CallerResolver callerResolver;
     private final PersonDirectory directory;
+    private final StructuralHierarchyLookup hierarchy;
     private final DomainEventPublisher events;
     private final Clock clock;
 
     public AddPersonApplicationService(
             CallerResolver callerResolver,
             PersonDirectory directory,
+            StructuralHierarchyLookup hierarchy,
             DomainEventPublisher events,
             Clock clock) {
         this.callerResolver = callerResolver;
         this.directory = directory;
+        this.hierarchy = hierarchy;
         this.events = events;
         this.clock = clock;
     }
@@ -63,6 +68,10 @@ public class AddPersonApplicationService {
 
         UUID kshetraId = directory.kshetraIdOfSabha(command.homeSabhaId())
                 .orElseThrow(() -> new HomeSabhaNotFoundException(command.homeSabhaId()));
+
+        if (hierarchy.isSabhaKindRetired(command.homeSabhaId())) {
+            throw new SabhaKindRetiredException(command.homeSabhaId());
+        }
 
         List<NameCandidate> candidates =
                 directory.findNameCandidates(kshetraId, command.fullName(), MAX_CANDIDATES);

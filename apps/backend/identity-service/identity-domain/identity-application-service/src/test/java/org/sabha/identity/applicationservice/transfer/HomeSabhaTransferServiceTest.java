@@ -13,12 +13,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import java.util.HashSet;
+
 import org.junit.jupiter.api.Test;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.SabhaScope;
+import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
 import org.sabha.identity.applicationservice.otp.OtpGateway;
 import org.sabha.identity.applicationservice.otp.OtpRateLimitExceededException;
@@ -192,6 +197,18 @@ class HomeSabhaTransferServiceTest {
     }
 
     @Test
+    void initiatingATransferIntoARetiredKindSabhaIsRejected() {
+        Fixture f = new Fixture();
+        f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
+        f.hierarchy.retiredSabhas.add(DESTINATION_SABHA);
+
+        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
+                .isInstanceOf(SabhaKindRetiredException.class);
+        assertThat(f.gateway.sentCode).isNull();
+        assertThat(f.transfers.findById(PERSON)).isEmpty();
+    }
+
+    @Test
     void sahSanchalakOfDestinationMayInitiate() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
@@ -267,6 +284,7 @@ class HomeSabhaTransferServiceTest {
         final RecordingOtpGateway gateway = new RecordingOtpGateway();
         final RecordingPublisher publisher = new RecordingPublisher();
         final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
+        final FakeHierarchy hierarchy = new FakeHierarchy();
         final MutableClock clock = new MutableClock(Instant.parse("2026-05-31T10:00:00Z"));
 
         Fixture() {
@@ -286,7 +304,32 @@ class HomeSabhaTransferServiceTest {
             return new HomeSabhaTransferService(
                     caller(), roleAssignments, directory, transfers, gateway,
                     new FixedOtpCodeGenerator(FIXED_OTP), new SaltedTestOtpHasher(),
-                    otpSendPolicy, publisher, clock);
+                    otpSendPolicy, hierarchy, publisher, clock);
+        }
+    }
+
+    /** Cross-context structural lookup fake — only destination retirement matters here. */
+    static final class FakeHierarchy implements StructuralHierarchyLookup {
+        final Set<UUID> retiredSabhas = new HashSet<>();
+
+        @Override
+        public boolean isSabhaKindRetired(UUID sabhaId) {
+            return retiredSabhas.contains(sabhaId);
+        }
+
+        @Override
+        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> cityOfZone(UUID zoneId) {
+            return Optional.empty();
         }
     }
 

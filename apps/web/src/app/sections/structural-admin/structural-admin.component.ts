@@ -161,6 +161,19 @@ export class StructuralAdminComponent implements OnInit {
     });
   }
 
+  /** A retired kind drains: existing Sabhas keep running, no new ones may be created (ADR-0026). */
+  isRetired(kind: SabhaKindView): boolean {
+    return kind.retiredAt != null;
+  }
+
+  retireSabhaKind(kind: SabhaKindView): void {
+    this.api.retireSabhaKind(kind.id).subscribe(() => this.refreshSabhaKinds());
+  }
+
+  reactivateSabhaKind(kind: SabhaKindView): void {
+    this.api.reactivateSabhaKind(kind.id).subscribe(() => this.refreshSabhaKinds());
+  }
+
   private refreshSabhaKinds(): void {
     this.api.listSabhaKinds().subscribe((k) => this.sabhaKinds.set(k));
   }

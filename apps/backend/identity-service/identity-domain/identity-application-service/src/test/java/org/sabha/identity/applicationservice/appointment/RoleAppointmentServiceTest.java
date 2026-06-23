@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.ConflictException;
+import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
@@ -175,6 +176,22 @@ class RoleAppointmentServiceTest {
     }
 
     @Test
+    void appointingASanchalakOnARetiredKindSabhaIsRejectedAndNothingIsCreated() {
+        Fixture f = new Fixture();
+        UUID personId = f.existingUser("Replacement Sanchalak");
+        f.hierarchy.retiredSabhas.add(SABHA);
+
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+                RoleAppointmentCommand.forExistingPerson(
+                        AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
+                        personId, "x", "x")))
+                .isInstanceOf(SabhaKindRetiredException.class)
+                .satisfies(e -> assertThat(((ConflictException) e).code()).isEqualTo("SABHA_KIND_RETIRED"));
+
+        assertThat(f.appointments.saved).isEmpty();
+    }
+
+    @Test
     void appointingAThirdSahNirdeshakForAKshetraDemographicIsRejected() {
         Fixture f = new Fixture();
         UUID personId = f.existingUser("Third Wheel");
@@ -302,10 +319,10 @@ class RoleAppointmentServiceTest {
             AppointmentAuthorization authz = new AppointmentAuthorization(
                     hierarchy, authority, userId -> false);
             AddPersonApplicationService addPerson = new AddPersonApplicationService(
-                    callers, directory, events -> { }, clock);
+                    callers, directory, hierarchy, events -> { }, clock);
             return new RoleAppointmentService(
                     callers, authz, addPerson, users, identityProvider, appointments,
-                    new SahNirdeshakCap(sahNirdeshakCount), clock);
+                    new SahNirdeshakCap(sahNirdeshakCount), hierarchy, clock);
         }
     }
 
@@ -320,10 +337,16 @@ class RoleAppointmentServiceTest {
 
     private static final class FakeHierarchy implements StructuralHierarchyLookup {
         final Map<UUID, SabhaScope> sabhaScopes = new HashMap<>();
+        final Set<UUID> retiredSabhas = new HashSet<>();
 
         @Override
         public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
             return Optional.ofNullable(sabhaScopes.get(sabhaId));
+        }
+
+        @Override
+        public boolean isSabhaKindRetired(UUID sabhaId) {
+            return retiredSabhas.contains(sabhaId);
         }
 
         @Override

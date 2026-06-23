@@ -22,7 +22,8 @@ function sessionStub(authority: Authority): Partial<SessionService> {
 function apiSpy(): jasmine.SpyObj<StructuralService> {
   const spy = jasmine.createSpyObj<StructuralService>('StructuralService', [
     'listCities', 'createCity', 'listZones', 'createZone',
-    'listSabhaKinds', 'createSabhaKind', 'myCities', 'myZones', 'listKshetras', 'createKshetra',
+    'listSabhaKinds', 'createSabhaKind', 'retireSabhaKind', 'reactivateSabhaKind',
+    'myCities', 'myZones', 'listKshetras', 'createKshetra',
   ]);
   spy.listCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai' }]));
   spy.listZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai' }]));
@@ -33,6 +34,8 @@ function apiSpy(): jasmine.SpyObj<StructuralService> {
   spy.createCity.and.returnValue(of({ id: 'new' }));
   spy.createZone.and.returnValue(of({ id: 'new' }));
   spy.createSabhaKind.and.returnValue(of({ id: 'new' }));
+  spy.retireSabhaKind.and.returnValue(of(void 0));
+  spy.reactivateSabhaKind.and.returnValue(of(void 0));
   spy.createKshetra.and.returnValue(of({ id: 'new' }));
   return spy;
 }
@@ -118,6 +121,36 @@ describe('StructuralAdminComponent', () => {
 
     expect(el.querySelector('.create-card')).toBeNull();
     expect(el.querySelector('p.empty')?.textContent).toContain('not on the Regional Team of any City');
+  });
+
+  it('soft-retires an active kind then refreshes the kind list', () => {
+    const { fixture, api } = mount('mk');
+    api.listSabhaKinds.calls.reset();
+
+    fixture.componentInstance.retireSabhaKind({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' });
+
+    expect(api.retireSabhaKind).toHaveBeenCalledWith('k1');
+    expect(api.listSabhaKinds).toHaveBeenCalled();
+  });
+
+  it('reactivates a retired kind then refreshes the kind list', () => {
+    const { fixture, api } = mount('mk');
+    api.listSabhaKinds.calls.reset();
+
+    fixture.componentInstance.reactivateSabhaKind(
+      { id: 'k1', demographic: 'YUVAK', track: 'REGULAR', retiredAt: '2026-06-19T10:00:00Z' });
+
+    expect(api.reactivateSabhaKind).toHaveBeenCalledWith('k1');
+    expect(api.listSabhaKinds).toHaveBeenCalled();
+  });
+
+  it('reflects the retired marker through isRetired', () => {
+    const { fixture } = mount('mk');
+    const c = fixture.componentInstance;
+
+    expect(c.isRetired({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' })).toBeFalse();
+    expect(c.isRetired(
+      { id: 'k2', demographic: 'YUVAK', track: 'REGULAR', retiredAt: '2026-06-19T10:00:00Z' })).toBeTrue();
   });
 
   it('disallows a Sanyukta selective kind in the builder but allows the regular one', () => {

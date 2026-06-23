@@ -989,6 +989,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "retiredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
           "track" : {
             "enum" : [ "REGULAR", "BSS", "YSS" ],
             "type" : "string"
@@ -2796,6 +2800,46 @@
                 }
               }
             },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/sabha-kinds/{id}/reactivate" : {
+      "post" : {
+        "operationId" : "reactivateSabhaKind",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/sabha-kinds/{id}/retire" : {
+      "post" : {
+        "operationId" : "retireSabhaKind",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
             "description" : "OK"
           }
         },

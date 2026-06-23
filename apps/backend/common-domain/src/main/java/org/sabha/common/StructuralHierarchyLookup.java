@@ -34,6 +34,19 @@ public interface StructuralHierarchyLookup {
         return Optional.empty();
     }
 
+    /**
+     * Whether the given Sabha's {@code (demographic, track)} kind has been
+     * soft-retired (ADR-0026). Identity's creation paths — appointing a
+     * Sanchalak/Sah-Sanchalak, assigning or transferring a Home Sabha — consult
+     * this to reject new usage of a retired kind while existing Sabhas drain.
+     *
+     * <p>Defaulted to {@code false} so the appointment/transfer test fakes that
+     * predate soft-retire need not implement it; the JDBC adapter overrides.</p>
+     */
+    default boolean isSabhaKindRetired(UUID sabhaId) {
+        return false;
+    }
+
     /** The Zone the given Kshetra belongs to. */
     Optional<UUID> zoneOfKshetra(UUID kshetraId);
 

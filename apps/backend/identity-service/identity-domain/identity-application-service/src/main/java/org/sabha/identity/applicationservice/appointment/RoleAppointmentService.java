@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.CallerResolver;
+import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
@@ -45,6 +47,7 @@ public class RoleAppointmentService implements AppointRole {
     private final IdentityProviderGateway identityProvider;
     private final RoleAppointmentRepository appointments;
     private final SahNirdeshakCap sahNirdeshakCap;
+    private final StructuralHierarchyLookup hierarchy;
     private final Clock clock;
 
     public RoleAppointmentService(
@@ -55,6 +58,7 @@ public class RoleAppointmentService implements AppointRole {
             IdentityProviderGateway identityProvider,
             RoleAppointmentRepository appointments,
             SahNirdeshakCap sahNirdeshakCap,
+            StructuralHierarchyLookup hierarchy,
             Clock clock) {
         this.callerResolver = callerResolver;
         this.authz = authz;
@@ -63,6 +67,7 @@ public class RoleAppointmentService implements AppointRole {
         this.identityProvider = identityProvider;
         this.appointments = appointments;
         this.sahNirdeshakCap = sahNirdeshakCap;
+        this.hierarchy = hierarchy;
         this.clock = clock;
     }
 
@@ -75,6 +80,7 @@ public class RoleAppointmentService implements AppointRole {
             throw new AuthorizationDeniedException(appointer, AuthorizedAction.APPOINT_ROLE);
         }
 
+        enforceKindActive(command.scope());
         enforceSahNirdeshakCap(command.scope());
 
         UUID personId;
@@ -97,6 +103,19 @@ public class RoleAppointmentService implements AppointRole {
                 assignmentId, userId, command.scope(), appointer, clock.instant()));
 
         return AppointmentResult.appointed(personId, userId, assignmentId);
+    }
+
+    /**
+     * A Sabha-scoped role (Sanchalak/Sah-Sanchalak) names a Sabha, which carries a
+     * Sabha Kind. A retired kind blocks new roles of that kind (ADR-0026) while
+     * existing Sabhas drain; a state collision, so a 409 checked before anything is
+     * created. Geographic-scoped roles name only a demographic, not a kind, so they
+     * are unaffected.
+     */
+    private void enforceKindActive(AppointmentScope scope) {
+        if (scope.sabhaId() != null && hierarchy.isSabhaKindRetired(scope.sabhaId())) {
+            throw new SabhaKindRetiredException(scope.sabhaId());
+        }
     }
 
     /**

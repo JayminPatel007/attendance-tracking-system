@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.CallerResolver;
+import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaProvisioning;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
@@ -63,6 +64,10 @@ public class SabhaDefinitionService {
 
         if (!authz.canDefineSabha(nirdeshak, command.kshetraId(), demographic)) {
             throw new AuthorizationDeniedException(nirdeshak, AuthorizedAction.CREATE_SABHA);
+        }
+
+        if (provisioning.isKindRetired(command.sabhaKindId())) {
+            throw new SabhaKindRetiredException(command.sabhaKindId());
         }
 
         UUID sabhaId = command.weekly()

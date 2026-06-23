@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.RegionalTeamCityLookup;
 import org.sabha.common.SanyojakZoneLookup;
+import org.sabha.sabha.applicationservice.SabhaKindLifecycleService;
 import org.sabha.sabha.applicationservice.StructuralCreationService;
 import org.sabha.sabha.applicationservice.StructuralQueries;
 import org.sabha.sabha.domain.Demographic;
@@ -13,6 +14,7 @@ import org.sabha.sabha.domain.Track;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StructuralCreationController {
 
     private final StructuralCreationService creation;
+    private final SabhaKindLifecycleService sabhaKindLifecycle;
     private final StructuralQueries queries;
     private final CallerResolver callers;
     private final SanyojakZoneLookup sanyojakZones;
@@ -39,11 +42,13 @@ public class StructuralCreationController {
 
     public StructuralCreationController(
             StructuralCreationService creation,
+            SabhaKindLifecycleService sabhaKindLifecycle,
             StructuralQueries queries,
             CallerResolver callers,
             SanyojakZoneLookup sanyojakZones,
             RegionalTeamCityLookup regionalTeamCities) {
         this.creation = creation;
+        this.sabhaKindLifecycle = sabhaKindLifecycle;
         this.queries = queries;
         this.callers = callers;
         this.sanyojakZones = sanyojakZones;
@@ -66,6 +71,20 @@ public class StructuralCreationController {
     public ResponseEntity<CreatedResponse> createSabhaKind(
             @RequestBody CreateSabhaKindRequest req, Authentication authentication) {
         return created(creation.createSabhaKind(requireCaller(authentication), req.demographic(), req.track()));
+    }
+
+    @PostMapping("/bff/structure/sabha-kinds/{id}/retire")
+    public ResponseEntity<Void> retireSabhaKind(
+            @PathVariable UUID id, Authentication authentication) {
+        sabhaKindLifecycle.retire(requireCaller(authentication), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/bff/structure/sabha-kinds/{id}/reactivate")
+    public ResponseEntity<Void> reactivateSabhaKind(
+            @PathVariable UUID id, Authentication authentication) {
+        sabhaKindLifecycle.reactivate(requireCaller(authentication), id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/bff/structure/kshetras")

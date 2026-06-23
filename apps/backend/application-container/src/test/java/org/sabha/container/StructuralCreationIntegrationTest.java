@@ -139,6 +139,48 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
     }
 
     @Test
+    void mkRetiresThenReactivatesASabhaKindAttributedToThemAndReflectedInTheReadModel() throws Exception {
+        String mkSubject = keycloakSubject(MK_USERNAME);
+        UUID mkUser = localUserId(MK_USERNAME);
+        UUID kindId = createSabhaKind(mkSubject, "BALIKA", "BSS");
+
+        mockMvc.perform(authedPost(mkSubject, "/bff/structure/sabha-kinds/" + kindId + "/retire", ""))
+                .andExpect(status().isNoContent());
+
+        Object[] retired = jdbc.sql("SELECT retired_at, retired_by FROM sabha_kinds WHERE id = ?")
+                .param(kindId).query((rs, n) -> new Object[] {
+                    rs.getObject("retired_at"), rs.getObject("retired_by", UUID.class) }).single();
+        assertThat(retired[0]).isNotNull();
+        assertThat(retired[1]).isEqualTo(mkUser);
+
+        mockMvc.perform(get("/bff/structure/sabha-kinds")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id=='" + kindId + "')].retiredAt").isNotEmpty());
+
+        mockMvc.perform(authedPost(mkSubject, "/bff/structure/sabha-kinds/" + kindId + "/reactivate", ""))
+                .andExpect(status().isNoContent());
+
+        assertThat(isActive(kindId)).isTrue();
+    }
+
+    @Test
+    void aNonMkUserCannotRetireASabhaKind() throws Exception {
+        String mkSubject = keycloakSubject(MK_USERNAME);
+        UUID kindId = createSabhaKind(mkSubject, "YUVATI", "BSS");
+
+        mockMvc.perform(authedPost(SANCHALAK_SUBJECT, "/bff/structure/sabha-kinds/" + kindId + "/retire", ""))
+                .andExpect(status().isForbidden());
+
+        assertThat(isActive(kindId)).isTrue();
+    }
+
+    private boolean isActive(UUID kindId) {
+        return jdbc.sql("SELECT retired_at IS NULL FROM sabha_kinds WHERE id = ?")
+                .param(kindId).query(Boolean.class).single();
+    }
+
+    @Test
     void theKindBuilderRejectsASanyuktaSelectiveKind() throws Exception {
         String mkSubject = keycloakSubject(MK_USERNAME);
 
@@ -194,6 +236,14 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
 
     private UUID createCity(String mkSubject, String name) throws Exception {
         String body = mockMvc.perform(authedPost(mkSubject, "/bff/structure/cities", "{\"name\":\"" + name + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return UUID.fromString(body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1"));
+    }
+
+    private UUID createSabhaKind(String mkSubject, String demographic, String track) throws Exception {
+        String body = mockMvc.perform(authedPost(mkSubject, "/bff/structure/sabha-kinds",
+                        "{\"demographic\":\"" + demographic + "\",\"track\":\"" + track + "\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return UUID.fromString(body.replaceAll(".*\"id\":\"([^\"]+)\".*", "$1"));

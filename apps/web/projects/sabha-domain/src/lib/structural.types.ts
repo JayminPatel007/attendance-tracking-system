@@ -25,6 +25,8 @@ export interface SabhaKindView {
   id: string;
   demographic: Demographic;
   track: Track;
+  /** ISO instant once the kind has been soft-retired (ADR-0026); null/absent while active. */
+  retiredAt?: string | null;
 }
 
 export interface KshetraView {

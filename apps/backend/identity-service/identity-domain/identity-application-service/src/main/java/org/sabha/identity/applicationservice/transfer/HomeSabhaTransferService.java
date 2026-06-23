@@ -9,6 +9,8 @@ import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
 import org.sabha.identity.applicationservice.otp.OtpGateway;
 import org.sabha.identity.applicationservice.otp.OtpSendPolicy;
@@ -47,6 +49,7 @@ public class HomeSabhaTransferService {
     private final OtpCodeGenerator otpCodeGenerator;
     private final OtpHasher otpHasher;
     private final OtpSendPolicy otpSendPolicy;
+    private final StructuralHierarchyLookup hierarchy;
     private final DomainEventPublisher events;
     private final Clock clock;
 
@@ -59,6 +62,7 @@ public class HomeSabhaTransferService {
             OtpCodeGenerator otpCodeGenerator,
             OtpHasher otpHasher,
             OtpSendPolicy otpSendPolicy,
+            StructuralHierarchyLookup hierarchy,
             DomainEventPublisher events,
             Clock clock) {
         this.callerResolver = callerResolver;
@@ -69,6 +73,7 @@ public class HomeSabhaTransferService {
         this.otpCodeGenerator = otpCodeGenerator;
         this.otpHasher = otpHasher;
         this.otpSendPolicy = otpSendPolicy;
+        this.hierarchy = hierarchy;
         this.events = events;
         this.clock = clock;
     }
@@ -80,6 +85,10 @@ public class HomeSabhaTransferService {
         Set<Role> roles = roleAssignments.rolesForUserOnSabha(initiatingUserId, destinationSabhaId);
         if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {
             throw new TransferNotAuthorizedException(initiatingUserId, destinationSabhaId);
+        }
+
+        if (hierarchy.isSabhaKindRetired(destinationSabhaId)) {
+            throw new SabhaKindRetiredException(destinationSabhaId);
         }
 
         Person person = directory.findById(personId).orElseThrow();
