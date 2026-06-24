@@ -2501,6 +2501,26 @@
         "tags" : [ "sabha-definition-controller" ]
       }
     },
+    "/bff/sabhas/{id}" : {
+      "delete" : {
+        "operationId" : "deleteSabha",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-deletion-controller" ]
+      }
+    },
     "/bff/selection/deselect" : {
       "post" : {
         "operationId" : "deselect",
@@ -2661,6 +2681,26 @@
         "tags" : [ "structural-creation-controller" ]
       }
     },
+    "/bff/structure/cities/{id}" : {
+      "delete" : {
+        "operationId" : "deleteCity",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-deletion-controller" ]
+      }
+    },
     "/bff/structure/kshetras" : {
       "get" : {
         "operationId" : "listKshetras",
@@ -2715,6 +2755,26 @@
           }
         },
         "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/kshetras/{id}" : {
+      "delete" : {
+        "operationId" : "deleteKshetra",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-deletion-controller" ]
       }
     },
     "/bff/structure/my-cities" : {
@@ -2891,6 +2951,26 @@
           }
         },
         "tags" : [ "structural-creation-controller" ]
+      }
+    },
+    "/bff/structure/zones/{id}" : {
+      "delete" : {
+        "operationId" : "deleteZone",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structural-deletion-controller" ]
       }
     }
   },

@@ -1,5 +1,6 @@
 package org.sabha.sabha.dataaccess;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.sabha.sabha.applicationservice.ZoneRepository;
@@ -33,5 +34,26 @@ public class JdbcZoneRepository implements ZoneRepository {
                 .param(id)
                 .query(Boolean.class)
                 .single();
+    }
+
+    @Override
+    public Optional<UUID> cityIdOf(UUID id) {
+        return jdbc.sql("SELECT city_id FROM zones WHERE id = ?")
+                .param(id)
+                .query((rs, n) -> rs.getObject("city_id", UUID.class))
+                .optional();
+    }
+
+    @Override
+    public int kshetraCount(UUID id) {
+        return jdbc.sql("SELECT count(*) FROM kshetras WHERE zone_id = ?")
+                .param(id)
+                .query(Integer.class)
+                .single();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jdbc.sql("DELETE FROM zones WHERE id = ?").param(id).update();
     }
 }

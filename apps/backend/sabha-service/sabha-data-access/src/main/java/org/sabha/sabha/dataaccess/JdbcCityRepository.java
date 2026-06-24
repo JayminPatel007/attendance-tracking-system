@@ -33,4 +33,17 @@ public class JdbcCityRepository implements CityRepository {
                 .query(Boolean.class)
                 .single();
     }
+
+    @Override
+    public int zoneCount(UUID cityId) {
+        return jdbc.sql("SELECT count(*) FROM zones WHERE city_id = ?")
+                .param(cityId)
+                .query(Integer.class)
+                .single();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jdbc.sql("DELETE FROM cities WHERE id = ?").param(id).update();
+    }
 }

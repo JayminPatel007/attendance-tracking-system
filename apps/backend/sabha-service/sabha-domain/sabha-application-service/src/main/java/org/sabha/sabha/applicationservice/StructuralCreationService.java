@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates structural creation (ADR-0009, ADR-0024): authorize the caller via the
- * {@link StructuralCreationAuthorization} engine, build the aggregate (which
+ * {@link StructuralScopeAuthority} engine, build the aggregate (which
  * enforces its own invariants and stamps {@code createdBy} with the caller),
  * then persist. A denied decision becomes an
  * {@link AuthorizationDeniedException} (HTTP 403); domain-rule violations bubble
@@ -26,14 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StructuralCreationService {
 
-    private final StructuralCreationAuthorization authz;
+    private final StructuralScopeAuthority authz;
     private final CityRepository cities;
     private final ZoneRepository zones;
     private final KshetraRepository kshetras;
     private final SabhaKindRepository sabhaKinds;
 
     public StructuralCreationService(
-            StructuralCreationAuthorization authz,
+            StructuralScopeAuthority authz,
             CityRepository cities,
             ZoneRepository zones,
             KshetraRepository kshetras,
@@ -47,7 +47,7 @@ public class StructuralCreationService {
 
     @Transactional
     public UUID createCity(UUID caller, String name) {
-        if (!authz.canCreateStateStructure(caller)) {
+        if (!authz.holdsStateScope(caller)) {
             throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_CITY);
         }
         City city = City.create(name, caller);
@@ -57,7 +57,7 @@ public class StructuralCreationService {
 
     @Transactional
     public UUID createZone(UUID caller, UUID cityId, String name) {
-        if (!authz.canCreateZone(caller, cityId)) {
+        if (!authz.holdsCityScope(caller, cityId)) {
             throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_ZONE);
         }
         if (!cities.existsById(cityId)) {
@@ -70,7 +70,7 @@ public class StructuralCreationService {
 
     @Transactional
     public UUID createSabhaKind(UUID caller, Demographic demographic, Track track) {
-        if (!authz.canCreateStateStructure(caller)) {
+        if (!authz.holdsStateScope(caller)) {
             throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_SABHA_KIND);
         }
         if (sabhaKinds.exists(demographic, track)) {
@@ -83,7 +83,7 @@ public class StructuralCreationService {
 
     @Transactional
     public UUID createKshetra(UUID caller, UUID zoneId, String name) {
-        if (!authz.canCreateKshetra(caller, zoneId)) {
+        if (!authz.holdsZoneScope(caller, zoneId)) {
             throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_KSHETRA);
         }
         Kshetra kshetra = Kshetra.create(zoneId, name, caller);
