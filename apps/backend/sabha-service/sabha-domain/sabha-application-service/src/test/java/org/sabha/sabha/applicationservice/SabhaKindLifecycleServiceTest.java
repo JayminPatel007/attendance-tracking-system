@@ -30,8 +30,9 @@ class SabhaKindLifecycleServiceTest {
     private final FakeSabhaKinds sabhaKinds = new FakeSabhaKinds();
 
     private final SabhaKindLifecycleService service = new SabhaKindLifecycleService(
-            new StructuralCreationAuthorization(
-                    userId -> userId.equals(MK), userId -> List.of(), userId -> List.of()),
+            new StructuralScopeAuthority(
+                    userId -> userId.equals(MK), userId -> List.of(), userId -> List.of(),
+                    new FakeRoleAssignments()),
             sabhaKinds,
             Clock.fixed(NOW, ZoneOffset.UTC));
 

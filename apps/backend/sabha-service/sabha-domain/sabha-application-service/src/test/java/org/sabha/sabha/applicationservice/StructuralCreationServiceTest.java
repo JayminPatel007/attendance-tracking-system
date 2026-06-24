@@ -33,10 +33,11 @@ class StructuralCreationServiceTest {
     private final List<UUID> regionalTeamCities = new ArrayList<>();
 
     private final StructuralCreationService service = new StructuralCreationService(
-            new StructuralCreationAuthorization(
+            new StructuralScopeAuthority(
                     userId -> userId.equals(MK),
                     userId -> userId.equals(SANYOJAK) ? List.of(ZONE) : List.of(),
-                    userId -> userId.equals(REGIONAL_TEAM) ? List.copyOf(regionalTeamCities) : List.of()),
+                    userId -> userId.equals(REGIONAL_TEAM) ? List.copyOf(regionalTeamCities) : List.of(),
+                    new FakeRoleAssignments()),
             cities, zones, kshetras, sabhaKinds);
 
     @Test
@@ -136,6 +137,16 @@ class StructuralCreationServiceTest {
         public boolean existsById(UUID id) {
             return saved.stream().anyMatch(c -> c.id().equals(id));
         }
+
+        @Override
+        public int zoneCount(UUID cityId) {
+            return 0;
+        }
+
+        @Override
+        public void deleteById(UUID id) {
+            saved.removeIf(c -> c.id().equals(id));
+        }
     }
 
     private static final class FakeZones implements ZoneRepository {
@@ -150,6 +161,21 @@ class StructuralCreationServiceTest {
         public boolean existsById(UUID id) {
             return saved.stream().anyMatch(z -> z.id().equals(id));
         }
+
+        @Override
+        public java.util.Optional<UUID> cityIdOf(UUID id) {
+            return saved.stream().filter(z -> z.id().equals(id)).map(Zone::cityId).findFirst();
+        }
+
+        @Override
+        public int kshetraCount(UUID id) {
+            return 0;
+        }
+
+        @Override
+        public void deleteById(UUID id) {
+            saved.removeIf(z -> z.id().equals(id));
+        }
     }
 
     private static final class FakeKshetras implements KshetraRepository {
@@ -158,6 +184,21 @@ class StructuralCreationServiceTest {
         @Override
         public void save(Kshetra kshetra) {
             saved.add(kshetra);
+        }
+
+        @Override
+        public java.util.Optional<UUID> zoneIdOf(UUID id) {
+            return saved.stream().filter(k -> k.id().equals(id)).map(Kshetra::zoneId).findFirst();
+        }
+
+        @Override
+        public int sabhaCount(UUID id) {
+            return 0;
+        }
+
+        @Override
+        public void deleteById(UUID id) {
+            saved.removeIf(k -> k.id().equals(id));
         }
     }
 

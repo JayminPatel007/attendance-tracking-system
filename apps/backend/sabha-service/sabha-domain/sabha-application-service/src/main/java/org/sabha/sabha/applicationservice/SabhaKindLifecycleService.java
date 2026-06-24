@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * reactivate it.
  *
  * <p>Retiring and reactivating are State-level MK authority, the same authority
- * that registers kinds ({@link StructuralCreationAuthorization#canCreateStateStructure}).
+ * that registers kinds ({@link StructuralScopeAuthority#holdsStateScope}).
  * A denial becomes an {@link AuthorizationDeniedException} (HTTP 403); the
  * aggregate enforces the active/retired transition invariants. The retire is
  * attributed to the acting MK member on the {@link SabhaKind} itself.</p>
@@ -26,12 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SabhaKindLifecycleService {
 
-    private final StructuralCreationAuthorization authz;
+    private final StructuralScopeAuthority authz;
     private final SabhaKindRepository sabhaKinds;
     private final Clock clock;
 
     public SabhaKindLifecycleService(
-            StructuralCreationAuthorization authz, SabhaKindRepository sabhaKinds, Clock clock) {
+            StructuralScopeAuthority authz, SabhaKindRepository sabhaKinds, Clock clock) {
         this.authz = authz;
         this.sabhaKinds = sabhaKinds;
         this.clock = clock;
@@ -50,7 +50,7 @@ public class SabhaKindLifecycleService {
     }
 
     private SabhaKind requireStateAuthorityOver(UUID caller, UUID kindId, AuthorizedAction action) {
-        if (!authz.canCreateStateStructure(caller)) {
+        if (!authz.holdsStateScope(caller)) {
             throw new AuthorizationDeniedException(caller, action);
         }
         return sabhaKinds.findById(kindId).orElseThrow(() -> new SabhaKindNotFoundException(kindId));
