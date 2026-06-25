@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import jakarta.servlet.http.Cookie;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -230,6 +231,28 @@ class StructuralCreationIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(myZone.toString()));
+    }
+
+    @Test
+    void theCityAndZoneListsCarryTheirLiveChildCountsForTheDeleteGuard() throws Exception {
+        String mkSubject = keycloakSubject(MK_USERNAME);
+        UUID parentCity = createCity(mkSubject, "CountParent");
+        UUID emptyCity = createCity(mkSubject, "CountEmpty");
+        RegionalTeamMember rt = seedRegionalTeamMember(parentCity, "count");
+        UUID zoneId = createZone(rt.subject().toString(), parentCity, "CountZone");
+
+        // A populated City reports its Zone count; an empty one reports zero.
+        mockMvc.perform(get("/bff/structure/cities")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id=='" + parentCity + "')].zoneCount", contains(1)))
+                .andExpect(jsonPath("$[?(@.id=='" + emptyCity + "')].zoneCount", contains(0)));
+
+        // The Zone carries its Kshetra count — zero until a Sanyojak adds one.
+        mockMvc.perform(get("/bff/structure/zones")
+                        .with(oidcLogin().idToken(t -> t.subject(mkSubject))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id=='" + zoneId + "')].kshetraCount", contains(0)));
     }
 
     // --- helpers -----------------------------------------------------------

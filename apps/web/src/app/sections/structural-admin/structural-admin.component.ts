@@ -5,12 +5,14 @@ import {
   CityView,
   DEMOGRAPHICS,
   Demographic,
+  DeleteButtonComponent,
   KshetraView,
   SabhaKindView,
   TRACKS,
   Track,
   ZoneView,
   isAllowedKind,
+  notEmptyReason,
 } from 'sabha-domain';
 
 import { StructuralService } from './structural.service';
@@ -44,7 +46,7 @@ const TABS_BY_ACTOR: Record<Actor, Tab[]> = {
 @Component({
   selector: 'app-structural-admin',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DeleteButtonComponent],
   templateUrl: './structural-admin.component.html',
   styleUrl: './structural-admin.component.scss',
 })
@@ -55,6 +57,8 @@ export class StructuralAdminComponent implements OnInit {
   readonly tabLabel = TAB_LABELS;
   readonly demographics = DEMOGRAPHICS;
   readonly tracks = TRACKS;
+  /** The block-if-non-empty reason for a disabled delete, or null when deletable (ADR-0026). */
+  readonly notEmptyReason = notEmptyReason;
 
   readonly actor = computed<Actor>(() => {
     const session = this.sessions.session();
@@ -124,6 +128,11 @@ export class StructuralAdminComponent implements OnInit {
     });
   }
 
+  /** Deletes an empty City (the button is disabled while it has Zones — ADR-0026). */
+  deleteCity(city: CityView): void {
+    this.api.deleteCity(city.id).subscribe(() => this.refreshCities());
+  }
+
   private refreshCities(): void {
     this.api.listCities().subscribe((c) => this.cities.set(c));
   }
@@ -139,6 +148,11 @@ export class StructuralAdminComponent implements OnInit {
       this.newZoneCityId = '';
       this.refreshZones();
     });
+  }
+
+  /** Deletes an empty Zone (the button is disabled while it has Kshetras — ADR-0026). */
+  deleteZone(zone: ZoneView): void {
+    this.api.deleteZone(zone.id).subscribe(() => this.refreshZones());
   }
 
   private refreshZones(): void {
@@ -188,6 +202,11 @@ export class StructuralAdminComponent implements OnInit {
       this.newKshetraName = '';
       this.refreshKshetras();
     });
+  }
+
+  /** Deletes an empty Kshetra (the button is disabled while it has Sabhas — ADR-0026). */
+  deleteKshetra(kshetra: KshetraView): void {
+    this.api.deleteKshetra(kshetra.id).subscribe(() => this.refreshKshetras());
   }
 
   private refreshKshetras(): void {

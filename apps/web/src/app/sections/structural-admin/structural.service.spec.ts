@@ -101,4 +101,28 @@ describe('StructuralService', () => {
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
+
+  it('deletes a city via DELETE /bff/structure/cities/:id', () => {
+    service.deleteCity('c1').subscribe();
+
+    const req = http.expectOne('/bff/structure/cities/c1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
+  it('deletes a zone via DELETE /bff/structure/zones/:id', () => {
+    service.deleteZone('z1').subscribe();
+
+    const req = http.expectOne('/bff/structure/zones/z1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
+  it('deletes a kshetra via DELETE /bff/structure/kshetras/:id', () => {
+    service.deleteKshetra('ksh1').subscribe();
+
+    const req = http.expectOne('/bff/structure/kshetras/ksh1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
 });

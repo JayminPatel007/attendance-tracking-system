@@ -32,12 +32,22 @@ export class StructuralService {
     return this.http.post<CreatedResponse>('/bff/structure/cities', { name });
   }
 
+  /** Deletes an empty City (ADR-0026); a non-empty City yields a 409 the caller surfaces. */
+  deleteCity(id: string): Observable<void> {
+    return this.http.delete<void>(`/bff/structure/cities/${id}`);
+  }
+
   listZones(): Observable<ZoneView[]> {
     return this.http.get<ZoneView[]>('/bff/structure/zones');
   }
 
   createZone(cityId: string, name: string): Observable<CreatedResponse> {
     return this.http.post<CreatedResponse>('/bff/structure/zones', { cityId, name });
+  }
+
+  /** Deletes an empty Zone (ADR-0026); a non-empty Zone yields a 409 the caller surfaces. */
+  deleteZone(id: string): Observable<void> {
+    return this.http.delete<void>(`/bff/structure/zones/${id}`);
   }
 
   listSabhaKinds(): Observable<SabhaKindView[]> {
@@ -70,5 +80,10 @@ export class StructuralService {
 
   createKshetra(zoneId: string, name: string): Observable<CreatedResponse> {
     return this.http.post<CreatedResponse>('/bff/structure/kshetras', { zoneId, name });
+  }
+
+  /** Deletes an empty Kshetra (ADR-0026); a non-empty Kshetra yields a 409 the caller surfaces. */
+  deleteKshetra(id: string): Observable<void> {
+    return this.http.delete<void>(`/bff/structure/kshetras/${id}`);
   }
 }

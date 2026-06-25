@@ -1,1 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Shared list of structural entities with a trailing action (e.g. delete). Used
+   by the structural-admin (City/Zone/Kshetra/Sabha-kind) and Sabha-definition lists. */
+.entity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+
+  .empty {
+    color: #9ca3af;
+    border-style: dashed;
+  }
+
+  .muted {
+    color: #9ca3af;
+  }
+}

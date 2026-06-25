@@ -235,6 +235,58 @@ class StructuralDeletionIntegrationTest extends KeycloakIntegrationTest {
         assertThat(exists("sabhas", sabhaId)).isTrue();
     }
 
+    // --- my Sabhas (Nirdeshak deletion list) -------------------------------
+
+    @Test
+    void aNirdeshakListsOnlyTheSabhasInTheirScopeEachWithItsOccurrenceCount() throws Exception {
+        UUID myKshetra = seedKshetraRow();
+        UUID baalKind = seedSabhaKind("BAAL", "REGULAR");
+        UUID yuvakKind = seedSabhaKind("YUVAK", "REGULAR");
+        UUID mySabha = seedSabhaOfKind(myKshetra, baalKind, "REGULAR_BAAL");
+        seedOccurrence(mySabha);
+        // Same Kshetra, different demographic — outside a BAAL Nirdeshak's scope.
+        seedSabhaOfKind(myKshetra, yuvakKind, "REGULAR_YUVAK");
+        // Same demographic, different Kshetra — outside scope.
+        seedSabhaOfKind(seedKshetraRow(), baalKind, "REGULAR_BAAL");
+        Authority nirdeshak = seedNirdeshak(myKshetra, "BAAL", "mine");
+
+        mockMvc.perform(get("/bff/sabhas/mine")
+                        .with(oidcLogin().idToken(t -> t.subject(nirdeshak.subject().toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(mySabha.toString()))
+                .andExpect(jsonPath("$[0].demographic").value("BAAL"))
+                .andExpect(jsonPath("$[0].occurrenceCount").value(1));
+    }
+
+    @Test
+    void aUserWithNoNirdeshakScopeListsNoSabhas() throws Exception {
+        UUID kshetra = seedKshetraRow();
+        seedSabhaOfKind(kshetra, seedSabhaKind("BAAL", "REGULAR"), "REGULAR_BAAL");
+
+        mockMvc.perform(get("/bff/sabhas/mine")
+                        .with(oidcLogin().idToken(t -> t.subject(SANCHALAK_SUBJECT))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    private UUID seedSabhaKind(String demographic, String track) {
+        UUID id = UUID.randomUUID();
+        UUID creator = seedUser("kind-creator-" + demographic + "-" + track).userId();
+        jdbc.sql("INSERT INTO sabha_kinds (id, demographic, track, created_by) VALUES (?, ?, ?, ?)")
+                .param(id).param(demographic).param(track).param(creator).update();
+        return id;
+    }
+
+    private UUID seedSabhaOfKind(UUID kshetraId, UUID kindId, String sabhaKindToken) {
+        UUID sabhaId = UUID.randomUUID();
+        jdbc.sql("""
+                INSERT INTO sabhas (id, kshetra_id, sabha_kind, sabha_kind_id, schedule_shape, standing_venue)
+                VALUES (?, ?, ?, ?, 'MONTHLY_AD_HOC', 'Main Hall')
+                """).param(sabhaId).param(kshetraId).param(sabhaKindToken).param(kindId).update();
+        return sabhaId;
+    }
+
     // --- helpers -----------------------------------------------------------
 
     private UUID createCity(String mkSubject, String name) throws Exception {
