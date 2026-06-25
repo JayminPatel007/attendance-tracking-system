@@ -49,4 +49,20 @@ describe('SabhaDefinitionService', () => {
     expect(req.request.params.get('zoneId')).toBe('zone1');
     req.flush([]);
   });
+
+  it('lists the caller’s own Sabhas from GET /bff/sabhas/mine', () => {
+    service.listMySabhas().subscribe();
+
+    const req = http.expectOne('/bff/sabhas/mine');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('deletes an empty Sabha via DELETE /bff/sabhas/:id', () => {
+    service.deleteSabha('s1').subscribe();
+
+    const req = http.expectOne('/bff/sabhas/s1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
 });

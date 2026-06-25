@@ -21,22 +21,25 @@ function sessionStub(authority: Authority): Partial<SessionService> {
 
 function apiSpy(): jasmine.SpyObj<StructuralService> {
   const spy = jasmine.createSpyObj<StructuralService>('StructuralService', [
-    'listCities', 'createCity', 'listZones', 'createZone',
+    'listCities', 'createCity', 'deleteCity', 'listZones', 'createZone', 'deleteZone',
     'listSabhaKinds', 'createSabhaKind', 'retireSabhaKind', 'reactivateSabhaKind',
-    'myCities', 'myZones', 'listKshetras', 'createKshetra',
+    'myCities', 'myZones', 'listKshetras', 'createKshetra', 'deleteKshetra',
   ]);
-  spy.listCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai' }]));
-  spy.listZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai' }]));
+  spy.listCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai', zoneCount: 0 }]));
+  spy.listZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 0 }]));
   spy.listSabhaKinds.and.returnValue(of([{ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' }]));
-  spy.myCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai' }]));
-  spy.myZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai' }]));
-  spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'z1' }]));
+  spy.myCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai', zoneCount: 0 }]));
+  spy.myZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 0 }]));
+  spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'z1', sabhaCount: 0 }]));
   spy.createCity.and.returnValue(of({ id: 'new' }));
+  spy.deleteCity.and.returnValue(of(void 0));
   spy.createZone.and.returnValue(of({ id: 'new' }));
+  spy.deleteZone.and.returnValue(of(void 0));
   spy.createSabhaKind.and.returnValue(of({ id: 'new' }));
   spy.retireSabhaKind.and.returnValue(of(void 0));
   spy.reactivateSabhaKind.and.returnValue(of(void 0));
   spy.createKshetra.and.returnValue(of({ id: 'new' }));
+  spy.deleteKshetra.and.returnValue(of(void 0));
   return spy;
 }
 
@@ -104,7 +107,7 @@ describe('StructuralAdminComponent', () => {
 
   it('lets a Regional Team member create a Zone in one of their cities then refreshes the zone list', () => {
     const { fixture, api } = mount('regional-team');
-    expect(fixture.componentInstance.myCities()).toEqual([{ id: 'c1', name: 'Mumbai' }]);
+    expect(fixture.componentInstance.myCities()).toEqual([{ id: 'c1', name: 'Mumbai', zoneCount: 0 }]);
     api.listZones.calls.reset();
 
     fixture.componentInstance.newZoneName = 'Mumbai South';
@@ -151,6 +154,44 @@ describe('StructuralAdminComponent', () => {
     expect(c.isRetired({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' })).toBeFalse();
     expect(c.isRetired(
       { id: 'k2', demographic: 'YUVAK', track: 'REGULAR', retiredAt: '2026-06-19T10:00:00Z' })).toBeTrue();
+  });
+
+  it('deletes an empty city then refreshes the city list', () => {
+    const { fixture, api } = mount('mk');
+    api.listCities.calls.reset();
+
+    fixture.componentInstance.deleteCity({ id: 'c1', name: 'Mumbai', zoneCount: 0 });
+
+    expect(api.deleteCity).toHaveBeenCalledWith('c1');
+    expect(api.listCities).toHaveBeenCalled();
+  });
+
+  it('disables the city delete with the block reason while it still has Zones', () => {
+    const { fixture } = mount('mk', (api) =>
+      api.listCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai', zoneCount: 3 }])));
+    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.entity-list button.delete');
+
+    expect(btn?.disabled).toBeTrue();
+    expect(btn?.textContent).toContain('has 3 Zones');
+  });
+
+  it('enables the city delete when the city is empty', () => {
+    const { fixture } = mount('mk', (api) =>
+      api.listCities.and.returnValue(of([{ id: 'c1', name: 'Surat', zoneCount: 0 }])));
+    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.entity-list button.delete');
+
+    expect(btn?.disabled).toBeFalse();
+    expect(btn?.textContent).toContain('Delete');
+  });
+
+  it('a Sanyojak deletes an empty Kshetra then refreshes its zone list', () => {
+    const { fixture, api } = mount('sanyojak');
+    api.listKshetras.calls.reset();
+
+    fixture.componentInstance.deleteKshetra({ id: 'ksh1', name: 'Andheri-7', zoneId: 'z1', sabhaCount: 0 });
+
+    expect(api.deleteKshetra).toHaveBeenCalledWith('ksh1');
+    expect(api.listKshetras).toHaveBeenCalled();
   });
 
   it('disallows a Sanyukta selective kind in the builder but allows the regular one', () => {

@@ -5,6 +5,7 @@
  * Sah-Sanchalak) in a single transaction.
  */
 import { NameCandidate } from 'identity-domain';
+import { Demographic, Track } from 'sabha-domain';
 
 /** Java `DayOfWeek` is serialized by its enum name. */
 export type DayOfWeek =
@@ -48,6 +49,21 @@ export interface DefineSabhaRequest {
   standingVenue: string;
   sanchalak: AppointeePayload;
   sahSanchalak?: AppointeePayload | null;
+}
+
+/**
+ * A Sabha in the Nirdeshak's management list (ADR-0026), mirroring the backend
+ * `StructuralQueries.SabhaView`. {@code occurrenceCount} gates deletion: the
+ * delete button is disabled while it is non-zero (block-if-non-empty).
+ */
+export interface SabhaSummary {
+  id: string;
+  kshetraId: string;
+  kshetraName: string;
+  demographic: Demographic;
+  track: Track;
+  standingVenue: string;
+  occurrenceCount: number;
 }
 
 export interface DefineSabhaResponse {

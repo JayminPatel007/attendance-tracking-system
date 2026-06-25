@@ -7,6 +7,20 @@
     </p>
   </header>
 
+  <section class="my-sabhas">
+    <h3>Your Sabhas</h3>
+    <ul class="entity-list">
+      @for (s of mySabhas(); track s.id) {
+        <li>
+          <span>{{ sabhaLabel(s) }} <span class="muted">· {{ s.standingVenue }}</span></span>
+          <app-delete-button [reason]="notEmptyReason(s.occurrenceCount, 'Occurrence')" (confirmed)="deleteSabha(s)" />
+        </li>
+      } @empty {
+        <li class="empty">You have no standing Sabhas yet.</li>
+      }
+    </ul>
+  </section>
+
   @if (stage() === 'done') {
     <div class="done" role="status">
       <p>Sabha created and its Sanchalak appointed.</p>

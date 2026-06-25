@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 
 import { SabhaDefinitionComponent } from './sabha-definition.component';
 import { SabhaDefinitionService } from './sabha-definition.service';
-import { DefineSabhaResponse } from './sabha-definition.types';
+import { DefineSabhaResponse, SabhaSummary } from './sabha-definition.types';
 
 function created(): DefineSabhaResponse {
   return {
@@ -17,12 +17,14 @@ function created(): DefineSabhaResponse {
 
 function apiSpy(): jasmine.SpyObj<SabhaDefinitionService> {
   const spy = jasmine.createSpyObj<SabhaDefinitionService>('SabhaDefinitionService', [
-    'define', 'listSabhaKinds', 'listZones', 'listKshetras',
+    'define', 'listSabhaKinds', 'listZones', 'listKshetras', 'listMySabhas', 'deleteSabha',
   ]);
   spy.define.and.returnValue(of(created()));
   spy.listSabhaKinds.and.returnValue(of([{ id: 'kind1', demographic: 'YUVAK', track: 'REGULAR' }]));
-  spy.listZones.and.returnValue(of([{ id: 'zone1', name: 'Andheri', cityId: 'c1', cityName: 'Mumbai' }]));
-  spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'zone1' }]));
+  spy.listZones.and.returnValue(of([{ id: 'zone1', name: 'Andheri', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 1 }]));
+  spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'zone1', sabhaCount: 1 }]));
+  spy.listMySabhas.and.returnValue(of([]));
+  spy.deleteSabha.and.returnValue(of(void 0));
   return spy;
 }
 
@@ -42,8 +44,16 @@ interface Mounted {
   directory: jasmine.SpyObj<DirectoryService>;
 }
 
-function mount(): Mounted {
+function sabha(overrides: Partial<SabhaSummary> & { id: string }): SabhaSummary {
+  return {
+    kshetraId: 'ksh1', kshetraName: 'Andheri-7', demographic: 'YUVAK', track: 'REGULAR',
+    standingVenue: 'Sansthan Hall', occurrenceCount: 0, ...overrides,
+  };
+}
+
+function mount(configure?: (api: jasmine.SpyObj<SabhaDefinitionService>) => void): Mounted {
   const api = apiSpy();
+  configure?.(api);
   const directory = directorySpy();
   TestBed.configureTestingModule({
     imports: [SabhaDefinitionComponent],
@@ -182,5 +192,40 @@ describe('SabhaDefinitionComponent', () => {
 
     expect(c.error()).toContain('not authorized');
     expect(c.stage()).toBe('editing');
+  });
+
+  it('loads the caller’s own Sabhas on init', () => {
+    const { fixture, api } = mount();
+
+    expect(api.listMySabhas).toHaveBeenCalled();
+    expect(fixture.componentInstance.mySabhas().length).toBe(0);
+  });
+
+  it('deletes an empty Sabha then refreshes the list', () => {
+    const { fixture, api } = mount();
+    api.listMySabhas.calls.reset();
+
+    fixture.componentInstance.deleteSabha(sabha({ id: 's1', occurrenceCount: 0 }));
+
+    expect(api.deleteSabha).toHaveBeenCalledWith('s1');
+    expect(api.listMySabhas).toHaveBeenCalled();
+  });
+
+  it('disables the Sabha delete with the block reason while it has Occurrences', () => {
+    const { fixture } = mount((api) =>
+      api.listMySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 4 })])));
+    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.my-sabhas button.delete');
+
+    expect(btn?.disabled).toBeTrue();
+    expect(btn?.textContent).toContain('has 4 Occurrences');
+  });
+
+  it('enables the Sabha delete when the Sabha has no Occurrences', () => {
+    const { fixture } = mount((api) =>
+      api.listMySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 0 })])));
+    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.my-sabhas button.delete');
+
+    expect(btn?.disabled).toBeFalse();
+    expect(btn?.textContent).toContain('Delete');
   });
 });

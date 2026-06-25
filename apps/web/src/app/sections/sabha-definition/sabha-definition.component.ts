@@ -2,15 +2,33 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PersonPickerComponent } from 'identity-domain';
-import { KshetraView, SabhaKindView, ZoneView, demographicLabel } from 'sabha-domain';
+import {
+  DeleteButtonComponent,
+  KshetraView,
+  SabhaKindView,
+  ZoneView,
+  demographicLabel,
+  notEmptyReason,
+} from 'sabha-domain';
 
 import { errorMessageFor } from '../../shared/http-error';
 import { SabhaDefinitionService } from './sabha-definition.service';
-import { AppointeePayload, DAYS_OF_WEEK, DayOfWeek, DefineSabhaRequest } from './sabha-definition.types';
+import {
+  AppointeePayload,
+  DAYS_OF_WEEK,
+  DayOfWeek,
+  DefineSabhaRequest,
+  SabhaSummary,
+} from './sabha-definition.types';
 
 /** Human label for a kind dropdown option, e.g. "Yuvak Sabha (YSS)". */
 export function kindLabel(kind: SabhaKindView): string {
   return `${demographicLabel(kind.demographic)} Sabha (${kind.track})`;
+}
+
+/** Human label for a Sabha in the management list, e.g. "Yuvak Sabha (YSS) — Andheri-7". */
+export function sabhaLabel(sabha: SabhaSummary): string {
+  return `${demographicLabel(sabha.demographic)} Sabha (${sabha.track}) — ${sabha.kshetraName}`;
 }
 
 type Stage = 'editing' | 'done';
@@ -42,7 +60,7 @@ function payloadOf(picker: PersonPickerComponent): AppointeePayload | null {
 @Component({
   selector: 'app-sabha-definition',
   standalone: true,
-  imports: [FormsModule, PersonPickerComponent],
+  imports: [FormsModule, PersonPickerComponent, DeleteButtonComponent],
   templateUrl: './sabha-definition.component.html',
   styleUrl: './sabha-definition.component.scss',
 })
@@ -51,10 +69,15 @@ export class SabhaDefinitionComponent implements OnInit {
 
   readonly daysOfWeek = DAYS_OF_WEEK;
   readonly kindLabel = kindLabel;
+  readonly sabhaLabel = sabhaLabel;
+  /** The block-if-non-empty reason for a disabled delete, or null when deletable (ADR-0026). */
+  readonly notEmptyReason = notEmptyReason;
 
   readonly kinds = signal<SabhaKindView[]>([]);
   readonly zones = signal<ZoneView[]>([]);
   readonly kshetras = signal<KshetraView[]>([]);
+  /** The caller's standing Sabhas, listed for deletion (ADR-0026). */
+  readonly mySabhas = signal<SabhaSummary[]>([]);
 
   sabhaKindId = '';
   zoneId = '';
@@ -72,6 +95,16 @@ export class SabhaDefinitionComponent implements OnInit {
   ngOnInit(): void {
     this.api.listSabhaKinds().subscribe((k) => this.kinds.set(k));
     this.api.listZones().subscribe((z) => this.zones.set(z));
+    this.refreshMySabhas();
+  }
+
+  /** Deletes an empty Sabha (the button is disabled while it has Occurrences — ADR-0026). */
+  deleteSabha(sabha: SabhaSummary): void {
+    this.api.deleteSabha(sabha.id).subscribe(() => this.refreshMySabhas());
+  }
+
+  private refreshMySabhas(): void {
+    this.api.listMySabhas().subscribe((s) => this.mySabhas.set(s));
   }
 
   onZoneChange(zoneId: string): void {

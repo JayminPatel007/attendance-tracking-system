@@ -26,7 +26,10 @@
       <div class="panel">
         <ul class="entity-list">
           @for (city of cities(); track city.id) {
-            <li>{{ city.name }}</li>
+            <li>
+              <span>{{ city.name }}</span>
+              <app-delete-button [reason]="notEmptyReason(city.zoneCount, 'Zone')" (confirmed)="deleteCity(city)" />
+            </li>
           } @empty {
             <li class="empty">No Cities yet.</li>
           }
@@ -46,7 +49,10 @@
       <div class="panel">
         <ul class="entity-list">
           @for (zone of zones(); track zone.id) {
-            <li>{{ zone.name }} <span class="muted">in {{ zone.cityName }}</span></li>
+            <li>
+              <span>{{ zone.name }} <span class="muted">in {{ zone.cityName }}</span></span>
+              <app-delete-button [reason]="notEmptyReason(zone.kshetraCount, 'Kshetra')" (confirmed)="deleteZone(zone)" />
+            </li>
           } @empty {
             <li class="empty">No Zones yet.</li>
           }
@@ -128,7 +134,10 @@
         } @else {
           <ul class="entity-list">
             @for (kshetra of kshetras(); track kshetra.id) {
-              <li>{{ kshetra.name }}</li>
+              <li>
+                <span>{{ kshetra.name }}</span>
+                <app-delete-button [reason]="notEmptyReason(kshetra.sabhaCount, 'Sabha')" (confirmed)="deleteKshetra(kshetra)" />
+              </li>
             } @empty {
               <li class="empty">No Kshetras in this Zone yet.</li>
             }

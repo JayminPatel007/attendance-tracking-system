@@ -6,3 +6,4 @@
  */
 export * from './lib/sabha-kind-label';
 export * from './lib/structural.types';
+export * from './lib/delete-button.component';

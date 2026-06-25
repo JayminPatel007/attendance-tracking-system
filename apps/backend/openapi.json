@@ -273,6 +273,10 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "zoneCount" : {
+            "format" : "int32",
+            "type" : "integer"
           }
         },
         "type" : "object"
@@ -560,6 +564,10 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "sabhaCount" : {
+            "format" : "int32",
+            "type" : "integer"
           },
           "zoneId" : {
             "format" : "uuid",
@@ -1011,6 +1019,37 @@
         },
         "type" : "object"
       },
+      "SabhaView" : {
+        "properties" : {
+          "demographic" : {
+            "enum" : [ "BAAL", "BALIKA", "YUVAK", "YUVATI", "SANYUKTA" ],
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "kshetraId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "kshetraName" : {
+            "type" : "string"
+          },
+          "occurrenceCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "standingVenue" : {
+            "type" : "string"
+          },
+          "track" : {
+            "enum" : [ "REGULAR", "BSS", "YSS" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "SahNirdeshakCapResponse" : {
         "properties" : {
           "active" : {
@@ -1256,6 +1295,10 @@
           "id" : {
             "format" : "uuid",
             "type" : "string"
+          },
+          "kshetraCount" : {
+            "format" : "int32",
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"
@@ -2499,6 +2542,27 @@
           }
         },
         "tags" : [ "sabha-definition-controller" ]
+      }
+    },
+    "/bff/sabhas/mine" : {
+      "get" : {
+        "operationId" : "mySabhas",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/SabhaView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sabha-list-controller" ]
       }
     },
     "/bff/sabhas/{id}" : {
