@@ -2034,6 +2034,26 @@
         "tags" : [ "role-appointment-controller" ]
       }
     },
+    "/bff/appointments/{id}/revoke" : {
+      "post" : {
+        "operationId" : "revoke",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "role-appointment-controller" ]
+      }
+    },
     "/bff/audit-log" : {
       "get" : {
         "operationId" : "list_1",
