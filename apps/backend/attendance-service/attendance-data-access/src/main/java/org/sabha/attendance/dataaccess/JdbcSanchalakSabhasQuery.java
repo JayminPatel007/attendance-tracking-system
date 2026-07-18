@@ -30,6 +30,7 @@ public class JdbcSanchalakSabhasQuery implements SanchalakSabhasQuery {
                 JOIN sabhas s ON s.id = ra.sabha_id
                 WHERE ra.user_id = ?
                   AND ra.role = 'SANCHALAK'
+                  AND ra.revoked_at IS NULL
                   AND s.schedule_shape = 'MONTHLY_AD_HOC'
                 ORDER BY s.standing_venue
                 """)

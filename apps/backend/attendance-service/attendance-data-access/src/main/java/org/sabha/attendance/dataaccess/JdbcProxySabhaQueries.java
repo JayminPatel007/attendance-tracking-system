@@ -50,6 +50,7 @@ public class JdbcProxySabhaQueries implements ProxySabhaQueries {
                 JOIN sabhas s ON s.id = na.sabha_id
                 JOIN kshetras k ON k.id = s.kshetra_id
                 LEFT JOIN role_assignments ra ON ra.sabha_id = s.id AND ra.role = 'SANCHALAK'
+                       AND ra.revoked_at IS NULL
                 LEFT JOIN users u ON u.id = ra.user_id
                 LEFT JOIN persons p ON p.id = u.person_id
                 LEFT JOIN user_activity ua ON ua.user_id = u.id

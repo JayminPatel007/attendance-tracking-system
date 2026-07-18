@@ -41,6 +41,7 @@ public class JdbcAppointerAuthorityLookup implements AppointerAuthorityLookup {
                 SELECT EXISTS (
                     SELECT 1 FROM role_assignments
                     WHERE user_id = ? AND role = ? AND %s = ? AND demographic = ?
+                      AND revoked_at IS NULL
                 )
                 """.formatted(scopeColumn))
                 .param(userId)

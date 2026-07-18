@@ -22,16 +22,19 @@ public class JdbcAuditScopeLookup implements AuditScopeLookup {
     private static final String KSHETRAS_SQL = """
             SELECT DISTINCT kshetra_id FROM role_assignments
             WHERE user_id = :userId AND role IN ('NIRDESHAK', 'SAH_NIRDESHAK') AND kshetra_id IS NOT NULL
+              AND revoked_at IS NULL
             """;
 
     private static final String ZONES_SQL = """
             SELECT DISTINCT zone_id FROM role_assignments
             WHERE user_id = :userId AND role = 'SANYOJAK' AND zone_id IS NOT NULL
+              AND revoked_at IS NULL
             """;
 
     private static final String CITIES_SQL = """
             SELECT DISTINCT city_id FROM role_assignments
             WHERE user_id = :userId AND role = 'REGIONAL_TEAM' AND city_id IS NOT NULL
+              AND revoked_at IS NULL
             """;
 
     private final JdbcClient jdbc;

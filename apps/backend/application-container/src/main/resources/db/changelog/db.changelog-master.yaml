@@ -45,3 +45,5 @@ databaseChangeLog:
       file: db/changelog/issue-77/001-hash-otp-at-rest.sql
   - include:
       file: db/changelog/issue-87/001-sabha-kind-retire.sql
+  - include:
+      file: db/changelog/issue-89/001-role-revocation.sql

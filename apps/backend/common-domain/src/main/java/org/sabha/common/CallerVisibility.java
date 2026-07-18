@@ -67,7 +67,7 @@ public final class CallerVisibility {
             branches.add("""
                     EXISTS (
                       SELECT 1 FROM role_assignments ra
-                      WHERE ra.user_id = :userId AND (
+                      WHERE ra.user_id = :userId AND ra.revoked_at IS NULL AND (
                         %s
                       )
                     )""".formatted(roleClauses.toString()));

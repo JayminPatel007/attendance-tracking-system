@@ -38,6 +38,7 @@ public class JdbcCurrentOccurrenceQuery implements CurrentOccurrenceQuery {
                       AND o.state IN ('SCHEDULED', 'RESCHEDULED', 'CANCELLED')
                 WHERE ra.user_id = ?
                   AND ra.role = 'SANCHALAK'
+                  AND ra.revoked_at IS NULL
                 ORDER BY o.occurrence_date DESC
                 LIMIT 1
                 """)

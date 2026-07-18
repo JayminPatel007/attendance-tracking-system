@@ -33,7 +33,7 @@ public class JdbcAppointerContactLookup implements AppointerContactLookup {
                 FROM role_assignments ra
                 JOIN users u ON u.id = ra.appointed_by
                 JOIN persons p ON p.id = u.person_id
-                WHERE ra.user_id = ? AND ra.appointed_by IS NOT NULL
+                WHERE ra.user_id = ? AND ra.appointed_by IS NOT NULL AND ra.revoked_at IS NULL
                 """)
                 .param(targetUserId)
                 .query((rs, n) -> new AppointerContact(rs.getString("name"), rs.getString("mobile")))
@@ -47,7 +47,7 @@ public class JdbcAppointerContactLookup implements AppointerContactLookup {
                 FROM role_assignments ra
                 JOIN users u ON u.id = ra.user_id
                 JOIN persons p ON p.id = u.person_id
-                WHERE ra.role = ?
+                WHERE ra.role = ? AND ra.revoked_at IS NULL
                 """)
                 .param(MK_ROLE)
                 .query((rs, n) -> new AppointerContact(rs.getString("name"), rs.getString("mobile")))

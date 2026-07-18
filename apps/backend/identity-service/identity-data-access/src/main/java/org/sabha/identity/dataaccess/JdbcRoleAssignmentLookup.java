@@ -31,7 +31,7 @@ public class JdbcRoleAssignmentLookup implements RoleAssignmentLookup {
     @Override
     public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
         Set<Role> roles = EnumSet.noneOf(Role.class);
-        jdbc.sql("SELECT role FROM role_assignments WHERE user_id = ? AND sabha_id = ?")
+        jdbc.sql("SELECT role FROM role_assignments WHERE user_id = ? AND sabha_id = ? AND revoked_at IS NULL")
                 .param(userId)
                 .param(sabhaId)
                 .query((rs, n) -> rs.getString("role"))
@@ -46,6 +46,7 @@ public class JdbcRoleAssignmentLookup implements RoleAssignmentLookup {
         jdbc.sql("""
                 SELECT role FROM role_assignments
                 WHERE user_id = ? AND kshetra_id = ? AND demographic = ?
+                  AND revoked_at IS NULL
                 """)
                 .param(userId)
                 .param(kshetraId)
@@ -61,6 +62,7 @@ public class JdbcRoleAssignmentLookup implements RoleAssignmentLookup {
         return jdbc.sql("""
                 SELECT user_id FROM role_assignments
                 WHERE sabha_id = ? AND role = 'SANCHALAK'
+                  AND revoked_at IS NULL
                 LIMIT 1
                 """)
                 .param(sabhaId)

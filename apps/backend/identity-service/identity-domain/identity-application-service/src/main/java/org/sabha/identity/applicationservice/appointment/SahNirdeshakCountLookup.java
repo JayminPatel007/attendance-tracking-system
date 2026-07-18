@@ -10,8 +10,8 @@ import java.util.UUID;
  * matched as a string token to stay aligned with {@link org.sabha.common.SabhaScope}
  * across the bounded-context seam, mirroring {@link AppointerAuthorityLookup}.
  *
- * <p>"Active" excludes revoked assignments; role-assignment revocation is not yet a
- * modelled state, so today every matching row counts.</p>
+ * <p>"Active" excludes revoked assignments: a row whose {@code revoked_at} is set
+ * (ADR-0026) no longer counts against the cap, so a revocation frees a slot.</p>
  */
 public interface SahNirdeshakCountLookup {
 

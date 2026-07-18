@@ -30,6 +30,7 @@ public class JdbcSanyojakZoneLookup implements SanyojakZoneLookup {
         return jdbc.sql("""
                 SELECT zone_id FROM role_assignments
                 WHERE user_id = ? AND role = ? AND zone_id IS NOT NULL
+                  AND revoked_at IS NULL
                 """)
                 .param(userId)
                 .param(SANYOJAK_ROLE)

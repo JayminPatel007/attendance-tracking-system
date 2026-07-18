@@ -488,6 +488,11 @@ class RoleAppointmentServiceTest {
         public void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange) {
             throw new UnsupportedOperationException("not used by role appointment");
         }
+
+        @Override
+        public void disableUser(UUID keycloakUserId) {
+            throw new UnsupportedOperationException("not used by role appointment");
+        }
     }
 
     private static final class FakeAppointments implements RoleAppointmentRepository {

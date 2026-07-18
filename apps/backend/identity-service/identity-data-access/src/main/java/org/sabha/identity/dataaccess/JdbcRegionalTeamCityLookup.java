@@ -34,6 +34,7 @@ public class JdbcRegionalTeamCityLookup implements RegionalTeamCityLookup {
         return jdbc.sql("""
                 SELECT DISTINCT city_id FROM role_assignments
                 WHERE user_id = ? AND role = ? AND city_id IS NOT NULL
+                  AND revoked_at IS NULL
                 """)
                 .param(userId)
                 .param(REGIONAL_TEAM_ROLE)

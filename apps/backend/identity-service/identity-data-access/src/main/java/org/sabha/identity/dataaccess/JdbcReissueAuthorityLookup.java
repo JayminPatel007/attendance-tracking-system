@@ -27,7 +27,7 @@ public class JdbcReissueAuthorityLookup implements ReissueAuthorityLookup {
         return jdbc.sql("""
                 SELECT EXISTS (
                     SELECT 1 FROM role_assignments
-                    WHERE user_id = ? AND appointed_by = ?
+                    WHERE user_id = ? AND appointed_by = ? AND revoked_at IS NULL
                 )
                 """)
                 .param(targetUserId)

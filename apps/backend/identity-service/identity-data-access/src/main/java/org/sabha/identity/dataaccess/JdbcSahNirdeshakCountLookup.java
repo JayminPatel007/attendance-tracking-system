@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 /**
  * Counts active Sah-Nirdeshaks for a (Kshetra, demographic) from
  * {@code role_assignments} (ADR-0025 §3), so {@code RoleAppointmentService} can
- * cap appointments at two. Role-assignment revocation is not yet a modelled state,
- * so every matching row is active and counts.
+ * cap appointments at two. Revoked rows ({@code revoked_at} set) are excluded, so
+ * a revocation frees a slot under the cap (ADR-0026).
  */
 @Repository
 public class JdbcSahNirdeshakCountLookup implements SahNirdeshakCountLookup {
@@ -26,6 +26,7 @@ public class JdbcSahNirdeshakCountLookup implements SahNirdeshakCountLookup {
         return jdbc.sql("""
                 SELECT COUNT(*) FROM role_assignments
                 WHERE role = 'SAH_NIRDESHAK' AND kshetra_id = ? AND demographic = ?
+                  AND revoked_at IS NULL
                 """)
                 .param(kshetraId)
                 .param(demographic)

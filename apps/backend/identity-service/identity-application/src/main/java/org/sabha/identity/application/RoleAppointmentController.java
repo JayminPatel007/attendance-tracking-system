@@ -9,6 +9,7 @@ import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
 import org.sabha.identity.applicationservice.appointment.AppointmentScope;
 import org.sabha.identity.applicationservice.directory.NameCandidate;
+import org.sabha.identity.applicationservice.appointment.RevokeRole;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentCommand;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentService;
 import org.sabha.identity.applicationservice.appointment.SahNirdeshakCap;
@@ -16,6 +17,7 @@ import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,10 +39,13 @@ public class RoleAppointmentController {
 
     private final RoleAppointmentService appointments;
     private final SahNirdeshakCap sahNirdeshakCap;
+    private final RevokeRole revokeRole;
 
-    public RoleAppointmentController(RoleAppointmentService appointments, SahNirdeshakCap sahNirdeshakCap) {
+    public RoleAppointmentController(
+            RoleAppointmentService appointments, SahNirdeshakCap sahNirdeshakCap, RevokeRole revokeRole) {
         this.appointments = appointments;
         this.sahNirdeshakCap = sahNirdeshakCap;
+        this.revokeRole = revokeRole;
     }
 
     @PostMapping("/bff/appointments")
@@ -53,6 +58,21 @@ public class RoleAppointmentController {
         }
         return ResponseEntity.status(201).body(
                 AppointmentResponse.appointed(result.personId(), result.userId(), result.assignmentId()));
+    }
+
+    /**
+     * Revokes a role assignment as a state change (ADR-0026): the current holder
+     * of the appointing scope — not necessarily whoever appointed it — marks the
+     * row revoked, the User loses login on their last active role, and no
+     * appointees or structure cascade. Authority, the Regional Team last-one-out
+     * guard (409), and unknown/already-revoked ids (404) are arbitrated by
+     * {@link RevokeRole} and mapped by the global exception handler. Returns 204.
+     */
+    @PostMapping("/bff/appointments/{id}/revoke")
+    public ResponseEntity<Void> revoke(@PathVariable UUID id, Authentication authentication) {
+        UUID subject = UUID.fromString(authentication.getName());
+        revokeRole.revoke(subject, id);
+        return ResponseEntity.noContent().build();
     }
 
     /**

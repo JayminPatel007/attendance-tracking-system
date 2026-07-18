@@ -228,6 +228,11 @@ class PasswordReissueServiceTest {
             this.lastRawPassword = rawPassword;
             this.lastRequirePasswordChange = requirePasswordChange;
         }
+
+        @Override
+        public void disableUser(UUID keycloakUserId) {
+            throw new UnsupportedOperationException("not used by password reissue");
+        }
     }
 
     static final class MutableClock extends Clock {

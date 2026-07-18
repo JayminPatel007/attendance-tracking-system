@@ -45,6 +45,7 @@ public class JdbcSelectionQueries implements SelectionQueries {
                         AND ra.role = 'NIRDESHAK'
                         AND ra.kshetra_id = n.kshetra_id
                         AND ra.demographic = n.demographic
+                        AND ra.revoked_at IS NULL
                   )
                 ORDER BY n.nominated_at
                 """)
@@ -81,6 +82,7 @@ public class JdbcSelectionQueries implements SelectionQueries {
                         AND ra.role = 'NIRDESHAK'
                         AND ra.kshetra_id = n.kshetra_id
                         AND ra.demographic = n.demographic
+                        AND ra.revoked_at IS NULL
                   )
                 ORDER BY n.decided_at DESC
                 """)
