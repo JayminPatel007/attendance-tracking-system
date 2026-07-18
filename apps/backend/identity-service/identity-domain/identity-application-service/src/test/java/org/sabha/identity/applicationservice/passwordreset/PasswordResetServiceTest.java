@@ -453,6 +453,11 @@ class PasswordResetServiceTest {
             this.lastRawPassword = rawPassword;
             this.lastRequirePasswordChange = requirePasswordChange;
         }
+
+        @Override
+        public void disableUser(UUID keycloakUserId) {
+            throw new UnsupportedOperationException("not used by password reset");
+        }
     }
 
     static final class FixedResetTokenGenerator implements ResetTokenGenerator {

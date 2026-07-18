@@ -78,6 +78,16 @@ public class KeycloakAdminRestClient implements IdentityProviderGateway {
         }
     }
 
+    @Override
+    public void disableUser(UUID keycloakUserId) {
+        try (Keycloak admin = adminClient()) {
+            UserResource user = admin.realm(realm).users().get(keycloakUserId.toString());
+            UserRepresentation representation = user.toRepresentation();
+            representation.setEnabled(false);
+            user.update(representation);
+        }
+    }
+
     private Keycloak adminClient() {
         return KeycloakBuilder.builder()
                 .serverUrl(adminBaseUrl)

@@ -30,6 +30,7 @@ public class JdbcNirdeshakScopeLookup implements NirdeshakScopeLookup {
                 SELECT kshetra_id, demographic FROM role_assignments
                 WHERE user_id = ? AND role = 'NIRDESHAK'
                   AND kshetra_id IS NOT NULL AND demographic IS NOT NULL
+                  AND revoked_at IS NULL
                 """)
                 .param(userId)
                 .query((rs, n) -> new NirdeshakScope(

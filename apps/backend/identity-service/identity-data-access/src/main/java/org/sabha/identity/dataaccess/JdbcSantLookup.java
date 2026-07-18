@@ -27,7 +27,7 @@ public class JdbcSantLookup implements SantLookup {
 
     @Override
     public boolean isSant(UUID userId) {
-        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ?)")
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ? AND revoked_at IS NULL)")
                 .param(userId)
                 .param(OversightRole.SANT.wireValue())
                 .query(Boolean.class)

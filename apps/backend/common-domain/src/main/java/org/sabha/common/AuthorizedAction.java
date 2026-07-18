@@ -34,6 +34,7 @@ public enum AuthorizedAction {
     DELETE_KSHETRA,
     DELETE_SABHA,
     APPOINT_ROLE,
+    REVOKE_ROLE,
     REISSUE_PASSWORD,
     REOPEN;
 

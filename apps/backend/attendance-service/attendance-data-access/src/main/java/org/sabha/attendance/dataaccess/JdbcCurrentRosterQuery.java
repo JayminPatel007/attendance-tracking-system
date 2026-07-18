@@ -40,6 +40,7 @@ public class JdbcCurrentRosterQuery implements CurrentRosterQuery {
                       AND o.state = 'OPEN_FOR_MARKING'
                 WHERE ra.user_id = ?
                   AND ra.role = 'SANCHALAK'
+                  AND ra.revoked_at IS NULL
                 ORDER BY o.occurrence_date DESC
                 LIMIT 1
                 """)

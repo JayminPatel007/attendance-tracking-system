@@ -27,7 +27,7 @@ public class JdbcUserRolesLookup implements UserRolesLookup {
     @Override
     public Set<Role> operationalRolesOf(UUID userId) {
         Set<Role> roles = EnumSet.noneOf(Role.class);
-        jdbc.sql("SELECT role FROM role_assignments WHERE user_id = ?")
+        jdbc.sql("SELECT role FROM role_assignments WHERE user_id = ? AND revoked_at IS NULL")
                 .param(userId)
                 .query((rs, n) -> rs.getString("role"))
                 .list()

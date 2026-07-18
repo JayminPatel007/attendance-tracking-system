@@ -33,7 +33,7 @@ public class JdbcMadhyasthaKaryalayaMembership
 
     @Override
     public boolean anyMemberExists() {
-        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE role = ?)")
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE role = ? AND revoked_at IS NULL)")
                 .param(OversightRole.MADHYASTHA_KARYALAYA.wireValue())
                 .query(Boolean.class)
                 .single();
@@ -53,7 +53,7 @@ public class JdbcMadhyasthaKaryalayaMembership
 
     @Override
     public boolean isMember(UUID userId) {
-        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ?)")
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM role_assignments WHERE user_id = ? AND role = ? AND revoked_at IS NULL)")
                 .param(userId)
                 .param(OversightRole.MADHYASTHA_KARYALAYA.wireValue())
                 .query(Boolean.class)

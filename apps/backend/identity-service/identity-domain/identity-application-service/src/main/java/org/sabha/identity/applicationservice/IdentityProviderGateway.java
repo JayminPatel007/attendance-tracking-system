@@ -31,4 +31,13 @@ public interface IdentityProviderGateway {
      * @param keycloakUserId the identity provider's user id (the JWT {@code sub})
      */
     void resetPassword(UUID keycloakUserId, String rawPassword, boolean requirePasswordChange);
+
+    /**
+     * Disables an identity-provider user so they can no longer log in (ADR-0026),
+     * without deleting the account — used when a User's last active role is revoked.
+     * The Person record and the role-assignment history are unaffected.
+     *
+     * @param keycloakUserId the identity provider's user id (the JWT {@code sub})
+     */
+    void disableUser(UUID keycloakUserId);
 }
