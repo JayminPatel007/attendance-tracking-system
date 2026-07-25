@@ -5,14 +5,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.SabhaSchedule;
-import org.sabha.common.SabhaScheduleLookup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,17 +28,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class OccurrenceShapingService {
 
     private final OccurrenceWriter writer;
-    private final SabhaScheduleLookup scheduleLookup;
+    private final EffectiveSlotResolver slotResolver;
     private final Clock clock;
     private final Duration revertGrace;
 
     public OccurrenceShapingService(
             OccurrenceWriter writer,
-            SabhaScheduleLookup scheduleLookup,
+            EffectiveSlotResolver slotResolver,
             Clock clock,
             @Value("${sabha.attendance.revert.grace:PT24H}") Duration revertGrace) {
         this.writer = writer;
-        this.scheduleLookup = scheduleLookup;
+        this.slotResolver = slotResolver;
         this.clock = clock;
         this.revertGrace = revertGrace;
     }
@@ -79,16 +76,16 @@ public class OccurrenceShapingService {
                 occurrence -> occurrence.overrideVenue(venue));
     }
 
+    /**
+     * The revert grace window closes {@code revertGrace} after the Occurrence's
+     * Effective Slot ends. An Occurrence with no resolvable slot has no cutoff to
+     * measure against, so the revert is allowed.
+     */
     private void requireWithinRevertWindow(Occurrence occurrence) {
-        Optional<SabhaSchedule> schedule = scheduleLookup.findSchedule(occurrence.sabhaId());
-        if (schedule.isEmpty()) {
-            return;
-        }
-        Instant scheduledEnd = ZonedDateTime.of(
-                occurrence.date(), schedule.get().endTime(), clock.getZone()).toInstant();
-        Instant cutoff = scheduledEnd.plus(revertGrace);
-        if (clock.instant().isAfter(cutoff)) {
-            throw new RevertWindowExpiredException(occurrence.id(), cutoff);
+        Optional<Instant> cutoff = slotResolver.resolve(occurrence)
+                .map(slot -> slot.endsAt().plus(revertGrace));
+        if (cutoff.isPresent() && clock.instant().isAfter(cutoff.get())) {
+            throw new RevertWindowExpiredException(occurrence.id(), cutoff.get());
         }
     }
 }

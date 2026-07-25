@@ -40,9 +40,9 @@ class AutoOpenScannerTest {
         UUID otherSabhaId = UUID.fromString("00000000-0000-0000-0000-000000000007");
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.scheduled.add(new ScheduledOccurrenceRef(DUE_OCCURRENCE, SABHA_ID,
+        queries.scheduled.add(new OccurrenceSlotRef(DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 26)));
-        queries.scheduled.add(new ScheduledOccurrenceRef(NOT_YET_DUE_OCCURRENCE, otherSabhaId,
+        queries.scheduled.add(new OccurrenceSlotRef(NOT_YET_DUE_OCCURRENCE, otherSabhaId,
                 LocalDate.of(2026, 5, 26)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
@@ -62,7 +62,7 @@ class AutoOpenScannerTest {
         OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
-        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, writer, clock);
+        AutoOpenScanner scanner = new AutoOpenScanner(queries, new EffectiveSlotResolver(lookup, clock), writer, clock);
 
         scanner.scan();
 
@@ -91,10 +91,10 @@ class AutoOpenScannerTest {
         UUID notYetRescheduled = UUID.fromString("00000000-0000-0000-0000-000000000031");
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.scheduled.add(new ScheduledOccurrenceRef(dueRescheduled, SABHA_ID,
-                LocalDate.of(2026, 5, 31), LocalTime.of(19, 30)));
-        queries.scheduled.add(new ScheduledOccurrenceRef(notYetRescheduled, SABHA_ID,
-                LocalDate.of(2026, 5, 31), LocalTime.of(21, 0)));
+        queries.scheduled.add(new OccurrenceSlotRef(dueRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 31), LocalTime.of(19, 30), LocalTime.of(20, 30)));
+        queries.scheduled.add(new OccurrenceSlotRef(notYetRescheduled, SABHA_ID,
+                LocalDate.of(2026, 5, 31), LocalTime.of(21, 0), LocalTime.of(22, 0)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
@@ -113,7 +113,7 @@ class AutoOpenScannerTest {
         OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
-        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, writer, clock);
+        AutoOpenScanner scanner = new AutoOpenScanner(queries, new EffectiveSlotResolver(lookup, clock), writer, clock);
 
         scanner.scan();
 
@@ -133,8 +133,8 @@ class AutoOpenScannerTest {
         UUID monthlyOccurrence = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.scheduled.add(new ScheduledOccurrenceRef(monthlyOccurrence, monthlySabha,
-                LocalDate.of(2026, 6, 21), LocalTime.of(9, 0)));
+        queries.scheduled.add(new OccurrenceSlotRef(monthlyOccurrence, monthlySabha,
+                LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
 
@@ -147,7 +147,7 @@ class AutoOpenScannerTest {
                 new OccurrenceWriterTest.CapturingPublisher();
         OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(occurrences, log, publisher, clock);
 
-        new AutoOpenScanner(queries, lookup, writer, clock).scan();
+        new AutoOpenScanner(queries, new EffectiveSlotResolver(lookup, clock), writer, clock).scan();
 
         assertThat(occurrences.saved).hasSize(1);
         assertThat(occurrences.saved.get(0).id()).isEqualTo(monthlyOccurrence);
@@ -155,16 +155,16 @@ class AutoOpenScannerTest {
     }
 
     private static final class StubOccurrenceQueries implements OccurrenceQueries {
-        final List<ScheduledOccurrenceRef> scheduled = new ArrayList<>();
-        final List<OpenOccurrenceRef> open = new ArrayList<>();
+        final List<OccurrenceSlotRef> scheduled = new ArrayList<>();
+        final List<OccurrenceSlotRef> open = new ArrayList<>();
 
         @Override
-        public List<ScheduledOccurrenceRef> findScheduledOnOrBefore(LocalDate date) {
+        public List<OccurrenceSlotRef> findScheduledOnOrBefore(LocalDate date) {
             return scheduled;
         }
 
         @Override
-        public List<OpenOccurrenceRef> findOpenOnOrBefore(LocalDate date) {
+        public List<OccurrenceSlotRef> findOpenOnOrBefore(LocalDate date) {
             return open;
         }
     }

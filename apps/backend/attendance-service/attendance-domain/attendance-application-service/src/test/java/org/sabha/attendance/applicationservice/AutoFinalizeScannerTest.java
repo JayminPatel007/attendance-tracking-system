@@ -39,9 +39,9 @@ class AutoFinalizeScannerTest {
         Clock clock = Clock.fixed(now, KOLKATA);
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.open.add(new OpenOccurrenceRef(DUE_OCCURRENCE, SABHA_ID,
+        queries.open.add(new OccurrenceSlotRef(DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 25)));
-        queries.open.add(new OpenOccurrenceRef(NOT_YET_DUE_OCCURRENCE, SABHA_ID,
+        queries.open.add(new OccurrenceSlotRef(NOT_YET_DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 26)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
@@ -62,7 +62,7 @@ class AutoFinalizeScannerTest {
                 occurrences, log, publisher, clock);
 
         AutoFinalizeScanner scanner = new AutoFinalizeScanner(
-                queries, lookup, writer, clock, Duration.ofHours(24));
+                queries, new EffectiveSlotResolver(lookup, clock), writer, clock, Duration.ofHours(24));
 
         scanner.scan();
 
@@ -90,8 +90,8 @@ class AutoFinalizeScannerTest {
         Clock clock = Clock.fixed(now, KOLKATA);
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.open.add(new OpenOccurrenceRef(DUE_OCCURRENCE, SABHA_ID,
-                LocalDate.of(2026, 5, 26), LocalTime.of(22, 0)));
+        queries.open.add(new OccurrenceSlotRef(DUE_OCCURRENCE, SABHA_ID,
+                LocalDate.of(2026, 5, 26), LocalTime.of(20, 0), LocalTime.of(22, 0)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
@@ -109,7 +109,7 @@ class AutoFinalizeScannerTest {
                 occurrences, log, publisher, clock);
 
         AutoFinalizeScanner scanner = new AutoFinalizeScanner(
-                queries, lookup, writer, clock, Duration.ofHours(24));
+                queries, new EffectiveSlotResolver(lookup, clock), writer, clock, Duration.ofHours(24));
 
         scanner.scan();
 
@@ -127,8 +127,8 @@ class AutoFinalizeScannerTest {
         UUID monthlyOccurrence = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
 
         StubOccurrenceQueries queries = new StubOccurrenceQueries();
-        queries.open.add(new OpenOccurrenceRef(monthlyOccurrence, monthlySabha,
-                LocalDate.of(2026, 6, 21), LocalTime.of(10, 30)));
+        queries.open.add(new OccurrenceSlotRef(monthlyOccurrence, monthlySabha,
+                LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30)));
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
 
@@ -142,7 +142,7 @@ class AutoFinalizeScannerTest {
                 new OccurrenceWriterTest.CapturingPublisher();
         OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(occurrences, log, publisher, clock);
 
-        new AutoFinalizeScanner(queries, lookup, writer, clock, Duration.ofHours(24)).scan();
+        new AutoFinalizeScanner(queries, new EffectiveSlotResolver(lookup, clock), writer, clock, Duration.ofHours(24)).scan();
 
         assertThat(occurrences.saved).hasSize(1);
         assertThat(occurrences.saved.get(0).id()).isEqualTo(monthlyOccurrence);
@@ -150,16 +150,16 @@ class AutoFinalizeScannerTest {
     }
 
     private static final class StubOccurrenceQueries implements OccurrenceQueries {
-        final List<ScheduledOccurrenceRef> scheduled = new ArrayList<>();
-        final List<OpenOccurrenceRef> open = new ArrayList<>();
+        final List<OccurrenceSlotRef> scheduled = new ArrayList<>();
+        final List<OccurrenceSlotRef> open = new ArrayList<>();
 
         @Override
-        public List<ScheduledOccurrenceRef> findScheduledOnOrBefore(LocalDate date) {
+        public List<OccurrenceSlotRef> findScheduledOnOrBefore(LocalDate date) {
             return scheduled;
         }
 
         @Override
-        public List<OpenOccurrenceRef> findOpenOnOrBefore(LocalDate date) {
+        public List<OccurrenceSlotRef> findOpenOnOrBefore(LocalDate date) {
             return open;
         }
     }

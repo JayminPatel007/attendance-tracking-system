@@ -130,6 +130,31 @@ class OccurrenceShapingServiceTest {
     }
 
     @Test
+    void revertOfAMonthlyAdHocOccurrenceIsBoundedByItsOwnEndTime() {
+        // A monthly-ad-hoc Sabha has no standing schedule to fall back to; the
+        // Occurrence's Effective Slot comes from its own picked end time, so the
+        // revert window still closes a grace period after that.
+        Fixture f = Fixture.withMonthlyAdHocOccurrence();
+        f.now = SCHEDULED_END.plus(Duration.ofHours(25));
+
+        assertThatThrownBy(() -> f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID))
+                .isInstanceOf(RevertWindowExpiredException.class);
+
+        assertThat(f.occurrences.saved).isEmpty();
+    }
+
+    @Test
+    void revertOfAMonthlyAdHocOccurrenceIsAllowedWithinItsOwnGraceWindow() {
+        Fixture f = Fixture.withMonthlyAdHocOccurrence();
+        f.now = SCHEDULED_END.plus(Duration.ofHours(23));
+
+        f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID);
+
+        assertThat(f.occurrences.saved).singleElement()
+                .extracting(Occurrence::state).isEqualTo(OccurrenceState.SCHEDULED);
+    }
+
+    @Test
     void sanchalakReschedulesAScheduledOccurrenceToANewDateTime() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
         LocalDate newDate = LocalDate.of(2026, 5, 31);
@@ -168,10 +193,23 @@ class OccurrenceShapingServiceTest {
         final InMemoryTransitionLog transitions = new InMemoryTransitionLog();
         final CapturingPublisher publisher = new CapturingPublisher();
         Instant now = SCHEDULED_END;
+        SabhaSchedule standingSchedule = new SabhaSchedule(
+                java.time.DayOfWeek.SUNDAY, LocalTime.of(19, 0), LocalTime.of(20, 0));
 
         static Fixture withOccurrence(OccurrenceState state) {
             Fixture f = new Fixture();
             f.occurrences.put(new Occurrence(OCCURRENCE_ID, SABHA_ID, OCCURRENCE_DATE, state, 0L, List.of()));
+            return f;
+        }
+
+        /** A Cancelled Occurrence on a monthly-ad-hoc Sabha: own 19:00–20:00 slot, no standing schedule. */
+        static Fixture withMonthlyAdHocOccurrence() {
+            Fixture f = new Fixture();
+            f.standingSchedule = null;
+            Occurrence occurrence = new Occurrence(OCCURRENCE_ID, SABHA_ID, OCCURRENCE_DATE,
+                    OccurrenceState.CANCELLED, 0L, List.of());
+            occurrence.restoreShaping(null, null, LocalTime.of(19, 0), LocalTime.of(20, 0));
+            f.occurrences.put(occurrence);
             return f;
         }
 
@@ -227,8 +265,7 @@ class OccurrenceShapingServiceTest {
                     return Optional.empty();
                 }
             };
-            SabhaScheduleLookup schedule = sabhaId -> Optional.of(new SabhaSchedule(
-                    java.time.DayOfWeek.SUNDAY, LocalTime.of(19, 0), LocalTime.of(20, 0)));
+            SabhaScheduleLookup schedule = sabhaId -> Optional.ofNullable(standingSchedule);
             Clock clock = Clock.fixed(now, ZoneOffset.UTC);
             org.sabha.common.NirikshakAssignmentLookup nirikshakAssignments =
                     new org.sabha.common.NirikshakAssignmentLookup() {
@@ -245,7 +282,8 @@ class OccurrenceShapingServiceTest {
             OccurrenceWriter writer = new OccurrenceWriter(
                     callerResolver, new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
-            return new OccurrenceShapingService(writer, schedule, clock, Duration.ofHours(24));
+            return new OccurrenceShapingService(writer, new EffectiveSlotResolver(schedule, clock),
+                    clock, Duration.ofHours(24));
         }
     }
 

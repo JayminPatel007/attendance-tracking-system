@@ -19,6 +19,10 @@ _Avoid_: Meeting, event, session
 A single dated instance of a Sabha. For **weekly-recurring** Sabhas, Occurrences are pre-materialized from the Sabha's schedule by a system job. For **monthly-ad-hoc** Sabhas (BSS / YSS), each Occurrence is created manually by the Sanchalak before its date. Each Occurrence has its own Attendance Markings, moves through a defined lifecycle (see Occurrence States below), and may be **rescheduled** to a different date/time without changing the Sabha's underlying schedule.
 _Avoid_: Session, instance
 
+**Effective Slot**:
+When an Occurrence actually starts and ends, in absolute time. Resolved per boundary: a **per-occurrence override** (a reschedule, or a monthly-ad-hoc Occurrence's own picked date/time) wins; each boundary not overridden falls back to the Sabha's **standing schedule**; the resulting local date/time is read in the system's scheduling timezone. A Slot needs both ends: a monthly-ad-hoc Sabha has no standing schedule, so an Occurrence there that leaves *either* boundary un-overridden has **no** Effective Slot at all, and everything below skips it rather than guess. Everything the system does on the clock hangs off this one term: auto-open fires at its start, auto-finalize at its end plus a grace period, and the revert window closes a grace period after its end.
+_Avoid_: Scheduled time, window, occurrence time
+
 **Occurrence States**:
 
 - **Scheduled** — auto-created from the Sabha's schedule; awaiting its date.
