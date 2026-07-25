@@ -84,6 +84,7 @@
       username: '',
       password: genPassword(),
       log: [],
+      reject: null, // { holderId, code, detail } — last-one-out 409 surfaced on the offending row
     };
 
     function logAct(msg) { state.log.unshift({ t: new Date().toLocaleTimeString(), msg }); }
@@ -131,7 +132,7 @@
             </div>
           </div>
           ${list.length ? list.map((h) => {
-            const r = revocability(h);
+            const rejected = state.reject && state.reject.holderId === h.id;
             return `
             <div class="holder-row">
               <div class="avatar" style="width:30px;height:30px;font-size:11px;">${h.initials}</div>
@@ -139,10 +140,13 @@
                 <div class="name">${h.name}</div>
                 <div class="sub">holding since ${h.since}</div>
               </div>
-              ${r.ok
-                ? `<button class="btn danger xs" data-revoke="${h.id}">Revoke role</button>`
-                : `<button class="btn ghost xs" disabled title="${r.reason}">🚫 ${r.reason}</button>`}
-            </div>`;
+              <button class="btn danger xs" data-revoke="${h.id}">Revoke role</button>
+            </div>
+            ${rejected ? `
+            <div class="revoke-error">
+              <div class="revoke-error-head">⚠ 409 Conflict · <code>${state.reject.code}</code></div>
+              <div class="revoke-error-body">${state.reject.detail}</div>
+            </div>` : ''}`;
           }).join('') : '<div class="empty-holders">No current holders in scope.</div>'}
         </div>
       `;
@@ -275,11 +279,12 @@
           state.actor = b.dataset.actor;
           state.person = null;
           state.username = '';
+          state.reject = null;
           mount();
         });
       });
 
-      sel('role')?.addEventListener('change', (e) => { state.role = e.target.value; state.person = null; state.username = ''; mount(); });
+      sel('role')?.addEventListener('change', (e) => { state.role = e.target.value; state.person = null; state.username = ''; state.reject = null; mount(); });
 
       const q = sel('q');
       if (q) q.addEventListener('input', (e) => { state.query = e.target.value; mount(); root.querySelector('#q')?.focus(); });
@@ -306,10 +311,23 @@
       sel('un')?.addEventListener('input', (e) => (state.username = e.target.value));
       sel('pw')?.addEventListener('input', (e) => (state.password = e.target.value));
 
-      // Revoke = scope-based delete of a role assignment.
+      // Revoke = scope-based delete of a role assignment. The backend authorizes by
+      // scope, then enforces the Regional Team last-one-out guard — rejecting with a
+      // 409 ProblemDetail (code LAST_REGIONAL_TEAM_MEMBER) that we surface as a banner.
       root.querySelectorAll('[data-revoke]').forEach((b) => {
         b.addEventListener('click', () => {
           const h = holders.find((x) => x.id === b.dataset.revoke);
+          const r = revocability(h);
+          if (!r.ok) {
+            state.reject = {
+              holderId: h.id,
+              code: 'LAST_REGIONAL_TEAM_MEMBER',
+              detail: `Cannot revoke the ${r.reason} — the Regional Team tier for this (City, demographic) can never be emptied. Appoint another Regional Team member first.`,
+            };
+            mount();
+            return;
+          }
+          state.reject = null;
           holders = holders.filter((x) => x.id !== b.dataset.revoke);
           logAct(`Revoked the <strong>${ROLE_DEFS[h.roleKey].name}</strong> role assignment from <strong>${h.name}</strong> — Person persists; structures &amp; sub-appointees inherited by the next scope-holder.`);
           mount();
