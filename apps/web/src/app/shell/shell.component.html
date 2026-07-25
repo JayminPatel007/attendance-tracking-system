@@ -19,7 +19,7 @@
 
   <div class="body">
     <nav class="sidenav">
-      @for (item of navItems(); track item.section) {
+      @for (item of navItems(); track item.path) {
         <a class="nav-item" [routerLink]="item.path" routerLinkActive="active">
           {{ item.label }}
         </a>

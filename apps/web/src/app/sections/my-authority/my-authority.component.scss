@@ -1,0 +1,150 @@
+.my-authority {
+  .page-head h1 {
+    margin: 0 0 4px;
+  }
+
+  .sub {
+    color: #6b7280;
+    margin: 0 0 18px;
+  }
+
+  .actor-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 12px;
+
+    button {
+      border: none;
+      background: none;
+      padding: 10px 14px;
+      cursor: pointer;
+      color: #6b7280;
+      border-bottom: 2px solid transparent;
+
+      &.active {
+        color: #111827;
+        border-bottom-color: #2563eb;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .legend {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    display: grid;
+    gap: 10px;
+
+    .legend-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .authority-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+  }
+
+  .operational {
+    margin-top: 24px;
+  }
+
+  .item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .item-row {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 12px;
+
+    &:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+  }
+
+  .item-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .item-name {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .item-scope,
+  .item-delete-note {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .create-badge,
+  .delete-badge {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .kind-block-if-non-empty {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .kind-soft-retire {
+    background: #ede9fe;
+    color: #5b21b6;
+  }
+
+  .kind-revoke {
+    background: #e0f2fe;
+    color: #075985;
+  }
+
+  .no-authority {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .empty,
+  .legend-meaning,
+  .no-authority,
+  .scope-line {
+    color: #6b7280;
+    font-size: 14px;
+  }
+}

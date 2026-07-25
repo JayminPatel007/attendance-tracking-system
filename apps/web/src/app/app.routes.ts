@@ -1,3 +1,4 @@
+import { Type } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { ForgotPasswordComponent } from './password-reset/forgot-password.component';
@@ -11,7 +12,7 @@ import { SanchalakProxyComponent } from './sections/sanchalak-proxy/sanchalak-pr
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
 import { SelectionComponent } from './sections/selection/selection.component';
 import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
-import { SECTION_NAV } from './shell/section-nav';
+import { SECTION_NAV, UNGATED_NAV } from './shell/section-nav';
 import { sectionGuard } from './shell/section.guard';
 import { ShellComponent } from './shell/shell.component';
 
@@ -36,6 +37,22 @@ const sectionRoutes: Routes = SECTION_NAV.map((item) => ({
   data: { section: item.section, label: item.label },
 }));
 
+/**
+ * Ungated shell routes, keyed off the same nav model (issue #90). Loaded lazily:
+ * reference material every user carries but few open shouldn't sit in the initial
+ * bundle.
+ */
+const UNGATED_LOADERS: Record<string, () => Promise<Type<unknown>>> = {
+  'my-authority': () =>
+    import('./sections/my-authority/my-authority.component').then((m) => m.MyAuthorityComponent),
+};
+
+const ungatedRoutes: Routes = UNGATED_NAV.map((item) => ({
+  path: item.path,
+  loadComponent: UNGATED_LOADERS[item.path],
+  data: { label: item.label },
+}));
+
 export const routes: Routes = [
   // Public, unauthenticated reset routes (ADR-0004, Slice 18B) — matched before
   // the shell so a locked-out user reaches them without an OIDC session.
@@ -47,6 +64,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...sectionRoutes,
+      ...ungatedRoutes,
       { path: '**', redirectTo: 'dashboard' },
     ],
   },

@@ -52,6 +52,7 @@ describe('ShellComponent sidebar', () => {
       'Dashboard',
       'Structural Admin',
       'Sabha Definition',
+      'My Authority',
     ]);
   });
 
@@ -78,6 +79,28 @@ describe('ShellComponent sidebar', () => {
     });
 
     expect(navLabels(fixture)).toContain('Audit Log');
+  });
+
+  it('always offers My Authority, after the granted sections (#90)', () => {
+    const fixture = render({
+      username: 'sanchalak',
+      madhyasthaKaryalaya: false,
+      regionalTeam: false,
+      sections: ['DASHBOARD'],
+    });
+
+    expect(navLabels(fixture)).toEqual(['Dashboard', 'My Authority']);
+  });
+
+  it('offers My Authority even to a session the BFF grants no sections', () => {
+    const fixture = render({
+      username: 'sah-nirdeshak',
+      madhyasthaKaryalaya: false,
+      regionalTeam: false,
+      sections: [],
+    });
+
+    expect(navLabels(fixture)).toEqual(['My Authority']);
   });
 
   it('shows the signed-in username in the header', () => {
