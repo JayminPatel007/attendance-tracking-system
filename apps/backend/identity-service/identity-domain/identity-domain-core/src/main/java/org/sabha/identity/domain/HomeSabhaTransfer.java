@@ -18,7 +18,7 @@ import org.sabha.common.AggregateRoot;
  * and the {@code confirmed} flag, so there is a single source of truth for the OTP
  * sub-state ({@code EXPIRED} / {@code LOCKED}), mirroring {@link PasswordReset}.</p>
  */
-public class HomeSabhaTransfer extends AggregateRoot<UUID> {
+public class HomeSabhaTransfer extends AggregateRoot<UUID> implements OtpGuarded {
 
     private final UUID id;
     private final UUID personId;
@@ -80,6 +80,7 @@ public class HomeSabhaTransfer extends AggregateRoot<UUID> {
     }
 
     /** Records that the consent OTP was dispatched; registers {@link TransferOtpSent}. */
+    @Override
     public void markOtpSent(Instant now) {
         registerEvent(new TransferOtpSent(id, now));
     }

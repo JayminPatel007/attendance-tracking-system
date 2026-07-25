@@ -4,12 +4,18 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.sabha.common.AggregateRoot;
 import org.sabha.common.DomainEvent;
+import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -47,6 +53,18 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @AnalyzeClasses(packages = "org.sabha", importOptions = ImportOption.DoNotIncludeTests.class)
 class IntraModuleArchitectureRulesTest {
+
+    private static final ArchCondition<JavaMethod> CALL_OTP_CONSUME =
+            new ArchCondition<>("call " + OtpGuardedFlow.class.getSimpleName() + ".consume") {
+                @Override
+                public void check(JavaMethod method, ConditionEvents events) {
+                    for (JavaMethodCall call : method.getMethodCallsFromSelf()) {
+                        boolean isConsume = call.getTargetOwner().isAssignableTo(OtpGuardedFlow.class)
+                                && "consume".equals(call.getTarget().getName());
+                        events.add(new SimpleConditionEvent(call, isConsume, call.getDescription()));
+                    }
+                }
+            };
 
     /**
      * ADR-0017/0019: REST controllers + DTOs in {@code *-application} are
@@ -87,6 +105,23 @@ class IntraModuleArchitectureRulesTest {
                     .should().beAnnotatedWith(Transactional.class)
                     .as("@Transactional may annotate a method only in *-application-service (ADR-0018)")
                     .because("the transaction boundary belongs to the use-case tier, not to adapters or the domain");
+
+    /**
+     * ADR-0018 + issue #130: {@link OtpGuardedFlow#consume} carries the
+     * {@code noRollbackFor} rules that let a rejected OTP keep its incremented
+     * attempt count, so it has to be the outermost transaction of the consume
+     * step. A caller that opened its own {@code @Transactional} boundary around it
+     * would have <em>its</em> rules decide the rollback instead, and the attempt
+     * budget would silently reset on every wrong guess — a regression no unit test
+     * of the caller can see, since it needs a real transaction to show up.
+     */
+    @ArchTest
+    static final ArchRule callers_of_the_otp_consume_step_do_not_own_its_transaction =
+            noMethods()
+                    .that().areAnnotatedWith(Transactional.class)
+                    .should(CALL_OTP_CONSUME)
+                    .as("a @Transactional method must not call OtpGuardedFlow.consume (issue #130)")
+                    .because("consume owns the rollback rules that let a rejected OTP persist its attempt count");
 
     /**
      * ADR-0019: outbound adapters implement ports declared in their own context's

@@ -108,6 +108,37 @@ class PasswordResetIntegrationTest extends KeycloakIntegrationTest {
         assertThat(canAuthenticate(RESET_USERNAME, "BrandNew1!")).isTrue();
     }
 
+    /**
+     * Each rejected code leaves its incremented attempt count behind, so the
+     * budget accumulates across requests rather than resetting on every wrong
+     * guess. This walks that through the real stack; the rollback exemption that
+     * makes it hold in production is asserted directly in {@code
+     * OtpGuardedFlowTest} — this class's own {@code @Transactional} would mask its
+     * absence here.
+     */
+    @Test
+    void eachWrongOtpAttemptPersistsSoTheBudgetAccumulatesAcrossRequests() throws Exception {
+        seedUser(RESET_PERSON, RESET_USER, RESET_USERNAME, RESET_MOBILE, UUID.randomUUID());
+
+        MvcResult requested = mockMvc.perform(post("/api/password-reset/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + RESET_USERNAME + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        UUID resetId = UUID.fromString(json(requested, "resetId"));
+
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            mockMvc.perform(post("/api/password-reset/verify")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"resetId\":\"" + resetId + "\",\"otpCode\":\"000000\"}"))
+                    .andExpect(status().isUnprocessableEntity());
+
+            Integer attempts = jdbc.sql("SELECT attempts FROM password_resets WHERE id = ?")
+                    .param(resetId).query((rs, n) -> rs.getInt("attempts")).single();
+            assertThat(attempts).isEqualTo(attempt);
+        }
+    }
+
     @Test
     void requestForAnUnknownUsernameIs404OnThePublicChain() throws Exception {
         mockMvc.perform(post("/api/password-reset/request")

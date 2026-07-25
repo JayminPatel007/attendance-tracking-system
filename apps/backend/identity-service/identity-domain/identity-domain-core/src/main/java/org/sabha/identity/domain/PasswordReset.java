@@ -17,7 +17,7 @@ import org.sabha.common.AggregateRoot;
  * challenge and the verify/complete flags, so there is a single source of truth
  * for the OTP sub-state ({@code EXPIRED} / {@code LOCKED}).</p>
  */
-public class PasswordReset extends AggregateRoot<UUID> {
+public class PasswordReset extends AggregateRoot<UUID> implements OtpGuarded {
 
     /** Window to set a new password after the OTP is verified. */
     public static final Duration RESET_TOKEN_TTL = Duration.ofMinutes(5);
@@ -80,6 +80,7 @@ public class PasswordReset extends AggregateRoot<UUID> {
     }
 
     /** Records that the reset OTP was dispatched; registers {@link PasswordResetOtpSent}. */
+    @Override
     public void markOtpSent(Instant now) {
         registerEvent(new PasswordResetOtpSent(id, now));
     }

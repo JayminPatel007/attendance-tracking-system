@@ -10,12 +10,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class OtpSendPolicyTest {
+class WindowedOtpSendPolicyTest {
 
     private static final String MOBILE = "+919820100200";
     private static final Instant NOW = Instant.parse("2026-06-14T10:00:00Z");
 
-    private final OtpSendPolicy policy = new OtpSendPolicy();
+    private final OtpSendPolicy policy = new WindowedOtpSendPolicy();
 
     @Test
     void allowsTheFirstSendToAMobileWithNoHistory() {
