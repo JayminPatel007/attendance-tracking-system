@@ -1,16 +1,14 @@
 import { Section } from 'identity-domain';
 
-/** A sidebar entry: which {@link Section} it represents, its route, its label. */
-export interface SectionNavItem {
-  section: Section;
+/** A sidebar entry: its route and its label. */
+export interface NavItem {
   path: string;
   label: string;
 }
 
-/** A sidebar entry no authority gates — route and label only. */
-export interface UngatedNavItem {
-  path: string;
-  label: string;
+/** A sidebar entry gated on the {@link Section} it represents. */
+export interface SectionNavItem extends NavItem {
+  section: Section;
 }
 
 /**
@@ -36,6 +34,6 @@ export const SECTION_NAV: readonly SectionNavItem[] = [
  * behind a {@link Section} would hide the explanation from exactly the tiers
  * (e.g. Sah-Nirdeshak) that most need to read why they hold no such authority.
  */
-export const UNGATED_NAV: readonly UngatedNavItem[] = [
+export const UNGATED_NAV: readonly NavItem[] = [
   { path: 'my-authority', label: 'My Authority' },
 ];

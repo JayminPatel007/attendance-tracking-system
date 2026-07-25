@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from 'identity-domain';
 
-import { SECTION_NAV, UNGATED_NAV, UngatedNavItem } from './section-nav';
+import { NavItem, SECTION_NAV, UNGATED_NAV } from './section-nav';
 
 /**
  * The authenticated web shell (Slice 9): a header with the account menu, a
@@ -23,7 +23,7 @@ export class ShellComponent {
   readonly session = this.sessions.session;
 
   /** The sections the session unlocks, then the entries no authority gates. */
-  readonly navItems = computed<UngatedNavItem[]>(() => {
+  readonly navItems = computed<NavItem[]>(() => {
     const current = this.session();
     if (!current) {
       return [];

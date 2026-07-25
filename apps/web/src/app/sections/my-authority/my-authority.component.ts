@@ -1,7 +1,22 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { SessionService } from 'identity-domain';
 
-import { ACTOR_TIERS, ActorTier, DELETE_LEGEND, authorityFor } from './authority-matrix';
+import {
+  ACTOR_TIERS,
+  ActorTier,
+  AuthorityItem,
+  DELETE_LEGEND,
+  DeleteKind,
+  authorityFor,
+} from './authority-matrix';
+
+/** One rendered column of the matrix. */
+interface AuthorityColumn {
+  key: 'structures' | 'roles';
+  title: string;
+  items: AuthorityItem[];
+  emptyText: string;
+}
 
 /**
  * The authority matrix (issue #90): a read-only answer to "what can I create or
@@ -43,6 +58,22 @@ export class MyAuthorityComponent {
   readonly selected = signal<ActorTier | null>(null);
   readonly actor = computed(() => authorityFor(this.selected() ?? this.ownTier()));
 
+  /** Both columns share a shape, so the template renders them from one loop. */
+  readonly columns = computed<AuthorityColumn[]>(() => [
+    {
+      key: 'structures',
+      title: 'Structures',
+      items: this.actor().structures,
+      emptyText: 'No structural-creation authority at this tier.',
+    },
+    {
+      key: 'roles',
+      title: 'Roles',
+      items: this.actor().roles,
+      emptyText: 'No appointment authority at this tier.',
+    },
+  ]);
+
   select(tier: ActorTier): void {
     this.selected.set(tier);
   }
@@ -52,7 +83,7 @@ export class MyAuthorityComponent {
   }
 
   /** The legend label for a delete kind — the badge and the legend must read alike. */
-  deleteLabel(kind: string): string {
+  deleteLabel(kind: DeleteKind): string {
     return this.legend.find((entry) => entry.kind === kind)!.label;
   }
 }

@@ -45,11 +45,22 @@ describe('authority matrix', () => {
     expect(DELETE_LEGEND.length).toBe(3);
   });
 
-  it('names a concrete guard on every delete rule it shows', () => {
+  it('names a concrete guard and a verb on every rule it shows', () => {
     everyItem().forEach((item) => {
       expect(item.deleteNote).withContext(item.name).toBeTruthy();
       expect(item.scope).withContext(item.name).toBeTruthy();
+      expect(item.verb).withContext(item.name).toBeTruthy();
     });
+  });
+
+  it('provisions a Sant rather than appointing one — the position sits outside the system', () => {
+    expect(named('Sant')?.verb).toBe('Provision');
+    expect(named('Sanyojak')?.verb).toBe('Appoint');
+    expect(named('City')?.verb).toBe('Create');
+  });
+
+  it('does not promise that revoking a Nirikshak reassigns their Sabhas', () => {
+    expect(named('Nirikshak')?.deleteNote).not.toContain('reassign');
   });
 
   it('deletes geographic structures by block-if-non-empty (ADR-0026)', () => {

@@ -79,8 +79,18 @@ describe('MyAuthorityComponent', () => {
 
     expect(rowNames(fixture, 'structures')).toEqual(['Kshetra']);
     expect(rowNames(fixture, 'roles')).toEqual(['Nirdeshak']);
+    expect(texts(fixture, '.column-structures .create-badge')).toEqual(['Create']);
+    expect(texts(fixture, '.column-roles .create-badge')).toEqual(['Appoint']);
     expect(texts(fixture, '.column-structures .delete-badge')).toEqual(['Block-if-non-empty']);
     expect(texts(fixture, '.column-roles .delete-badge')).toEqual(['Revoke assignment']);
+  });
+
+  it('labels each row with its own verb — a Sant is provisioned, not appointed', () => {
+    const fixture = render();
+
+    selectTier(fixture, 'Madhyastha Karyalaya');
+
+    expect(texts(fixture, '.column-roles .create-badge')).toEqual(['Appoint', 'Provision']);
   });
 
   it('swaps the whole matrix when the actor changes', () => {

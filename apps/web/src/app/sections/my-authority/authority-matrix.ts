@@ -35,9 +35,14 @@ export const ACTOR_TIERS: readonly ActorTier[] = [
 /** What "delete" means for a given kind of thing (ADR-0026). */
 export type DeleteKind = 'block-if-non-empty' | 'soft-retire' | 'revoke';
 
-/** One thing a tier may create, and the rule that governs removing it. */
+/** One thing a tier may bring into being, and the rule that governs removing it. */
 export interface AuthorityItem {
   name: string;
+  /**
+   * How this tier brings the item about, in the domain's own words — a Sant is
+   * *provisioned* as an administrative act, never "appointed" (CONTEXT.md).
+   */
+  verb: 'Create' | 'Appoint' | 'Provision';
   /** The scope the creation/appointment is bound to. */
   scope: string;
   delete: DeleteKind;
@@ -55,7 +60,7 @@ export interface ActorAuthority {
   roles: AuthorityItem[];
   /** Powers that are neither create nor delete — populated only where they are the whole story. */
   operational: string[];
-  /** Shown in place of the columns when the tier holds no create/delete authority. */
+  /** Shown beneath the operational powers, spelling out the absence of create/delete authority. */
   noAuthorityNote: string | null;
 }
 
@@ -88,12 +93,14 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     structures: [
       {
         name: 'City',
+        verb: 'Create',
         scope: 'anywhere in the State',
         delete: 'block-if-non-empty',
         deleteNote: 'Blocked while the City still has Zones.',
       },
       {
         name: 'Sabha Kind',
+        verb: 'Create',
         scope: 'a (demographic, track) pair, registered once',
         delete: 'soft-retire',
         deleteNote:
@@ -103,13 +110,16 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     roles: [
       {
         name: 'Regional Team member',
-        scope: 'per (City, demographic) — you seed the first member of each',
+        verb: 'Appoint',
+        scope: 'per (City, demographic) — you seed the first, after which the team grows itself',
         delete: 'revoke',
         deleteNote: 'Refused on the last remaining member of a (City, demographic).',
       },
       {
         name: 'Sant',
-        scope: 'per (City, demographic) — an administrative act; the position exists outside the system',
+        verb: 'Provision',
+        scope:
+          'per (City, demographic) — an administrative act creating their login; the position itself exists outside the system',
         delete: 'revoke',
         deleteNote: 'Revoking their only role withdraws the login; the Person record stays.',
       },
@@ -125,6 +135,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     structures: [
       {
         name: 'Zone',
+        verb: 'Create',
         scope: 'within a City you are a member of (ADR-0024)',
         delete: 'block-if-non-empty',
         deleteNote: 'Blocked while the Zone still has Kshetras.',
@@ -133,6 +144,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     roles: [
       {
         name: 'Regional Team member (peer)',
+        verb: 'Appoint',
         scope: 'the same (City, demographic) — the tier grows itself (ADR-0025)',
         delete: 'revoke',
         deleteNote:
@@ -140,6 +152,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
       },
       {
         name: 'Sanyojak',
+        verb: 'Appoint',
         scope: 'per (Zone, demographic) within your City',
         delete: 'revoke',
         deleteNote:
@@ -157,6 +170,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     structures: [
       {
         name: 'Kshetra',
+        verb: 'Create',
         scope: 'within your own Zone',
         delete: 'block-if-non-empty',
         deleteNote: 'Blocked while the Kshetra still has Sabhas.',
@@ -165,6 +179,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     roles: [
       {
         name: 'Nirdeshak',
+        verb: 'Appoint',
         scope: 'per (Kshetra, demographic) in your Zone',
         delete: 'revoke',
         deleteNote:
@@ -182,6 +197,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     structures: [
       {
         name: 'Sabha',
+        verb: 'Create',
         scope: 'within your (Kshetra, demographic); creating one appoints its Sanchalak',
         delete: 'block-if-non-empty',
         deleteNote: 'Blocked once the Sabha has any recorded Occurrence.',
@@ -190,24 +206,28 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
     roles: [
       {
         name: 'Sanchalak',
+        verb: 'Appoint',
         scope: 'one per Sabha in your scope',
         delete: 'revoke',
         deleteNote: 'The Sabha and its history stay; the next Sanchalak inherits them.',
       },
       {
         name: 'Sah-Sanchalak',
+        verb: 'Appoint',
         scope: 'deputy on a Sabha in your scope',
         delete: 'revoke',
         deleteNote: 'Revoking their only role withdraws the login; the Person record stays.',
       },
       {
         name: 'Nirikshak',
-        scope: 'per (Kshetra, demographic), Regular track only',
+        verb: 'Appoint',
+        scope: 'per (Kshetra, demographic), overseeing 3–4 of your Sabhas',
         delete: 'revoke',
-        deleteNote: 'The Sabhas assigned to them return to you to reassign.',
+        deleteNote: 'Revoking their only role withdraws the login; the Person record stays.',
       },
       {
         name: 'Sah-Nirdeshak',
+        verb: 'Appoint',
         scope: 'at most 2 per (Kshetra, demographic) (ADR-0025)',
         delete: 'revoke',
         deleteNote: 'Revoking one frees a slot against the cap of 2.',
@@ -228,7 +248,7 @@ const AUTHORITY: Record<ActorTier, ActorAuthority> = {
       'See the same analytics as the Nirdeshak, over the same Kshetra scope.',
     ],
     noAuthorityNote:
-      'The Sah-Nirdeshak is an operational backstop, not an administrator: no structural creation, no appointments, and no deletions or revocations — for now (ADR-0025 §3).',
+      'The Sah-Nirdeshak is an operational backstop, not an administrator: no structural creation, no appointments, and no deletions or revocations — for now (ADR-0025 §3). The Sanchalak-proxy toolkit is the Nirikshak’s, on the Sabhas assigned to them; it is not held here.',
   },
 };
 

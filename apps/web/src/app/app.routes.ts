@@ -1,4 +1,3 @@
-import { Type } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { ForgotPasswordComponent } from './password-reset/forgot-password.component';
@@ -38,20 +37,18 @@ const sectionRoutes: Routes = SECTION_NAV.map((item) => ({
 }));
 
 /**
- * Ungated shell routes, keyed off the same nav model (issue #90). Loaded lazily:
- * reference material every user carries but few open shouldn't sit in the initial
- * bundle.
+ * The routes {@link UNGATED_NAV} lists — open to every signed-in user, so no
+ * section guard. Loaded lazily: reference material everyone carries but few open
+ * has no business in the initial bundle.
  */
-const UNGATED_LOADERS: Record<string, () => Promise<Type<unknown>>> = {
-  'my-authority': () =>
-    import('./sections/my-authority/my-authority.component').then((m) => m.MyAuthorityComponent),
-};
-
-const ungatedRoutes: Routes = UNGATED_NAV.map((item) => ({
-  path: item.path,
-  loadComponent: UNGATED_LOADERS[item.path],
-  data: { label: item.label },
-}));
+const ungatedRoutes: Routes = [
+  {
+    path: 'my-authority',
+    loadComponent: () =>
+      import('./sections/my-authority/my-authority.component').then((m) => m.MyAuthorityComponent),
+    data: { label: 'My Authority' },
+  },
+];
 
 export const routes: Routes = [
   // Public, unauthenticated reset routes (ADR-0004, Slice 18B) — matched before
