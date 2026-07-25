@@ -42,8 +42,8 @@ class MarkAttendanceApplicationServiceTest {
 
         f.service().execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
 
-        assertThat(f.occurrences.savedOccurrences()).hasSize(1);
-        Occurrence saved = f.occurrences.savedOccurrences().get(0);
+        assertThat(f.occurrences.saved).hasSize(1);
+        Occurrence saved = f.occurrences.saved.get(0);
         assertThat(saved.id()).isEqualTo(OCCURRENCE_ID);
         AttendanceMarking marking = saved.markings().iterator().next();
         assertThat(marking.personId()).isEqualTo(PERSON_ID);
@@ -60,7 +60,7 @@ class MarkAttendanceApplicationServiceTest {
         f.service().executeBatch(SUBJECT, OCCURRENCE_ID,
                 List.of(MarkItem.walkIn(PERSON_ID, CLIENT_MARKED_AT)));
 
-        AttendanceMarking marking = f.occurrences.savedOccurrences().get(0).markings().iterator().next();
+        AttendanceMarking marking = f.occurrences.saved.get(0).markings().iterator().next();
         assertThat(marking.personId()).isEqualTo(PERSON_ID);
         assertThat(marking.present()).isTrue();
         assertThat(marking.markingType()).isEqualTo(MarkingType.WALK_IN);

@@ -1,6 +1,7 @@
 package org.sabha.attendance.applicationservice;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -13,7 +14,7 @@ import org.sabha.common.CallerResolver;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.OptimisticLockException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -34,9 +35,15 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Nothing is written until the save succeeds: a mutation that throws — an
  * invalid transition, a denied authority — leaves no audit row and publishes no
- * event.</p>
+ * event, and the audit row is stamped with the moment the save stuck.</p>
+ *
+ * <p>The write methods are {@code @Transactional} (ADR-0018) so the cron scanners,
+ * which call in from a Spring-scheduled thread with no ambient transaction, still
+ * get one per Occurrence — the boundary the deleted {@code OccurrenceStateMachine}
+ * owned. Request-driven callers are themselves {@code @Transactional}, so their
+ * write simply joins the transaction they opened.</p>
  */
-@Component
+@Service
 public class OccurrenceWriter {
 
     private static final int MAX_OPTIMISTIC_LOCK_ATTEMPTS = 3;
@@ -83,9 +90,8 @@ public class OccurrenceWriter {
             UUID onBehalfOf = authorize(actor, actorUserId, occurrence);
             OccurrenceState from = occurrence.state();
             mutation.accept(occurrence);
-            return new OccurrenceStateTransition(
-                    UUID.randomUUID(), occurrenceId, from, occurrence.state(), auditedAs,
-                    actor.kind(), actorUserId, onBehalfOf, reason, clock.instant());
+            return new AuditIntent(from, occurrence.state(), auditedAs,
+                    actor.kind(), actorUserId, onBehalfOf, reason);
         });
     }
 
@@ -100,8 +106,8 @@ public class OccurrenceWriter {
      * {@link AuthorizationEngine}.</p>
      */
     @Transactional
-    public void mutate(UUID occurrenceId, UUID keycloakSubject,
-                       BiConsumer<Occurrence, UUID> mutation) {
+    public void mutateUnaudited(UUID occurrenceId, UUID keycloakSubject,
+                                 BiConsumer<Occurrence, UUID> mutation) {
         UUID actorUserId = callerResolver.requireUserId(keycloakSubject);
         write(occurrenceId, occurrence -> {
             mutation.accept(occurrence, actorUserId);
@@ -111,16 +117,16 @@ public class OccurrenceWriter {
 
     /**
      * The load-mutate-save-retry cycle. {@code apply} mutates the loaded aggregate
-     * and returns the audit row to append once the save sticks, or {@code null}
-     * when the write is not an audited transition.
+     * and returns what the audit row should record, or {@code null} when the write
+     * is not an audited transition.
      */
-    private void write(UUID occurrenceId, Function<Occurrence, OccurrenceStateTransition> apply) {
+    private void write(UUID occurrenceId, Function<Occurrence, AuditIntent> apply) {
         OptimisticLockException lastConflict = null;
         for (int attempt = 0; attempt < MAX_OPTIMISTIC_LOCK_ATTEMPTS; attempt++) {
             Occurrence occurrence = occurrences.findById(occurrenceId)
                     .orElseThrow(() -> new OccurrenceNotFoundException(occurrenceId));
 
-            OccurrenceStateTransition auditRow = apply.apply(occurrence);
+            AuditIntent audited = apply.apply(occurrence);
 
             try {
                 occurrences.save(occurrence);
@@ -129,8 +135,8 @@ public class OccurrenceWriter {
                 continue;
             }
 
-            if (auditRow != null) {
-                transitions.append(auditRow);
+            if (audited != null) {
+                transitions.append(audited.stampedAt(occurrenceId, clock.instant()));
             }
             events.publishAll(occurrence.pullDomainEvents());
             return;
@@ -146,6 +152,26 @@ public class OccurrenceWriter {
         return actor instanceof TransitionActor.SignedIn user
                 ? callerResolver.requireUserId(user.keycloakSubject())
                 : null;
+    }
+
+    /**
+     * What an audited transition will record, minus the moment it landed: the row
+     * is only stamped and appended once the save has stuck, so a write that ends
+     * up retried or abandoned never dates an audit row it did not write.
+     */
+    private record AuditIntent(
+            OccurrenceState fromState,
+            OccurrenceState toState,
+            OccurrenceAction action,
+            ActorKind actorKind,
+            UUID actorUserId,
+            UUID onBehalfOfUserId,
+            String reason) {
+
+        OccurrenceStateTransition stampedAt(UUID occurrenceId, Instant at) {
+            return new OccurrenceStateTransition(UUID.randomUUID(), occurrenceId,
+                    fromState, toState, action, actorKind, actorUserId, onBehalfOfUserId, reason, at);
+        }
     }
 
     /** @return the absent Sanchalak this is a proxy action for, or {@code null} */

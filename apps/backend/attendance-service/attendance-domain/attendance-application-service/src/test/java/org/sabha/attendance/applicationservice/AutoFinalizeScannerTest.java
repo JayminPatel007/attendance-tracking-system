@@ -66,9 +66,9 @@ class AutoFinalizeScannerTest {
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(DUE_OCCURRENCE);
-        assertThat(occurrences.savedOccurrences().get(0).state())
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(DUE_OCCURRENCE);
+        assertThat(occurrences.saved.get(0).state())
                 .isEqualTo(OccurrenceState.FINALIZED);
 
         assertThat(log.appended).hasSize(1);
@@ -113,7 +113,7 @@ class AutoFinalizeScannerTest {
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).isEmpty();
+        assertThat(occurrences.saved).isEmpty();
         assertThat(log.appended).isEmpty();
     }
 
@@ -144,9 +144,9 @@ class AutoFinalizeScannerTest {
 
         new AutoFinalizeScanner(queries, lookup, writer, clock, Duration.ofHours(24)).scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(monthlyOccurrence);
-        assertThat(occurrences.savedOccurrences().get(0).state()).isEqualTo(OccurrenceState.FINALIZED);
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(monthlyOccurrence);
+        assertThat(occurrences.saved.get(0).state()).isEqualTo(OccurrenceState.FINALIZED);
     }
 
     private static final class StubOccurrenceQueries implements OccurrenceQueries {

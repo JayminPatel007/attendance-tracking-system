@@ -66,9 +66,9 @@ class AutoOpenScannerTest {
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(DUE_OCCURRENCE);
-        assertThat(occurrences.savedOccurrences().get(0).state())
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(DUE_OCCURRENCE);
+        assertThat(occurrences.saved.get(0).state())
                 .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
 
         assertThat(log.appended).hasSize(1);
@@ -117,9 +117,9 @@ class AutoOpenScannerTest {
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(dueRescheduled);
-        assertThat(occurrences.savedOccurrences().get(0).state())
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(dueRescheduled);
+        assertThat(occurrences.saved.get(0).state())
                 .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
     }
 
@@ -149,9 +149,9 @@ class AutoOpenScannerTest {
 
         new AutoOpenScanner(queries, lookup, writer, clock).scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(monthlyOccurrence);
-        assertThat(occurrences.savedOccurrences().get(0).state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(monthlyOccurrence);
+        assertThat(occurrences.saved.get(0).state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
     }
 
     private static final class StubOccurrenceQueries implements OccurrenceQueries {

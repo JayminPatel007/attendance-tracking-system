@@ -43,7 +43,7 @@ public class MarkAttendanceApplicationService {
      */
     @Transactional
     public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
-        writer.mutate(occurrenceId, keycloakSubject, (occurrence, markedBy) -> {
+        writer.mutateUnaudited(occurrenceId, keycloakSubject, (occurrence, markedBy) -> {
             for (MarkItem item : items) {
                 apply(occurrence, item, markedBy);
             }

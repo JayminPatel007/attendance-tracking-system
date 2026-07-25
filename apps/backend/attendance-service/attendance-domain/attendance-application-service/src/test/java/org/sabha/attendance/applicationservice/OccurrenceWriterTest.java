@@ -1,7 +1,9 @@
 package org.sabha.attendance.applicationservice;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -199,13 +201,29 @@ class OccurrenceWriterTest {
     void anUnauditedMutationSharesTheSameRetryContract() {
         Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.OPEN_FOR_MARKING, 99);
 
-        assertThatThrownBy(() -> f.writer().mutate(OCCURRENCE_ID, SANCHALAK_SUBJECT,
+        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_SUBJECT,
                 (occurrence, actorUserId) -> occurrence.markWalkIn(
                         UUID.randomUUID(), actorUserId, FIXED_NOW)))
                 .isInstanceOf(ConcurrentModificationException.class);
 
         assertThat(f.occurrences.saveAttempts).isEqualTo(3);
         assertThat(f.publisher.published).isEmpty();
+    }
+
+    @Test
+    void theAuditRowIsStampedWhenTheSaveSticksNotBeforeTheRetriedAttempts() {
+        Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.SCHEDULED, 1);
+        AdvancingClock clock = new AdvancingClock(FIXED_NOW);
+        // Every save attempt — the conflicting one and the one that sticks —
+        // costs a minute, so a row stamped before the save reads a minute early.
+        f.occurrences.beforeSave = () -> clock.advance(Duration.ofMinutes(1));
+
+        f.writer(clock).transition(OCCURRENCE_ID, TransitionActor.system(),
+                OccurrenceAction.OPEN, null, Occurrence::open);
+
+        assertThat(f.occurrences.saveAttempts).isEqualTo(2);
+        assertThat(f.transitions.appended.get(0).at())
+                .isEqualTo(FIXED_NOW.plus(Duration.ofMinutes(2)));
     }
 
     // --- the unaudited (marking) path --------------------------------------
@@ -216,7 +234,7 @@ class OccurrenceWriterTest {
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         List<UUID> markedBy = new ArrayList<>();
 
-        f.writer().mutate(OCCURRENCE_ID, SANCHALAK_SUBJECT, (occurrence, actorUserId) -> {
+        f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_SUBJECT, (occurrence, actorUserId) -> {
             markedBy.add(actorUserId);
             occurrence.mark(personId, true, actorUserId, FIXED_NOW);
         });
@@ -232,7 +250,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.OPEN_FOR_MARKING);
         UUID unknownSubject = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
-        assertThatThrownBy(() -> f.writer().mutate(OCCURRENCE_ID, unknownSubject,
+        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, unknownSubject,
                 (occurrence, actorUserId) -> occurrence.mark(
                         UUID.randomUUID(), true, actorUserId, FIXED_NOW)))
                 .isInstanceOf(CallerUnknownException.class);
@@ -275,6 +293,10 @@ class OccurrenceWriterTest {
         }
 
         OccurrenceWriter writer() {
+            return writer(FIXED_CLOCK);
+        }
+
+        OccurrenceWriter writer(Clock clock) {
             CallerResolver callerResolver = subject -> {
                 if (subject.equals(SANCHALAK_SUBJECT)) {
                     return Optional.of(SANCHALAK_USER);
@@ -335,7 +357,7 @@ class OccurrenceWriterTest {
             };
             return new OccurrenceWriter(callerResolver,
                     new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
-                    occurrences, transitions, publisher, FIXED_CLOCK);
+                    occurrences, transitions, publisher, clock);
         }
     }
 
@@ -415,6 +437,8 @@ class OccurrenceWriterTest {
         final Map<UUID, Occurrence> store = new HashMap<>();
         final List<Occurrence> saved = new ArrayList<>();
         private final int failures;
+        /** Run on entry to every save attempt, so a test can move the clock. */
+        Runnable beforeSave = () -> { };
         int loads;
         int saveAttempts;
 
@@ -428,10 +452,6 @@ class OccurrenceWriterTest {
 
         void put(Occurrence occurrence) {
             store.put(occurrence.id(), occurrence);
-        }
-
-        List<Occurrence> savedOccurrences() {
-            return saved;
         }
 
         @Override
@@ -450,12 +470,41 @@ class OccurrenceWriterTest {
 
         @Override
         public void save(Occurrence occurrence) {
+            beforeSave.run();
             saveAttempts++;
             if (saveAttempts <= failures) {
                 throw new OptimisticLockException(occurrence.id());
             }
             store.put(occurrence.id(), occurrence);
             saved.add(occurrence);
+        }
+    }
+
+    /** A clock the test moves by hand, to date events relative to each other. */
+    static final class AdvancingClock extends Clock {
+        private Instant now;
+
+        AdvancingClock(Instant start) {
+            this.now = start;
+        }
+
+        void advance(Duration by) {
+            now = now.plus(by);
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
         }
     }
 

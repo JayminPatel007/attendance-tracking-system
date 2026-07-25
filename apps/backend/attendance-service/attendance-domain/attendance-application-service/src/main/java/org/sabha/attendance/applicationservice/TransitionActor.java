@@ -25,7 +25,7 @@ public sealed interface TransitionActor {
     ActorKind kind();
 
     static TransitionActor system() {
-        return Cron.INSTANCE;
+        return new Cron();
     }
 
     static TransitionActor user(UUID keycloakSubject, AuthorizedAction authority) {
@@ -33,8 +33,6 @@ public sealed interface TransitionActor {
     }
 
     record Cron() implements TransitionActor {
-
-        static final Cron INSTANCE = new Cron();
 
         @Override
         public ActorKind kind() {
