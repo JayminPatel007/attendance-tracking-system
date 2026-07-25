@@ -9,7 +9,9 @@ import java.util.List;
  */
 public interface OccurrenceQueries {
 
-    List<ScheduledOccurrenceRef> findScheduledOnOrBefore(LocalDate date);
+    /** Scheduled (or Rescheduled) Occurrences — auto-open candidates. */
+    List<OccurrenceSlotRef> findScheduledOnOrBefore(LocalDate date);
 
-    List<OpenOccurrenceRef> findOpenOnOrBefore(LocalDate date);
+    /** Open-for-Marking Occurrences — auto-finalize candidates. */
+    List<OccurrenceSlotRef> findOpenOnOrBefore(LocalDate date);
 }
