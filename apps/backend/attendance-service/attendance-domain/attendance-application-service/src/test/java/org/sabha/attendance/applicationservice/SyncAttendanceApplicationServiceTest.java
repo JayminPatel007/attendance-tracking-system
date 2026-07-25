@@ -122,9 +122,9 @@ class SyncAttendanceApplicationServiceTest {
         CapturingPublisher publisher = new CapturingPublisher();
         CallerResolver resolver = subject ->
                 subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
-        MarkAttendanceApplicationService markUseCase = new MarkAttendanceApplicationService(
-                resolver, occurrences, publisher);
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
+        MarkAttendanceApplicationService markUseCase =
+                markAttendance(resolver, occurrences, publisher, clock);
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
                 resolver, markUseCase, new RecordingActivity(), clock);
 
@@ -165,13 +165,21 @@ class SyncAttendanceApplicationServiceTest {
         CapturingPublisher publisher = new CapturingPublisher();
         CallerResolver resolver = subject ->
                 subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
-        MarkAttendanceApplicationService markUseCase = new MarkAttendanceApplicationService(
-                resolver, occurrences, publisher);
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
+        MarkAttendanceApplicationService markUseCase =
+                markAttendance(resolver, occurrences, publisher, clock);
         RecordingActivity recorder = new RecordingActivity();
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
                 resolver, markUseCase, recorder, clock);
         return new Fixture(occurrences, publisher, markUseCase, recorder, service);
+    }
+
+    private static MarkAttendanceApplicationService markAttendance(
+            CallerResolver resolver, OccurrenceRepository occurrences,
+            DomainEventPublisher publisher, Clock clock) {
+        return new MarkAttendanceApplicationService(OccurrenceWriterTest.unauthorizedWriter(
+                resolver, occurrences, new OccurrenceWriterTest.InMemoryTransitionLog(),
+                publisher, clock));
     }
 
     private record Fixture(

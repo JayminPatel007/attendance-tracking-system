@@ -51,24 +51,24 @@ class AutoOpenScannerTest {
         lookup.put(otherSabhaId, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(21, 0), LocalTime.of(22, 0)));
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(Occurrence.scheduled(DUE_OCCURRENCE, SABHA_ID, LocalDate.of(2026, 5, 26)));
         occurrences.put(Occurrence.scheduled(NOT_YET_DUE_OCCURRENCE, otherSabhaId, LocalDate.of(2026, 5, 26)));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
-        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, stateMachine, clock);
+        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, writer, clock);
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(DUE_OCCURRENCE);
-        assertThat(occurrences.savedOccurrences().get(0).state())
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(DUE_OCCURRENCE);
+        assertThat(occurrences.saved.get(0).state())
                 .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
 
         assertThat(log.appended).hasSize(1);
@@ -100,26 +100,26 @@ class AutoOpenScannerTest {
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(new Occurrence(dueRescheduled, SABHA_ID,
                 LocalDate.of(2026, 5, 24), OccurrenceState.RESCHEDULED));
         occurrences.put(new Occurrence(notYetRescheduled, SABHA_ID,
                 LocalDate.of(2026, 5, 24), OccurrenceState.RESCHEDULED));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
-        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, stateMachine, clock);
+        AutoOpenScanner scanner = new AutoOpenScanner(queries, lookup, writer, clock);
 
         scanner.scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(dueRescheduled);
-        assertThat(occurrences.savedOccurrences().get(0).state())
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(dueRescheduled);
+        assertThat(occurrences.saved.get(0).state())
                 .isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
     }
 
@@ -138,20 +138,20 @@ class AutoOpenScannerTest {
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(Occurrence.scheduled(monthlyOccurrence, monthlySabha, LocalDate.of(2026, 6, 21)));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(occurrences, log, publisher, clock);
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(occurrences, log, publisher, clock);
 
-        new AutoOpenScanner(queries, lookup, stateMachine, clock).scan();
+        new AutoOpenScanner(queries, lookup, writer, clock).scan();
 
-        assertThat(occurrences.savedOccurrences()).hasSize(1);
-        assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(monthlyOccurrence);
-        assertThat(occurrences.savedOccurrences().get(0).state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
+        assertThat(occurrences.saved).hasSize(1);
+        assertThat(occurrences.saved.get(0).id()).isEqualTo(monthlyOccurrence);
+        assertThat(occurrences.saved.get(0).state()).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
     }
 
     private static final class StubOccurrenceQueries implements OccurrenceQueries {

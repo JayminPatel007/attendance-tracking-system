@@ -6,28 +6,24 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
-import org.sabha.common.CallerResolver;
-import org.sabha.common.DomainEventPublisher;
-import org.sabha.common.OptimisticLockException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Records Attendance Markings against an Occurrence. This service owns only the
+ * marking vocabulary — Roster presence vs Walk-in; the load-retry-save-publish
+ * cycle it shares with every other writer of the aggregate lives in {@link
+ * OccurrenceWriter}. Marking changes no lifecycle state, so it takes the writer's
+ * unaudited path: each marking carries its own {@code markedBy}, and no
+ * state-transition row is appended.
+ */
 @Service
 public class MarkAttendanceApplicationService {
 
-    private static final int MAX_OPTIMISTIC_LOCK_ATTEMPTS = 3;
+    private final OccurrenceWriter writer;
 
-    private final CallerResolver callerResolver;
-    private final OccurrenceRepository occurrences;
-    private final DomainEventPublisher events;
-
-    public MarkAttendanceApplicationService(
-            CallerResolver callerResolver,
-            OccurrenceRepository occurrences,
-            DomainEventPublisher events) {
-        this.callerResolver = callerResolver;
-        this.occurrences = occurrences;
-        this.events = events;
+    public MarkAttendanceApplicationService(OccurrenceWriter writer) {
+        this.writer = writer;
     }
 
     @Transactional
@@ -47,28 +43,11 @@ public class MarkAttendanceApplicationService {
      */
     @Transactional
     public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
-        UUID markedBy = callerResolver.requireUserId(keycloakSubject);
-
-        OptimisticLockException lastConflict = null;
-        for (int attempt = 0; attempt < MAX_OPTIMISTIC_LOCK_ATTEMPTS; attempt++) {
-            Occurrence occurrence = occurrences.findById(occurrenceId)
-                    .orElseThrow(() -> new OccurrenceNotFoundException(occurrenceId));
-
+        writer.mutateUnaudited(occurrenceId, keycloakSubject, (occurrence, markedBy) -> {
             for (MarkItem item : items) {
                 apply(occurrence, item, markedBy);
             }
-
-            try {
-                occurrences.save(occurrence);
-            } catch (OptimisticLockException retry) {
-                lastConflict = retry;
-                continue;
-            }
-
-            events.publishAll(occurrence.pullDomainEvents());
-            return;
-        }
-        throw new org.sabha.common.ConcurrentModificationException(occurrenceId, lastConflict);
+        });
     }
 
     private static void apply(Occurrence occurrence, MarkItem item, UUID markedBy) {
