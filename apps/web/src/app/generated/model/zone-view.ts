@@ -13,6 +13,7 @@ export interface ZoneView {
     cityId?: string;
     cityName?: string;
     id?: string;
+    kshetraCount?: number;
     name?: string;
 }
 

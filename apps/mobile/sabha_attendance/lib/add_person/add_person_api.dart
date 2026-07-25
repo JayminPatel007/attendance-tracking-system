@@ -8,35 +8,47 @@ import '../api/api_error.dart';
 /// add flow is **online-only** (ADR-0007) — the de-dup check must hit the live
 /// Directory, so nothing here is ever queued offline.
 ///
-/// Responses are deserialized through the generated typed models (issue #73) —
-/// `AddPersonResponse`/`NameCandidate` — so the soft-warn candidate shape can
-/// never silently drift from the backend the way the old hand-rolled parser did
-/// (issue #75). The *request* is still built by hand: `dateOfBirth` is a
-/// free-text passthrough and `gender` a plain string, neither of which survives
-/// the generated `AddPersonRequest` cleanly (its `DateTime` serializer applies
-/// `.toUtc()`, shifting birthdates, and `gender` is a closed enum). `findByMobile`
-/// likewise stays hand-rolled: the spec types that response as an untyped object.
+/// Every payload on this seam — request and response, both directions — is a
+/// generated typed model (issues #73, #104), so no shape here can silently drift
+/// from the backend the way the old hand-rolled parsers did (issue #75). What
+/// remains hand-written is the *transport* of the add call: the generated
+/// operation collapses a failure into a status plus a body string, and the add
+/// flow needs the ProblemDetail `code` and `existingPersonId` extensions off a
+/// `409` (issues #67, #70) to drive the hard-block redirect. So the add posts the
+/// generated request through the plain client and keeps the shared [apiError]
+/// dispatcher; the mobile lookup, which has no such error contract, goes through
+/// the generated operation whole.
 class AddPersonApi {
   AddPersonApi({required this.baseUrl, required this.accessToken, http.Client? client})
-      : _client = client ?? http.Client();
+      : _client = client ?? http.Client() {
+    final apiClient = api.ApiClient(
+      basePath: baseUrl,
+      authentication: api.HttpBearerAuth()..accessToken = accessToken,
+    );
+    if (client != null) {
+      apiClient.client = client;
+    }
+    _directory = api.PersonDirectoryRestControllerApi(apiClient);
+  }
 
   final String baseUrl;
   final String accessToken;
   final http.Client _client;
+  late final api.PersonDirectoryRestControllerApi _directory;
 
   /// Step 1 of the flow: look the entered mobile up against the Directory.
   /// Returns the existing Person on an exact hit (the forced-redirect case), or
-  /// `null` when the number is new.
+  /// `null` when the number is new — the `404` the endpoint documents as an
+  /// outcome, not a failure. Any other status is a transport failure and must
+  /// not be read as "new number".
   Future<DirectoryPerson?> findByMobile(String mobile) async {
-    final resp = await _client.get(
-      Uri.parse('$baseUrl/api/directory/persons').replace(queryParameters: {'mobile': mobile}),
-      headers: {'Authorization': 'Bearer $accessToken'},
-    );
-    if (resp.statusCode == 404) return null;
-    if (resp.statusCode != 200) {
-      throw AddPersonApiException('GET persons?mobile -> ${resp.statusCode}: ${resp.body}');
+    try {
+      final person = await _directory.byMobile(mobile);
+      return person == null ? null : DirectoryPerson._fromApi(person);
+    } on api.ApiException catch (e) {
+      if (e.code == 404) return null;
+      throw AddPersonApiException('GET persons?mobile -> ${e.code}: ${e.message}');
     }
-    return DirectoryPerson.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
   /// Step 2: create the Person. A `201` is a clean create; a `200` is the name
@@ -50,7 +62,7 @@ class AddPersonApi {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(req.toJson()),
+      body: jsonEncode(req.toApi()),
     );
     if (resp.statusCode == 201 || resp.statusCode == 200) {
       return AddPersonOutcome.fromResponse(api.AddPersonResponse.fromJson(jsonDecode(resp.body))!);
@@ -126,15 +138,47 @@ class AddPersonRequest {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'fullName': fullName,
-        'gender': gender,
-        'dateOfBirth': dateOfBirth,
-        'mobile': mobile,
-        'guardianPersonId': guardianPersonId,
-        'homeSabhaId': homeSabhaId,
-        'overrideDuplicateWarning': overrideDuplicateWarning,
-      };
+  /// The generated wire model for this request.
+  ///
+  /// [dateOfBirth] is the one field that needs care. A birthdate is a calendar
+  /// date — the backend field is a `LocalDate`, no time and no zone — but the
+  /// generated model types it as a `DateTime` and serializes
+  /// `.toUtc()`. Handing it a *local* midnight would therefore post the previous
+  /// day from any device east of Greenwich (IST `2010-05-01` → `2010-04-30`).
+  /// Building the value at UTC midnight makes that conversion a no-op, so the
+  /// entered date goes out as entered from any timezone (issue #104).
+  api.AddPersonRequest toApi() => api.AddPersonRequest(
+        fullName: fullName,
+        gender: _genderValue(gender),
+        dateOfBirth: _utcMidnight(dateOfBirth),
+        mobile: mobile,
+        guardianPersonId: guardianPersonId,
+        homeSabhaId: homeSabhaId,
+        overrideDuplicateWarning: overrideDuplicateWarning,
+      );
+
+  /// [gender] is a closed set on the wire. The generated transformer answers
+  /// `null` for a value outside it, which would quietly post a Person with no
+  /// gender; say so instead, since gender decides which demographic Sabhas the
+  /// Person is eligible for (CONTEXT.md).
+  static api.AddPersonRequestGenderEnum _genderValue(String gender) {
+    final value = api.AddPersonRequestGenderEnum.fromJson(gender);
+    if (value == null) {
+      throw DirectoryRuleException('Choose a gender before adding the Person.');
+    }
+    return value;
+  }
+
+  /// The DOB field is free text, so an unparseable entry is an adder mistake to
+  /// report — not a crash to fall through into the generic connection error.
+  static DateTime? _utcMidnight(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return null;
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) {
+      throw DirectoryRuleException('Enter the date of birth as YYYY-MM-DD.');
+    }
+    return DateTime.utc(date.year, date.month, date.day);
+  }
 }
 
 /// Outcome of an add: either a clean create ([createdPersonId] set) or a soft
@@ -151,7 +195,7 @@ class AddPersonOutcome {
   factory AddPersonOutcome.fromResponse(api.AddPersonResponse r) {
     return AddPersonOutcome(
       createdPersonId: r.personId,
-      requiresOverride: r.requiresOverride ?? false,
+      requiresOverride: r.requiresOverride,
       candidates: r.candidates.map(NameCandidate._fromApi).toList(),
     );
   }
@@ -162,9 +206,6 @@ class AddPersonOutcome {
 /// they qualify for (typically their demographic Sabha + Sanyukta, CONTEXT.md) —
 /// so the adder sees the demographic Sabha and not just whichever sorts first.
 /// Elements are `sabha_kind` strings.
-///
-/// A non-null view model: the API seam asserts the backend's contract (id + name
-/// always present) once here, so the soft-warn card never deals with nulls.
 class NameCandidate {
   NameCandidate({required this.personId, required this.fullName, this.homeSabhas = const []});
 
@@ -177,8 +218,8 @@ class NameCandidate {
   String get homeSabhasLabel => homeSabhas.join(', ');
 
   factory NameCandidate._fromApi(api.NameCandidate c) => NameCandidate(
-        personId: c.personId!,
-        fullName: c.fullName!,
+        personId: c.personId,
+        fullName: c.fullName,
         homeSabhas: c.homeSabhas,
       );
 }
@@ -202,14 +243,19 @@ class DirectoryPerson {
   final String? mobile;
   final String? guardianPersonId;
 
-  factory DirectoryPerson.fromJson(Map<String, dynamic> json) {
-    return DirectoryPerson(
-      id: json['id'] as String,
-      fullName: json['fullName'] as String,
-      gender: json['gender'] as String,
-      dateOfBirth: json['dateOfBirth'] as String?,
-      mobile: json['mobile'] as String?,
-      guardianPersonId: json['guardianPersonId'] as String?,
-    );
-  }
+  /// [dateOfBirth] comes back as the generated `DateTime`; the profile view shows
+  /// it as the calendar date it is, read off the value's own fields so no
+  /// timezone conversion can move it (issue #104).
+  factory DirectoryPerson._fromApi(api.PersonResponse p) => DirectoryPerson(
+        id: p.id,
+        fullName: p.fullName,
+        gender: p.gender.value,
+        dateOfBirth: p.dateOfBirth == null ? null : _isoDate(p.dateOfBirth!),
+        mobile: p.mobile,
+        guardianPersonId: p.guardianPersonId,
+      );
+
+  static String _isoDate(DateTime date) => '${date.year.toString().padLeft(4, '0')}'
+      '-${date.month.toString().padLeft(2, '0')}'
+      '-${date.day.toString().padLeft(2, '0')}';
 }

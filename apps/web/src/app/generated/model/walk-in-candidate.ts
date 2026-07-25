@@ -10,8 +10,8 @@
 
 
 export interface WalkInCandidate { 
-    fullName?: string;
-    homeSabhas?: Array<string>;
-    personId?: string;
+    fullName: string;
+    homeSabhas: Array<string>;
+    personId: string;
 }
 

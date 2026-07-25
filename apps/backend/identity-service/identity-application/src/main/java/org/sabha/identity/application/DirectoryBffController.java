@@ -1,11 +1,8 @@
 package org.sabha.identity.application;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 import org.sabha.identity.applicationservice.directory.SearchDirectoryUseCase;
-import org.sabha.identity.domain.Gender;
-import org.sabha.identity.domain.Person;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,14 +39,5 @@ public class DirectoryBffController {
             return ResponseEntity.ok(searchDirectory.byName(kshetraId, name));
         }
         return ResponseEntity.badRequest().build();
-    }
-
-    public record PersonResponse(
-            UUID id, String fullName, Gender gender, LocalDate dateOfBirth, String mobile, UUID guardianPersonId) {
-
-        static PersonResponse of(Person person) {
-            return new PersonResponse(person.id(), person.fullName(), person.gender(),
-                    person.dateOfBirth(), person.mobile(), person.guardianPersonId());
-        }
     }
 }

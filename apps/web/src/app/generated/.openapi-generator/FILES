@@ -16,10 +16,12 @@ api/password-reset-rest-controller.service.ts
 api/person-directory-rest-controller.service.ts
 api/role-appointment-controller.service.ts
 api/sabha-definition-controller.service.ts
+api/sabha-list-controller.service.ts
 api/sanchalak-proxy-bff-controller.service.ts
 api/selection-bff-controller.service.ts
 api/selection-rest-controller.service.ts
 api/structural-creation-controller.service.ts
+api/structural-deletion-controller.service.ts
 api/who-appointed-me-rest-controller.service.ts
 configuration.ts
 encoder.ts
@@ -82,6 +84,7 @@ model/roster-entry.ts
 model/sabha-definition-response.ts
 model/sabha-kind-view.ts
 model/sabha-tree.ts
+model/sabha-view.ts
 model/sabha.ts
 model/sah-nirdeshak-cap-response.ts
 model/selected-person-item.ts

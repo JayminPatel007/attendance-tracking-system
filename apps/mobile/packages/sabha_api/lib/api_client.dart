@@ -297,6 +297,10 @@ class ApiClient {
           return SabhaKindView.fromJson(value);
         case 'SabhaTree':
           return SabhaTree.fromJson(value);
+        case 'SabhaView':
+          return SabhaView.fromJson(value);
+        case 'SahNirdeshakCapResponse':
+          return SahNirdeshakCapResponse.fromJson(value);
         case 'SelectedPersonItem':
           return SelectedPersonItem.fromJson(value);
         case 'SyncRequest':

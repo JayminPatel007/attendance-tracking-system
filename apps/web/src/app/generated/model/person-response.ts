@@ -11,10 +11,10 @@
 
 export interface PersonResponse { 
     dateOfBirth?: string;
-    fullName?: string;
-    gender?: PersonResponse.GenderEnum;
+    fullName: string;
+    gender: PersonResponse.GenderEnum;
     guardianPersonId?: string;
-    id?: string;
+    id: string;
     mobile?: string;
 }
 export namespace PersonResponse {

@@ -15,6 +15,7 @@ class KshetraView {
   KshetraView({
     this.id,
     this.name,
+    this.sabhaCount,
     this.zoneId,
   });
 
@@ -40,12 +41,21 @@ class KshetraView {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
+  int? sabhaCount;
+
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
   String? zoneId;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is KshetraView &&
     other.id == id &&
     other.name == name &&
+    other.sabhaCount == sabhaCount &&
     other.zoneId == zoneId;
 
   @override
@@ -53,10 +63,11 @@ class KshetraView {
     // ignore: unnecessary_parenthesis
     (id == null ? 0 : id!.hashCode) +
     (name == null ? 0 : name!.hashCode) +
+    (sabhaCount == null ? 0 : sabhaCount!.hashCode) +
     (zoneId == null ? 0 : zoneId!.hashCode);
 
   @override
-  String toString() => 'KshetraView[id=$id, name=$name, zoneId=$zoneId]';
+  String toString() => 'KshetraView[id=$id, name=$name, sabhaCount=$sabhaCount, zoneId=$zoneId]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -69,6 +80,11 @@ class KshetraView {
       json[r'name'] = this.name;
     } else {
       json[r'name'] = null;
+    }
+    if (this.sabhaCount != null) {
+      json[r'sabhaCount'] = this.sabhaCount;
+    } else {
+      json[r'sabhaCount'] = null;
     }
     if (this.zoneId != null) {
       json[r'zoneId'] = this.zoneId;
@@ -95,6 +111,7 @@ class KshetraView {
       return KshetraView(
         id: mapValueOfType<String>(json, r'id'),
         name: mapValueOfType<String>(json, r'name'),
+        sabhaCount: mapValueOfType<int>(json, r'sabhaCount'),
         zoneId: mapValueOfType<String>(json, r'zoneId'),
       );
     }

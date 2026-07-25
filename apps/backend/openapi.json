@@ -47,6 +47,7 @@
             "type" : "boolean"
           }
         },
+        "required" : [ "candidates", "requiresOverride" ],
         "type" : "object"
       },
       "AppointeePayload" : {
@@ -654,6 +655,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "fullName", "homeSabhas", "personId" ],
         "type" : "object"
       },
       "NewPersonPayload" : {
@@ -795,6 +797,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "fullName", "gender", "id" ],
         "type" : "object"
       },
       "ProxyOccurrenceItem" : {
@@ -1197,6 +1200,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "fullName", "homeSabhas", "personId" ],
         "type" : "object"
       },
       "WalkInRequest" : {
@@ -1315,29 +1319,22 @@
   },
   "openapi" : "3.1.0",
   "paths" : {
-    "/api/directory/persons" : {
+    "/api/directory/name-search" : {
       "get" : {
-        "operationId" : "search",
+        "operationId" : "nameSearch",
         "parameters" : [ {
           "in" : "query",
-          "name" : "mobile",
-          "required" : false,
+          "name" : "kshetraId",
+          "required" : true,
           "schema" : {
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
           "in" : "query",
           "name" : "name",
-          "required" : false,
+          "required" : true,
           "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "kshetraId",
-          "required" : false,
-          "schema" : {
-            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -1346,13 +1343,49 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "items" : {
+                    "$ref" : "#/components/schemas/NameCandidate"
+                  },
+                  "type" : "array"
                 }
               }
             },
             "description" : "OK"
           }
         },
+        "tags" : [ "person-directory-rest-controller" ]
+      }
+    },
+    "/api/directory/persons" : {
+      "get" : {
+        "operationId" : "byMobile",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "mobile",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PersonResponse"
+                }
+              }
+            },
+            "description" : "The Person registered to that mobile"
+          },
+          "400" : {
+            "description" : "The mobile to look up was blank"
+          },
+          "404" : {
+            "description" : "No Person has that mobile"
+          }
+        },
+        "summary" : "Look a Person up by their exact mobile number",
         "tags" : [ "person-directory-rest-controller" ]
       },
       "post" : {
@@ -2266,7 +2299,7 @@
     },
     "/bff/directory/search" : {
       "get" : {
-        "operationId" : "search_1",
+        "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
           "name" : "mobile",

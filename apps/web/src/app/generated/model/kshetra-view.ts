@@ -12,6 +12,7 @@
 export interface KshetraView { 
     id?: string;
     name?: string;
+    sabhaCount?: number;
     zoneId?: string;
 }
 

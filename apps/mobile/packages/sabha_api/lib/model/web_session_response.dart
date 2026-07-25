@@ -14,6 +14,7 @@ class WebSessionResponse {
   /// Returns a new [WebSessionResponse] instance.
   WebSessionResponse({
     this.madhyasthaKaryalaya,
+    this.regionalTeam,
     this.sections = const {},
     this.username,
   });
@@ -25,6 +26,14 @@ class WebSessionResponse {
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
   bool? madhyasthaKaryalaya;
+
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  bool? regionalTeam;
 
   Set<WebSessionResponseSectionsEnum> sections;
 
@@ -39,6 +48,7 @@ class WebSessionResponse {
   @override
   bool operator ==(Object other) => identical(this, other) || other is WebSessionResponse &&
     other.madhyasthaKaryalaya == madhyasthaKaryalaya &&
+    other.regionalTeam == regionalTeam &&
     _deepEquality.equals(other.sections, sections) &&
     other.username == username;
 
@@ -46,11 +56,12 @@ class WebSessionResponse {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (madhyasthaKaryalaya == null ? 0 : madhyasthaKaryalaya!.hashCode) +
+    (regionalTeam == null ? 0 : regionalTeam!.hashCode) +
     (sections.hashCode) +
     (username == null ? 0 : username!.hashCode);
 
   @override
-  String toString() => 'WebSessionResponse[madhyasthaKaryalaya=$madhyasthaKaryalaya, sections=$sections, username=$username]';
+  String toString() => 'WebSessionResponse[madhyasthaKaryalaya=$madhyasthaKaryalaya, regionalTeam=$regionalTeam, sections=$sections, username=$username]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -58,6 +69,11 @@ class WebSessionResponse {
       json[r'madhyasthaKaryalaya'] = this.madhyasthaKaryalaya;
     } else {
       json[r'madhyasthaKaryalaya'] = null;
+    }
+    if (this.regionalTeam != null) {
+      json[r'regionalTeam'] = this.regionalTeam;
+    } else {
+      json[r'regionalTeam'] = null;
     }
       json[r'sections'] = this.sections.toList(growable: false);
     if (this.username != null) {
@@ -84,6 +100,7 @@ class WebSessionResponse {
 
       return WebSessionResponse(
         madhyasthaKaryalaya: mapValueOfType<bool>(json, r'madhyasthaKaryalaya'),
+        regionalTeam: mapValueOfType<bool>(json, r'regionalTeam'),
         sections: WebSessionResponseSectionsEnum.listFromJson(json[r'sections']).toSet(),
         username: mapValueOfType<String>(json, r'username'),
       );

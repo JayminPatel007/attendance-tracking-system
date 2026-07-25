@@ -15,7 +15,7 @@ class AddPersonResponse {
   AddPersonResponse({
     this.candidates = const [],
     this.personId,
-    this.requiresOverride,
+    required this.requiresOverride,
   });
 
   List<NameCandidate> candidates;
@@ -28,13 +28,7 @@ class AddPersonResponse {
   ///
   String? personId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? requiresOverride;
+  bool requiresOverride;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AddPersonResponse &&
@@ -47,7 +41,7 @@ class AddPersonResponse {
     // ignore: unnecessary_parenthesis
     (candidates.hashCode) +
     (personId == null ? 0 : personId!.hashCode) +
-    (requiresOverride == null ? 0 : requiresOverride!.hashCode);
+    (requiresOverride.hashCode);
 
   @override
   String toString() => 'AddPersonResponse[candidates=$candidates, personId=$personId, requiresOverride=$requiresOverride]';
@@ -60,11 +54,7 @@ class AddPersonResponse {
     } else {
       json[r'personId'] = null;
     }
-    if (this.requiresOverride != null) {
       json[r'requiresOverride'] = this.requiresOverride;
-    } else {
-      json[r'requiresOverride'] = null;
-    }
     return json;
   }
 
@@ -79,13 +69,17 @@ class AddPersonResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidates'), 'Required key "AddPersonResponse[candidates]" is missing from JSON.');
+        assert(json[r'candidates'] != null, 'Required key "AddPersonResponse[candidates]" has a null value in JSON.');
+        assert(json.containsKey(r'requiresOverride'), 'Required key "AddPersonResponse[requiresOverride]" is missing from JSON.');
+        assert(json[r'requiresOverride'] != null, 'Required key "AddPersonResponse[requiresOverride]" has a null value in JSON.');
         return true;
       }());
 
       return AddPersonResponse(
         candidates: NameCandidate.listFromJson(json[r'candidates']),
         personId: mapValueOfType<String>(json, r'personId'),
-        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride'),
+        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride')!,
       );
     }
     return null;
@@ -133,6 +127,8 @@ class AddPersonResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidates',
+    'requiresOverride',
   };
 }
 

@@ -14,10 +14,10 @@ class PersonResponse {
   /// Returns a new [PersonResponse] instance.
   PersonResponse({
     this.dateOfBirth,
-    this.fullName,
-    this.gender,
+    required this.fullName,
+    required this.gender,
     this.guardianPersonId,
-    this.id,
+    required this.id,
     this.mobile,
   });
 
@@ -29,15 +29,9 @@ class PersonResponse {
   ///
   DateTime? dateOfBirth;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? fullName;
+  String fullName;
 
-  PersonResponseGenderEnum? gender;
+  PersonResponseGenderEnum gender;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -47,13 +41,7 @@ class PersonResponse {
   ///
   String? guardianPersonId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -76,10 +64,10 @@ class PersonResponse {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (dateOfBirth == null ? 0 : dateOfBirth!.hashCode) +
-    (fullName == null ? 0 : fullName!.hashCode) +
-    (gender == null ? 0 : gender!.hashCode) +
+    (fullName.hashCode) +
+    (gender.hashCode) +
     (guardianPersonId == null ? 0 : guardianPersonId!.hashCode) +
-    (id == null ? 0 : id!.hashCode) +
+    (id.hashCode) +
     (mobile == null ? 0 : mobile!.hashCode);
 
   @override
@@ -92,26 +80,14 @@ class PersonResponse {
     } else {
       json[r'dateOfBirth'] = null;
     }
-    if (this.fullName != null) {
       json[r'fullName'] = this.fullName;
-    } else {
-      json[r'fullName'] = null;
-    }
-    if (this.gender != null) {
       json[r'gender'] = this.gender;
-    } else {
-      json[r'gender'] = null;
-    }
     if (this.guardianPersonId != null) {
       json[r'guardianPersonId'] = this.guardianPersonId;
     } else {
       json[r'guardianPersonId'] = null;
     }
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
     if (this.mobile != null) {
       json[r'mobile'] = this.mobile;
     } else {
@@ -131,15 +107,21 @@ class PersonResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'fullName'), 'Required key "PersonResponse[fullName]" is missing from JSON.');
+        assert(json[r'fullName'] != null, 'Required key "PersonResponse[fullName]" has a null value in JSON.');
+        assert(json.containsKey(r'gender'), 'Required key "PersonResponse[gender]" is missing from JSON.');
+        assert(json[r'gender'] != null, 'Required key "PersonResponse[gender]" has a null value in JSON.');
+        assert(json.containsKey(r'id'), 'Required key "PersonResponse[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "PersonResponse[id]" has a null value in JSON.');
         return true;
       }());
 
       return PersonResponse(
         dateOfBirth: mapDateTime(json, r'dateOfBirth', r''),
-        fullName: mapValueOfType<String>(json, r'fullName'),
-        gender: PersonResponseGenderEnum.fromJson(json[r'gender']),
+        fullName: mapValueOfType<String>(json, r'fullName')!,
+        gender: PersonResponseGenderEnum.fromJson(json[r'gender'])!,
         guardianPersonId: mapValueOfType<String>(json, r'guardianPersonId'),
-        id: mapValueOfType<String>(json, r'id'),
+        id: mapValueOfType<String>(json, r'id')!,
         mobile: mapValueOfType<String>(json, r'mobile'),
       );
     }
@@ -188,6 +170,9 @@ class PersonResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'fullName',
+    'gender',
+    'id',
   };
 }
 
