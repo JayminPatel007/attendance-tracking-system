@@ -16,6 +16,7 @@ class ZoneView {
     this.cityId,
     this.cityName,
     this.id,
+    this.kshetraCount,
     this.name,
   });
 
@@ -49,6 +50,14 @@ class ZoneView {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
+  int? kshetraCount;
+
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
   String? name;
 
   @override
@@ -56,6 +65,7 @@ class ZoneView {
     other.cityId == cityId &&
     other.cityName == cityName &&
     other.id == id &&
+    other.kshetraCount == kshetraCount &&
     other.name == name;
 
   @override
@@ -64,10 +74,11 @@ class ZoneView {
     (cityId == null ? 0 : cityId!.hashCode) +
     (cityName == null ? 0 : cityName!.hashCode) +
     (id == null ? 0 : id!.hashCode) +
+    (kshetraCount == null ? 0 : kshetraCount!.hashCode) +
     (name == null ? 0 : name!.hashCode);
 
   @override
-  String toString() => 'ZoneView[cityId=$cityId, cityName=$cityName, id=$id, name=$name]';
+  String toString() => 'ZoneView[cityId=$cityId, cityName=$cityName, id=$id, kshetraCount=$kshetraCount, name=$name]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -85,6 +96,11 @@ class ZoneView {
       json[r'id'] = this.id;
     } else {
       json[r'id'] = null;
+    }
+    if (this.kshetraCount != null) {
+      json[r'kshetraCount'] = this.kshetraCount;
+    } else {
+      json[r'kshetraCount'] = null;
     }
     if (this.name != null) {
       json[r'name'] = this.name;
@@ -112,6 +128,7 @@ class ZoneView {
         cityId: mapValueOfType<String>(json, r'cityId'),
         cityName: mapValueOfType<String>(json, r'cityName'),
         id: mapValueOfType<String>(json, r'id'),
+        kshetraCount: mapValueOfType<int>(json, r'kshetraCount'),
         name: mapValueOfType<String>(json, r'name'),
       );
     }

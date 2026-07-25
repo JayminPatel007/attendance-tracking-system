@@ -10,12 +10,12 @@
 
 part of openapi.api;
 
-class CityView {
-  /// Returns a new [CityView] instance.
-  CityView({
-    this.id,
-    this.name,
-    this.zoneCount,
+class SahNirdeshakCapResponse {
+  /// Returns a new [SahNirdeshakCapResponse] instance.
+  SahNirdeshakCapResponse({
+    this.active,
+    this.cap,
+    this.reached,
   });
 
   ///
@@ -24,7 +24,7 @@ class CityView {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
-  String? id;
+  int? active;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -32,7 +32,7 @@ class CityView {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
-  String? name;
+  int? cap;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -40,48 +40,48 @@ class CityView {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
-  int? zoneCount;
+  bool? reached;
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is CityView &&
-    other.id == id &&
-    other.name == name &&
-    other.zoneCount == zoneCount;
+  bool operator ==(Object other) => identical(this, other) || other is SahNirdeshakCapResponse &&
+    other.active == active &&
+    other.cap == cap &&
+    other.reached == reached;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (id == null ? 0 : id!.hashCode) +
-    (name == null ? 0 : name!.hashCode) +
-    (zoneCount == null ? 0 : zoneCount!.hashCode);
+    (active == null ? 0 : active!.hashCode) +
+    (cap == null ? 0 : cap!.hashCode) +
+    (reached == null ? 0 : reached!.hashCode);
 
   @override
-  String toString() => 'CityView[id=$id, name=$name, zoneCount=$zoneCount]';
+  String toString() => 'SahNirdeshakCapResponse[active=$active, cap=$cap, reached=$reached]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.id != null) {
-      json[r'id'] = this.id;
+    if (this.active != null) {
+      json[r'active'] = this.active;
     } else {
-      json[r'id'] = null;
+      json[r'active'] = null;
     }
-    if (this.name != null) {
-      json[r'name'] = this.name;
+    if (this.cap != null) {
+      json[r'cap'] = this.cap;
     } else {
-      json[r'name'] = null;
+      json[r'cap'] = null;
     }
-    if (this.zoneCount != null) {
-      json[r'zoneCount'] = this.zoneCount;
+    if (this.reached != null) {
+      json[r'reached'] = this.reached;
     } else {
-      json[r'zoneCount'] = null;
+      json[r'reached'] = null;
     }
     return json;
   }
 
-  /// Returns a new [CityView] instance and imports its values from
+  /// Returns a new [SahNirdeshakCapResponse] instance and imports its values from
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
-  static CityView? fromJson(dynamic value) {
+  static SahNirdeshakCapResponse? fromJson(dynamic value) {
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
@@ -92,20 +92,20 @@ class CityView {
         return true;
       }());
 
-      return CityView(
-        id: mapValueOfType<String>(json, r'id'),
-        name: mapValueOfType<String>(json, r'name'),
-        zoneCount: mapValueOfType<int>(json, r'zoneCount'),
+      return SahNirdeshakCapResponse(
+        active: mapValueOfType<int>(json, r'active'),
+        cap: mapValueOfType<int>(json, r'cap'),
+        reached: mapValueOfType<bool>(json, r'reached'),
       );
     }
     return null;
   }
 
-  static List<CityView> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <CityView>[];
+  static List<SahNirdeshakCapResponse> listFromJson(dynamic json, {bool growable = false,}) {
+    final result = <SahNirdeshakCapResponse>[];
     if (json is List && json.isNotEmpty) {
       for (final row in json) {
-        final value = CityView.fromJson(row);
+        final value = SahNirdeshakCapResponse.fromJson(row);
         if (value != null) {
           result.add(value);
         }
@@ -114,12 +114,12 @@ class CityView {
     return result.toList(growable: growable);
   }
 
-  static Map<String, CityView> mapFromJson(dynamic json) {
-    final map = <String, CityView>{};
+  static Map<String, SahNirdeshakCapResponse> mapFromJson(dynamic json) {
+    final map = <String, SahNirdeshakCapResponse>{};
     if (json is Map && json.isNotEmpty) {
       json = json.cast<String, dynamic>(); // ignore: parameter_assignments
       for (final entry in json.entries) {
-        final value = CityView.fromJson(entry.value);
+        final value = SahNirdeshakCapResponse.fromJson(entry.value);
         if (value != null) {
           map[entry.key] = value;
         }
@@ -128,14 +128,14 @@ class CityView {
     return map;
   }
 
-  // maps a json object with a list of CityView-objects as value to a dart map
-  static Map<String, List<CityView>> mapListFromJson(dynamic json, {bool growable = false,}) {
-    final map = <String, List<CityView>>{};
+  // maps a json object with a list of SahNirdeshakCapResponse-objects as value to a dart map
+  static Map<String, List<SahNirdeshakCapResponse>> mapListFromJson(dynamic json, {bool growable = false,}) {
+    final map = <String, List<SahNirdeshakCapResponse>>{};
     if (json is Map && json.isNotEmpty) {
       // ignore: parameter_assignments
       json = json.cast<String, dynamic>();
       for (final entry in json.entries) {
-        map[entry.key] = CityView.listFromJson(entry.value, growable: growable,);
+        map[entry.key] = SahNirdeshakCapResponse.listFromJson(entry.value, growable: growable,);
       }
     }
     return map;

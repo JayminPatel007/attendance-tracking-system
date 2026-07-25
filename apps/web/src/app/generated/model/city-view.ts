@@ -12,5 +12,6 @@
 export interface CityView { 
     id?: string;
     name?: string;
+    zoneCount?: number;
 }
 

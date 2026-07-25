@@ -27,6 +27,13 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--
+            Annotation-only artifact (no framework) used by the presentation ring to
+            describe the wire contract for springdoc (issue #104). Keep in step with
+            the swagger-core that springdoc-openapi pulls into application-container:
+            `mvn -pl application-container dependency:tree -Dincludes=io.swagger.core.v3:*`.
+        -->
+        <swagger-annotations.version>2.2.47</swagger-annotations.version>
     </properties>
 
     <modules>
@@ -154,6 +161,12 @@
                 <groupId>org.sabha</groupId>
                 <artifactId>analytics-application</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

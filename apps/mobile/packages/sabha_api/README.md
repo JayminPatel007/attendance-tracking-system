@@ -80,7 +80,7 @@ Class | Method | HTTP request | Description
 *DashboardBffControllerApi* | [**scope**](doc//DashboardBffControllerApi.md#scope) | **GET** /bff/dashboard/scope | 
 *DashboardBffControllerApi* | [**thresholds**](doc//DashboardBffControllerApi.md#thresholds) | **GET** /bff/dashboard/thresholds | 
 *DashboardBffControllerApi* | [**updateThresholds**](doc//DashboardBffControllerApi.md#updatethresholds) | **PUT** /bff/dashboard/thresholds | 
-*DirectoryBffControllerApi* | [**search1**](doc//DirectoryBffControllerApi.md#search1) | **GET** /bff/directory/search | 
+*DirectoryBffControllerApi* | [**search**](doc//DirectoryBffControllerApi.md#search) | **GET** /bff/directory/search | 
 *HomeSabhaTransferRestControllerApi* | [**confirm**](doc//HomeSabhaTransferRestControllerApi.md#confirm) | **POST** /api/home-sabha-transfers/{id}/confirm | 
 *HomeSabhaTransferRestControllerApi* | [**initiate**](doc//HomeSabhaTransferRestControllerApi.md#initiate) | **POST** /api/home-sabha-transfers | 
 *IdentityRestControllerApi* | [**whoami**](doc//IdentityRestControllerApi.md#whoami) | **GET** /api/whoami | 
@@ -91,11 +91,15 @@ Class | Method | HTTP request | Description
 *PasswordResetRestControllerApi* | [**request**](doc//PasswordResetRestControllerApi.md#request) | **POST** /api/password-reset/request | 
 *PasswordResetRestControllerApi* | [**verify**](doc//PasswordResetRestControllerApi.md#verify) | **POST** /api/password-reset/verify | 
 *PersonDirectoryRestControllerApi* | [**add**](doc//PersonDirectoryRestControllerApi.md#add) | **POST** /api/directory/persons | 
+*PersonDirectoryRestControllerApi* | [**byMobile**](doc//PersonDirectoryRestControllerApi.md#bymobile) | **GET** /api/directory/persons | Look a Person up by their exact mobile number
 *PersonDirectoryRestControllerApi* | [**detail**](doc//PersonDirectoryRestControllerApi.md#detail) | **GET** /api/directory/persons/{id} | 
-*PersonDirectoryRestControllerApi* | [**search**](doc//PersonDirectoryRestControllerApi.md#search) | **GET** /api/directory/persons | 
+*PersonDirectoryRestControllerApi* | [**nameSearch**](doc//PersonDirectoryRestControllerApi.md#namesearch) | **GET** /api/directory/name-search | 
 *PersonDirectoryRestControllerApi* | [**walkInSearch**](doc//PersonDirectoryRestControllerApi.md#walkinsearch) | **GET** /api/directory/walk-in-search | 
 *RoleAppointmentControllerApi* | [**appoint**](doc//RoleAppointmentControllerApi.md#appoint) | **POST** /bff/appointments | 
+*RoleAppointmentControllerApi* | [**revoke**](doc//RoleAppointmentControllerApi.md#revoke) | **POST** /bff/appointments/{id}/revoke | 
+*RoleAppointmentControllerApi* | [**sahNirdeshakCap**](doc//RoleAppointmentControllerApi.md#sahnirdeshakcap) | **GET** /bff/appointments/sah-nirdeshak-cap | 
 *SabhaDefinitionControllerApi* | [**define**](doc//SabhaDefinitionControllerApi.md#define) | **POST** /bff/sabhas | 
+*SabhaListControllerApi* | [**mySabhas**](doc//SabhaListControllerApi.md#mysabhas) | **GET** /bff/sabhas/mine | 
 *SanchalakProxyBffControllerApi* | [**cancel**](doc//SanchalakProxyBffControllerApi.md#cancel) | **POST** /bff/proxy/occurrences/{occurrenceId}/cancel | 
 *SanchalakProxyBffControllerApi* | [**occurrences**](doc//SanchalakProxyBffControllerApi.md#occurrences) | **GET** /bff/proxy/sabhas/{sabhaId}/occurrences | 
 *SanchalakProxyBffControllerApi* | [**reschedule**](doc//SanchalakProxyBffControllerApi.md#reschedule) | **POST** /bff/proxy/occurrences/{occurrenceId}/reschedule | 
@@ -115,7 +119,14 @@ Class | Method | HTTP request | Description
 *StructuralCreationControllerApi* | [**listKshetras**](doc//StructuralCreationControllerApi.md#listkshetras) | **GET** /bff/structure/kshetras | 
 *StructuralCreationControllerApi* | [**listSabhaKinds**](doc//StructuralCreationControllerApi.md#listsabhakinds) | **GET** /bff/structure/sabha-kinds | 
 *StructuralCreationControllerApi* | [**listZones**](doc//StructuralCreationControllerApi.md#listzones) | **GET** /bff/structure/zones | 
+*StructuralCreationControllerApi* | [**myCities**](doc//StructuralCreationControllerApi.md#mycities) | **GET** /bff/structure/my-cities | 
 *StructuralCreationControllerApi* | [**myZones**](doc//StructuralCreationControllerApi.md#myzones) | **GET** /bff/structure/my-zones | 
+*StructuralCreationControllerApi* | [**reactivateSabhaKind**](doc//StructuralCreationControllerApi.md#reactivatesabhakind) | **POST** /bff/structure/sabha-kinds/{id}/reactivate | 
+*StructuralCreationControllerApi* | [**retireSabhaKind**](doc//StructuralCreationControllerApi.md#retiresabhakind) | **POST** /bff/structure/sabha-kinds/{id}/retire | 
+*StructuralDeletionControllerApi* | [**deleteCity**](doc//StructuralDeletionControllerApi.md#deletecity) | **DELETE** /bff/structure/cities/{id} | 
+*StructuralDeletionControllerApi* | [**deleteKshetra**](doc//StructuralDeletionControllerApi.md#deletekshetra) | **DELETE** /bff/structure/kshetras/{id} | 
+*StructuralDeletionControllerApi* | [**deleteSabha**](doc//StructuralDeletionControllerApi.md#deletesabha) | **DELETE** /bff/sabhas/{id} | 
+*StructuralDeletionControllerApi* | [**deleteZone**](doc//StructuralDeletionControllerApi.md#deletezone) | **DELETE** /bff/structure/zones/{id} | 
 *WhoAppointedMeRestControllerApi* | [**whoAppointedMe**](doc//WhoAppointedMeRestControllerApi.md#whoappointedme) | **GET** /api/who-appointed-me | 
 
 
@@ -178,6 +189,8 @@ Class | Method | HTTP request | Description
  - [SabhaDefinitionResponse](doc//SabhaDefinitionResponse.md)
  - [SabhaKindView](doc//SabhaKindView.md)
  - [SabhaTree](doc//SabhaTree.md)
+ - [SabhaView](doc//SabhaView.md)
+ - [SahNirdeshakCapResponse](doc//SahNirdeshakCapResponse.md)
  - [SelectedPersonItem](doc//SelectedPersonItem.md)
  - [SyncRequest](doc//SyncRequest.md)
  - [SyncResponse](doc//SyncResponse.md)

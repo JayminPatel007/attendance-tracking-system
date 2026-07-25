@@ -11,8 +11,8 @@ import { NameCandidate } from './name-candidate';
 
 
 export interface AddPersonResponse { 
-    candidates?: Array<NameCandidate>;
+    candidates: Array<NameCandidate>;
     personId?: string;
-    requiresOverride?: boolean;
+    requiresOverride: boolean;
 }
 

@@ -16,6 +16,8 @@ import { HttpClient, HttpHeaders, HttpParams,
 import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
+// @ts-ignore
+import { SabhaView } from '../model/sabha-view';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -27,54 +29,22 @@ import { BaseService } from '../api.base.service';
 @Injectable({
   providedIn: 'root'
 })
-export class DirectoryBffControllerService extends BaseService {
+export class SabhaListControllerService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * @endpoint get /bff/directory/search
-     * @param mobile 
-     * @param name 
-     * @param kshetraId 
+     * @endpoint get /bff/sabhas/mine
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<object>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<object>>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<object>>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'mobile',
-            <any>mobile,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'name',
-            <any>name,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'kshetraId',
-            <any>kshetraId,
-            QueryParamStyle.Form,
-            true,
-        );
-
+    public mySabhas(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SabhaView>>;
+    public mySabhas(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SabhaView>>>;
+    public mySabhas(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SabhaView>>>;
+    public mySabhas(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -101,12 +71,11 @@ export class DirectoryBffControllerService extends BaseService {
             }
         }
 
-        let localVarPath = `/bff/directory/search`;
+        let localVarPath = `/bff/sabhas/mine`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<object>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<SabhaView>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

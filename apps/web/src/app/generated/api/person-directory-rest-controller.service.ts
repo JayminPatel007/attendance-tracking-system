@@ -21,6 +21,8 @@ import { AddPersonRequest } from '../model/add-person-request';
 // @ts-ignore
 import { AddPersonResponse } from '../model/add-person-response';
 // @ts-ignore
+import { NameCandidate } from '../model/name-candidate';
+// @ts-ignore
 import { PersonResponse } from '../model/person-response';
 // @ts-ignore
 import { WalkInCandidate } from '../model/walk-in-candidate';
@@ -107,6 +109,74 @@ export class PersonDirectoryRestControllerService extends BaseService {
     }
 
     /**
+     * Look a Person up by their exact mobile number
+     * @endpoint get /api/directory/persons
+     * @param mobile 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public byMobile(mobile: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PersonResponse>;
+    public byMobile(mobile: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PersonResponse>>;
+    public byMobile(mobile: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PersonResponse>>;
+    public byMobile(mobile: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (mobile === null || mobile === undefined) {
+            throw new Error('Required parameter mobile was null or undefined when calling byMobile.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'mobile',
+            <any>mobile,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/directory/persons`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<PersonResponse>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * @endpoint get /api/directory/persons/{id}
      * @param id 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -162,25 +232,30 @@ export class PersonDirectoryRestControllerService extends BaseService {
     }
 
     /**
-     * @endpoint get /api/directory/persons
-     * @param mobile 
-     * @param name 
+     * @endpoint get /api/directory/name-search
      * @param kshetraId 
+     * @param name 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<object>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<object>>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<object>>;
-    public search(mobile?: string, name?: string, kshetraId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public nameSearch(kshetraId: string, name: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<NameCandidate>>;
+    public nameSearch(kshetraId: string, name: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<NameCandidate>>>;
+    public nameSearch(kshetraId: string, name: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<NameCandidate>>>;
+    public nameSearch(kshetraId: string, name: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (kshetraId === null || kshetraId === undefined) {
+            throw new Error('Required parameter kshetraId was null or undefined when calling nameSearch.');
+        }
+        if (name === null || name === undefined) {
+            throw new Error('Required parameter name was null or undefined when calling nameSearch.');
+        }
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 
         localVarQueryParameters = this.addToHttpParams(
             localVarQueryParameters,
-            'mobile',
-            <any>mobile,
+            'kshetraId',
+            <any>kshetraId,
             QueryParamStyle.Form,
             true,
         );
@@ -190,15 +265,6 @@ export class PersonDirectoryRestControllerService extends BaseService {
             localVarQueryParameters,
             'name',
             <any>name,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'kshetraId',
-            <any>kshetraId,
             QueryParamStyle.Form,
             true,
         );
@@ -229,9 +295,9 @@ export class PersonDirectoryRestControllerService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/directory/persons`;
+        let localVarPath = `/api/directory/name-search`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<object>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<NameCandidate>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),

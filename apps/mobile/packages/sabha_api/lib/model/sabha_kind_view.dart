@@ -15,6 +15,7 @@ class SabhaKindView {
   SabhaKindView({
     this.demographic,
     this.id,
+    this.retiredAt,
     this.track,
   });
 
@@ -28,12 +29,21 @@ class SabhaKindView {
   ///
   String? id;
 
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  DateTime? retiredAt;
+
   SabhaKindViewTrackEnum? track;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SabhaKindView &&
     other.demographic == demographic &&
     other.id == id &&
+    other.retiredAt == retiredAt &&
     other.track == track;
 
   @override
@@ -41,10 +51,11 @@ class SabhaKindView {
     // ignore: unnecessary_parenthesis
     (demographic == null ? 0 : demographic!.hashCode) +
     (id == null ? 0 : id!.hashCode) +
+    (retiredAt == null ? 0 : retiredAt!.hashCode) +
     (track == null ? 0 : track!.hashCode);
 
   @override
-  String toString() => 'SabhaKindView[demographic=$demographic, id=$id, track=$track]';
+  String toString() => 'SabhaKindView[demographic=$demographic, id=$id, retiredAt=$retiredAt, track=$track]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -57,6 +68,11 @@ class SabhaKindView {
       json[r'id'] = this.id;
     } else {
       json[r'id'] = null;
+    }
+    if (this.retiredAt != null) {
+      json[r'retiredAt'] = this.retiredAt!.toUtc().toIso8601String();
+    } else {
+      json[r'retiredAt'] = null;
     }
     if (this.track != null) {
       json[r'track'] = this.track;
@@ -83,6 +99,7 @@ class SabhaKindView {
       return SabhaKindView(
         demographic: SabhaKindViewDemographicEnum.fromJson(json[r'demographic']),
         id: mapValueOfType<String>(json, r'id'),
+        retiredAt: mapDateTime(json, r'retiredAt', r''),
         track: SabhaKindViewTrackEnum.fromJson(json[r'track']),
       );
     }

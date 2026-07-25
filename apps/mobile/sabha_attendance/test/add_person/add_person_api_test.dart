@@ -46,6 +46,14 @@ void main() {
       final api = apiReturning((req) => http.Response('', 404));
       expect(await api.findByMobile('+910000000000'), isNull);
     });
+
+    test('surfaces a transport failure rather than reading it as "new number"', () async {
+      final api = apiReturning((req) => http.Response('boom', 500));
+      await expectLater(
+        () => api.findByMobile('+919820111122'),
+        throwsA(isA<AddPersonApiException>()),
+      );
+    });
   });
 
   group('add', () {
@@ -151,6 +159,78 @@ void main() {
         )),
         throwsA(isA<DirectoryRuleException>()
             .having((e) => e.message, 'message', 'guardian or mobile required')),
+      );
+    });
+
+    /// A birthdate is a calendar date, not an instant. The generated request
+    /// model types it as a `DateTime` and serializes `.toUtc()`, which walks the
+    /// date back a day on any device east of Greenwich (issue #104). This asserts
+    /// the entered date leaves the seam untouched — and holds in every device
+    /// timezone, because nothing here builds a local-time value.
+    test('sends a birthdate as the entered calendar date, unshifted', () async {
+      late http.Request captured;
+      final api = apiReturning((req) {
+        captured = req;
+        return http.Response(
+          jsonEncode({'personId': 'child-2', 'candidates': <dynamic>[], 'requiresOverride': false}),
+          201,
+        );
+      });
+
+      await api.add(const AddPersonRequest(
+        fullName: 'Ravi Patel',
+        gender: 'MALE',
+        dateOfBirth: '2010-05-01',
+        mobile: '+919999000333',
+        homeSabhaId: 'sabha-1',
+      ));
+
+      expect((jsonDecode(captured.body) as Map<String, dynamic>)['dateOfBirth'], '2010-05-01');
+      // The body assertion alone can't catch the shift on a UTC machine (CI runs
+      // there): a local-midnight value would serialize to 2010-05-01 too. What
+      // makes the generated model's `.toUtc()` a no-op in *every* timezone is
+      // that the value is already UTC — assert that directly.
+      expect(
+        const AddPersonRequest(
+          fullName: 'Ravi Patel',
+          gender: 'MALE',
+          dateOfBirth: '2010-05-01',
+          homeSabhaId: 'sabha-1',
+        ).toApi().dateOfBirth,
+        DateTime.utc(2010, 5, 1),
+      );
+    });
+
+    test('rejects a gender the contract has no value for instead of dropping it', () async {
+      final api = apiReturning((req) => http.Response('', 201));
+
+      await expectLater(
+        () => api.add(const AddPersonRequest(
+          fullName: 'Mystery Patel',
+          gender: 'Male',
+          mobile: '+919999000555',
+          homeSabhaId: 'sabha-1',
+        )),
+        throwsA(isA<DirectoryRuleException>()),
+      );
+    });
+
+    /// The DOB field is free text ("YYYY-MM-DD" is only a hint), so a typo has to
+    /// come back as something the adder can act on rather than as the generic
+    /// connection error every unhandled failure falls into.
+    test('a date of birth that is not a date is rejected with a readable message', () async {
+      final api = apiReturning((req) => http.Response('', 201));
+
+      await expectLater(
+        () => api.add(const AddPersonRequest(
+          fullName: 'Typo Patel',
+          gender: 'MALE',
+          dateOfBirth: '1 May 2010',
+          mobile: '+919999000444',
+          homeSabhaId: 'sabha-1',
+        )),
+        throwsA(isA<DirectoryRuleException>()
+            .having((e) => e.message, 'message', contains('YYYY-MM-DD'))),
       );
     });
 
