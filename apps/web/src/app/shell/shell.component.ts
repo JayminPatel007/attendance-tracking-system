@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from 'identity-domain';
 
-import { SECTION_NAV } from './section-nav';
+import { NavItem, SECTION_NAV, UNGATED_NAV } from './section-nav';
 
 /**
  * The authenticated web shell (Slice 9): a header with the account menu, a
@@ -22,13 +22,16 @@ export class ShellComponent {
 
   readonly session = this.sessions.session;
 
-  /** Sidebar entries restricted to the sections the session unlocks. */
-  readonly navItems = computed(() => {
+  /** The sections the session unlocks, then the entries no authority gates. */
+  readonly navItems = computed<NavItem[]>(() => {
     const current = this.session();
     if (!current) {
       return [];
     }
-    return SECTION_NAV.filter((item) => current.sections.includes(item.section));
+    return [
+      ...SECTION_NAV.filter((item) => current.sections.includes(item.section)),
+      ...UNGATED_NAV,
+    ];
   });
 
   readonly menuOpen = signal(false);

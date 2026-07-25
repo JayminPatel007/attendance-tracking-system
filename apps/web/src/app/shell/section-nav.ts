@@ -1,10 +1,14 @@
 import { Section } from 'identity-domain';
 
-/** A sidebar entry: which {@link Section} it represents, its route, its label. */
-export interface SectionNavItem {
-  section: Section;
+/** A sidebar entry: its route and its label. */
+export interface NavItem {
   path: string;
   label: string;
+}
+
+/** A sidebar entry gated on the {@link Section} it represents. */
+export interface SectionNavItem extends NavItem {
+  section: Section;
 }
 
 /**
@@ -21,4 +25,15 @@ export const SECTION_NAV: readonly SectionNavItem[] = [
   { section: 'SANCHALAK_PROXY', path: 'sanchalak-proxy', label: 'Sanchalak Proxy' },
   { section: 'SELECTION', path: 'selection', label: 'Selection' },
   { section: 'AUDIT_LOG', path: 'audit-log', label: 'Audit Log' },
+];
+
+/**
+ * Entries every signed-in user gets, shown after the granted sections (issue
+ * #90). The authority matrix explains the create/delete rules rather than
+ * exercising any of them, so there is nothing for the BFF to grant — gating it
+ * behind a {@link Section} would hide the explanation from exactly the tiers
+ * (e.g. Sah-Nirdeshak) that most need to read why they hold no such authority.
+ */
+export const UNGATED_NAV: readonly NavItem[] = [
+  { path: 'my-authority', label: 'My Authority' },
 ];

@@ -1,0 +1,70 @@
+<section class="my-authority">
+  <header class="page-head">
+    <h1>My authority</h1>
+    <p class="sub">
+      Everything a tier may create or delete, and what "delete" means for each. Authority is
+      by the scope you currently hold — not by who created the record — so a successor may
+      remove what a predecessor made (ADR-0025, ADR-0026). Switch tiers to compare.
+    </p>
+  </header>
+
+  <nav class="actor-switcher tabs" aria-label="Authority tier">
+    @for (tier of tiers; track tier) {
+      <button type="button" class="tab" [class.active]="isSelected(tier)" (click)="select(tier)">
+        {{ labelOf(tier) }}
+      </button>
+    }
+  </nav>
+
+  <p class="scope-line">{{ actor().scopeLabel }}</p>
+
+  <ul class="legend">
+    @for (entry of legend; track entry.kind) {
+      <li class="legend-item">
+        <span class="delete-badge" [class]="'kind-' + entry.kind">{{ entry.label }}</span>
+        <span class="legend-meaning">{{ entry.meaning }}</span>
+      </li>
+    }
+  </ul>
+
+  <div class="columns">
+    @for (column of columns(); track column.key) {
+      <section class="authority-card" [class]="'column-' + column.key">
+        <h2>{{ column.title }}</h2>
+        <ul class="item-list">
+          @for (item of column.items; track item.name) {
+            <li class="item-row">
+              <div class="item-head">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="create-badge">{{ item.verb }}</span>
+                <span class="delete-badge" [class]="'kind-' + item.delete">
+                  {{ deleteLabel(item.delete) }}
+                </span>
+              </div>
+              <p class="item-scope">{{ item.scope }}</p>
+              <p class="item-delete-note">{{ item.deleteNote }}</p>
+            </li>
+          } @empty {
+            <li class="empty">{{ column.emptyText }}</li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+
+  @if (actor().operational.length || actor().noAuthorityNote) {
+    <section class="authority-card operational">
+      <h2>Operational powers</h2>
+      <ul class="item-list">
+        @for (power of actor().operational; track power) {
+          <li class="item-row">
+            <span class="item-name">{{ power }}</span>
+          </li>
+        }
+      </ul>
+      @if (actor().noAuthorityNote) {
+        <p class="no-authority">{{ actor().noAuthorityNote }}</p>
+      }
+    </section>
+  }
+</section>

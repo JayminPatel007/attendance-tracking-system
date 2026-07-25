@@ -11,7 +11,7 @@ import { SanchalakProxyComponent } from './sections/sanchalak-proxy/sanchalak-pr
 import { SectionPlaceholderComponent } from './sections/section-placeholder.component';
 import { SelectionComponent } from './sections/selection/selection.component';
 import { StructuralAdminComponent } from './sections/structural-admin/structural-admin.component';
-import { SECTION_NAV } from './shell/section-nav';
+import { SECTION_NAV, UNGATED_NAV } from './shell/section-nav';
 import { sectionGuard } from './shell/section.guard';
 import { ShellComponent } from './shell/shell.component';
 
@@ -36,6 +36,20 @@ const sectionRoutes: Routes = SECTION_NAV.map((item) => ({
   data: { section: item.section, label: item.label },
 }));
 
+/**
+ * The routes {@link UNGATED_NAV} lists — open to every signed-in user, so no
+ * section guard. Loaded lazily: reference material everyone carries but few open
+ * has no business in the initial bundle.
+ */
+const ungatedRoutes: Routes = [
+  {
+    path: 'my-authority',
+    loadComponent: () =>
+      import('./sections/my-authority/my-authority.component').then((m) => m.MyAuthorityComponent),
+    data: { label: 'My Authority' },
+  },
+];
+
 export const routes: Routes = [
   // Public, unauthenticated reset routes (ADR-0004, Slice 18B) — matched before
   // the shell so a locked-out user reaches them without an OIDC session.
@@ -47,6 +61,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       ...sectionRoutes,
+      ...ungatedRoutes,
       { path: '**', redirectTo: 'dashboard' },
     ],
   },
