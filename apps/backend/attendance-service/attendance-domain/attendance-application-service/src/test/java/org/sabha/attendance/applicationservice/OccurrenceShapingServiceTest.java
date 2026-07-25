@@ -242,10 +242,10 @@ class OccurrenceShapingServiceTest {
                             return userId.equals(NIRIKSHAK_USER) ? Set.of(SABHA_ID) : Set.of();
                         }
                     };
-            OccurrenceTransitionExecutor executor = new OccurrenceTransitionExecutor(
+            OccurrenceWriter writer = new OccurrenceWriter(
                     callerResolver, new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
-            return new OccurrenceShapingService(executor, schedule, clock, Duration.ofHours(24));
+            return new OccurrenceShapingService(writer, schedule, clock, Duration.ofHours(24));
         }
     }
 

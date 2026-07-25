@@ -21,15 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
  * vocabulary and its reason requirement; the shared transition orchestration —
  * authorize, mutate, persist, append the reason-bearing audit row the "reopened"
  * badge is derived from, and publish events — lives in {@link
- * OccurrenceTransitionExecutor}.</p>
+ * OccurrenceWriter}.</p>
  */
 @Service
 public class OccurrenceReopenService {
 
-    private final OccurrenceTransitionExecutor executor;
+    private final OccurrenceWriter writer;
 
-    public OccurrenceReopenService(OccurrenceTransitionExecutor executor) {
-        this.executor = executor;
+    public OccurrenceReopenService(OccurrenceWriter writer) {
+        this.writer = writer;
     }
 
     @Transactional
@@ -37,7 +37,7 @@ public class OccurrenceReopenService {
         if (reason == null || reason.isBlank()) {
             throw new ReopenReasonRequiredException(occurrenceId);
         }
-        executor.execute(keycloakSubject, occurrenceId, AuthorizedAction.REOPEN,
+        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.REOPEN),
                 OccurrenceAction.REOPEN, reason, Occurrence::reopen);
     }
 }

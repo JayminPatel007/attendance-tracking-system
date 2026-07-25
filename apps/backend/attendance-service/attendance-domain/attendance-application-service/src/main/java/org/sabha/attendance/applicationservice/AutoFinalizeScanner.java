@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.SabhaSchedule;
 import org.sabha.common.SabhaScheduleLookup;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,27 +17,27 @@ import org.springframework.stereotype.Component;
 /**
  * Auto-Finalize scanner (Slice 3 / PRD-0001). Driven by Spring scheduling on
  * an hourly cadence: finds Open-for-Marking Occurrences whose scheduled end
- * Instant plus a grace period (24h per ADR-0001) has passed, and dispatches
- * the FINALIZE action through the state machine.
+ * Instant plus a grace period (24h per ADR-0001) has passed, and finalizes them
+ * through the single Occurrence write path.
  */
 @Component
 public class AutoFinalizeScanner {
 
     private final OccurrenceQueries occurrenceQueries;
     private final SabhaScheduleLookup scheduleLookup;
-    private final OccurrenceStateMachine stateMachine;
+    private final OccurrenceWriter writer;
     private final Clock clock;
     private final Duration gracePeriod;
 
     public AutoFinalizeScanner(
             OccurrenceQueries occurrenceQueries,
             SabhaScheduleLookup scheduleLookup,
-            OccurrenceStateMachine stateMachine,
+            OccurrenceWriter writer,
             Clock clock,
             @Value("${sabha.attendance.auto-finalize.grace:PT24H}") Duration gracePeriod) {
         this.occurrenceQueries = occurrenceQueries;
         this.scheduleLookup = scheduleLookup;
-        this.stateMachine = stateMachine;
+        this.writer = writer;
         this.clock = clock;
         this.gracePeriod = gracePeriod;
     }
@@ -61,8 +62,8 @@ public class AutoFinalizeScanner {
                     ref.date(), endTime, clock.getZone()).toInstant();
             Instant cutoff = scheduledEndAt.plus(gracePeriod);
             if (!cutoff.isAfter(now)) {
-                stateMachine.transition(ref.occurrenceId(),
-                        OccurrenceAction.FINALIZE, TransitionActor.system());
+                writer.transition(ref.occurrenceId(), TransitionActor.system(),
+                        OccurrenceAction.FINALIZE, null, Occurrence::markFinalized);
             }
         }
     }

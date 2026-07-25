@@ -151,10 +151,10 @@ class OccurrenceReopenServiceTest {
                     return Set.of();
                 }
             };
-            OccurrenceTransitionExecutor executor = new OccurrenceTransitionExecutor(
+            OccurrenceWriter writer = new OccurrenceWriter(
                     callerResolver, new AuthorizationEngine(roles, hierarchy, noProxy),
                     occurrences, transitions, publisher, clock);
-            return new OccurrenceReopenService(executor);
+            return new OccurrenceReopenService(writer);
         }
     }
 

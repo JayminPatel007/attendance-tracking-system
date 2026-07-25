@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
  * proxy is scoped to the explicit Sabha assignment via {@link
  * NirikshakAssignmentLookup}, so a Nirikshak is rejected on any Sabha outside
  * their assignment. The audit attribution of a proxy action (acting Nirikshak vs
- * on-behalf-of Sanchalak) is the {@link OccurrenceTransitionExecutor}'s concern,
+ * on-behalf-of Sanchalak) is the {@link OccurrenceWriter}'s concern,
  * not the engine's.</p>
  *
  * <p>{@link AuthorizedAction#REOPEN} is the higher-tier correction path: only the

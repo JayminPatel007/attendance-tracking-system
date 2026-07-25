@@ -23,24 +23,24 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>This service owns only the shaping vocabulary and its preconditions — the
  * cancel reason requirement and the revert grace window. The load-authorize-
- * mutate-save-audit-publish orchestration (shared with reopen) lives in
- * {@link OccurrenceTransitionExecutor}; the Sanchalak-vs-Sah-Sanchalak authority
- * is the {@link AuthorizationEngine}'s call.</p>
+ * mutate-save-audit-publish orchestration (shared with reopen and the cron) lives
+ * in {@link OccurrenceWriter}; the Sanchalak-vs-Sah-Sanchalak authority is the
+ * {@link AuthorizationEngine}'s call.</p>
  */
 @Service
 public class OccurrenceShapingService {
 
-    private final OccurrenceTransitionExecutor executor;
+    private final OccurrenceWriter writer;
     private final SabhaScheduleLookup scheduleLookup;
     private final Clock clock;
     private final Duration revertGrace;
 
     public OccurrenceShapingService(
-            OccurrenceTransitionExecutor executor,
+            OccurrenceWriter writer,
             SabhaScheduleLookup scheduleLookup,
             Clock clock,
             @Value("${sabha.attendance.revert.grace:PT24H}") Duration revertGrace) {
-        this.executor = executor;
+        this.writer = writer;
         this.scheduleLookup = scheduleLookup;
         this.clock = clock;
         this.revertGrace = revertGrace;
@@ -51,13 +51,13 @@ public class OccurrenceShapingService {
         if (reason == null || reason.isBlank()) {
             throw new CancellationReasonRequiredException(occurrenceId);
         }
-        executor.execute(keycloakSubject, occurrenceId, AuthorizedAction.CANCEL,
+        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, reason, Occurrence::cancel);
     }
 
     @Transactional
     public void revert(UUID keycloakSubject, UUID occurrenceId) {
-        executor.execute(keycloakSubject, occurrenceId, AuthorizedAction.CANCEL,
+        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.CANCEL),
                 OccurrenceAction.REVERT, null, occurrence -> {
                     requireWithinRevertWindow(occurrence);
                     occurrence.revert();
@@ -67,14 +67,14 @@ public class OccurrenceShapingService {
     @Transactional
     public void reschedule(UUID keycloakSubject, UUID occurrenceId,
                            LocalDate newDate, LocalTime newStartTime, LocalTime newEndTime) {
-        executor.execute(keycloakSubject, occurrenceId, AuthorizedAction.RESCHEDULE,
+        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.RESCHEDULE),
                 OccurrenceAction.RESCHEDULE, null,
                 occurrence -> occurrence.reschedule(newDate, newStartTime, newEndTime));
     }
 
     @Transactional
     public void overrideVenue(UUID keycloakSubject, UUID occurrenceId, String venue) {
-        executor.execute(keycloakSubject, occurrenceId, AuthorizedAction.VENUE_OVERRIDE,
+        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.VENUE_OVERRIDE),
                 OccurrenceAction.OVERRIDE_VENUE, null,
                 occurrence -> occurrence.overrideVenue(venue));
     }

@@ -48,21 +48,21 @@ class AutoFinalizeScannerTest {
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(new Occurrence(DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 25), OccurrenceState.OPEN_FOR_MARKING));
         occurrences.put(new Occurrence(NOT_YET_DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 26), OccurrenceState.OPEN_FOR_MARKING));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
         AutoFinalizeScanner scanner = new AutoFinalizeScanner(
-                queries, lookup, stateMachine, clock, Duration.ofHours(24));
+                queries, lookup, writer, clock, Duration.ofHours(24));
 
         scanner.scan();
 
@@ -97,19 +97,19 @@ class AutoFinalizeScannerTest {
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(new Occurrence(DUE_OCCURRENCE, SABHA_ID,
                 LocalDate.of(2026, 5, 26), OccurrenceState.OPEN_FOR_MARKING));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(
                 occurrences, log, publisher, clock);
 
         AutoFinalizeScanner scanner = new AutoFinalizeScanner(
-                queries, lookup, stateMachine, clock, Duration.ofHours(24));
+                queries, lookup, writer, clock, Duration.ofHours(24));
 
         scanner.scan();
 
@@ -132,17 +132,17 @@ class AutoFinalizeScannerTest {
 
         StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
 
-        OccurrenceStateMachineTest.InMemoryOccurrenceRepository occurrences =
-                new OccurrenceStateMachineTest.InMemoryOccurrenceRepository();
+        OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
+                new OccurrenceWriterTest.RecordingOccurrenceRepository();
         occurrences.put(new Occurrence(monthlyOccurrence, monthlySabha,
                 LocalDate.of(2026, 6, 21), OccurrenceState.OPEN_FOR_MARKING));
-        OccurrenceStateMachineTest.InMemoryTransitionLog log =
-                new OccurrenceStateMachineTest.InMemoryTransitionLog();
-        OccurrenceStateMachineTest.CapturingPublisher publisher =
-                new OccurrenceStateMachineTest.CapturingPublisher();
-        OccurrenceStateMachine stateMachine = new OccurrenceStateMachine(occurrences, log, publisher, clock);
+        OccurrenceWriterTest.InMemoryTransitionLog log =
+                new OccurrenceWriterTest.InMemoryTransitionLog();
+        OccurrenceWriterTest.CapturingPublisher publisher =
+                new OccurrenceWriterTest.CapturingPublisher();
+        OccurrenceWriter writer = OccurrenceWriterTest.cronWriter(occurrences, log, publisher, clock);
 
-        new AutoFinalizeScanner(queries, lookup, stateMachine, clock, Duration.ofHours(24)).scan();
+        new AutoFinalizeScanner(queries, lookup, writer, clock, Duration.ofHours(24)).scan();
 
         assertThat(occurrences.savedOccurrences()).hasSize(1);
         assertThat(occurrences.savedOccurrences().get(0).id()).isEqualTo(monthlyOccurrence);
