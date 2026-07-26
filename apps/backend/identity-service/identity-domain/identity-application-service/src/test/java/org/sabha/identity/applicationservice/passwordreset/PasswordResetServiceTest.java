@@ -19,14 +19,10 @@ import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UnknownUsernameException;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.directory.PersonContactLookup;
-import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
-import org.sabha.identity.applicationservice.otp.OtpGateway;
-import org.sabha.identity.applicationservice.otp.OtpRateLimitExceededException;
-import org.sabha.identity.applicationservice.otp.OtpSendLog;
-import org.sabha.identity.applicationservice.otp.OtpSendPolicy;
+import org.sabha.identity.applicationservice.otp.OtpFlowFixture;
+import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
-import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.PasswordReset;
 import org.sabha.identity.domain.PasswordResetCompleted;
 import org.sabha.identity.domain.PasswordResetOtpSent;
@@ -97,35 +93,6 @@ class PasswordResetServiceTest {
 
         assertThat(f.gateway.sentCode).isNull();
         assertThat(f.publisher.events).isEmpty();
-    }
-
-    @Test
-    void requestConsultsTheSendPolicyWithThisFlowsSendLogBeforeSending() {
-        Fixture f = new Fixture();
-        f.users.seed(new User(USER_ID, PERSON_ID, USERNAME, KEYCLOAK_USER_ID));
-        f.contacts.seedMobile(PERSON_ID, MOBILE);
-        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
-        f.otpSendPolicy = policy;
-
-        f.service().request(USERNAME);
-
-        assertThat(policy.mobile).isEqualTo(MOBILE);
-        assertThat(policy.log).isSameAs(f.resets);
-        assertThat(policy.now).isEqualTo(f.clock.instant());
-    }
-
-    @Test
-    void requestSendsNoOtpWhenTheSendPolicyDeniesTheSend() {
-        Fixture f = new Fixture();
-        f.users.seed(new User(USER_ID, PERSON_ID, USERNAME, KEYCLOAK_USER_ID));
-        f.contacts.seedMobile(PERSON_ID, MOBILE);
-        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
-        policy.toThrow = new OtpRateLimitExceededException(MOBILE);
-        f.otpSendPolicy = policy;
-
-        assertThatThrownBy(() -> f.service().request(USERNAME))
-                .isInstanceOf(OtpRateLimitExceededException.class);
-        assertThat(f.gateway.sentCode).isNull();
     }
 
     @Test
@@ -280,17 +247,15 @@ class PasswordResetServiceTest {
         final InMemoryUserRepository users = new InMemoryUserRepository();
         final InMemoryPersonContactLookup contacts = new InMemoryPersonContactLookup();
         final InMemoryPasswordResetRepository resets = new InMemoryPasswordResetRepository();
-        final RecordingOtpGateway gateway = new RecordingOtpGateway();
+        final OtpFlowFixture.RecordingOtpGateway gateway = new OtpFlowFixture.RecordingOtpGateway();
         final RecordingIdentityProvider identityProvider = new RecordingIdentityProvider();
         final RecordingPublisher publisher = new RecordingPublisher();
         final MutableClock clock = new MutableClock(Instant.parse("2026-06-07T10:00:00Z"));
 
-        OtpSendPolicy otpSendPolicy = new OtpSendPolicy();
-
         PasswordResetService service() {
+            OtpGuardedFlow otpFlow = OtpFlowFixture.sending(FIXED_OTP, gateway, publisher, clock);
             return new PasswordResetService(
-                    users, contacts, resets, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP), new SaltedTestOtpHasher(), otpSendPolicy,
+                    users, contacts, resets, otpFlow,
                     new FixedResetTokenGenerator(FIXED_RESET_TOKEN),
                     identityProvider, publisher, clock);
         }
@@ -384,56 +349,6 @@ class PasswordResetServiceTest {
                     .filter(r -> mobile.equals(r.mobile()))
                     .filter(r -> !r.initiatedAt().isBefore(since))
                     .count();
-        }
-    }
-
-    static final class RecordingOtpGateway implements OtpGateway {
-        String sentTo;
-        String sentCode;
-
-        @Override
-        public void send(String mobile, String code) {
-            this.sentTo = mobile;
-            this.sentCode = code;
-        }
-    }
-
-    /** Captures what the service hands the policy, and optionally vetoes the send. */
-    static final class RecordingOtpSendPolicy extends OtpSendPolicy {
-        String mobile;
-        OtpSendLog log;
-        Instant now;
-        RuntimeException toThrow;
-
-        @Override
-        public void enforce(String mobile, OtpSendLog log, Instant now) {
-            this.mobile = mobile;
-            this.log = log;
-            this.now = now;
-            if (toThrow != null) {
-                throw toThrow;
-            }
-        }
-    }
-
-    static final class FixedOtpCodeGenerator implements OtpCodeGenerator {
-        private final String code;
-
-        FixedOtpCodeGenerator(String code) {
-            this.code = code;
-        }
-
-        @Override
-        public String generate() {
-            return code;
-        }
-    }
-
-    /** Deterministic salted stand-in for the production HMAC hasher. */
-    static final class SaltedTestOtpHasher implements OtpHasher {
-        @Override
-        public String hash(UUID challengeId, String code) {
-            return "digest(" + challengeId + ":" + code + ")";
         }
     }
 

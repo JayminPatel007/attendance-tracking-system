@@ -1,27 +1,18 @@
 package org.sabha.identity.applicationservice.transfer;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.CallerResolver;
-import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.StructuralHierarchyLookup;
-import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
-import org.sabha.identity.applicationservice.otp.OtpGateway;
-import org.sabha.identity.applicationservice.otp.OtpSendPolicy;
+import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.HomeSabhaSwap;
 import org.sabha.identity.domain.HomeSabhaTransfer;
-import org.sabha.identity.domain.OtpAttemptsExhaustedException;
-import org.sabha.identity.domain.OtpExpiredException;
-import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonHasNoMobileException;
-import org.sabha.identity.domain.WrongOtpException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
  *   confirm(transferId, otpCode)                             -> (swap committed)
  * </pre>
  *
- * <p>It hides OTP send, consent receipt, the Roster swap, and audit. A
- * Sanchalak/Sah-Sanchalak of the destination Sabha pulls a Directory Person in;
- * the Person's own OTP confirms consent before any Home Sabha changes.
+ * <p>A Sanchalak/Sah-Sanchalak of the destination Sabha pulls a Directory Person
+ * in; the Person's own OTP confirms consent before any Home Sabha changes. The
+ * OTP send and code consumption belong to {@link OtpGuardedFlow}; what stays here
+ * is who may pull a Person in, and the Roster swap that consent unlocks.
  */
 @Service
 public class HomeSabhaTransferService {
@@ -45,37 +37,22 @@ public class HomeSabhaTransferService {
     private final RoleAssignmentLookup roleAssignments;
     private final HomeSabhaDirectory directory;
     private final HomeSabhaTransferRepository transfers;
-    private final OtpGateway otpGateway;
-    private final OtpCodeGenerator otpCodeGenerator;
-    private final OtpHasher otpHasher;
-    private final OtpSendPolicy otpSendPolicy;
+    private final OtpGuardedFlow otpFlow;
     private final StructuralHierarchyLookup hierarchy;
-    private final DomainEventPublisher events;
-    private final Clock clock;
 
     public HomeSabhaTransferService(
             CallerResolver callerResolver,
             RoleAssignmentLookup roleAssignments,
             HomeSabhaDirectory directory,
             HomeSabhaTransferRepository transfers,
-            OtpGateway otpGateway,
-            OtpCodeGenerator otpCodeGenerator,
-            OtpHasher otpHasher,
-            OtpSendPolicy otpSendPolicy,
-            StructuralHierarchyLookup hierarchy,
-            DomainEventPublisher events,
-            Clock clock) {
+            OtpGuardedFlow otpFlow,
+            StructuralHierarchyLookup hierarchy) {
         this.callerResolver = callerResolver;
         this.roleAssignments = roleAssignments;
         this.directory = directory;
         this.transfers = transfers;
-        this.otpGateway = otpGateway;
-        this.otpCodeGenerator = otpCodeGenerator;
-        this.otpHasher = otpHasher;
-        this.otpSendPolicy = otpSendPolicy;
+        this.otpFlow = otpFlow;
         this.hierarchy = hierarchy;
-        this.events = events;
-        this.clock = clock;
     }
 
     @Transactional
@@ -97,50 +74,27 @@ public class HomeSabhaTransferService {
             throw new PersonHasNoMobileException(personId);
         }
 
-        Instant now = clock.instant();
-        otpSendPolicy.enforce(mobile, transfers, now);
-
-        String code = otpCodeGenerator.generate();
-        HomeSabhaTransfer transfer = HomeSabhaTransfer.initiate(
+        return otpFlow.begin(mobile, transfers, (code, now, hasher) -> HomeSabhaTransfer.initiate(
                 UUID.randomUUID(), personId, mobile, destinationSabhaId,
-                initiatingUserId, code, now, otpHasher);
-
-        otpGateway.send(mobile, code);
-        transfer.markOtpSent(now);
-        transfers.save(transfer);
-        events.publishAll(transfer.pullDomainEvents());
-        return transfer.id();
+                initiatingUserId, code, now, hasher)).id();
     }
 
     /**
-     * A failed OTP must still persist its consequence (incremented attempt count,
-     * EXPIRED/LOCKED status) so the budget accumulates across calls — hence the
-     * OTP-consume exceptions are exempted from rollback. The list is kept narrow
-     * on purpose: a swap-phase failure (e.g. {@link org.sabha.identity.domain.NoMatchingHomeSabhaException},
-     * also a {@code DomainException}) must roll back normally so it can never
-     * leave a half-applied swap behind.
+     * Deliberately not {@code @Transactional}: {@link OtpGuardedFlow#consume} owns
+     * the boundary, because it owns the rollback rules that let a rejected OTP keep
+     * its consequence. The swap below runs inside that same transaction, so a
+     * swap-phase failure still rolls the whole confirmation back.
      */
-    @Transactional(noRollbackFor = {
-            WrongOtpException.class,
-            OtpExpiredException.class,
-            OtpAttemptsExhaustedException.class })
     public void confirm(UUID transferId, String otpCode) {
-        HomeSabhaTransfer transfer = transfers.findById(transferId).orElseThrow();
+        otpFlow.consume(transferId, transfers, (transfer, now, hasher) -> {
+            transfer.confirm(otpCode, now, hasher);
 
-        try {
-            transfer.confirm(otpCode, clock.instant(), otpHasher);
-        } catch (WrongOtpException | OtpExpiredException | OtpAttemptsExhaustedException rejected) {
-            transfers.save(transfer);
-            throw rejected;
-        }
-
-        String destinationKind = directory.kindOf(transfer.destinationSabhaId()).orElseThrow();
-        UUID previousSabhaId = HomeSabhaSwap.selectPrevious(
-                directory.homeSabhasOf(transfer.personId()), destinationKind);
-        directory.replaceHomeSabha(transfer.personId(), previousSabhaId, transfer.destinationSabhaId());
-        transfer.recordSwap(previousSabhaId, clock.instant());
-
-        transfers.save(transfer);
-        events.publishAll(transfer.pullDomainEvents());
+            String destinationKind = directory.kindOf(transfer.destinationSabhaId()).orElseThrow();
+            UUID previousSabhaId = HomeSabhaSwap.selectPrevious(
+                    directory.homeSabhasOf(transfer.personId()), destinationKind);
+            directory.replaceHomeSabha(transfer.personId(), previousSabhaId, transfer.destinationSabhaId());
+            transfer.recordSwap(previousSabhaId, now);
+            return null;
+        });
     }
 }

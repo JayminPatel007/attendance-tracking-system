@@ -24,11 +24,8 @@ import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
-import org.sabha.identity.applicationservice.otp.OtpCodeGenerator;
-import org.sabha.identity.applicationservice.otp.OtpGateway;
-import org.sabha.identity.applicationservice.otp.OtpRateLimitExceededException;
-import org.sabha.identity.applicationservice.otp.OtpSendLog;
-import org.sabha.identity.applicationservice.otp.OtpSendPolicy;
+import org.sabha.identity.applicationservice.otp.OtpFlowFixture;
+import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.HomeSabhaRef;
 import org.sabha.identity.domain.HomeSabhaSwapped;
@@ -37,7 +34,6 @@ import org.sabha.identity.domain.HomeSabhaTransferInitiated;
 import org.sabha.identity.domain.NoMatchingHomeSabhaException;
 import org.sabha.identity.domain.OtpAttemptsExhaustedException;
 import org.sabha.identity.domain.OtpExpiredException;
-import org.sabha.identity.domain.OtpHasher;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonHasNoMobileException;
 import org.sabha.identity.domain.TransferOtpConfirmed;
@@ -221,33 +217,6 @@ class HomeSabhaTransferServiceTest {
     }
 
     @Test
-    void initiateConsultsTheSendPolicyWithThisFlowsSendLogBeforeSending() {
-        Fixture f = new Fixture();
-        f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
-        f.otpSendPolicy = policy;
-
-        f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
-
-        assertThat(policy.mobile).isEqualTo(PERSON_MOBILE);
-        assertThat(policy.log).isSameAs(f.transfers);
-        assertThat(policy.now).isEqualTo(f.clock.instant());
-    }
-
-    @Test
-    void initiateSendsNoOtpWhenTheSendPolicyDeniesTheSend() {
-        Fixture f = new Fixture();
-        f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        RecordingOtpSendPolicy policy = new RecordingOtpSendPolicy();
-        policy.toThrow = new OtpRateLimitExceededException(PERSON_MOBILE);
-        f.otpSendPolicy = policy;
-
-        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
-                .isInstanceOf(OtpRateLimitExceededException.class);
-        assertThat(f.gateway.sentCode).isNull();
-    }
-
-    @Test
     void confirmLocksAfterFiveWrongAttemptsAndIgnoresLaterCorrectOtp() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
@@ -281,7 +250,7 @@ class HomeSabhaTransferServiceTest {
     static final class Fixture {
         final InMemoryHomeSabhaDirectory directory = new InMemoryHomeSabhaDirectory();
         final InMemoryTransferRepository transfers = new InMemoryTransferRepository();
-        final RecordingOtpGateway gateway = new RecordingOtpGateway();
+        final OtpFlowFixture.RecordingOtpGateway gateway = new OtpFlowFixture.RecordingOtpGateway();
         final RecordingPublisher publisher = new RecordingPublisher();
         final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
         final FakeHierarchy hierarchy = new FakeHierarchy();
@@ -298,13 +267,10 @@ class HomeSabhaTransferServiceTest {
                     ? Optional.of(INITIATOR_USER) : Optional.empty();
         }
 
-        OtpSendPolicy otpSendPolicy = new OtpSendPolicy();
-
         HomeSabhaTransferService service() {
+            OtpGuardedFlow otpFlow = OtpFlowFixture.sending(FIXED_OTP, gateway, publisher, clock);
             return new HomeSabhaTransferService(
-                    caller(), roleAssignments, directory, transfers, gateway,
-                    new FixedOtpCodeGenerator(FIXED_OTP), new SaltedTestOtpHasher(),
-                    otpSendPolicy, hierarchy, publisher, clock);
+                    caller(), roleAssignments, directory, transfers, otpFlow, hierarchy);
         }
     }
 
@@ -423,56 +389,6 @@ class HomeSabhaTransferServiceTest {
                     .filter(t -> mobile.equals(t.mobile()))
                     .map(HomeSabhaTransfer::initiatedAt)
                     .max(Instant::compareTo);
-        }
-    }
-
-    static final class RecordingOtpGateway implements OtpGateway {
-        String sentTo;
-        String sentCode;
-
-        @Override
-        public void send(String mobile, String code) {
-            this.sentTo = mobile;
-            this.sentCode = code;
-        }
-    }
-
-    /** Captures what the service hands the policy, and optionally vetoes the send. */
-    static final class RecordingOtpSendPolicy extends OtpSendPolicy {
-        String mobile;
-        OtpSendLog log;
-        Instant now;
-        RuntimeException toThrow;
-
-        @Override
-        public void enforce(String mobile, OtpSendLog log, Instant now) {
-            this.mobile = mobile;
-            this.log = log;
-            this.now = now;
-            if (toThrow != null) {
-                throw toThrow;
-            }
-        }
-    }
-
-    static final class FixedOtpCodeGenerator implements OtpCodeGenerator {
-        private final String code;
-
-        FixedOtpCodeGenerator(String code) {
-            this.code = code;
-        }
-
-        @Override
-        public String generate() {
-            return code;
-        }
-    }
-
-    /** Deterministic salted stand-in for the production HMAC hasher. */
-    static final class SaltedTestOtpHasher implements OtpHasher {
-        @Override
-        public String hash(UUID challengeId, String code) {
-            return "digest(" + challengeId + ":" + code + ")";
         }
     }
 

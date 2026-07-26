@@ -13,8 +13,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * The single home for the OTP consent state-machine internals (TTL, attempt
  * budget, lockout, expiry, and hashing-at-rest). The OTP-gated aggregates
- * ({@link HomeSabhaTransfer}, {@link PasswordReset}) compose this challenge and are
- * tested at the flow level; the rules below are deliberately verified once, here.
+ * ({@link HomeSabhaTransfer}, {@link PasswordReset}) compose this challenge and
+ * are tested beside it in their own right; the rules below are deliberately
+ * verified once, here, rather than re-derived in each of them.
  */
 class OtpChallengeTest {
 
