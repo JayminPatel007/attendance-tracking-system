@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 /**
  * Audit-log viewer BFF for the Angular web shell (ADR-0023, ADR-0022, Slice 19).
  * Cookie/session authenticated, so the caller is the Keycloak subject in
@@ -50,6 +52,14 @@ public class AuditLogBffController {
         this.callers = callers;
     }
 
+    /**
+     * Named explicitly because {@code list} collides with the occurrence-reopen
+     * feed's operation, and the client generators resolve a collision by
+     * appending an ordinal to whichever one they reach second — a name that
+     * depends on nothing the contract states. The audit viewer is the one web
+     * caller that names a generated operation in hand-written code (issue #131).
+     */
+    @Operation(operationId = "listAuditEntries", summary = "Read the caller's scoped audit feed")
     @GetMapping("/bff/audit-log")
     public ResponseEntity<List<AuditEntry>> list(
             @RequestParam(required = false) AuditTargetType targetType,

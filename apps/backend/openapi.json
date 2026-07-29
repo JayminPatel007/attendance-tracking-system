@@ -2117,7 +2117,7 @@
     },
     "/bff/audit-log" : {
       "get" : {
-        "operationId" : "list_1",
+        "operationId" : "listAuditEntries",
         "parameters" : [ {
           "in" : "query",
           "name" : "targetType",
@@ -2189,6 +2189,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Read the caller's scoped audit feed",
         "tags" : [ "audit-log-bff-controller" ]
       }
     },

@@ -212,6 +212,22 @@ class WebContractTest {
         assertThat(requiredOf("AppointerContact")).containsExactlyInAnyOrder("name", "mobile");
     }
 
+    // --- audit feed operation naming --------------------------------------
+
+    /**
+     * Two controllers offered an operation called {@code list}, so the generators
+     * kept one and renamed the other by appending an ordinal — and which one got
+     * renamed depends on nothing the contract states. The audit viewer is the one
+     * caller that names a generated operation in hand-written code, so a third
+     * {@code list} appearing anywhere could silently re-point it at another
+     * endpoint while still compiling. Naming the operation removes the ordinal.
+     */
+    @Test
+    void theAuditFeedOperationIsNamedRatherThanNumbered() {
+        assertThat(spec.at("/paths/~1bff~1audit-log/get/operationId").asText())
+                .isEqualTo("listAuditEntries");
+    }
+
     // --- the web Directory search (ADR-0013) ------------------------------
 
     /**

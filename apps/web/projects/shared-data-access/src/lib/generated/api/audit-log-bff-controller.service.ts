@@ -36,6 +36,7 @@ export class AuditLogBffControllerService extends BaseService {
     }
 
     /**
+     * Read the caller\&#39;s scoped audit feed
      * @endpoint get /bff/audit-log
      * @param targetType 
      * @param targetId 
@@ -48,10 +49,10 @@ export class AuditLogBffControllerService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public list1(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AuditEntry>>;
-    public list1(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AuditEntry>>>;
-    public list1(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AuditEntry>>>;
-    public list1(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public listAuditEntries(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AuditEntry>>;
+    public listAuditEntries(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AuditEntry>>>;
+    public listAuditEntries(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AuditEntry>>>;
+    public listAuditEntries(targetType?: 'OCCURRENCE' | 'SABHA' | 'ROLE_ASSIGNMENT' | 'STRUCTURAL' | 'PERSON', targetId?: string, actorUserId?: string, action?: string, from?: string, to?: string, proxyOnly?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
 

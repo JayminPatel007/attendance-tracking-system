@@ -46,7 +46,7 @@ export class AuditLogService {
   private readonly api = inject(AuditLogBffControllerService);
 
   list(filter: AuditFilter): Observable<AuditEntry[]> {
-    return this.api.list1(
+    return this.api.listAuditEntries(
       filter.targetType,
       filter.targetId,
       filter.actorUserId,
