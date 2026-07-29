@@ -1,65 +1,87 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DirectoryService, PersonPickerComponent } from 'identity-domain';
+import { PersonPickerComponent } from 'identity-domain';
 import { of, throwError } from 'rxjs';
 
-import { SabhaDefinitionComponent } from './sabha-definition.component';
-import { SabhaDefinitionService } from './sabha-definition.service';
-import { DefineSabhaResponse, SabhaSummary } from './sabha-definition.types';
+import {
+  DirectoryBffControllerService,
+  SabhaDefinitionControllerService,
+  SabhaDefinitionResponse,
+  SabhaListControllerService,
+  SabhaView,
+  StructuralCreationControllerService,
+  StructuralDeletionControllerService,
+} from 'shared-data-access';
 
-function created(): DefineSabhaResponse {
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
+import { SabhaDefinitionComponent } from './sabha-definition.component';
+
+/**
+ * The screen composes four generated modules — define, the Nirdeshak's Sabha
+ * list, the structural lookups behind the dropdowns, and delete. It is one
+ * surface to the reader, so one stub stands in for all four tokens.
+ */
+type SabhaDefinitionApi = SabhaDefinitionControllerService
+  & SabhaListControllerService
+  & StructuralCreationControllerService
+  & StructuralDeletionControllerService;
+
+function created(): SabhaDefinitionResponse {
   return {
     sabhaId: 's1', sanchalakAssignmentId: 'a1', sahSanchalakAssignmentId: null,
     candidates: [], requiresOverride: false,
   };
 }
 
-function apiSpy(): jasmine.SpyObj<SabhaDefinitionService> {
-  const spy = jasmine.createSpyObj<SabhaDefinitionService>('SabhaDefinitionService', [
-    'define', 'listSabhaKinds', 'listZones', 'listKshetras', 'listMySabhas', 'deleteSabha',
+function apiSpy(): ApiStub<SabhaDefinitionApi> {
+  const spy = apiStub<SabhaDefinitionApi>('SabhaDefinitionApi', [
+    'define', 'listSabhaKinds', 'listZones', 'listKshetras', 'mySabhas', 'deleteSabha',
   ]);
   spy.define.and.returnValue(of(created()));
-  spy.listSabhaKinds.and.returnValue(of([{ id: 'kind1', demographic: 'YUVAK', track: 'REGULAR' }]));
+  spy.listSabhaKinds.and.returnValue(of([{ id: 'kind1', demographic: 'YUVAK', track: 'REGULAR', retiredAt: null }]));
   spy.listZones.and.returnValue(of([{ id: 'zone1', name: 'Andheri', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 1 }]));
   spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'zone1', sabhaCount: 1 }]));
-  spy.listMySabhas.and.returnValue(of([]));
+  spy.mySabhas.and.returnValue(of([]));
   spy.deleteSabha.and.returnValue(of(void 0));
   return spy;
 }
 
-function directorySpy(): jasmine.SpyObj<DirectoryService> {
-  const spy = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['searchByName', 'searchByMobile']);
-  spy.searchByName.and.returnValue(of([{ personId: 'cand-1', fullName: 'Pratik Patel', homeSabhas: [] }]));
-  spy.searchByMobile.and.returnValue(of({
-    id: 'm-1', fullName: 'Mobile Match', gender: 'MALE', dateOfBirth: null,
-    mobile: '+919820000001', guardianPersonId: null,
+function directorySpy(): ApiStub<DirectoryBffControllerService> {
+  const spy = apiStub<DirectoryBffControllerService>('DirectoryBffControllerService', ['nameSearch', 'search']);
+  spy.nameSearch.and.returnValue(of([{ personId: 'cand-1', fullName: 'Pratik Patel', homeSabhas: [] }]));
+  spy.search.and.returnValue(of({
+    id: 'm-1', fullName: 'Mobile Match', gender: 'MALE', dateOfBirth: undefined,
+    mobile: '+919820000001', guardianPersonId: undefined,
   }));
   return spy;
 }
 
 interface Mounted {
   fixture: ComponentFixture<SabhaDefinitionComponent>;
-  api: jasmine.SpyObj<SabhaDefinitionService>;
-  directory: jasmine.SpyObj<DirectoryService>;
+  api: ApiStub<SabhaDefinitionApi>;
+  directory: ApiStub<DirectoryBffControllerService>;
 }
 
-function sabha(overrides: Partial<SabhaSummary> & { id: string }): SabhaSummary {
+function sabha(overrides: Partial<SabhaView> & { id: string }): SabhaView {
   return {
     kshetraId: 'ksh1', kshetraName: 'Andheri-7', demographic: 'YUVAK', track: 'REGULAR',
     standingVenue: 'Sansthan Hall', occurrenceCount: 0, ...overrides,
   };
 }
 
-function mount(configure?: (api: jasmine.SpyObj<SabhaDefinitionService>) => void): Mounted {
+function mount(configure?: (api: ApiStub<SabhaDefinitionApi>) => void): Mounted {
   const api = apiSpy();
   configure?.(api);
   const directory = directorySpy();
   TestBed.configureTestingModule({
     imports: [SabhaDefinitionComponent],
     providers: [
-      { provide: SabhaDefinitionService, useValue: api },
-      { provide: DirectoryService, useValue: directory },
+      { provide: SabhaDefinitionControllerService, useValue: api },
+      { provide: SabhaListControllerService, useValue: api },
+      { provide: StructuralCreationControllerService, useValue: api },
+      { provide: StructuralDeletionControllerService, useValue: api },
+      { provide: DirectoryBffControllerService, useValue: directory },
     ],
   });
   const fixture = TestBed.createComponent(SabhaDefinitionComponent);
@@ -151,7 +173,7 @@ describe('SabhaDefinitionComponent', () => {
     expect(request.kshetraId).toBe('ksh1');
     expect(request.sabhaKindId).toBe('kind1');
     expect(request.sanchalak.existingPersonId).toBe('cand-1');
-    expect(request.sahSanchalak).toBeNull();
+    expect(request.sahSanchalak).toBeUndefined();
     expect(c.stage()).toBe('done');
   });
 
@@ -165,9 +187,9 @@ describe('SabhaDefinitionComponent', () => {
 
     const request = api.define.calls.mostRecent().args[0];
     expect(request.weekly).toBeFalse();
-    expect(request.dayOfWeek).toBeNull();
-    expect(request.startTime).toBeNull();
-    expect(request.endTime).toBeNull();
+    expect(request.dayOfWeek).toBeUndefined();
+    expect(request.startTime).toBeUndefined();
+    expect(request.endTime).toBeUndefined();
   });
 
   it('includes an optional Sah-Sanchalak when one is picked', () => {
@@ -197,23 +219,23 @@ describe('SabhaDefinitionComponent', () => {
   it('loads the caller’s own Sabhas on init', () => {
     const { fixture, api } = mount();
 
-    expect(api.listMySabhas).toHaveBeenCalled();
+    expect(api.mySabhas).toHaveBeenCalled();
     expect(fixture.componentInstance.mySabhas().length).toBe(0);
   });
 
   it('deletes an empty Sabha then refreshes the list', () => {
     const { fixture, api } = mount();
-    api.listMySabhas.calls.reset();
+    api.mySabhas.calls.reset();
 
     fixture.componentInstance.deleteSabha(sabha({ id: 's1', occurrenceCount: 0 }));
 
     expect(api.deleteSabha).toHaveBeenCalledWith('s1');
-    expect(api.listMySabhas).toHaveBeenCalled();
+    expect(api.mySabhas).toHaveBeenCalled();
   });
 
   it('disables the Sabha delete with the block reason while it has Occurrences', () => {
     const { fixture } = mount((api) =>
-      api.listMySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 4 })])));
+      api.mySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 4 })])));
     const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.my-sabhas button.delete');
 
     expect(btn?.disabled).toBeTrue();
@@ -222,7 +244,7 @@ describe('SabhaDefinitionComponent', () => {
 
   it('enables the Sabha delete when the Sabha has no Occurrences', () => {
     const { fixture } = mount((api) =>
-      api.listMySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 0 })])));
+      api.mySabhas.and.returnValue(of([sabha({ id: 's1', occurrenceCount: 0 })])));
     const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.my-sabhas button.delete');
 
     expect(btn?.disabled).toBeFalse();

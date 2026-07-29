@@ -1,15 +1,17 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { DashboardScopeChip, DashboardService } from 'analytics-domain';
-import { SessionService, WebSession } from 'identity-domain';
+import { CityChip, DashboardBffControllerService, WebSessionResponse } from 'shared-data-access';
+import { SessionService } from 'identity-domain';
 
 import { DashboardComponent } from './dashboard.component';
 
-const ROLE_SCOPED: DashboardScopeChip = { sant: false, selectedCityId: null, cities: [] };
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
-function apiSpy(scope: DashboardScopeChip): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', [
+const ROLE_SCOPED: CityChip = { sant: false, selectedCityId: null, cities: [] };
+
+function apiSpy(scope: CityChip): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', [
     'overview',
     'people',
     'sabhaTree',
@@ -30,19 +32,19 @@ function apiSpy(scope: DashboardScopeChip): jasmine.SpyObj<DashboardService> {
 
 function sessionStub(madhyasthaKaryalaya: boolean): Partial<SessionService> {
   return {
-    session: signal<WebSession | null>({ username: 'u', madhyasthaKaryalaya, regionalTeam: false, sections: ['DASHBOARD'] }),
+    session: signal<WebSessionResponse | null>({ username: 'u', madhyasthaKaryalaya, regionalTeam: false, sections: ['DASHBOARD'] }),
   } as Partial<SessionService>;
 }
 
 function mount(
   madhyasthaKaryalaya = false,
-  scope: DashboardScopeChip = ROLE_SCOPED,
-): { fixture: ComponentFixture<DashboardComponent>; api: jasmine.SpyObj<DashboardService> } {
+  scope: CityChip = ROLE_SCOPED,
+): { fixture: ComponentFixture<DashboardComponent>; api: ApiStub<DashboardBffControllerService> } {
   const api = apiSpy(scope);
   TestBed.configureTestingModule({
     imports: [DashboardComponent],
     providers: [
-      { provide: DashboardService, useValue: api },
+      { provide: DashboardBffControllerService, useValue: api },
       { provide: SessionService, useValue: sessionStub(madhyasthaKaryalaya) },
     ],
   });

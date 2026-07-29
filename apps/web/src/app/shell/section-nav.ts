@@ -1,4 +1,4 @@
-import { Section } from 'identity-domain';
+import { WebSessionResponse } from 'shared-data-access';
 
 /** A sidebar entry: its route and its label. */
 export interface NavItem {
@@ -6,9 +6,9 @@ export interface NavItem {
   label: string;
 }
 
-/** A sidebar entry gated on the {@link Section} it represents. */
+/** A sidebar entry gated on the {@link WebSessionResponse.SectionsEnum} it represents. */
 export interface SectionNavItem extends NavItem {
-  section: Section;
+  section: WebSessionResponse.SectionsEnum;
 }
 
 /**
@@ -31,7 +31,7 @@ export const SECTION_NAV: readonly SectionNavItem[] = [
  * Entries every signed-in user gets, shown after the granted sections (issue
  * #90). The authority matrix explains the create/delete rules rather than
  * exercising any of them, so there is nothing for the BFF to grant — gating it
- * behind a {@link Section} would hide the explanation from exactly the tiers
+ * behind a {@link WebSessionResponse.SectionsEnum} would hide the explanation from exactly the tiers
  * (e.g. Sah-Nirdeshak) that most need to read why they hold no such authority.
  */
 export const UNGATED_NAV: readonly NavItem[] = [

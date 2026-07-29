@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { Section, SessionService } from 'identity-domain';
+import { SessionService } from 'identity-domain';
+import { WebSessionResponse } from 'shared-data-access';
 
 /**
  * Route guard for the shell's section routes (Slice 9). The route's
@@ -12,7 +13,7 @@ export const sectionGuard: CanActivateFn = (route) => {
   const sessions = inject(SessionService);
   const router = inject(Router);
 
-  const section = route.data['section'] as Section;
+  const section = route.data['section'] as WebSessionResponse.SectionsEnum;
   const current = sessions.session();
   if (current?.sections.includes(section)) {
     return true;

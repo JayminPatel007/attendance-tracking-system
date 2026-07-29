@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { AppointerContact, PasswordResetService } from './password-reset.service';
+import { AppointerContact, WhoAppointedMeRestControllerService } from 'shared-data-access';
 
 /**
  * "Who appointed me?" lookup (ADR-0004, Slice 18B) — a **public** route reachable
@@ -21,7 +21,7 @@ import { AppointerContact, PasswordResetService } from './password-reset.service
   styleUrl: './who-appointed-me.component.scss',
 })
 export class WhoAppointedMeComponent {
-  private readonly api = inject(PasswordResetService);
+  private readonly api = inject(WhoAppointedMeRestControllerService);
 
   username = '';
 
@@ -38,7 +38,7 @@ export class WhoAppointedMeComponent {
     this.error.set(null);
     this.contacts.set(null);
     this.api.whoAppointedMe(username).subscribe({
-      next: (contacts) => {
+      next: ({ contacts }) => {
         this.contacts.set(contacts);
         this.busy.set(false);
       },

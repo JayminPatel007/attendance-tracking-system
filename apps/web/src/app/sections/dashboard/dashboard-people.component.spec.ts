@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { CandidateRow, DashboardService } from 'analytics-domain';
+import { CandidateRow, DashboardBffControllerService } from 'shared-data-access';
 
 import { DashboardPeopleComponent } from './dashboard-people.component';
+
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
 function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
   return {
@@ -18,20 +20,20 @@ function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
   };
 }
 
-function apiSpy(rows: CandidateRow[]): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', ['people']);
+function apiSpy(rows: CandidateRow[]): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', ['people']);
   spy.people.and.returnValue(of(rows));
   return spy;
 }
 
 function mount(rows: CandidateRow[]): {
   fixture: ComponentFixture<DashboardPeopleComponent>;
-  api: jasmine.SpyObj<DashboardService>;
+  api: ApiStub<DashboardBffControllerService>;
 } {
   const api = apiSpy(rows);
   TestBed.configureTestingModule({
     imports: [DashboardPeopleComponent],
-    providers: [{ provide: DashboardService, useValue: api }],
+    providers: [{ provide: DashboardBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(DashboardPeopleComponent);
   fixture.detectChanges();

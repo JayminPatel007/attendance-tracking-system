@@ -4,9 +4,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
+import { AuditEntry } from 'shared-data-access';
+
 import { errorMessageFor } from '../../shared/http-error';
-import { AuditLogService } from './audit-log.service';
-import { AuditEntry, AuditFilter, AuditTargetType, AUDIT_TARGET_TYPES } from './audit-log.types';
+import { AUDIT_TARGET_TYPES, AuditFilter, AuditLogService } from './audit-log.service';
 
 /**
  * Audit-log viewer section (ADR-0023, Slice 19). Renders the feed the BFF
@@ -37,7 +38,7 @@ export class AuditLogComponent implements OnInit {
 
   readonly targetTypes = AUDIT_TARGET_TYPES;
 
-  targetType: '' | AuditTargetType = '';
+  targetType: '' | AuditEntry.TargetTypeEnum = '';
   actorUserId = '';
   action = '';
   from = '';
@@ -53,7 +54,7 @@ export class AuditLogComponent implements OnInit {
     this.route.queryParamMap.subscribe((params) => {
       const type = params.get('targetType');
       if (type && (AUDIT_TARGET_TYPES as readonly string[]).includes(type)) {
-        this.targetType = type as AuditTargetType;
+        this.targetType = type as AuditEntry.TargetTypeEnum;
       }
       this.targetId.set(params.get('targetId') ?? '');
       this.load();

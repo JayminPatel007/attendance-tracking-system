@@ -77,6 +77,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "mobile", "name" ],
         "type" : "object"
       },
       "AppointmentRequest" : {
@@ -124,7 +125,7 @@
         "properties" : {
           "assignmentId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "candidates" : {
             "items" : {
@@ -134,16 +135,17 @@
           },
           "personId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "requiresOverride" : {
             "type" : "boolean"
           },
           "userId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
+        "required" : [ "assignmentId", "candidates", "personId", "requiresOverride", "userId" ],
         "type" : "object"
       },
       "AuditEntry" : {
@@ -152,29 +154,29 @@
             "type" : "string"
           },
           "actorName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "actorUserId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "at" : {
             "format" : "date-time",
             "type" : "string"
           },
           "detail" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
             "type" : "string"
           },
           "onBehalfName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "onBehalfOfUserId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "targetId" : {
             "format" : "uuid",
@@ -185,6 +187,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "action", "actorName", "actorUserId", "at", "detail", "id", "onBehalfName", "onBehalfOfUserId", "targetId", "targetType" ],
         "type" : "object"
       },
       "CancelRequest" : {
@@ -222,9 +225,11 @@
             "type" : "string"
           },
           "tier" : {
+            "enum" : [ "CANDIDATE", "PRIORITY" ],
             "type" : "string"
           }
         },
+        "required" : [ "demographic", "homeSabhaId", "kshetraName", "missedStreak", "personId", "personName", "sabhaKind", "tier" ],
         "type" : "object"
       },
       "ChooseCityRequest" : {
@@ -249,9 +254,10 @@
           },
           "selectedCityId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
+        "required" : [ "cities", "sant", "selectedCityId" ],
         "type" : "object"
       },
       "CityOption" : {
@@ -264,6 +270,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "id", "name" ],
         "type" : "object"
       },
       "CityView" : {
@@ -280,6 +287,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "id", "name", "zoneCount" ],
         "type" : "object"
       },
       "CompletePayload" : {
@@ -380,6 +388,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "id" ],
         "type" : "object"
       },
       "CurrentOccurrence" : {
@@ -446,6 +455,7 @@
             "$ref" : "#/components/schemas/Kpis"
           }
         },
+        "required" : [ "headlineCandidates", "kpis" ],
         "type" : "object"
       },
       "DefineSabhaRequest" : {
@@ -533,6 +543,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "priorityCandidates", "sabhasWithCandidates", "totalCandidates" ],
         "type" : "object"
       },
       "Kshetra" : {
@@ -555,6 +566,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "candidateCount", "kshetraId", "kshetraName", "sabhas" ],
         "type" : "object"
       },
       "KshetraView" : {
@@ -575,6 +587,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "id", "name", "sabhaCount", "zoneId" ],
         "type" : "object"
       },
       "MarkRequest" : {
@@ -817,13 +830,14 @@
             "type" : "string"
           }
         },
+        "required" : [ "effectiveDate", "id", "state", "venue" ],
         "type" : "object"
       },
       "ProxySabhaListItem" : {
         "properties" : {
           "lastSeenAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sabhaId" : {
             "format" : "uuid",
@@ -833,13 +847,14 @@
             "type" : "string"
           },
           "sanchalakName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sanchalakUserId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
+        "required" : [ "lastSeenAt", "sabhaId", "sabhaLabel", "sanchalakName", "sanchalakUserId" ],
         "type" : "object"
       },
       "ReissueRequest" : {
@@ -872,7 +887,7 @@
             "type" : "string"
           },
           "lastReopenReason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "occurrenceId" : {
             "format" : "uuid",
@@ -891,6 +906,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "date", "kshetraName", "lastReopenReason", "occurrenceId", "reopened", "sabhaKind", "state", "venue" ],
         "type" : "object"
       },
       "ReopenRequest" : {
@@ -916,6 +932,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "resetId" ],
         "type" : "object"
       },
       "RescheduleRequest" : {
@@ -962,6 +979,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "candidateCount", "sabhaId", "sabhaKind" ],
         "type" : "object"
       },
       "SabhaDefinitionResponse" : {
@@ -977,17 +995,18 @@
           },
           "sabhaId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sahSanchalakAssignmentId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sanchalakAssignmentId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
+        "required" : [ "candidates", "requiresOverride", "sabhaId", "sahSanchalakAssignmentId", "sanchalakAssignmentId" ],
         "type" : "object"
       },
       "SabhaKindView" : {
@@ -1002,13 +1021,14 @@
           },
           "retiredAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "track" : {
             "enum" : [ "REGULAR", "BSS", "YSS" ],
             "type" : "string"
           }
         },
+        "required" : [ "demographic", "id", "retiredAt", "track" ],
         "type" : "object"
       },
       "SabhaTree" : {
@@ -1020,6 +1040,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "zones" ],
         "type" : "object"
       },
       "SabhaView" : {
@@ -1051,6 +1072,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "demographic", "id", "kshetraId", "kshetraName", "occurrenceCount", "standingVenue", "track" ],
         "type" : "object"
       },
       "SahNirdeshakCapResponse" : {
@@ -1067,6 +1089,7 @@
             "type" : "boolean"
           }
         },
+        "required" : [ "active", "cap", "reached" ],
         "type" : "object"
       },
       "SelectedPersonItem" : {
@@ -1141,6 +1164,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "candidate", "priority" ],
         "type" : "object"
       },
       "ThresholdsRequest" : {
@@ -1182,6 +1206,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "resetToken" ],
         "type" : "object"
       },
       "WalkInCandidate" : {
@@ -1229,13 +1254,13 @@
               "enum" : [ "DASHBOARD", "ROLE_APPOINTMENT", "STRUCTURAL_ADMIN", "SABHA_DEFINITION", "OCCURRENCE_REOPEN", "SANCHALAK_PROXY", "SELECTION", "AUDIT_LOG" ],
               "type" : "string"
             },
-            "type" : "array",
-            "uniqueItems" : true
+            "type" : "array"
           },
           "username" : {
             "type" : "string"
           }
         },
+        "required" : [ "madhyasthaKaryalaya", "regionalTeam", "sections", "username" ],
         "type" : "object"
       },
       "WhoAmIResponse" : {
@@ -1263,6 +1288,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "contacts" ],
         "type" : "object"
       },
       "Zone" : {
@@ -1279,12 +1305,13 @@
           },
           "zoneId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "zoneName" : {
             "type" : "string"
           }
         },
+        "required" : [ "candidateCount", "kshetras", "zoneId", "zoneName" ],
         "type" : "object"
       },
       "ZoneView" : {
@@ -1308,6 +1335,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "cityId", "cityName", "id", "kshetraCount", "name" ],
         "type" : "object"
       }
     }
@@ -1321,7 +1349,7 @@
   "paths" : {
     "/api/directory/name-search" : {
       "get" : {
-        "operationId" : "nameSearch",
+        "operationId" : "nameSearch_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "kshetraId",
@@ -2297,29 +2325,22 @@
         "tags" : [ "dashboard-bff-controller" ]
       }
     },
-    "/bff/directory/search" : {
+    "/bff/directory/name-search" : {
       "get" : {
-        "operationId" : "search",
+        "operationId" : "nameSearch",
         "parameters" : [ {
           "in" : "query",
-          "name" : "mobile",
-          "required" : false,
+          "name" : "kshetraId",
+          "required" : true,
           "schema" : {
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
           "in" : "query",
           "name" : "name",
-          "required" : false,
+          "required" : true,
           "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "kshetraId",
-          "required" : false,
-          "schema" : {
-            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -2328,13 +2349,49 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "items" : {
+                    "$ref" : "#/components/schemas/NameCandidate"
+                  },
+                  "type" : "array"
                 }
               }
             },
             "description" : "OK"
           }
         },
+        "tags" : [ "directory-bff-controller" ]
+      }
+    },
+    "/bff/directory/search" : {
+      "get" : {
+        "operationId" : "search",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "mobile",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PersonResponse"
+                }
+              }
+            },
+            "description" : "The Person registered to that mobile"
+          },
+          "400" : {
+            "description" : "The mobile to look up was blank"
+          },
+          "404" : {
+            "description" : "No Person has that mobile"
+          }
+        },
+        "summary" : "Look a Person up by their exact mobile number",
         "tags" : [ "directory-bff-controller" ]
       }
     },

@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { isPublicPath } from './password-reset/public-paths';
-import { provideApi } from './generated';
+import { provideApi } from 'shared-data-access';
 
 export const appConfig: ApplicationConfig = {
   providers: [

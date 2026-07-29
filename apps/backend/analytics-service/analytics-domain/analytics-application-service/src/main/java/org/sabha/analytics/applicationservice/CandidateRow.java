@@ -2,6 +2,8 @@ package org.sabha.analytics.applicationservice;
 
 import java.util.UUID;
 
+import org.sabha.analytics.domain.Tier;
+
 /**
  * One re-engagement candidate as the dashboard's People analytics table and the
  * overview headline list render it (ADR-0010): the drifting Person, the Home Sabha
@@ -15,5 +17,5 @@ public record CandidateRow(
         String kshetraName,
         String demographic,
         int missedStreak,
-        String tier) {
+        Tier tier) {
 }

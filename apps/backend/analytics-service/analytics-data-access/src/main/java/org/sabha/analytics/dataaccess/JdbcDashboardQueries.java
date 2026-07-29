@@ -14,6 +14,7 @@ import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.common.CallerVisibility;
 import org.sabha.common.SabhaKind;
+import org.sabha.analytics.domain.Tier;
 import org.sabha.common.VisibilityTier;
 import org.sabha.common.WhereClause;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -162,7 +163,7 @@ public class JdbcDashboardQueries implements DashboardQueries {
                         rs.getString("kshetra_name"),
                         rs.getString("demographic"),
                         rs.getInt("missed_streak"),
-                        rs.getString("tier")))
+                        Tier.valueOf(rs.getString("tier"))))
                 .list();
     }
 

@@ -2,8 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { BrowserLocation } from 'shared-kernel';
-
-import { WebSession } from './web-session';
+import { BffSessionControllerService, WebSessionResponse } from 'shared-data-access';
 
 /** Spring's default OIDC login entry point for the `keycloak` registration. */
 const LOGIN_URL = '/oauth2/authorization/keycloak';
@@ -23,9 +22,10 @@ export type SessionStatus = 'pending' | 'authenticated' | 'unlinked';
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private readonly http = inject(HttpClient);
+  private readonly api = inject(BffSessionControllerService);
   private readonly location = inject(BrowserLocation);
 
-  private readonly _session = signal<WebSession | null>(null);
+  private readonly _session = signal<WebSessionResponse | null>(null);
   private readonly _status = signal<SessionStatus>('pending');
 
   /** The current session once loaded, else `null`. */
@@ -40,7 +40,7 @@ export class SessionService {
    * completes silently in that case rather than erroring.
    */
   load(): Observable<void> {
-    return this.http.get<WebSession>('/bff/me').pipe(
+    return this.api.me().pipe(
       tap((session) => {
         this._session.set(session);
         this._status.set('authenticated');

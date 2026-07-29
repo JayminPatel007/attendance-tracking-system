@@ -1,14 +1,10 @@
 /**
  * identity-domain — frontend mirror of the backend identity bounded context.
- * Session types and the BFF-backed SessionService used by the web shell
- * (Slice 9), plus the Directory search adapter, person DTOs, appointment
+ * The BFF-backed SessionService used by the web shell (Slice 9), the appointment
  * credential helpers, and the shared person-picker every appointing flow
- * composes (Slice 11/12, issue #81).
+ * composes (Slice 11/12, issue #81). The session and Directory wire shapes are
+ * the generated models in `shared-data-access` (issue #131).
  */
-export * from './lib/section';
-export * from './lib/web-session';
 export * from './lib/session.service';
-export * from './lib/directory.types';
-export * from './lib/directory.service';
 export * from './lib/appointment-credentials';
 export * from './lib/person-picker.component';

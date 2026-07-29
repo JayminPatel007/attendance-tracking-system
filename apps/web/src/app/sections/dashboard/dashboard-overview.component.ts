@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CandidateRow, DashboardService, Kpis } from 'analytics-domain';
+import { CandidateRow, DashboardBffControllerService, Kpis } from 'shared-data-access';
 import { kindLabel } from 'sabha-domain';
 
 import { TierBadgeComponent } from './tier-badge.component';
@@ -18,7 +18,7 @@ import { TierBadgeComponent } from './tier-badge.component';
   styleUrl: './dashboard-overview.component.scss',
 })
 export class DashboardOverviewComponent implements OnInit {
-  private readonly api = inject(DashboardService);
+  private readonly api = inject(DashboardBffControllerService);
 
   readonly kindLabel = kindLabel;
 

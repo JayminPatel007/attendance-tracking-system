@@ -1,27 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PersonPickerComponent, suggestPassword, suggestUsername } from 'identity-domain';
+
+import { DEMOGRAPHICS, Demographic } from 'sabha-domain';
 import {
-  Gender,
+  AppointmentRequest,
   NameCandidate,
-  PersonPickerComponent,
-  suggestPassword,
-  suggestUsername,
-} from 'identity-domain';
+  NewPersonPayload,
+  RoleAppointmentControllerService,
+  SahNirdeshakCapResponse,
+} from 'shared-data-access';
 
 import { errorMessageFor } from '../../shared/http-error';
-import { AppointmentService } from './appointment.service';
+import { AppointableRole, ROLE_SCOPE, ScopeKind } from './appointment-scope';
 import { PasswordReissueComponent } from './password-reissue.component';
-import {
-  AppointableRole,
-  AppointmentRequest,
-  DEMOGRAPHICS,
-  Demographic,
-  NewPersonPayload,
-  ROLE_SCOPE,
-  SahNirdeshakCapStatus,
-  ScopeKind,
-} from './appointment.types';
 
 const ROLES: readonly AppointableRole[] = [
   'SANCHALAK',
@@ -65,7 +58,7 @@ type Stage = 'editing' | 'done';
   styleUrl: './role-appointment.component.scss',
 })
 export class RoleAppointmentComponent {
-  private readonly api = inject(AppointmentService);
+  private readonly api = inject(RoleAppointmentControllerService);
 
   readonly roles = ROLES;
   readonly roleLabel = ROLE_LABELS;
@@ -98,7 +91,7 @@ export class RoleAppointmentComponent {
   readonly softWarn = signal<NameCandidate[]>([]);
 
   /** Sah-Nirdeshak cap status for the current (Kshetra, demographic); null until both are chosen. */
-  readonly capStatus = signal<SahNirdeshakCapStatus | null>(null);
+  readonly capStatus = signal<SahNirdeshakCapResponse | null>(null);
   readonly capReached = computed<boolean>(() => this.capStatus()?.reached ?? false);
 
   onRoleChange(role: AppointableRole): void {
@@ -143,7 +136,7 @@ export class RoleAppointmentComponent {
 
   /** Re-suggest the username/password from the new Person's name as it is typed. */
   onNewPersonNameChange(): void {
-    this.suggestNewCredentials(this.newPerson.fullName);
+    this.suggestNewCredentials(this.newPerson.fullName ?? '');
   }
 
   private suggestNewCredentials(fullName: string): void {
@@ -215,7 +208,7 @@ export class RoleAppointmentComponent {
         ...this.scope(),
         username: picker.username.trim(),
         rawPassword: picker.rawPassword,
-        existingPersonId: picker.selectedId(),
+        existingPersonId: picker.selectedId() ?? undefined,
       };
     }
     return null;
@@ -225,11 +218,11 @@ export class RoleAppointmentComponent {
   private scope(): Omit<AppointmentRequest, 'username' | 'rawPassword'> {
     return {
       role: this.role(),
-      sabhaId: this.scopeKind() === 'SABHA' ? this.sabhaId.trim() : null,
-      kshetraId: this.scopeKind() === 'KSHETRA' ? this.kshetraId.trim() : null,
-      zoneId: this.scopeKind() === 'ZONE' ? this.zoneId.trim() : null,
-      cityId: this.scopeKind() === 'CITY' ? this.cityId.trim() : null,
-      demographic: this.scopeKind() === 'SABHA' ? null : (this.demographic || null),
+      sabhaId: this.scopeKind() === 'SABHA' ? this.sabhaId.trim() : undefined,
+      kshetraId: this.scopeKind() === 'KSHETRA' ? this.kshetraId.trim() : undefined,
+      zoneId: this.scopeKind() === 'ZONE' ? this.zoneId.trim() : undefined,
+      cityId: this.scopeKind() === 'CITY' ? this.cityId.trim() : undefined,
+      demographic: this.scopeKind() === 'SABHA' ? undefined : (this.demographic || undefined),
     };
   }
 
@@ -249,10 +242,10 @@ export class RoleAppointmentComponent {
 function blankNewPerson(): NewPersonPayload {
   return {
     fullName: '',
-    gender: 'MALE' as Gender,
-    dateOfBirth: null,
-    mobile: null,
-    guardianPersonId: null,
+    gender: NewPersonPayload.GenderEnum.Male,
+    dateOfBirth: undefined,
+    mobile: undefined,
+    guardianPersonId: undefined,
     homeSabhaId: '',
     overrideDuplicateWarning: false,
   };

@@ -2,19 +2,21 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { DashboardService, Thresholds } from 'analytics-domain';
-import { SessionService, WebSession } from 'identity-domain';
+import { DashboardBffControllerService, Thresholds, WebSessionResponse } from 'shared-data-access';
+import { SessionService } from 'identity-domain';
 
 import { ThresholdEditorComponent } from './threshold-editor.component';
 
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
+
 function sessionStub(madhyasthaKaryalaya: boolean): Partial<SessionService> {
   return {
-    session: signal<WebSession | null>({ username: 'u', madhyasthaKaryalaya, regionalTeam: false, sections: ['DASHBOARD'] }),
+    session: signal<WebSessionResponse | null>({ username: 'u', madhyasthaKaryalaya, regionalTeam: false, sections: ['DASHBOARD'] }),
   } as Partial<SessionService>;
 }
 
-function apiSpy(current: Thresholds): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', ['thresholds', 'updateThresholds']);
+function apiSpy(current: Thresholds): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', ['thresholds', 'updateThresholds']);
   spy.thresholds.and.returnValue(of(current));
   spy.updateThresholds.and.returnValue(of(undefined));
   return spy;
@@ -25,13 +27,13 @@ function mount(
   current: Thresholds = { candidate: 3, priority: 6 },
 ): {
   fixture: ComponentFixture<ThresholdEditorComponent>;
-  api: jasmine.SpyObj<DashboardService>;
+  api: ApiStub<DashboardBffControllerService>;
 } {
   const api = apiSpy(current);
   TestBed.configureTestingModule({
     imports: [ThresholdEditorComponent],
     providers: [
-      { provide: DashboardService, useValue: api },
+      { provide: DashboardBffControllerService, useValue: api },
       { provide: SessionService, useValue: sessionStub(madhyasthaKaryalaya) },
     ],
   });

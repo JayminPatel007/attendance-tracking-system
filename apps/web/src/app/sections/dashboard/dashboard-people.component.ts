@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CandidateRow, DashboardService } from 'analytics-domain';
+import { CandidateRow, DashboardBffControllerService } from 'shared-data-access';
 import { demographicLabel, kindLabel } from 'sabha-domain';
 
 import { TierBadgeComponent } from './tier-badge.component';
@@ -19,7 +19,7 @@ import { TierBadgeComponent } from './tier-badge.component';
   styleUrl: './dashboard-people.component.scss',
 })
 export class DashboardPeopleComponent implements OnInit {
-  private readonly api = inject(DashboardService);
+  private readonly api = inject(DashboardBffControllerService);
 
   readonly kindLabel = kindLabel;
   readonly demographicLabel = demographicLabel;

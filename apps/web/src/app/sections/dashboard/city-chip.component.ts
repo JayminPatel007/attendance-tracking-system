@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, output, signal } from '@angular/core';
-import { CityOption, DashboardService } from 'analytics-domain';
+import { CityOption, DashboardBffControllerService } from 'shared-data-access';
 
 /**
  * The dashboard scope chip in the section topnav (Slice 17). A Sant sees an
@@ -16,7 +16,7 @@ import { CityOption, DashboardService } from 'analytics-domain';
   styleUrl: './city-chip.component.scss',
 })
 export class CityChipComponent implements OnInit {
-  private readonly api = inject(DashboardService);
+  private readonly api = inject(DashboardBffControllerService);
 
   readonly sant = signal(false);
   readonly cities = signal<CityOption[]>([]);
@@ -38,7 +38,7 @@ export class CityChipComponent implements OnInit {
   }
 
   choose(cityId: string): void {
-    this.api.chooseCity(cityId).subscribe(() => {
+    this.api.chooseCity({ cityId }).subscribe(() => {
       this.selectedCityId.set(cityId);
       this.cityPicked.emit(cityId);
     });

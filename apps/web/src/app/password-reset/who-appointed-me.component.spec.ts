@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideApi } from 'shared-data-access';
 import { provideRouter } from '@angular/router';
 
 import { WhoAppointedMeComponent } from './who-appointed-me.component';
@@ -13,7 +14,14 @@ describe('WhoAppointedMeComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [WhoAppointedMeComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        // Pin the generated client's base path to "" so it issues the same
+        // relative URLs this spec asserts (it defaults to the spec server).
+        provideApi({ basePath: '' }),
+      ],
     });
     fixture = TestBed.createComponent(WhoAppointedMeComponent);
     component = fixture.componentInstance;

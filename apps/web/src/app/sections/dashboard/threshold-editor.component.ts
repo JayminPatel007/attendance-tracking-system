@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DashboardService } from 'analytics-domain';
+import { DashboardBffControllerService } from 'shared-data-access';
 import { SessionService } from 'identity-domain';
 
 import { errorMessageFor } from '../../shared/http-error';
@@ -21,7 +21,7 @@ import { errorMessageFor } from '../../shared/http-error';
   styleUrl: './threshold-editor.component.scss',
 })
 export class ThresholdEditorComponent implements OnInit {
-  private readonly api = inject(DashboardService);
+  private readonly api = inject(DashboardBffControllerService);
   private readonly sessions = inject(SessionService);
 
   readonly isMk = computed(() => this.sessions.session()?.madhyasthaKaryalaya ?? false);

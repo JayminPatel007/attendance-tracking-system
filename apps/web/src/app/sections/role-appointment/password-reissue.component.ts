@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 
 import { suggestPassword } from 'identity-domain';
 
+import { PasswordReissueControllerService } from 'shared-data-access';
+
 import { errorMessageFor } from '../../shared/http-error';
-import { AppointmentService } from './appointment.service';
 
 type Stage = 'editing' | 'done';
 
@@ -26,7 +27,7 @@ type Stage = 'editing' | 'done';
   styleUrl: './password-reissue.component.scss',
 })
 export class PasswordReissueComponent {
-  private readonly api = inject(AppointmentService);
+  private readonly api = inject(PasswordReissueControllerService);
 
   targetUserId = '';
   newPassword = suggestPassword();
@@ -50,7 +51,7 @@ export class PasswordReissueComponent {
     const issued = this.newPassword;
     this.busy.set(true);
     this.error.set(null);
-    this.api.reissuePassword(targetUserId, issued).subscribe({
+    this.api.reissue({ targetUserId, newPassword: issued }).subscribe({
       next: () => {
         this.issuedPassword.set(issued);
         this.stage.set('done');

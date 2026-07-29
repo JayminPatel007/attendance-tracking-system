@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { CandidateRow, DashboardOverview, DashboardService } from 'analytics-domain';
+import { CandidateRow, DashboardBffControllerService, DashboardOverview } from 'shared-data-access';
 
 import { DashboardOverviewComponent } from './dashboard-overview.component';
+
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
 function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
   return {
@@ -26,20 +28,20 @@ function overview(overrides: Partial<DashboardOverview> = {}): DashboardOverview
   };
 }
 
-function apiSpy(data: DashboardOverview): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', ['overview']);
+function apiSpy(data: DashboardOverview): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', ['overview']);
   spy.overview.and.returnValue(of(data));
   return spy;
 }
 
 function mount(data: DashboardOverview): {
   fixture: ComponentFixture<DashboardOverviewComponent>;
-  api: jasmine.SpyObj<DashboardService>;
+  api: ApiStub<DashboardBffControllerService>;
 } {
   const api = apiSpy(data);
   TestBed.configureTestingModule({
     imports: [DashboardOverviewComponent],
-    providers: [{ provide: DashboardService, useValue: api }],
+    providers: [{ provide: DashboardBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(DashboardOverviewComponent);
   fixture.detectChanges();
