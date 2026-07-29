@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tier } from 'analytics-domain';
+import { CandidateRow } from 'shared-data-access';
 
 import { TierBadgeComponent } from './tier-badge.component';
 
-function mount(tier: Tier): ComponentFixture<TierBadgeComponent> {
+function mount(tier: CandidateRow.TierEnum): ComponentFixture<TierBadgeComponent> {
   TestBed.configureTestingModule({ imports: [TierBadgeComponent] });
   const fixture = TestBed.createComponent(TierBadgeComponent);
   fixture.componentRef.setInput('tier', tier);

@@ -1,12 +1,13 @@
 import { signal } from '@angular/core';
+import { WebSessionResponse } from 'shared-data-access';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionService, WebSession } from 'identity-domain';
+import { SessionService } from 'identity-domain';
 
 import { MyAuthorityComponent } from './my-authority.component';
 
 type Fixture = ComponentFixture<MyAuthorityComponent>;
 
-function session(overrides: Partial<WebSession> = {}): WebSession {
+function session(overrides: Partial<WebSessionResponse> = {}): WebSessionResponse {
   return {
     username: 'karyakar',
     madhyasthaKaryalaya: false,
@@ -16,13 +17,13 @@ function session(overrides: Partial<WebSession> = {}): WebSession {
   };
 }
 
-function render(current: WebSession = session()): Fixture {
+function render(current: WebSessionResponse = session()): Fixture {
   TestBed.configureTestingModule({
     imports: [MyAuthorityComponent],
     providers: [
       {
         provide: SessionService,
-        useValue: { session: signal<WebSession | null>(current).asReadonly() },
+        useValue: { session: signal<WebSessionResponse | null>(current).asReadonly() },
       },
     ],
   });

@@ -4,9 +4,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 
+import {
+  ProxyOccurrenceItem,
+  ProxySabhaListItem,
+  SanchalakProxyBffControllerService,
+} from 'shared-data-access';
 import { errorMessageFor } from '../../shared/http-error';
-import { SanchalakProxyService } from './sanchalak-proxy.service';
-import { ProxyOccurrence, ProxySabha } from './sanchalak-proxy.types';
 
 /** Human "last seen" hint for the picker; informational only, never gates entry. */
 export function lastSeenLabel(lastSeenAt: string | null): string {
@@ -42,21 +45,21 @@ const SHAPEABLE_STATES = new Set(['SCHEDULED', 'RESCHEDULED']);
   styleUrl: './sanchalak-proxy.component.scss',
 })
 export class SanchalakProxyComponent implements OnInit {
-  private readonly api = inject(SanchalakProxyService);
+  private readonly api = inject(SanchalakProxyBffControllerService);
 
   readonly lastSeenLabel = lastSeenLabel;
 
-  readonly sabhas = signal<ProxySabha[]>([]);
-  readonly acting = signal<ProxySabha | null>(null);
-  readonly occurrences = signal<ProxyOccurrence[]>([]);
+  readonly sabhas = signal<ProxySabhaListItem[]>([]);
+  readonly acting = signal<ProxySabhaListItem | null>(null);
+  readonly occurrences = signal<ProxyOccurrenceItem[]>([]);
   readonly error = signal<string | null>(null);
   readonly submitting = signal<boolean>(false);
 
   ngOnInit(): void {
-    this.api.listSabhas().subscribe((items) => this.sabhas.set(items));
+    this.api.sabhas().subscribe((items) => this.sabhas.set(items));
   }
 
-  enterProxy(sabha: ProxySabha): void {
+  enterProxy(sabha: ProxySabhaListItem): void {
     this.acting.set(sabha);
     this.error.set(null);
     this.loadOccurrences(sabha.sabhaId);
@@ -68,7 +71,7 @@ export class SanchalakProxyComponent implements OnInit {
     this.error.set(null);
   }
 
-  shapeable(occurrence: ProxyOccurrence): boolean {
+  shapeable(occurrence: ProxyOccurrenceItem): boolean {
     return SHAPEABLE_STATES.has(occurrence.state);
   }
 
@@ -76,14 +79,14 @@ export class SanchalakProxyComponent implements OnInit {
     if (reason.trim().length === 0) {
       return;
     }
-    this.run(this.api.cancel(occurrenceId, reason.trim()));
+    this.run(this.api.cancel(occurrenceId, { reason: reason.trim() }));
   }
 
   overrideVenue(occurrenceId: string, venue: string): void {
     if (venue.trim().length === 0) {
       return;
     }
-    this.run(this.api.overrideVenue(occurrenceId, venue.trim()));
+    this.run(this.api.venueOverride(occurrenceId, { venue: venue.trim() }));
   }
 
   reschedule(occurrenceId: string, date: string, startTime: string, endTime: string): void {
@@ -113,7 +116,7 @@ export class SanchalakProxyComponent implements OnInit {
   }
 
   private loadOccurrences(sabhaId: string): void {
-    this.api.listOccurrences(sabhaId).subscribe((items) => this.occurrences.set(items));
+    this.api.occurrences(sabhaId).subscribe((items) => this.occurrences.set(items));
   }
 
   private messageFor(err: HttpErrorResponse): string {

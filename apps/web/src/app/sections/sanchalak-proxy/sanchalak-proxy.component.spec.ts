@@ -3,10 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { SanchalakProxyComponent, lastSeenLabel } from './sanchalak-proxy.component';
-import { SanchalakProxyService } from './sanchalak-proxy.service';
-import { ProxyOccurrence, ProxySabha } from './sanchalak-proxy.types';
+import {
+  ProxyOccurrenceItem,
+  ProxySabhaListItem,
+  SanchalakProxyBffControllerService,
+} from 'shared-data-access';
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
-function sabha(overrides: Partial<ProxySabha> = {}): ProxySabha {
+function sabha(overrides: Partial<ProxySabhaListItem> = {}): ProxySabhaListItem {
   return {
     sabhaId: 'sabha-1',
     sabhaLabel: 'REGULAR_YUVAK · Kshetra Tracer',
@@ -17,7 +21,7 @@ function sabha(overrides: Partial<ProxySabha> = {}): ProxySabha {
   };
 }
 
-function occurrence(overrides: Partial<ProxyOccurrence> = {}): ProxyOccurrence {
+function occurrence(overrides: Partial<ProxyOccurrenceItem> = {}): ProxyOccurrenceItem {
   return {
     id: 'occ-1',
     effectiveDate: '2026-08-02',
@@ -28,32 +32,32 @@ function occurrence(overrides: Partial<ProxyOccurrence> = {}): ProxyOccurrence {
 }
 
 function apiSpy(
-  sabhas: ProxySabha[],
-  occurrences: ProxyOccurrence[],
-): jasmine.SpyObj<SanchalakProxyService> {
-  const spy = jasmine.createSpyObj<SanchalakProxyService>('SanchalakProxyService', [
-    'listSabhas',
-    'listOccurrences',
+  sabhas: ProxySabhaListItem[],
+  occurrences: ProxyOccurrenceItem[],
+): ApiStub<SanchalakProxyBffControllerService> {
+  const spy = apiStub<SanchalakProxyBffControllerService>('SanchalakProxyBffControllerService', [
+    'sabhas',
+    'occurrences',
     'cancel',
-    'overrideVenue',
+    'venueOverride',
     'reschedule',
   ]);
-  spy.listSabhas.and.returnValue(of(sabhas));
-  spy.listOccurrences.and.returnValue(of(occurrences));
+  spy.sabhas.and.returnValue(of(sabhas));
+  spy.occurrences.and.returnValue(of(occurrences));
   spy.cancel.and.returnValue(of(undefined));
-  spy.overrideVenue.and.returnValue(of(undefined));
+  spy.venueOverride.and.returnValue(of(undefined));
   spy.reschedule.and.returnValue(of(undefined));
   return spy;
 }
 
 function mount(
-  sabhas: ProxySabha[],
-  occurrences: ProxyOccurrence[] = [],
-): { fixture: ComponentFixture<SanchalakProxyComponent>; api: jasmine.SpyObj<SanchalakProxyService> } {
+  sabhas: ProxySabhaListItem[],
+  occurrences: ProxyOccurrenceItem[] = [],
+): { fixture: ComponentFixture<SanchalakProxyComponent>; api: ApiStub<SanchalakProxyBffControllerService> } {
   const api = apiSpy(sabhas, occurrences);
   TestBed.configureTestingModule({
     imports: [SanchalakProxyComponent],
-    providers: [{ provide: SanchalakProxyService, useValue: api }],
+    providers: [{ provide: SanchalakProxyBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(SanchalakProxyComponent);
   fixture.detectChanges();
@@ -66,7 +70,7 @@ describe('SanchalakProxyComponent', () => {
   it('loads the assignable Sabhas on init and starts in the picker', () => {
     const { fixture, api } = mount([sabha()]);
 
-    expect(api.listSabhas).toHaveBeenCalled();
+    expect(api.sabhas).toHaveBeenCalled();
     expect(fixture.componentInstance.sabhas().length).toBe(1);
     expect(fixture.componentInstance.acting()).toBeNull();
   });
@@ -77,7 +81,7 @@ describe('SanchalakProxyComponent', () => {
 
     c.enterProxy(sabha());
 
-    expect(api.listOccurrences).toHaveBeenCalledWith('sabha-1');
+    expect(api.occurrences).toHaveBeenCalledWith('sabha-1');
     expect(c.acting()?.sabhaLabel).toBe('REGULAR_YUVAK · Kshetra Tracer');
     expect(c.occurrences().length).toBe(1);
   });
@@ -99,8 +103,8 @@ describe('SanchalakProxyComponent', () => {
 
     c.cancel('occ-1', 'Sanchalak away');
 
-    expect(api.cancel).toHaveBeenCalledWith('occ-1', 'Sanchalak away');
-    expect(api.listOccurrences).toHaveBeenCalledTimes(2);
+    expect(api.cancel).toHaveBeenCalledWith('occ-1', { reason: 'Sanchalak away' });
+    expect(api.occurrences).toHaveBeenCalledTimes(2);
   });
 
   it('does not cancel without a reason', () => {

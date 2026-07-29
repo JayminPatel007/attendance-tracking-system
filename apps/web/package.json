@@ -8,7 +8,7 @@
     "build:libs": "ng build shared-kernel && ng build shared-ui && ng build shared-data-access && ng build identity-domain && ng build sabha-domain && ng build attendance-domain && ng build analytics-domain",
     "watch": "ng build web --watch --configuration development",
     "test": "npm run build:libs && ng test web --watch=false --browsers=ChromeHeadlessCI",
-    "generate:api": "openapi-generator-cli generate -i ../backend/openapi.json -g typescript-angular -o src/app/generated --additional-properties=ngVersion=18.2.0,providedInRoot=true,fileNaming=kebab-case,useSingleRequestParameter=false"
+    "generate:api": "openapi-generator-cli generate -i ../backend/openapi.json -g typescript-angular -o projects/shared-data-access/src/lib/generated --additional-properties=ngVersion=18.2.0,providedInRoot=true,fileNaming=kebab-case,useSingleRequestParameter=false"
   },
   "private": true,
   "dependencies": {

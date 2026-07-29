@@ -2,9 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { PendingNominationItem, SelectedPersonItem } from '../../generated';
+import { PendingNominationItem, SelectedPersonItem, SelectionBffControllerService } from 'shared-data-access';
 import { SelectionComponent } from './selection.component';
-import { SelectionService } from './selection.service';
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
 function nomination(overrides: Partial<PendingNominationItem> = {}): PendingNominationItem {
   return {
@@ -40,8 +40,8 @@ function selected(overrides: Partial<SelectedPersonItem> = {}): SelectedPersonIt
 function apiSpy(
   pending: PendingNominationItem[],
   selectedPeople: SelectedPersonItem[],
-): jasmine.SpyObj<SelectionService> {
-  const spy = jasmine.createSpyObj<SelectionService>('SelectionService', [
+): ApiStub<SelectionBffControllerService> {
+  const spy = apiStub<SelectionBffControllerService>('SelectionBffControllerService', [
     'queue',
     'selected',
     'approve',
@@ -59,11 +59,11 @@ function apiSpy(
 function mount(
   pending: PendingNominationItem[] = [],
   selectedPeople: SelectedPersonItem[] = [],
-): { fixture: ComponentFixture<SelectionComponent>; api: jasmine.SpyObj<SelectionService> } {
+): { fixture: ComponentFixture<SelectionComponent>; api: ApiStub<SelectionBffControllerService> } {
   const api = apiSpy(pending, selectedPeople);
   TestBed.configureTestingModule({
     imports: [SelectionComponent],
-    providers: [{ provide: SelectionService, useValue: api }],
+    providers: [{ provide: SelectionBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(SelectionComponent);
   fixture.detectChanges();
@@ -97,7 +97,7 @@ describe('SelectionComponent', () => {
 
     fixture.componentInstance.reject('nom-1', 'Not ready');
 
-    expect(api.reject).toHaveBeenCalledWith('nom-1', 'Not ready');
+    expect(api.reject).toHaveBeenCalledWith('nom-1', { reason: 'Not ready' });
     expect(api.queue).toHaveBeenCalledTimes(2);
   });
 
@@ -114,7 +114,7 @@ describe('SelectionComponent', () => {
 
     fixture.componentInstance.deselect(selected());
 
-    expect(api.deselect).toHaveBeenCalledWith('person-1', 'sabha-16');
+    expect(api.deselect).toHaveBeenCalledWith({ personId: 'person-1', selectiveSabhaId: 'sabha-16' });
     expect(api.selected).toHaveBeenCalledTimes(2);
   });
 

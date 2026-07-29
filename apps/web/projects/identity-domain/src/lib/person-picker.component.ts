@@ -2,8 +2,7 @@ import { Component, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { suggestPassword, suggestUsername } from './appointment-credentials';
-import { DirectoryService } from './directory.service';
-import { NameCandidate, PersonResponse } from './directory.types';
+import { DirectoryBffControllerService, NameCandidate, PersonResponse } from 'shared-data-access';
 
 /**
  * The shared Directory person-picker (ADR-0011, ADR-0013): the directory-first
@@ -162,7 +161,7 @@ import { NameCandidate, PersonResponse } from './directory.types';
   `,
 })
 export class PersonPickerComponent {
-  private readonly directory = inject(DirectoryService);
+  private readonly directory = inject(DirectoryBffControllerService);
 
   /** Kshetra to search names within, supplied by the host. */
   readonly kshetraId = input('');
@@ -189,7 +188,7 @@ export class PersonPickerComponent {
       return;
     }
     this.mobileMatch.set(null);
-    this.directory.searchByName(kshetraId, name).subscribe((c) => this.candidates.set(c));
+    this.directory.nameSearch(kshetraId, name).subscribe((c) => this.candidates.set(c));
   }
 
   searchByMobile(): void {
@@ -198,7 +197,7 @@ export class PersonPickerComponent {
       return;
     }
     this.candidates.set([]);
-    this.directory.searchByMobile(mobile).subscribe({
+    this.directory.search(mobile).subscribe({
       next: (person) => this.mobileMatch.set(person),
       error: () => this.mobileMatch.set(null),
     });

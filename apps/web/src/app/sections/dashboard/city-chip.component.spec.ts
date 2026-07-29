@@ -1,24 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { CityOption, DashboardScopeChip, DashboardService } from 'analytics-domain';
+import { CityChip, CityOption, DashboardBffControllerService } from 'shared-data-access';
 
 import { CityChipComponent } from './city-chip.component';
 
-function apiSpy(scope: DashboardScopeChip): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', ['scope', 'chooseCity']);
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
+
+function apiSpy(scope: CityChip): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', ['scope', 'chooseCity']);
   spy.scope.and.returnValue(of(scope));
   spy.chooseCity.and.returnValue(of(undefined));
   return spy;
 }
 
-function mount(scope: DashboardScopeChip): {
+function mount(scope: CityChip): {
   fixture: ComponentFixture<CityChipComponent>;
-  api: jasmine.SpyObj<DashboardService>;
+  api: ApiStub<DashboardBffControllerService>;
 } {
   const api = apiSpy(scope);
   TestBed.configureTestingModule({
     imports: [CityChipComponent],
-    providers: [{ provide: DashboardService, useValue: api }],
+    providers: [{ provide: DashboardBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(CityChipComponent);
   fixture.detectChanges();
@@ -57,7 +59,7 @@ describe('CityChipComponent', () => {
 
     fixture.componentInstance.choose('city-2');
 
-    expect(api.chooseCity).toHaveBeenCalledWith('city-2');
+    expect(api.chooseCity).toHaveBeenCalledWith({ cityId: 'city-2' });
     expect(fixture.componentInstance.selectedCityId()).toBe('city-2');
     expect(picked).toEqual(['city-2']);
   });
@@ -67,7 +69,7 @@ describe('CityChipComponent', () => {
     const api = apiSpy({ sant: true, selectedCityId: null, cities: CITIES });
     TestBed.configureTestingModule({
       imports: [CityChipComponent],
-      providers: [{ provide: DashboardService, useValue: api }],
+      providers: [{ provide: DashboardBffControllerService, useValue: api }],
     });
     const fixture = TestBed.createComponent(CityChipComponent);
     fixture.componentInstance.scopeLoaded.subscribe((s) => loaded.push(s));

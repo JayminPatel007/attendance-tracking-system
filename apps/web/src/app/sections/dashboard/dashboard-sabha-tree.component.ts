@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DashboardService, ZoneNode } from 'analytics-domain';
+import { DashboardBffControllerService, Zone } from 'shared-data-access';
 import { kindLabel } from 'sabha-domain';
 
 /** The key used for the bucket of Kshetras with no Zone (the tracer seed). */
@@ -19,11 +19,11 @@ const UNZONED_KEY = '__unzoned__';
   styleUrl: './dashboard-sabha-tree.component.scss',
 })
 export class DashboardSabhaTreeComponent implements OnInit {
-  private readonly api = inject(DashboardService);
+  private readonly api = inject(DashboardBffControllerService);
 
   readonly kindLabel = kindLabel;
 
-  readonly zones = signal<ZoneNode[]>([]);
+  readonly zones = signal<Zone[]>([]);
   private readonly openZones = signal<ReadonlySet<string>>(new Set());
   private readonly openKshetras = signal<ReadonlySet<string>>(new Set());
 
@@ -32,12 +32,12 @@ export class DashboardSabhaTreeComponent implements OnInit {
   }
 
   /** A stable key for a Zone node; the no-Zone bucket gets its own sentinel. */
-  zoneKey(zone: ZoneNode): string {
+  zoneKey(zone: Zone): string {
     return zone.zoneId ?? UNZONED_KEY;
   }
 
   /** The display name for a Zone, falling back to "Unzoned" for the null bucket. */
-  zoneLabel(zone: ZoneNode): string {
+  zoneLabel(zone: Zone): string {
     return zone.zoneId === null ? 'Unzoned' : zone.zoneName;
   }
 

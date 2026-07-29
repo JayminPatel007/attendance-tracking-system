@@ -6,8 +6,7 @@ import { demographicLabel } from 'sabha-domain';
 import { Observable } from 'rxjs';
 
 import { errorMessageFor } from '../../shared/http-error';
-import { PendingNominationItem, SelectedPersonItem } from '../../generated';
-import { SelectionService } from './selection.service';
+import { PendingNominationItem, SelectedPersonItem, SelectionBffControllerService } from 'shared-data-access';
 
 /**
  * A human label for the selective Sabha a Person joins, e.g. `Yuvak (YSS)` —
@@ -40,7 +39,7 @@ export function trackLabel(demographic: string, track: string): string {
   styleUrl: './selection.component.scss',
 })
 export class SelectionComponent implements OnInit {
-  private readonly api = inject(SelectionService);
+  private readonly api = inject(SelectionBffControllerService);
 
   readonly trackLabel = trackLabel;
 
@@ -61,11 +60,11 @@ export class SelectionComponent implements OnInit {
     if (reason.trim().length === 0) {
       return;
     }
-    this.run(this.api.reject(nominationId, reason.trim()));
+    this.run(this.api.reject(nominationId, { reason: reason.trim() }));
   }
 
   deselect(person: SelectedPersonItem): void {
-    this.run(this.api.deselect(person.personId!, person.selectiveSabhaId!));
+    this.run(this.api.deselect({ personId: person.personId, selectiveSabhaId: person.selectiveSabhaId }));
   }
 
   private run(action: Observable<void>): void {

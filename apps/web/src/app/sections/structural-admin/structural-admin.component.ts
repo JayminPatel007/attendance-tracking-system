@@ -2,20 +2,22 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SessionService } from 'identity-domain';
 import {
-  CityView,
   DEMOGRAPHICS,
   Demographic,
   DeleteButtonComponent,
-  KshetraView,
-  SabhaKindView,
   TRACKS,
   Track,
-  ZoneView,
   isAllowedKind,
   notEmptyReason,
 } from 'sabha-domain';
-
-import { StructuralService } from './structural.service';
+import {
+  CityView,
+  KshetraView,
+  SabhaKindView,
+  StructuralCreationControllerService,
+  StructuralDeletionControllerService,
+  ZoneView,
+} from 'shared-data-access';
 
 type Tab = 'cities' | 'zones' | 'sabha-kinds' | 'kshetras';
 
@@ -52,7 +54,8 @@ const TABS_BY_ACTOR: Record<Actor, Tab[]> = {
 })
 export class StructuralAdminComponent implements OnInit {
   private readonly sessions = inject(SessionService);
-  private readonly api = inject(StructuralService);
+  private readonly api = inject(StructuralCreationControllerService);
+  private readonly deletions = inject(StructuralDeletionControllerService);
 
   readonly tabLabel = TAB_LABELS;
   readonly demographics = DEMOGRAPHICS;
@@ -122,7 +125,7 @@ export class StructuralAdminComponent implements OnInit {
     if (!name) {
       return;
     }
-    this.api.createCity(name).subscribe(() => {
+    this.api.createCity({ name }).subscribe(() => {
       this.newCityName = '';
       this.refreshCities();
     });
@@ -130,7 +133,7 @@ export class StructuralAdminComponent implements OnInit {
 
   /** Deletes an empty City (the button is disabled while it has Zones — ADR-0026). */
   deleteCity(city: CityView): void {
-    this.api.deleteCity(city.id).subscribe(() => this.refreshCities());
+    this.deletions.deleteCity(city.id).subscribe(() => this.refreshCities());
   }
 
   private refreshCities(): void {
@@ -143,7 +146,7 @@ export class StructuralAdminComponent implements OnInit {
     if (!name || !this.newZoneCityId) {
       return;
     }
-    this.api.createZone(this.newZoneCityId, name).subscribe(() => {
+    this.api.createZone({ cityId: this.newZoneCityId, name }).subscribe(() => {
       this.newZoneName = '';
       this.newZoneCityId = '';
       this.refreshZones();
@@ -152,7 +155,7 @@ export class StructuralAdminComponent implements OnInit {
 
   /** Deletes an empty Zone (the button is disabled while it has Kshetras — ADR-0026). */
   deleteZone(zone: ZoneView): void {
-    this.api.deleteZone(zone.id).subscribe(() => this.refreshZones());
+    this.deletions.deleteZone(zone.id).subscribe(() => this.refreshZones());
   }
 
   private refreshZones(): void {
@@ -168,7 +171,7 @@ export class StructuralAdminComponent implements OnInit {
     if (!this.canRegisterKind()) {
       return;
     }
-    this.api.createSabhaKind(this.newKindDemographic as Demographic, this.newKindTrack).subscribe(() => {
+    this.api.createSabhaKind({ demographic: this.newKindDemographic as Demographic, track: this.newKindTrack }).subscribe(() => {
       this.newKindDemographic = '';
       this.newKindTrack = 'REGULAR';
       this.refreshSabhaKinds();
@@ -198,7 +201,7 @@ export class StructuralAdminComponent implements OnInit {
     if (!name || !this.selectedZoneId) {
       return;
     }
-    this.api.createKshetra(this.selectedZoneId, name).subscribe(() => {
+    this.api.createKshetra({ zoneId: this.selectedZoneId, name }).subscribe(() => {
       this.newKshetraName = '';
       this.refreshKshetras();
     });
@@ -206,7 +209,7 @@ export class StructuralAdminComponent implements OnInit {
 
   /** Deletes an empty Kshetra (the button is disabled while it has Sabhas — ADR-0026). */
   deleteKshetra(kshetra: KshetraView): void {
-    this.api.deleteKshetra(kshetra.id).subscribe(() => this.refreshKshetras());
+    this.deletions.deleteKshetra(kshetra.id).subscribe(() => this.refreshKshetras());
   }
 
   private refreshKshetras(): void {

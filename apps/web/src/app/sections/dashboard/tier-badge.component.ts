@@ -1,9 +1,9 @@
 import { Component, computed, input } from '@angular/core';
-import { Tier } from 'analytics-domain';
+import { CandidateRow } from 'shared-data-access';
 
 /**
  * The re-engagement tier pill shown wherever a candidate is listed (overview
- * headline, People table). Owns the single mapping from {@link Tier} to its
+ * headline, People table). Owns the single mapping from {@link CandidateRow.TierEnum} to its
  * label and visual treatment so the two lists can't drift apart.
  */
 @Component({
@@ -28,6 +28,6 @@ import { Tier } from 'analytics-domain';
   `,
 })
 export class TierBadgeComponent {
-  readonly tier = input.required<Tier>();
+  readonly tier = input.required<CandidateRow.TierEnum>();
   readonly label = computed(() => (this.tier() === 'PRIORITY' ? 'Priority' : 'Candidate'));
 }

@@ -5,10 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { kindLabel } from 'sabha-domain';
 
+import { OccurrenceReopenBffControllerService, ReopenListItem } from 'shared-data-access';
 import { errorMessageFor } from '../../shared/http-error';
-
-import { OccurrenceReopenService } from './occurrence-reopen.service';
-import { OccurrenceListItem } from './occurrence-reopen.types';
 
 /**
  * Occurrence-reopen section (ADR-0001, Slice 13). Two-pane: the Occurrences the
@@ -27,17 +25,17 @@ import { OccurrenceListItem } from './occurrence-reopen.types';
   styleUrl: './occurrence-reopen.component.scss',
 })
 export class OccurrenceReopenComponent implements OnInit {
-  private readonly api = inject(OccurrenceReopenService);
+  private readonly api = inject(OccurrenceReopenBffControllerService);
 
   readonly kindLabel = kindLabel;
 
-  readonly occurrences = signal<OccurrenceListItem[]>([]);
+  readonly occurrences = signal<ReopenListItem[]>([]);
   readonly selectedId = signal<string | null>(null);
   reason = '';
   readonly error = signal<string | null>(null);
   readonly submitting = signal<boolean>(false);
 
-  readonly selected = computed<OccurrenceListItem | null>(() => {
+  readonly selected = computed<ReopenListItem | null>(() => {
     const id = this.selectedId();
     return this.occurrences().find((o) => o.occurrenceId === id) ?? null;
   });
@@ -64,7 +62,7 @@ export class OccurrenceReopenComponent implements OnInit {
     }
     this.submitting.set(true);
     this.error.set(null);
-    this.api.reopen(occurrence.occurrenceId, this.reason.trim()).subscribe({
+    this.api.reopen(occurrence.occurrenceId, { reason: this.reason.trim() }).subscribe({
       next: () => {
         this.submitting.set(false);
         this.reason = '';

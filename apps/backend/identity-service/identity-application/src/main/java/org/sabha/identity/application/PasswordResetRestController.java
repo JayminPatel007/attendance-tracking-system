@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Self-service password-reset endpoints (ADR-0004). Unauthenticated by design —
  * a locked-out User reaches these from the login screen of both the mobile and
@@ -53,13 +55,15 @@ public class PasswordResetRestController {
     public record RequestPayload(String username) {
     }
 
-    public record RequestResponse(UUID resetId) {
+    public record RequestResponse(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID resetId) {
     }
 
     public record VerifyPayload(UUID resetId, String otpCode) {
     }
 
-    public record VerifyResponse(String resetToken) {
+    public record VerifyResponse(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String resetToken) {
     }
 
     public record CompletePayload(String resetToken, String newPassword) {

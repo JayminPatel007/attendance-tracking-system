@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { PasswordResetService } from './password-reset.service';
+import { PasswordResetRestControllerService } from 'shared-data-access';
 
 /** The step of the self-service reset the screen is showing. */
 type Stage = 'username' | 'otp' | 'password' | 'done';
@@ -25,7 +25,7 @@ type Stage = 'username' | 'otp' | 'password' | 'done';
   styleUrl: './forgot-password.component.scss',
 })
 export class ForgotPasswordComponent {
-  private readonly api = inject(PasswordResetService);
+  private readonly api = inject(PasswordResetRestControllerService);
 
   username = '';
   otpCode = '';
@@ -46,8 +46,8 @@ export class ForgotPasswordComponent {
       return;
     }
     this.begin();
-    this.api.requestReset(username).subscribe({
-      next: (resetId) => {
+    this.api.request({ username }).subscribe({
+      next: ({ resetId }) => {
         this.resetId = resetId;
         this.stage.set('otp');
         this.done();
@@ -63,9 +63,9 @@ export class ForgotPasswordComponent {
       return;
     }
     this.begin();
-    this.api.verifyOtp(this.resetId, code).subscribe({
-      next: (token) => {
-        this.resetToken = token;
+    this.api.verify({ resetId: this.resetId, otpCode: code }).subscribe({
+      next: ({ resetToken }) => {
+        this.resetToken = resetToken;
         this.stage.set('password');
         this.done();
       },
@@ -83,7 +83,7 @@ export class ForgotPasswordComponent {
       return;
     }
     this.begin();
-    this.api.completeReset(this.resetToken, this.newPassword).subscribe({
+    this.api.complete({ resetToken: this.resetToken, newPassword: this.newPassword }).subscribe({
       next: () => {
         this.stage.set('done');
         this.done();

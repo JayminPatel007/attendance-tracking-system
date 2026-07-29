@@ -1,33 +1,45 @@
 import { signal } from '@angular/core';
+import { WebSessionResponse } from 'shared-data-access';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { SessionService } from 'identity-domain';
 
+import {
+  StructuralCreationControllerService,
+  StructuralDeletionControllerService,
+} from 'shared-data-access';
+
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 import { StructuralAdminComponent } from './structural-admin.component';
-import { StructuralService } from './structural.service';
-import { WebSession } from 'identity-domain';
+
+/**
+ * The screen reads and writes the structure through one generated module and
+ * deletes through another; the section is one surface to the reader, so one stub
+ * stands in for both tokens.
+ */
+type StructuralApi = StructuralCreationControllerService & StructuralDeletionControllerService;
 
 type Authority = 'mk' | 'regional-team' | 'sanyojak';
 
 function sessionStub(authority: Authority): Partial<SessionService> {
-  const s: WebSession = {
+  const s: WebSessionResponse = {
     username: 'u',
     madhyasthaKaryalaya: authority === 'mk',
     regionalTeam: authority === 'regional-team',
     sections: ['DASHBOARD', 'STRUCTURAL_ADMIN'],
   };
-  return { session: signal<WebSession | null>(s).asReadonly() };
+  return { session: signal<WebSessionResponse | null>(s).asReadonly() };
 }
 
-function apiSpy(): jasmine.SpyObj<StructuralService> {
-  const spy = jasmine.createSpyObj<StructuralService>('StructuralService', [
+function apiSpy(): ApiStub<StructuralApi> {
+  const spy = apiStub<StructuralApi>('StructuralApi', [
     'listCities', 'createCity', 'deleteCity', 'listZones', 'createZone', 'deleteZone',
     'listSabhaKinds', 'createSabhaKind', 'retireSabhaKind', 'reactivateSabhaKind',
     'myCities', 'myZones', 'listKshetras', 'createKshetra', 'deleteKshetra',
   ]);
   spy.listCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai', zoneCount: 0 }]));
   spy.listZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 0 }]));
-  spy.listSabhaKinds.and.returnValue(of([{ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' }]));
+  spy.listSabhaKinds.and.returnValue(of([{ id: 'k1', demographic: 'YUVAK', track: 'REGULAR', retiredAt: null }]));
   spy.myCities.and.returnValue(of([{ id: 'c1', name: 'Mumbai', zoneCount: 0 }]));
   spy.myZones.and.returnValue(of([{ id: 'z1', name: 'West', cityId: 'c1', cityName: 'Mumbai', kshetraCount: 0 }]));
   spy.listKshetras.and.returnValue(of([{ id: 'ksh1', name: 'Andheri-7', zoneId: 'z1', sabhaCount: 0 }]));
@@ -45,15 +57,16 @@ function apiSpy(): jasmine.SpyObj<StructuralService> {
 
 function mount(
   authority: Authority,
-  configure?: (api: jasmine.SpyObj<StructuralService>) => void,
-): { fixture: ComponentFixture<StructuralAdminComponent>; api: jasmine.SpyObj<StructuralService> } {
+  configure?: (api: ApiStub<StructuralApi>) => void,
+): { fixture: ComponentFixture<StructuralAdminComponent>; api: ApiStub<StructuralApi> } {
   const api = apiSpy();
   configure?.(api);
   TestBed.configureTestingModule({
     imports: [StructuralAdminComponent],
     providers: [
       { provide: SessionService, useValue: sessionStub(authority) },
-      { provide: StructuralService, useValue: api },
+      { provide: StructuralCreationControllerService, useValue: api },
+      { provide: StructuralDeletionControllerService, useValue: api },
     ],
   });
   const fixture = TestBed.createComponent(StructuralAdminComponent);
@@ -101,7 +114,7 @@ describe('StructuralAdminComponent', () => {
     fixture.componentInstance.newCityName = 'Surat';
     fixture.componentInstance.createCity();
 
-    expect(api.createCity).toHaveBeenCalledWith('Surat');
+    expect(api.createCity).toHaveBeenCalledWith({ name: 'Surat' });
     expect(api.listCities).toHaveBeenCalled();
   });
 
@@ -114,7 +127,7 @@ describe('StructuralAdminComponent', () => {
     fixture.componentInstance.newZoneCityId = 'c1';
     fixture.componentInstance.createZone();
 
-    expect(api.createZone).toHaveBeenCalledWith('c1', 'Mumbai South');
+    expect(api.createZone).toHaveBeenCalledWith({ cityId: 'c1', name: 'Mumbai South' });
     expect(api.listZones).toHaveBeenCalled();
   });
 
@@ -130,7 +143,7 @@ describe('StructuralAdminComponent', () => {
     const { fixture, api } = mount('mk');
     api.listSabhaKinds.calls.reset();
 
-    fixture.componentInstance.retireSabhaKind({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' });
+    fixture.componentInstance.retireSabhaKind({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR', retiredAt: null });
 
     expect(api.retireSabhaKind).toHaveBeenCalledWith('k1');
     expect(api.listSabhaKinds).toHaveBeenCalled();
@@ -151,7 +164,7 @@ describe('StructuralAdminComponent', () => {
     const { fixture } = mount('mk');
     const c = fixture.componentInstance;
 
-    expect(c.isRetired({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR' })).toBeFalse();
+    expect(c.isRetired({ id: 'k1', demographic: 'YUVAK', track: 'REGULAR', retiredAt: null })).toBeFalse();
     expect(c.isRetired(
       { id: 'k2', demographic: 'YUVAK', track: 'REGULAR', retiredAt: '2026-06-19T10:00:00Z' })).toBeTrue();
   });

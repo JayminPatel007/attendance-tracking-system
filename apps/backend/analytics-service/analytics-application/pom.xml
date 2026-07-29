@@ -25,6 +25,17 @@
             <artifactId>analytics-application-service</artifactId>
         </dependency>
 
+        <!--
+            Annotations only (no framework): the presentation ring describes the
+            wire contract — which response fields are always present, what the
+            typed outcomes of an endpoint are — so springdoc renders a document
+            the generated clients can be strict about (issue #104).
+        -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations-jakarta</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>

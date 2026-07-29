@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Sabha-definition BFF endpoint (ADR-0012, ADR-0022): the Angular web shell posts
  * a single request that creates a Sabha and appoints its Sanchalak (and optional
@@ -99,9 +101,17 @@ public class SabhaDefinitionController {
         }
     }
 
+    /**
+     * The three ids are null on the soft-warn outcome, where nothing was created,
+     * and populated on the created one — always serialized either way, so the web
+     * reads them as {@code T | null} rather than possibly-absent (issue #131).
+     */
     public record SabhaDefinitionResponse(
-            UUID sabhaId, UUID sanchalakAssignmentId, UUID sahSanchalakAssignmentId,
-            List<NameCandidate> candidates, boolean requiresOverride) {
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID sabhaId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID sanchalakAssignmentId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID sahSanchalakAssignmentId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<NameCandidate> candidates,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean requiresOverride) {
 
         static SabhaDefinitionResponse created(UUID sabhaId, UUID sanchalakAssignmentId, UUID sahSanchalakAssignmentId) {
             return new SabhaDefinitionResponse(sabhaId, sanchalakAssignmentId, sahSanchalakAssignmentId, List.of(), false);

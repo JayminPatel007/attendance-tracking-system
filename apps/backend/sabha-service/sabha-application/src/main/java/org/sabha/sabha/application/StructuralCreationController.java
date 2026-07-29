@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Structural-admin BFF endpoints (ADR-0009, ADR-0024, ADR-0022): the Angular web
  * shell creates and lists Cities and Sabha Kinds (MK), Zones (Regional Team,
@@ -145,6 +147,7 @@ public class StructuralCreationController {
     public record CreateKshetraRequest(UUID zoneId, String name) {
     }
 
-    public record CreatedResponse(UUID id) {
+    public record CreatedResponse(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id) {
     }
 }

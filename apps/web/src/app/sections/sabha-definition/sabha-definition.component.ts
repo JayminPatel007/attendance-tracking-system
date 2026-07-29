@@ -2,24 +2,36 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PersonPickerComponent } from 'identity-domain';
-import {
-  DeleteButtonComponent,
-  KshetraView,
-  SabhaKindView,
-  ZoneView,
-  demographicLabel,
-  notEmptyReason,
-} from 'sabha-domain';
-
-import { errorMessageFor } from '../../shared/http-error';
-import { SabhaDefinitionService } from './sabha-definition.service';
+import { DeleteButtonComponent, demographicLabel, notEmptyReason } from 'sabha-domain';
 import {
   AppointeePayload,
-  DAYS_OF_WEEK,
-  DayOfWeek,
   DefineSabhaRequest,
-  SabhaSummary,
-} from './sabha-definition.types';
+  KshetraView,
+  SabhaDefinitionControllerService,
+  SabhaKindView,
+  SabhaListControllerService,
+  SabhaView,
+  StructuralCreationControllerService,
+  StructuralDeletionControllerService,
+  ZoneView,
+} from 'shared-data-access';
+
+import { errorMessageFor } from '../../shared/http-error';
+
+/**
+ * The days a weekly-recurring Sabha can stand on, in the order the dropdown
+ * lists them — the week as a reader scans it, which the contract's alphabetical
+ * enum does not give.
+ */
+const DAYS_OF_WEEK: readonly DefineSabhaRequest.DayOfWeekEnum[] = [
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+];
 
 /** Human label for a kind dropdown option, e.g. "Yuvak Sabha (YSS)". */
 export function kindLabel(kind: SabhaKindView): string {
@@ -27,7 +39,7 @@ export function kindLabel(kind: SabhaKindView): string {
 }
 
 /** Human label for a Sabha in the management list, e.g. "Yuvak Sabha (YSS) — Andheri-7". */
-export function sabhaLabel(sabha: SabhaSummary): string {
+export function sabhaLabel(sabha: SabhaView): string {
   return `${demographicLabel(sabha.demographic)} Sabha (${sabha.track}) — ${sabha.kshetraName}`;
 }
 
@@ -65,7 +77,10 @@ function payloadOf(picker: PersonPickerComponent): AppointeePayload | null {
   styleUrl: './sabha-definition.component.scss',
 })
 export class SabhaDefinitionComponent implements OnInit {
-  private readonly api = inject(SabhaDefinitionService);
+  private readonly api = inject(SabhaDefinitionControllerService);
+  private readonly sabhaList = inject(SabhaListControllerService);
+  private readonly structure = inject(StructuralCreationControllerService);
+  private readonly deletions = inject(StructuralDeletionControllerService);
 
   readonly daysOfWeek = DAYS_OF_WEEK;
   readonly kindLabel = kindLabel;
@@ -77,14 +92,14 @@ export class SabhaDefinitionComponent implements OnInit {
   readonly zones = signal<ZoneView[]>([]);
   readonly kshetras = signal<KshetraView[]>([]);
   /** The caller's standing Sabhas, listed for deletion (ADR-0026). */
-  readonly mySabhas = signal<SabhaSummary[]>([]);
+  readonly mySabhas = signal<SabhaView[]>([]);
 
   sabhaKindId = '';
   zoneId = '';
   kshetraId = '';
 
   readonly weekly = signal<boolean>(true);
-  dayOfWeek: DayOfWeek = 'SUNDAY';
+  dayOfWeek: DefineSabhaRequest.DayOfWeekEnum = 'SUNDAY';
   startTime = '19:00';
   endTime = '20:30';
   standingVenue = '';
@@ -93,18 +108,18 @@ export class SabhaDefinitionComponent implements OnInit {
   readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.api.listSabhaKinds().subscribe((k) => this.kinds.set(k));
-    this.api.listZones().subscribe((z) => this.zones.set(z));
+    this.structure.listSabhaKinds().subscribe((k) => this.kinds.set(k));
+    this.structure.listZones().subscribe((z) => this.zones.set(z));
     this.refreshMySabhas();
   }
 
   /** Deletes an empty Sabha (the button is disabled while it has Occurrences — ADR-0026). */
-  deleteSabha(sabha: SabhaSummary): void {
-    this.api.deleteSabha(sabha.id).subscribe(() => this.refreshMySabhas());
+  deleteSabha(sabha: SabhaView): void {
+    this.deletions.deleteSabha(sabha.id).subscribe(() => this.refreshMySabhas());
   }
 
   private refreshMySabhas(): void {
-    this.api.listMySabhas().subscribe((s) => this.mySabhas.set(s));
+    this.sabhaList.mySabhas().subscribe((s) => this.mySabhas.set(s));
   }
 
   onZoneChange(zoneId: string): void {
@@ -114,7 +129,7 @@ export class SabhaDefinitionComponent implements OnInit {
     if (!zoneId) {
       return;
     }
-    this.api.listKshetras(zoneId).subscribe((k) => this.kshetras.set(k));
+    this.structure.listKshetras(zoneId).subscribe((k) => this.kshetras.set(k));
   }
 
   setWeekly(weekly: boolean): void {
@@ -176,12 +191,12 @@ export class SabhaDefinitionComponent implements OnInit {
       kshetraId: this.kshetraId.trim(),
       sabhaKindId: this.sabhaKindId,
       weekly,
-      dayOfWeek: weekly ? this.dayOfWeek : null,
-      startTime: weekly ? this.startTime : null,
-      endTime: weekly ? this.endTime : null,
+      dayOfWeek: weekly ? this.dayOfWeek : undefined,
+      startTime: weekly ? this.startTime : undefined,
+      endTime: weekly ? this.endTime : undefined,
       standingVenue: this.standingVenue.trim(),
       sanchalak: sanchalakPayload,
-      sahSanchalak: payloadOf(sah),
+      sahSanchalak: payloadOf(sah) ?? undefined,
     };
   }
 

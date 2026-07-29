@@ -1,18 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { WebSessionResponse } from 'shared-data-access';
 import { signal } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, provideRouter } from '@angular/router';
-import { Section, SessionService, WebSession } from 'identity-domain';
+import { SessionService } from 'identity-domain';
 
 import { sectionGuard } from './section.guard';
 
-function routeFor(section: Section): ActivatedRouteSnapshot {
+function routeFor(section: WebSessionResponse.SectionsEnum): ActivatedRouteSnapshot {
   return { data: { section } } as unknown as ActivatedRouteSnapshot;
 }
 
 const STATE = {} as RouterStateSnapshot;
 
-function configure(sections: Section[]): Router {
-  const session: WebSession = {
+function configure(sections: WebSessionResponse.SectionsEnum[]): Router {
+  const session: WebSessionResponse = {
     username: 'u',
     madhyasthaKaryalaya: true,
     regionalTeam: false,
@@ -23,7 +24,7 @@ function configure(sections: Section[]): Router {
       provideRouter([]),
       {
         provide: SessionService,
-        useValue: { session: signal<WebSession | null>(session).asReadonly() },
+        useValue: { session: signal<WebSessionResponse | null>(session).asReadonly() },
       },
     ],
   });

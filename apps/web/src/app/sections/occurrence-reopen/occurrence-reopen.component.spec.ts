@@ -3,11 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { OccurrenceReopenComponent } from './occurrence-reopen.component';
-import { OccurrenceReopenService } from './occurrence-reopen.service';
-import { OccurrenceListItem } from './occurrence-reopen.types';
+import { OccurrenceReopenBffControllerService, ReopenListItem } from 'shared-data-access';
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
-function finalized(overrides: Partial<OccurrenceListItem> = {}): OccurrenceListItem {
+import { OccurrenceReopenComponent } from './occurrence-reopen.component';
+
+function finalized(overrides: Partial<ReopenListItem> = {}): ReopenListItem {
   return {
     occurrenceId: 'occ-1',
     date: '2026-05-17',
@@ -21,21 +22,22 @@ function finalized(overrides: Partial<OccurrenceListItem> = {}): OccurrenceListI
   };
 }
 
-function apiSpy(items: OccurrenceListItem[]): jasmine.SpyObj<OccurrenceReopenService> {
-  const spy = jasmine.createSpyObj<OccurrenceReopenService>('OccurrenceReopenService', ['list', 'reopen']);
+function apiSpy(items: ReopenListItem[]): ApiStub<OccurrenceReopenBffControllerService> {
+  const spy = apiStub<OccurrenceReopenBffControllerService>(
+    'OccurrenceReopenBffControllerService', ['list', 'reopen']);
   spy.list.and.returnValue(of(items));
   spy.reopen.and.returnValue(of(undefined));
   return spy;
 }
 
-function mount(items: OccurrenceListItem[]): {
+function mount(items: ReopenListItem[]): {
   fixture: ComponentFixture<OccurrenceReopenComponent>;
-  api: jasmine.SpyObj<OccurrenceReopenService>;
+  api: ApiStub<OccurrenceReopenBffControllerService>;
 } {
   const api = apiSpy(items);
   TestBed.configureTestingModule({
     imports: [OccurrenceReopenComponent],
-    providers: [provideRouter([]), { provide: OccurrenceReopenService, useValue: api }],
+    providers: [provideRouter([]), { provide: OccurrenceReopenBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(OccurrenceReopenComponent);
   fixture.detectChanges();
@@ -92,7 +94,7 @@ describe('OccurrenceReopenComponent', () => {
 
     c.reopen();
 
-    expect(api.reopen).toHaveBeenCalledWith('occ-1', 'Forgot to mark Ravi');
+    expect(api.reopen).toHaveBeenCalledWith('occ-1', { reason: 'Forgot to mark Ravi' });
     expect(api.list).toHaveBeenCalledTimes(2);
     expect(c.reason).toBe('');
   });

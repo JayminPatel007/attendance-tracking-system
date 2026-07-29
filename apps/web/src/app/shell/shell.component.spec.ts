@@ -1,14 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WebSessionResponse } from 'shared-data-access';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { SessionService, WebSession } from 'identity-domain';
+import { SessionService } from 'identity-domain';
 
 import { ShellComponent } from './shell.component';
 
-function sessionStub(session: WebSession): Partial<SessionService> {
+function sessionStub(session: WebSessionResponse): Partial<SessionService> {
   return {
-    session: signal<WebSession | null>(session).asReadonly(),
+    session: signal<WebSessionResponse | null>(session).asReadonly(),
     status: signal('authenticated' as const).asReadonly(),
     logout: jasmine.createSpy('logout').and.returnValue(EMPTY),
     changePassword: jasmine.createSpy('changePassword'),
@@ -27,7 +28,7 @@ function navLabels(fixture: ComponentFixture<ShellComponent>): string[] {
 }
 
 describe('ShellComponent sidebar', () => {
-  function render(session: WebSession): ComponentFixture<ShellComponent> {
+  function render(session: WebSessionResponse): ComponentFixture<ShellComponent> {
     TestBed.configureTestingModule({
       imports: [ShellComponent],
       providers: [

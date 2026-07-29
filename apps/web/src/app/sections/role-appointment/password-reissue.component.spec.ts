@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideApi } from 'shared-data-access';
 
 import { PasswordReissueComponent } from './password-reissue.component';
 
@@ -12,7 +13,9 @@ describe('PasswordReissueComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [PasswordReissueComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      // Pin the generated client's base path to "" so it issues the same
+      // relative URL this spec asserts (it defaults to the spec server).
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideApi({ basePath: '' })],
     });
     fixture = TestBed.createComponent(PasswordReissueComponent);
     component = fixture.componentInstance;

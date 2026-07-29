@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Role-appointment BFF endpoint (ADR-0011, ADR-0022): the Angular web shell posts
  * a single appointment that resolves-or-creates the Person, mints credentials
@@ -87,7 +89,10 @@ public class RoleAppointmentController {
         return new SahNirdeshakCapResponse(status.active(), status.cap(), status.reached());
     }
 
-    public record SahNirdeshakCapResponse(int active, int cap, boolean reached) {
+    public record SahNirdeshakCapResponse(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int active,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int cap,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean reached) {
     }
 
     public record AppointmentRequest(
@@ -127,9 +132,17 @@ public class RoleAppointmentController {
         }
     }
 
+    /**
+     * The three ids are null on the soft-warn outcome, where nothing was created,
+     * and populated on the appointed one — always serialized either way, so the
+     * web reads them as {@code T | null} rather than possibly-absent (issue #131).
+     */
     public record AppointmentResponse(
-            UUID personId, UUID userId, UUID assignmentId,
-            List<NameCandidate> candidates, boolean requiresOverride) {
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID personId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID userId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) UUID assignmentId,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<NameCandidate> candidates,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean requiresOverride) {
 
         static AppointmentResponse appointed(UUID personId, UUID userId, UUID assignmentId) {
             return new AppointmentResponse(personId, userId, assignmentId, List.of(), false);

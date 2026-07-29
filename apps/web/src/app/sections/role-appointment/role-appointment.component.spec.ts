@@ -1,37 +1,41 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DirectoryService, PersonPickerComponent } from 'identity-domain';
+import { PersonPickerComponent } from 'identity-domain';
 import { of, throwError } from 'rxjs';
 
-import { AppointmentService } from './appointment.service';
+import { AppointmentResponse, DirectoryBffControllerService, RoleAppointmentControllerService } from 'shared-data-access';
+
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 import { RoleAppointmentComponent } from './role-appointment.component';
-import { AppointmentResponse } from './appointment.types';
 
 function appointed(): AppointmentResponse {
   return { personId: 'p1', userId: 'u1', assignmentId: 'a1', candidates: [], requiresOverride: false };
 }
 
-function apiSpy(): jasmine.SpyObj<AppointmentService> {
-  const spy = jasmine.createSpyObj<AppointmentService>('AppointmentService', ['appoint', 'sahNirdeshakCap']);
+function apiSpy(): ApiStub<RoleAppointmentControllerService> {
+  const spy = apiStub<RoleAppointmentControllerService>(
+    'RoleAppointmentControllerService', ['appoint', 'sahNirdeshakCap']);
   spy.appoint.and.returnValue(of(appointed()));
   spy.sahNirdeshakCap.and.returnValue(of({ active: 1, cap: 2, reached: false }));
   return spy;
 }
 
-function directorySpy(): jasmine.SpyObj<DirectoryService> {
-  const spy = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['searchByName', 'searchByMobile']);
-  spy.searchByName.and.returnValue(of([{ personId: 'cand-1', fullName: 'Close Match', homeSabhas: [] }]));
-  spy.searchByMobile.and.returnValue(of({
-    id: 'existing-1', fullName: 'Existing One', gender: 'MALE', dateOfBirth: null,
-    mobile: '+919820000001', guardianPersonId: null,
+function directorySpy(): ApiStub<DirectoryBffControllerService> {
+  const spy = apiStub<DirectoryBffControllerService>('DirectoryBffControllerService', ['nameSearch', 'search']);
+  spy.nameSearch.and.returnValue(of([{ personId: 'cand-1', fullName: 'Close Match', homeSabhas: [] }]));
+  spy.search.and.returnValue(of({
+    id: 'existing-1', fullName: 'Existing One', gender: 'MALE', dateOfBirth: undefined,
+    mobile: '+919820000001', guardianPersonId: undefined,
   }));
   return spy;
 }
 
 interface Mounted {
   fixture: ComponentFixture<RoleAppointmentComponent>;
-  api: jasmine.SpyObj<AppointmentService>;
+  api: ApiStub<RoleAppointmentControllerService>;
 }
 
 function mount(): Mounted {
@@ -39,8 +43,10 @@ function mount(): Mounted {
   TestBed.configureTestingModule({
     imports: [RoleAppointmentComponent],
     providers: [
-      { provide: AppointmentService, useValue: api },
-      { provide: DirectoryService, useValue: directorySpy() },
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      { provide: RoleAppointmentControllerService, useValue: api },
+      { provide: DirectoryBffControllerService, useValue: directorySpy() },
     ],
   });
   const fixture = TestBed.createComponent(RoleAppointmentComponent);

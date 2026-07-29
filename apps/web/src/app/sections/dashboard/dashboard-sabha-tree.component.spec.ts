@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { DashboardService, SabhaTree } from 'analytics-domain';
+import { DashboardBffControllerService, SabhaTree } from 'shared-data-access';
 
 import { DashboardSabhaTreeComponent } from './dashboard-sabha-tree.component';
+
+import { ApiStub, apiStub } from '../../shared/api-stub.testing';
 
 function tree(): SabhaTree {
   return {
@@ -37,20 +39,20 @@ function tree(): SabhaTree {
   };
 }
 
-function apiSpy(data: SabhaTree): jasmine.SpyObj<DashboardService> {
-  const spy = jasmine.createSpyObj<DashboardService>('DashboardService', ['sabhaTree']);
+function apiSpy(data: SabhaTree): ApiStub<DashboardBffControllerService> {
+  const spy = apiStub<DashboardBffControllerService>('DashboardBffControllerService', ['sabhaTree']);
   spy.sabhaTree.and.returnValue(of(data));
   return spy;
 }
 
 function mount(data: SabhaTree): {
   fixture: ComponentFixture<DashboardSabhaTreeComponent>;
-  api: jasmine.SpyObj<DashboardService>;
+  api: ApiStub<DashboardBffControllerService>;
 } {
   const api = apiSpy(data);
   TestBed.configureTestingModule({
     imports: [DashboardSabhaTreeComponent],
-    providers: [{ provide: DashboardService, useValue: api }],
+    providers: [{ provide: DashboardBffControllerService, useValue: api }],
   });
   const fixture = TestBed.createComponent(DashboardSabhaTreeComponent);
   fixture.detectChanges();

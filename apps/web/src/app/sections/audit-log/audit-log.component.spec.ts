@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 
 import { AuditLogComponent } from './audit-log.component';
 import { AuditLogService } from './audit-log.service';
-import { AuditEntry } from './audit-log.types';
+import { AuditEntry } from 'shared-data-access';
 
 function entry(overrides: Partial<AuditEntry> = {}): AuditEntry {
   return {
