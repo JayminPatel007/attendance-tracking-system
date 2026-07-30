@@ -28,11 +28,34 @@ The standard five-module ring; see [[module-ring]] for what each ring means.
 | `identity-domain/identity-domain-core` | 48 | `User`, `Person`, `OtpChallenge`, `PasswordReset`, `SelectionNomination`, `HomeSabhaTransfer`, plus their domain events and exceptions. Pure — only common-domain allowed. |
 | `identity-domain/identity-application-service` | 93 | Nine feature packages in domain vocabulary: `appointment`, `directory`, `selection`, `passwordreset`, `otp`, `transfer`, `sabhadefinition`, `bootstrap`, `session`. Cross-cutting driven ports (`UserRepository`, `IdentityProviderGateway`) stay at the package root. |
 | `identity-data-access` | 25 | 21 `Jdbc*` adapters. |
-| `identity-application` | 14 | 11 REST controllers (ADR-0017). `/api/*` is mobile-facing, `/bff/*` is the web BFF (ADR-0022) — both live side by side in this module. |
+| `identity-application` | 14 | 11 REST controllers (ADR-0017). |
 | `identity-messaging` | 7 | `KeycloakAdminRestClient` (ADR-0016), OTP gateway, `HmacOtpHasher`, token generators. |
 
-This is the largest backend unit — ~210 Java files including tests, roughly the other three
-contexts combined. The nine feature packages, not the ring, are the useful unit of navigation.
+**Feature packages**: `appointment`, `directory`, `selection`, `passwordreset`, `otp`, `transfer`,
+`sabhadefinition`, `bootstrap`, `session` — the useful unit of navigation inside this unit, since
+the ring is identical across all four contexts. This is the largest backend unit at ~210 Java
+files including tests, roughly the other three contexts combined.
+
+## Exposes
+
+<!-- [coverage: high -- mapping-annotation grep over identity-application] -->
+
+11 controllers. `/api/*` is mobile-facing; `/bff/*` is the web BFF (ADR-0022). Both live side by
+side in `identity-application`. Route prefixes only — individual endpoints belong to the
+`features/` dossier that owns the capability.
+
+| Prefix | Serves | Controllers |
+|---|---|---|
+| `/api/directory/*` | mobile | `PersonDirectoryRestController` |
+| `/api/password-reset/*` | mobile | `PasswordResetRestController` |
+| `/api/home-sabha-transfers/*` | mobile | `HomeSabhaTransferRestController` |
+| `/api/sanchalak/nominations` | mobile | `SelectionRestController` |
+| `/api/whoami`, `/api/who-appointed-me` | mobile | `IdentityRestController`, `WhoAppointedMeRestController` |
+| `/bff/me` | web | `BffSessionController` |
+| `/bff/appointments/*` | web | `RoleAppointmentController` |
+| `/bff/selection/*` | web | `SelectionBffController` |
+| `/bff/directory/*` | web | `DirectoryBffController` |
+| `/bff/sabhas`, `/bff/password-reissue` | web | `SabhaDefinitionController`, `PasswordReissueController` |
 
 ## Talks To
 
@@ -58,7 +81,8 @@ of another context's packages from anywhere in this unit.
 <!-- [coverage: low -- adapter SQL only; no per-context schema and no ownership manifest exists] -->
 
 Migrations are **central**, in `apps/backend/application-container/src/main/resources/db/changelog`,
-not per context — so ownership is not derivable from the schema.
+not per context — so ownership is not derivable from the schema. That directory is outside this
+page's `source_paths`, so this section is knowingly under-invalidated pending issue #147.
 
 Owned (identity is the only writer): `users`, `persons`, `role_assignments`,
 `home_sabha_transfers`, `password_resets`, `selection_nominations`, `user_activity`.
