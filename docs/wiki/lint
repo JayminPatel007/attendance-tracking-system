@@ -1,0 +1,406 @@
+#!/usr/bin/env python3
+"""Deterministic linter for docs/wiki. No LLM, no network, stdlib only.
+
+Implements the seven checks fixed in docs/wiki/protocol.md §9:
+
+  1. every [[slug]] resolves to an existing page
+  2. slugs are globally unique across kinds, and match their filename
+  3. relative links in `Sources` and reference paths in frontmatter resolve on disk
+  4. every prose section carries a coverage tag with a valid level (compiled kinds only)
+  5. the checkpoint (last_compiled / last_verified) is present and is a real commit
+  6. every source_paths glob still matches at least one file  <- the orphan check
+  7. skeleton conformance: fixed per-kind sections, in order, empties written `_none_`
+
+Linted files are index.md plus every page under the four kind directories.
+`protocol.md` and `log.md` are excluded: protocol.md documents the contract and so
+quotes illustrative slugs and skeletons that are not real links.
+
+Usage:  docs/wiki/lint [repo-root]
+Exit:   0 clean, 1 on any failure, 2 on a usage/setup error.
+"""
+
+from __future__ import annotations
+
+import glob as globlib
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+KIND_DIRS = {
+    "structure": "structure",
+    "feature": "features",
+    "concept": "concepts",
+    "note": "notes",
+}
+COMPILED_KINDS = ("structure", "feature", "concept")
+
+SKELETONS = {
+    "structure": [
+        "Purpose",
+        "Layout",
+        "Exposes",
+        "Talks To",
+        "Data",
+        "Gotchas",
+        "Covered by",
+        "Sources",
+    ],
+    "feature": [
+        "What it does",
+        "Flow",
+        "Rules & authority",
+        "Where the code is",
+        "Amendments",
+        "Sources",
+    ],
+    "concept": [
+        "The pattern",
+        "Why",
+        "Where it appears",
+        "Deviations",
+        "Sources",
+    ],
+}
+
+# `Sources` is exempt from coverage tags: it *is* the evidence, not a derivation from it.
+COVERAGE_EXEMPT_SECTIONS = {"Sources"}
+
+CHECKPOINT_FIELD = {
+    "structure": "last_compiled",
+    "feature": "last_compiled",
+    "concept": "last_compiled",
+    "note": "last_verified",
+}
+
+WIKILINK = re.compile(r"\[\[([a-z0-9][a-z0-9-]*)\]\]")
+HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
+COVERAGE = re.compile(r"^<!--\s*\[coverage:\s*(high|medium|low)(\s+--\s+\S.*?)?\s*\]\s*-->$")
+MD_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+SHA = re.compile(r"^[0-9a-f]{40}$")
+ADR_ID = re.compile(r"^ADR-(\d{4})$")
+
+
+class Page:
+    def __init__(self, path: Path, rel: str, meta: dict, body: list[str], body_offset: int):
+        self.path = path
+        self.rel = rel
+        self.meta = meta
+        self.body = body            # list of lines, frontmatter stripped
+        self.body_offset = body_offset  # 1-based line number of body[0] in the file
+
+    def line_no(self, idx: int) -> int:
+        return self.body_offset + idx
+
+    @property
+    def kind(self) -> str:
+        return self.meta.get("kind", "")
+
+
+class Failures:
+    def __init__(self) -> None:
+        self.items: list[str] = []
+
+    def add(self, check: int, rel: str, line: int | None, msg: str) -> None:
+        where = f"{rel}:{line}" if line else rel
+        self.items.append(f"{where}: [check {check}] {msg}")
+
+    def __len__(self) -> int:
+        return len(self.items)
+
+
+# --------------------------------------------------------------------------- parsing
+
+
+def parse_frontmatter(lines: list[str]) -> tuple[dict, list[str], int]:
+    """Minimal YAML-subset reader: `key: scalar` and `key: [a, b]` only.
+
+    The wiki's frontmatter schema (protocol.md §3) is flat by construction, so a
+    real YAML parser would buy nothing and would drag in a dependency this script
+    exists to avoid.
+    """
+    if not lines or lines[0].strip() != "---":
+        return {}, lines, 1
+
+    meta: dict = {}
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            return meta, lines[i + 1:], i + 2
+        raw = lines[i]
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        if ":" not in raw:
+            continue
+        key, _, value = raw.partition(":")
+        key = key.strip()
+        value = value.split("#", 1)[0].strip() if key != "disputed_reason" else value.strip()
+        if value.startswith("[") and value.endswith("]") and "[[" not in value:
+            inner = value[1:-1].strip()
+            meta[key] = [v.strip() for v in inner.split(",") if v.strip()]
+        else:
+            meta[key] = value
+    return meta, [], len(lines) + 1
+
+
+def sections(page: Page) -> list[tuple[str, int, list[str]]]:
+    """Top-level (`##`) sections as (title, body-index-of-heading, content-lines)."""
+    out: list[tuple[str, int, list[str]]] = []
+    current: tuple[str, int] | None = None
+    buf: list[str] = []
+    in_fence = False
+    for idx, line in enumerate(page.body):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+        m = HEADING.match(line)
+        if m and not in_fence and len(m.group(1)) == 2:
+            if current:
+                out.append((current[0], current[1], buf))
+            current = (m.group(2).strip(), idx)
+            buf = []
+        elif current:
+            buf.append(line)
+    if current:
+        out.append((current[0], current[1], buf))
+    return out
+
+
+def strip_comments(text: str) -> str:
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+
+# --------------------------------------------------------------------------- checks
+
+
+def check_1_wikilinks(pages: list[Page], slugs: set[str], f: Failures) -> None:
+    for page in pages:
+        for idx, line in enumerate(page.body):
+            for m in WIKILINK.finditer(line):
+                if m.group(1) not in slugs:
+                    f.add(1, page.rel, page.line_no(idx), f"[[{m.group(1)}]] resolves to no page")
+        for key in ("bears_on", "appears_in"):
+            value = page.meta.get(key)
+            if isinstance(value, str):
+                for m in WIKILINK.finditer(value):
+                    if m.group(1) not in slugs:
+                        f.add(1, page.rel, None, f"frontmatter {key}: [[{m.group(1)}]] resolves to no page")
+
+
+def check_2_slugs(pages: list[Page], f: Failures) -> None:
+    seen: dict[str, str] = {}
+    for page in pages:
+        if page.kind == "index":
+            continue
+        slug = page.meta.get("slug")
+        if not isinstance(slug, str) or not slug:
+            f.add(2, page.rel, None, "missing frontmatter `slug`")
+            continue
+        stem = page.path.stem
+        if slug != stem:
+            f.add(2, page.rel, None, f"slug `{slug}` does not match filename `{stem}.md`")
+        if slug in seen:
+            f.add(2, page.rel, None, f"slug `{slug}` is already used by {seen[slug]}")
+        else:
+            seen[slug] = page.rel
+
+
+def check_3_paths(pages: list[Page], root: Path, f: Failures) -> None:
+    adr_dir = root / "docs" / "adr"
+    for page in pages:
+        for title, head_idx, content in sections(page):
+            if title != "Sources":
+                continue
+            for offset, line in enumerate(content):
+                for m in MD_LINK.finditer(line):
+                    target = m.group(1).split("#", 1)[0]
+                    if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target):
+                        continue  # external scheme; out of scope for a filesystem check
+                    resolved = (page.path.parent / target).resolve()
+                    if not resolved.exists():
+                        f.add(3, page.rel, page.line_no(head_idx + 1 + offset),
+                              f"Sources link `{target}` does not resolve on disk")
+        decisions = page.meta.get("decisions") or []
+        if isinstance(decisions, list):
+            for entry in decisions:
+                m = ADR_ID.match(entry)
+                if not m:
+                    f.add(3, page.rel, None, f"frontmatter decisions: `{entry}` is not a bare ADR id")
+                elif not sorted(adr_dir.glob(f"{m.group(1)}-*.md")):
+                    f.add(3, page.rel, None, f"frontmatter decisions: `{entry}` matches no file in docs/adr/")
+
+
+def check_4_coverage(pages: list[Page], f: Failures) -> None:
+    for page in pages:
+        if page.kind not in COMPILED_KINDS:
+            continue  # notes are primary evidence, not a derivation (protocol.md §5)
+        for title, head_idx, content in sections(page):
+            if title in COVERAGE_EXEMPT_SECTIONS:
+                continue
+            tag_line = next((line for line in content if line.strip()), None)
+            if tag_line is None or "[coverage:" not in tag_line:
+                f.add(4, page.rel, page.line_no(head_idx),
+                      f"section `{title}` has no coverage tag as its first non-empty line")
+            elif not COVERAGE.match(tag_line.strip()):
+                f.add(4, page.rel, page.line_no(head_idx + 1),
+                      f"section `{title}` has a malformed coverage tag: {tag_line.strip()!r} "
+                      "(want `<!-- [coverage: high|medium|low -- reason] -->`, "
+                      "reason required on low/medium)")
+            else:
+                m = COVERAGE.match(tag_line.strip())
+                if m.group(1) in ("low", "medium") and not m.group(2):
+                    f.add(4, page.rel, page.line_no(head_idx + 1),
+                          f"section `{title}` is tagged `{m.group(1)}` with no ` -- reason`")
+
+
+def check_5_checkpoint(pages: list[Page], root: Path, git_ok: bool, f: Failures) -> None:
+    for page in pages:
+        if page.kind == "index":
+            continue
+        field = CHECKPOINT_FIELD.get(page.kind)
+        if field is None:
+            continue
+        status = page.meta.get("status")
+        if status is not None:
+            if status != "disputed":
+                f.add(5, page.rel, None,
+                      f"`status: {status}` is not a stored status — `disputed` is the only one "
+                      "(draft/current/stale/orphaned are computed or derived; protocol.md §6)")
+            elif not page.meta.get("disputed_reason"):
+                f.add(5, page.rel, None, "`status: disputed` without a `disputed_reason` line")
+
+        value = page.meta.get(field)
+        if not isinstance(value, str) or not value:
+            f.add(5, page.rel, None, f"missing frontmatter `{field}`")
+            continue
+        if not SHA.match(value):
+            f.add(5, page.rel, None, f"`{field}: {value}` is not a full 40-character commit sha")
+            continue
+        if git_ok and not commit_exists(root, value):
+            f.add(5, page.rel, None, f"`{field}: {value}` is not a commit in this repository")
+
+
+def check_6_orphans(pages: list[Page], root: Path, f: Failures) -> None:
+    for page in pages:
+        if page.kind == "index":
+            continue
+        patterns = page.meta.get("source_paths")
+        if not isinstance(patterns, list) or not patterns:
+            f.add(6, page.rel, None, "missing frontmatter `source_paths` (at least one glob required)")
+            continue
+        for pattern in patterns:
+            if not globlib.glob(pattern, root_dir=root, recursive=True):
+                f.add(6, page.rel, None,
+                      f"source_paths glob `{pattern}` matches nothing — the subject may have been "
+                      "deleted or moved (orphan check)")
+
+
+def check_7_skeleton(pages: list[Page], f: Failures) -> None:
+    for page in pages:
+        expected = SKELETONS.get(page.kind)
+        if expected is None:
+            continue  # notes accrete facts, so they have no fixed section list
+        found = sections(page)
+        actual = [title for title, _, _ in found]
+        if actual != expected:
+            f.add(7, page.rel, None,
+                  f"sections do not match the {page.kind} skeleton\n"
+                  f"        expected: {expected}\n"
+                  f"        found:    {actual}")
+            continue
+        for title, head_idx, content in found:
+            text = strip_comments("\n".join(content))
+            text = "\n".join(
+                line for line in text.splitlines()
+                if not line.strip().startswith("[coverage:")
+            ).strip()
+            if not text:
+                f.add(7, page.rel, page.line_no(head_idx),
+                      f"section `{title}` is empty — write `_none_` rather than leaving it blank")
+
+
+# --------------------------------------------------------------------------- driver
+
+
+def commit_exists(root: Path, sha: str) -> bool:
+    result = subprocess.run(
+        ["git", "cat-file", "-e", f"{sha}^{{commit}}"],
+        cwd=root, capture_output=True,
+    )
+    return result.returncode == 0
+
+
+def git_available(root: Path) -> bool:
+    result = subprocess.run(
+        ["git", "rev-parse", "--git-dir"], cwd=root, capture_output=True,
+    )
+    return result.returncode == 0
+
+
+def collect(wiki: Path, root: Path) -> tuple[list[Page], list[str]]:
+    paths: list[Path] = []
+    index = wiki / "index.md"
+    if index.exists():
+        paths.append(index)
+    for directory in sorted(set(KIND_DIRS.values())):
+        paths.extend(sorted((wiki / directory).glob("*.md")))
+
+    pages: list[Page] = []
+    errors: list[str] = []
+    for path in paths:
+        rel = os.path.relpath(path, root)
+        lines = path.read_text(encoding="utf-8").splitlines()
+        meta, body, offset = parse_frontmatter(lines)
+        if not meta:
+            errors.append(f"{rel}: no frontmatter block")
+            continue
+        kind = meta.get("kind")
+        if kind not in {"index", *KIND_DIRS}:
+            errors.append(f"{rel}: frontmatter `kind: {kind}` is not a known kind")
+            continue
+        if kind != "index":
+            expected_dir = KIND_DIRS[kind]
+            if path.parent.name != expected_dir:
+                errors.append(f"{rel}: kind `{kind}` belongs in docs/wiki/{expected_dir}/")
+                continue
+        pages.append(Page(path, rel, meta, body, offset))
+    return pages, errors
+
+
+def main(argv: list[str]) -> int:
+    root = Path(argv[1]).resolve() if len(argv) > 1 else Path(__file__).resolve().parents[2]
+    wiki = root / "docs" / "wiki"
+    if not wiki.is_dir():
+        print(f"wiki lint: no wiki at {wiki}", file=sys.stderr)
+        return 2
+
+    pages, errors = collect(wiki, root)
+    f = Failures()
+    for error in errors:
+        f.add(0, error.split(":", 1)[0], None, error.split(":", 1)[1].strip())
+
+    slugs = {p.meta["slug"] for p in pages if isinstance(p.meta.get("slug"), str)}
+    git_ok = git_available(root)
+
+    check_1_wikilinks(pages, slugs, f)
+    check_2_slugs(pages, f)
+    check_3_paths(pages, root, f)
+    check_4_coverage(pages, f)
+    check_5_checkpoint(pages, root, git_ok, f)
+    check_6_orphans(pages, root, f)
+    check_7_skeleton(pages, f)
+
+    if not git_ok:
+        print("wiki lint: git unavailable — check 5 degraded to a format check", file=sys.stderr)
+
+    if f:
+        for item in f.items:
+            print(item)
+        print(f"\nwiki lint: {len(f)} failure(s) across {len(pages)} page(s)")
+        return 1
+
+    print(f"wiki lint: clean — {len(pages)} page(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -1,0 +1,32 @@
+name: wiki
+
+on:
+  push:
+    paths:
+      - 'docs/wiki/**'
+      - '.github/workflows/wiki.yml'
+  pull_request:
+    paths:
+      - 'docs/wiki/**'
+      - '.github/workflows/wiki.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Full history: check 5 verifies each page's `last_compiled` is a real commit
+      # in this repository, which a shallow clone cannot answer.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Runs in CI as well as inside the sweep because `notes/` are human-written:
+      # most wiki PRs contain no sweep at all, and a sweep-only linter would surface
+      # that breakage weeks later inside an unrelated PR. Stdlib only, no network.
+      - name: Lint the wiki
+        run: docs/wiki/lint
