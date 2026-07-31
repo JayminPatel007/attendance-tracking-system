@@ -4,8 +4,11 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root — the glossary and domain narrative.
-- **`docs/adr/`** — read ADRs that touch the area you're about to work in.
+- **`docs/wiki/index.md`** — the front door: which module owns what, how a capability works end to
+  end, and what we learned the hard way. Read it first when you don't yet know the terms. It is
+  **derived**, so on conflict the two below win. See `docs/agents/wiki.md`.
+- **`CONTEXT.md`** at the repo root — the glossary and domain narrative. Canonical.
+- **`docs/adr/`** — read ADRs that touch the area you're about to work in. Canonical.
 
 There is no `CONTEXT-MAP.md`: this repo is **single-context**. Don't go looking for per-app
 `CONTEXT.md` files or per-module ADR directories; they don't exist.
@@ -18,6 +21,7 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 /
 ├── CONTEXT.md                         ← the one glossary, covers all three apps
 ├── docs/
+│   ├── wiki/                          ← the compiled front door; index.md, protocol.md, 4 kind dirs
 │   ├── adr/                           ← 0001…0029, system-wide decisions
 │   ├── prd/
 │   └── dev-setup.md
