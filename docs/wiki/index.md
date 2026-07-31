@@ -1,6 +1,6 @@
 ---
 kind: index
-pages: 0
+pages: 13
 ---
 # Attendance Tracking System — Wiki
 
@@ -10,8 +10,8 @@ page contract.
 
 **The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win.**
 
-No pages have been compiled yet — the catalogs below are empty and rows 3–8 of the router therefore
-point at empty sections. Run the `wiki-sweep` skill to compile the first pages.
+The first sweep compiled all 13 `structure` pages. No `feature`, `concept` or `note` pages exist
+yet, so router rows 5–8 still point at their (empty) kind catalogs.
 
 ## Start here
 
@@ -35,8 +35,19 @@ One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `app
 
 | Page | Unit | Also known as |
 |---|---|---|
-
-_none_
+| [[backend-common-domain]] | `apps/backend/common-domain` | shared kernel, cross-context ports |
+| [[backend-identity]] | `apps/backend/identity-service` | users, Karyakar, Person Directory, role appointment |
+| [[backend-sabha]] | `apps/backend/sabha-service` | structure, City/Zone/Kshetra, Sabha Kind |
+| [[backend-attendance]] | `apps/backend/attendance-service` | Occurrence, marking, roster, offline sync |
+| [[backend-analytics]] | `apps/backend/analytics-service` | dashboards, re-engagement, audit log |
+| [[backend-container]] | `apps/backend/application-container` | Spring Boot app, migrations, cron, security |
+| [[mobile-app]] | `apps/mobile/sabha_attendance` | the Flutter app, Sanchalak app |
+| [[mobile-sabha-api]] | `apps/mobile/packages/sabha_api` | generated Dart client |
+| [[mobile-shared-kernel]] | `apps/mobile/packages/shared_kernel` | mobile shared kernel (scaffold) |
+| [[mobile-identity-domain]] | `apps/mobile/packages/identity_domain` | mobile identity mirror (scaffold) |
+| [[mobile-sabha-domain]] | `apps/mobile/packages/sabha_domain` | mobile sabha mirror (scaffold) |
+| [[mobile-attendance-domain]] | `apps/mobile/packages/attendance_domain` | mobile attendance mirror (scaffold) |
+| [[web]] | `apps/web` | the Angular app, oversight UI, BFF client |
 
 ## Features
 
