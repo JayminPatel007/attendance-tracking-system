@@ -51,7 +51,8 @@ The compiler **excludes `docs/wiki/**` from its own source scan**, so the wiki n
 never a trigger: a page over its cap with no admission test met is *misfiled*, not due for a split.
 
 - **structure** — fixed by the build. A new Maven module, Dart package or app, and nothing else.
-  Manifest-declared, so the sweep **creates** these without judgement.
+  Manifest-declared, so the sweep **creates** these without judgement — with one mechanical
+  carve-out: **a unit with no source files beneath it gets no page** (see the sweep skill, §2d).
 - **feature** — a new durable capability a user could name. **An issue or PR amends a dossier; it
   never adds one.** The sweep only *proposes* candidates in the PR body.
 - **concept** — the pattern recurs in **3+ pages** *and* is cited by **2+ ADRs**. Proposed, never
@@ -64,8 +65,27 @@ summarising page of an immutable original is a second copy that can only drift.
 **Cross-app flows get no kind of their own** — a feature dossier *is* the cross-app flow page, and
 its `Flow` section is written per app.
 
-**Word budget, per kind, as a smell only:** ~700 words for a `structure` page on a large unit
-(measured, not estimated — `backend-identity` is 681), ~500 elsewhere.
+### Word budget — prose only, a smell only
+
+The budget counts **prose words**: everything except frontmatter, HTML comments (the coverage tags)
+and table rows. Those three are ~45% of a structure page's `wc -w` and none of them is what the
+budget is for — coverage tags are metadata *about* the page and invisible to a reader, and a table
+is scanned rather than read, so charging a 5-row ring table at the same rate as 150 words of
+argument measures the wrong thing. Lint check 8 (§9) computes it, as a **warning**.
+
+| Kind | Budget | Evidence |
+|---|---|---|
+| `structure` | ~550 | **derived** — n=6, observed 383–527 across four different unit shapes |
+| `feature` | ~750 | **provisional** — n=1 (`attendance-marking`, 720) |
+| `concept` | inherits `feature`'s | **unmeasured** — n=0 |
+
+The provisional marks are load-bearing. The first budget (~700/~500) was stated as settled from a
+single page's `wc -w`, and the first real sweep appeared to falsify it on all 7 pages — when what had
+actually happened was that the units drifted out from under the number. State the sample size, or
+the next reader inherits a law where there was an observation.
+
+Size remains a **review smell, never a trigger**: over budget with no admission test met is
+*misfiled*, not due for a split.
 
 ---
 
@@ -425,7 +445,8 @@ An agent step was rejected: resolving every wikilink, path and glob is a fully s
 it is the category of work LLMs are least reliable at, and silently missing one broken link among
 sixty is an ordinary agent failure and an impossible one for `test -f`.
 
-The seven checks:
+The eight checks. Checks 1–7 are **failures** (exit 1); check 8 is a **warning** — printed in the
+same `file:line` format, never affecting the exit code:
 
 | # | Check | Scope |
 |---|---|---|
@@ -436,6 +457,12 @@ The seven checks:
 | 5 | the checkpoint (`last_compiled` / `last_verified`) is present and is a real commit; and `status`, if set, is `disputed` with a reason | all pages, not `index.md` |
 | 6 | each `source_paths` glob still matches ≥1 file — **the orphan check** | all kinds, incl. notes |
 | 7 | skeleton conformance: fixed per-kind sections, in order, empties written `_none_` | compiled kinds |
+| 8 | prose word count is within the §2 budget — **warning, not failure** | compiled kinds |
+
+**Check 8 must not be a gate.** §2 fixes size as a smell and never a trigger, so a check that failed
+the build would overturn the contract it exists to report on — and would have failed the seed set's
+own dossier, which is the right size. Notes are exempt with the other compiled-kind checks: they are
+primary evidence, not derivation, and have no skeleton to be long relative to.
 
 **Check 6 is load-bearing and unreachable by any other mechanism here.** A deleted path stops
 matching `source_paths`, so `git diff ∩ source_paths` can *never* fire on it — lint is the only way
