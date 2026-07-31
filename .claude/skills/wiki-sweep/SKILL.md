@@ -28,12 +28,42 @@ link rules — is `docs/wiki/protocol.md`. Read it before compiling anything; do
 
 ## Budget
 
-Measured on the hardest real unit (`backend-identity`: 210 Java files, 9 feature packages):
-**11 tool calls, no source file body read at all** — directory listings, an import scan, a table-name
-grep, five `package-info.java`, two ADRs. Output was 681 words.
+**`deep_scan: false` for `structure/` pages.** Seven pages have now been compiled with **no source
+file body read at all** — the finding that has held up twice, and the expensive habit this skill
+exists to prevent. Dossiers need more.
 
-So: **`deep_scan: false` for `structure/` pages.** `package-info.java`, module manifests and
-directory listings are the high-yield sources; method bodies are not. Dossiers will need more.
+Cost is **~10–20 tool calls per structure page**. The driver is whether the unit's `Data` can be
+read off a manifest or must be **inferred from adapters** — inference is the structural weak point
+where every wrong claim so far has landed, and it is what makes a page expensive *and* low-coverage
+at the same time.
+
+### The source ladder
+
+Try in order. The top rung is worth more than the rest combined **when it is real**, and one call
+tells you whether it is here:
+
+```sh
+grep -rL "Empty scaffold" --include=package-info.java <unit>/
+```
+
+1. **`package-info.java` — but only the files that grep lists.** Substantive in `identity`
+   (14 files; 9 are feature-package docs naming the feature in domain vocabulary), `attendance`
+   (5, multi-paragraph) and `common-domain` (1, enumerates the library). In `sabha` and `analytics`
+   all 5 are ADR-0019 ring scaffolds reading `"Empty scaffold per ADR-0019"` — identical everywhere,
+   therefore zero information. One grep is cheaper than the five reads this rung used to prescribe.
+2. **Module manifests and directory listings** — always available, and the only rung that exists at
+   all outside the JVM (a Dart package or the Angular app has no `package-info.java`).
+3. **A class listing** per ring module — the `Holds` column comes from here.
+4. **A mapping-annotation grep** (`@GetMapping`/`@PostMapping`/…) — this is what `Exposes` is built
+   from.
+5. **A writer-SQL grep** (`INSERT INTO`/`UPDATE`/`DELETE FROM` across the unit's adapters) — this is
+   what `Data` ownership is inferred from, and the reason `Data` earns a `low`/`medium` tag more
+   often than any other section.
+
+Rungs 3–5 always work; rung 1 sometimes doesn't. **State the ladder as an order to try, not a law** —
+the previous version of this section named rung 1 as *the* high-yield source on a sample of one
+context, and the first real sweep found it worthless in two of five units.
+
 If the budget runs out mid-sweep, **stop cleanly** — per-page checkpoints exist precisely so partial
 progress is recordable (step 6).
 
@@ -87,6 +117,23 @@ git diff --name-only <sha>..HEAD -- 'apps/backend/pom.xml' 'apps/mobile/**/pubsp
 
 A new `<module>` entry or `pubspec.yaml` means a `structure/` page is **missing**; create it. Without
 this the wiki silently never grows.
+
+**Carve-out: a unit with no source files beneath it gets no page.** Check before creating:
+
+```sh
+find <unit> -path '*/src/*' -name '*.java' -o -path '*/lib/*' -name '*.dart' | head -1
+```
+
+Empty output → skip it, and say so in the PR body. `apps/backend/pom.xml` declares **7** modules
+against the wiki's 6 pages: `coverage-aggregate` is a JaCoCo report aggregator with no source, and
+has nothing to say under any skeleton section.
+
+**Do not test `packaging`.** Four of the five context aggregators are `<packaging>pom</packaging>`
+and rightly have pages — `identity-service` alone holds 210 files. Source presence is the
+discriminator; packaging is not. The test stays mechanical, so §2d keeps the property worth having:
+the sweep creates structure pages **without judgement**. A legitimately new-but-empty module simply
+gets its page from the next sweep after code lands, which is the right default — an empty module has
+nothing to document.
 
 Report the dirty set before compiling. If it is empty, say so and stop — an empty sweep is a
 successful sweep.
@@ -150,8 +197,11 @@ name (an issue *amends* one, never adds one), and a concept must recur in 3+ pag
 docs/wiki/lint
 ```
 
-Deterministic, seven checks, no LLM. Fix every failure and re-run until clean. Do not open the PR
+Deterministic, eight checks, no LLM. Fix every failure and re-run until clean. Do not open the PR
 with a failing lint — CI runs the same script on `docs/wiki/**` and will catch it anyway.
+
+**Check 8 is a warning, not a failure** — a page over its prose budget is a smell (`protocol.md` §2).
+Don't split a page to silence it; carry the warning into the PR body and let the reviewer judge.
 
 ## 9. Open the docs-only PR
 

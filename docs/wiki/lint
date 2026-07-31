@@ -67,6 +67,14 @@ SKELETONS = {
 # `Sources` is exempt from coverage tags: it *is* the evidence, not a derivation from it.
 COVERAGE_EXEMPT_SECTIONS = {"Sources"}
 
+# Prose-word budgets (protocol.md §2). `structure` is derived (n=6); `feature` is
+# provisional (n=1); `concept` inherits `feature`'s until one is measured.
+BUDGETS = {
+    "structure": 550,
+    "feature": 750,
+    "concept": 750,
+}
+
 CHECKPOINT_FIELD = {
     "structure": "last_compiled",
     "feature": "last_compiled",
@@ -108,6 +116,10 @@ class Failures:
 
     def __len__(self) -> int:
         return len(self.items)
+
+
+class Warnings(Failures):
+    """Same format, no exit code. Check 8 only — see protocol.md §9."""
 
 
 # --------------------------------------------------------------------------- parsing
@@ -318,6 +330,33 @@ def check_7_skeleton(pages: list[Page], f: Failures) -> None:
                       f"section `{title}` is empty — write `_none_` rather than leaving it blank")
 
 
+def prose_words(page: Page) -> int:
+    """Words a reader actually reads: no frontmatter, no HTML comments, no table rows.
+
+    Those three are ~45% of a structure page's `wc -w` (protocol.md §2) and none of
+    them is what the budget is for — coverage tags are metadata about the page, and a
+    table is scanned rather than read.
+    """
+    text = strip_comments("\n".join(page.body))
+    return sum(
+        len(line.split())
+        for line in text.splitlines()
+        if not line.lstrip().startswith("|")
+    )
+
+
+def check_8_budget(pages: list[Page], w: Warnings) -> None:
+    for page in pages:
+        budget = BUDGETS.get(page.kind)
+        if budget is None:
+            continue  # notes are primary evidence, not derivation — no skeleton, no budget
+        count = prose_words(page)
+        if count > budget:
+            w.add(8, page.rel, None,
+                  f"{count} prose words against a ~{budget} budget for `{page.kind}` — "
+                  "a smell, not a gate: check the admission test (protocol.md §2) before splitting")
+
+
 # --------------------------------------------------------------------------- driver
 
 
@@ -389,8 +428,16 @@ def main(argv: list[str]) -> int:
     check_6_orphans(pages, root, f)
     check_7_skeleton(pages, f)
 
+    w = Warnings()
+    check_8_budget(pages, w)
+
     if not git_ok:
         print("wiki lint: git unavailable — check 5 degraded to a format check", file=sys.stderr)
+
+    for item in w.items:
+        print(item)
+    if w:
+        print(f"wiki lint: {len(w)} warning(s) — advisory, not a gate\n")
 
     if f:
         for item in f.items:
