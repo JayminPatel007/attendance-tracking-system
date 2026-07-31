@@ -1,0 +1,113 @@
+---
+kind: structure
+slug: backend-analytics
+source_paths: [apps/backend/analytics-service/**]
+decisions: [ADR-0010, ADR-0019, ADR-0023, ADR-0027]
+last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
+---
+
+# Analytics Service
+
+## Purpose
+
+<!-- [coverage: high -- class listing + ADR-0010/0023] -->
+
+The **read side**. Owns the higher-tier dashboards, the audit-log viewer (ADR-0023) and the
+re-engagement candidate model (ADR-0010) — who has drifted out of attendance and needs following up.
+It also owns the two pieces of configuration that drive those reads: the re-engagement thresholds
+and a Sant's default City.
+
+Almost everything it reports on is somebody else's data. It is the one unit whose job is to read
+across context boundaries.
+
+## Layout
+
+<!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold] -->
+
+The standard five-module ring. 48 main source files.
+
+| Module | Main files | Holds |
+|---|---|---|
+| `analytics-domain/analytics-domain-core` | 8 | `Candidate`, `Thresholds`, `Tier`, `Scope`, `OutcomeKind`, `HomeSabhaHistory` — the calculator's vocabulary. |
+| `analytics-domain/analytics-application-service` | 26 | `ReEngagementCandidateCalculator` (DB-free, two ports), `ReEngagementProjectionScanner`, `DashboardAccess`, `DashboardQueries`, `AuditLogAccess`, `AuditLogQueries`, `AuditReadAccessAdapter`. |
+| `analytics-data-access` | 10 | 9 `Jdbc*` adapters, including the cross-context reads. |
+| `analytics-application` | 3 | 2 BFF controllers (ADR-0017). |
+| `analytics-messaging` | 1 | `package-info.java` only — empty scaffold; this unit sends nothing. |
+
+Two authorization engines live side by side here — `DashboardAccess` and `AuditLogAccess` — kept
+separate rather than unified, consistent with ADR-0027's refusal of a shared granted-scope module.
+
+## Exposes
+
+<!-- [coverage: high -- mapping-annotation grep over analytics-application] -->
+
+2 controllers, **all `/bff/*`** — no mobile surface at all. Analytics is a web-tier capability by
+ADR-0003.
+
+| Prefix | Serves | Controllers |
+|---|---|---|
+| `/bff/dashboard/*` | web | `DashboardBffController` — overview, people, sabha-tree, scope, city, thresholds (GET + PUT) |
+| `/bff/audit-log` | web | `AuditLogBffController` |
+
+## Talks To
+
+<!-- [coverage: high -- import scan of all four modules] -->
+
+Zero direct imports of another context's packages — but see Data: this unit's real coupling to the
+others is through **SQL**, not through Java.
+
+**Outbound**:
+
+| Port | Target | Used by |
+|---|---|---|
+| `SantLookup` | identity | `DashboardAccess`, `AuditLogAccess` — the Sant universal-read rule |
+| `MadhyasthaKaryalayaLookup` | identity | `DashboardAccess`, `ThresholdAdmin` |
+| `CallerResolver` | identity | both controllers |
+
+**Inbound** — one port: `AuditReadAccess`, implemented by `AuditReadAccessAdapter`, which lets other
+contexts ask whether a caller may read audit data without depending on analytics.
+
+## Data
+
+<!-- [coverage: medium -- writer grep across all four contexts; ownership inferred from writers, no ownership manifest exists] -->
+
+**Owned**: `analytics_thresholds`, `reengagement_candidates` (the background projection ADR-0010's
+calculator feeds).
+
+**Also writes, but does not own**: `users.default_city_id`, via `JdbcSantDefaultCity`. This is the
+backend's only cross-context table write — analytics owns that one *column* on identity's table.
+Treat it as a known, deliberate exception rather than a pattern to copy.
+
+**Read but not owned** — the widest read surface in the backend: `persons`, `users`,
+`role_assignments`, `selection_nominations` (identity); `cities`, `zones`, `kshetras`, `sabhas`,
+`sabha_kinds` (sabha); `occurrences`, `attendance_markings`, `occurrence_state_transitions`
+(attendance); `home_sabhas`.
+
+The audit log is a **CQRS UNION read-model** per ADR-0023 — there is no central audit table. It is
+assembled at query time from the other contexts' tables, which is precisely why this unit's read
+list is so long.
+
+## Gotchas
+
+<!-- [coverage: medium -- one verified from ADR-0023 and the query classes; no exhaustive sweep] -->
+
+- **Don't go looking for an `audit_log` table** — there isn't one, by ADR-0023. `JdbcAuditFeed`
+  UNIONs across the owning contexts' tables at read time.
+- `ReEngagementCandidateCalculator` is deliberately **DB-free** — it takes two ports and no
+  connection. Its unit tests need no database, and adding a query to it would forfeit that.
+- Analytics reads other contexts' tables directly rather than through ports. That is legal read-model
+  latitude under ADR-0029, but it means a rename in someone else's schema breaks *this* unit's SQL
+  with no compile error anywhere.
+
+## Covered by
+
+<!-- [coverage: low -- no dossier covers analytics yet] -->
+
+`_none_` — dashboards, the audit-log viewer and re-engagement are three distinct capabilities with no
+`features/` page yet. All three are dossier candidates.
+
+## Sources
+
+- [ADR-0010](../../adr/0010-re-engagement-candidate-definition.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0023](../../adr/0023-audit-log-read-model-and-viewer-authority.md), [ADR-0027](../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md)
+- [CONTEXT.md](../../../CONTEXT.md) — Sant, Madhyastha Karyalaya, Re-engagement Candidate
+- Class listing + writer/reader SQL grep over `apps/backend/analytics-service/**`

@@ -1,6 +1,6 @@
 ---
 kind: index
-pages: 0
+pages: 7
 ---
 # Attendance Tracking System — Wiki
 
@@ -10,8 +10,10 @@ page contract.
 
 **The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win.**
 
-No pages have been compiled yet — the catalogs below are empty and rows 3–8 of the router therefore
-point at empty sections. Run the `wiki-sweep` skill to compile the first pages.
+The backend is compiled: all six build units plus one feature dossier. **Web and mobile have no
+`structure/` pages yet** — the mobile packages and the web app are unwritten, so rows pointing at
+those units will land you in the Structure catalog with nothing to follow. Backfilling them is
+ordinary follow-up work.
 
 ## Start here
 
@@ -24,19 +26,28 @@ The eight questions are fixed in `protocol.md`; the compiler fills only the targ
 | Which app/module owns X? | [Structure](#structure) |
 | How does capability Y work end to end? | [Features](#features) |
 | How does authorization work? | [Concepts](#concepts) |
-| Why is the backend shaped like this? | [Concepts](#concepts) |
-| What must I not break? | [Notes](#notes) |
+| Why is the backend shaped like this? | [[backend-common-domain]] |
+| What must I not break? | [Structure](#structure) |
 | What did we learn the hard way? | [Notes](#notes) |
+
+Row 6 points at [[backend-common-domain]] because the shape of the backend *is* its cross-context
+port table — the one page that shows all four contexts at once. Rows 5 and 7 still point at their
+kind's catalog: no `concepts/` page exists yet, and "what must I not break" is answered today by the
+`Gotchas` section of each structure page rather than by a `notes/` page.
 
 ## Structure
 
 One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `application-container`),
-6 mobile (5 Dart packages plus the app shell), and web as one.
+6 mobile (5 Dart packages plus the app shell), and web as one. Backend only, so far.
 
 | Page | Unit | Also known as |
 |---|---|---|
-
-_none_
+| [[backend-common-domain]] | `apps/backend/common-domain` | the shared kernel; the ports module |
+| [[backend-identity]] | `apps/backend/identity-service` | People, Users, roles; Karyakar, Person, Directory |
+| [[backend-sabha]] | `apps/backend/sabha-service` | the structural hierarchy; Kshetra, Zone, City, Sabha Kind |
+| [[backend-attendance]] | `apps/backend/attendance-service` | Occurrences and markings; Sabha Occurrence, Roster, Walk-in |
+| [[backend-analytics]] | `apps/backend/analytics-service` | dashboards, audit log, re-engagement; Nirdeshak/Sant reporting |
+| [[backend-container]] | `apps/backend/application-container` | the Spring Boot app; the composition root, the schema |
 
 ## Features
 
@@ -44,8 +55,7 @@ One page per durable capability. An issue amends a dossier; it never adds one.
 
 | Page | Capability | Also known as |
 |---|---|---|
-
-_none_
+| [[attendance-marking]] | Recording who attended a Sabha Occurrence, online or offline | hajri; Roster marking, Walk-in, sync |
 
 ## Concepts
 
