@@ -1,7 +1,17 @@
 ---
 kind: structure
 slug: backend-identity
-source_paths: [apps/backend/identity-service/**]
+source_paths: [
+  apps/backend/identity-service/*/src/main/**,
+  apps/backend/identity-service/*/pom.xml,
+  apps/backend/identity-service/pom.xml,
+  docs/adr/0015-*.md,
+  docs/adr/0017-*.md,
+  docs/adr/0018-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0029-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0015, ADR-0017, ADR-0018, ADR-0019, ADR-0029]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---

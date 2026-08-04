@@ -1,7 +1,17 @@
 ---
 kind: structure
 slug: backend-container
-source_paths: [apps/backend/application-container/**]
+source_paths: [
+  apps/backend/application-container/src/main/**,
+  apps/backend/application-container/pom.xml,
+  docs/adr/0014-*.md,
+  docs/adr/0015-*.md,
+  docs/adr/0016-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0021-*.md,
+  docs/adr/0022-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0014, ADR-0015, ADR-0016, ADR-0019, ADR-0021, ADR-0022]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---

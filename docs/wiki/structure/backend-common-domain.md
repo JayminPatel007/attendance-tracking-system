@@ -1,7 +1,16 @@
 ---
 kind: structure
 slug: backend-common-domain
-source_paths: [apps/backend/common-domain/**]
+source_paths: [
+  apps/backend/common-domain/src/main/**,
+  apps/backend/common-domain/pom.xml,
+  docs/adr/0008-*.md,
+  docs/adr/0015-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0020-*.md,
+  docs/adr/0027-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0008, ADR-0015, ADR-0019, ADR-0020, ADR-0027]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---

@@ -1,7 +1,20 @@
 ---
 kind: feature
 slug: attendance-marking
-source_paths: [apps/backend/attendance-service/**, apps/mobile/sabha_attendance/lib/roster/**, apps/mobile/sabha_attendance/lib/sync/**, apps/mobile/sabha_attendance/lib/walk_in/**, apps/backend/application-container/src/main/resources/db/changelog/slice-2/**, apps/backend/application-container/src/main/resources/db/changelog/slice-4/**, apps/backend/application-container/src/main/resources/db/changelog/slice-7/**]
+source_paths: [
+  apps/backend/attendance-service/*/src/main/**,
+  apps/mobile/sabha_attendance/lib/roster/**,
+  apps/mobile/sabha_attendance/lib/sync/**,
+  apps/mobile/sabha_attendance/lib/walk_in/**,
+  apps/backend/application-container/src/main/resources/db/changelog/slice-2/**,
+  apps/backend/application-container/src/main/resources/db/changelog/slice-4/**,
+  apps/backend/application-container/src/main/resources/db/changelog/slice-7/**,
+  docs/adr/0001-*.md,
+  docs/adr/0003-*.md,
+  docs/adr/0007-*.md,
+  docs/adr/0013-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0001, ADR-0003, ADR-0007, ADR-0013]
 issues: [3, 5]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a

@@ -1,7 +1,18 @@
 ---
 kind: structure
 slug: backend-attendance
-source_paths: [apps/backend/attendance-service/**]
+source_paths: [
+  apps/backend/attendance-service/*/src/main/**,
+  apps/backend/attendance-service/*/pom.xml,
+  apps/backend/attendance-service/pom.xml,
+  docs/adr/0001-*.md,
+  docs/adr/0007-*.md,
+  docs/adr/0012-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0021-*.md,
+  docs/adr/0028-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0001, ADR-0007, ADR-0012, ADR-0019, ADR-0021, ADR-0028]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---

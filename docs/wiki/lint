@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic linter for docs/wiki. No LLM, no network, stdlib only.
 
-Implements the seven checks fixed in docs/wiki/protocol.md §9:
+Implements the nine checks fixed in docs/wiki/protocol.md §9:
 
   1. every [[slug]] resolves to an existing page
   2. slugs are globally unique across kinds, and match their filename
@@ -10,6 +10,8 @@ Implements the seven checks fixed in docs/wiki/protocol.md §9:
   5. the checkpoint (last_compiled / last_verified) is present and is a real commit
   6. every source_paths glob still matches at least one file  <- the orphan check
   7. skeleton conformance: fixed per-kind sections, in order, empties written `_none_`
+  8. prose word count is within the §2 budget  <- a WARNING, never affects the exit code
+  9. every ADR in `decisions:` is also watched by a `source_paths` glob
 
 Linted files are index.md plus every page under the four kind directories.
 `protocol.md` and `log.md` are excluded: protocol.md documents the contract and so
@@ -126,26 +128,38 @@ class Warnings(Failures):
 
 
 def parse_frontmatter(lines: list[str]) -> tuple[dict, list[str], int]:
-    """Minimal YAML-subset reader: `key: scalar` and `key: [a, b]` only.
+    """Minimal YAML-subset reader: `key: scalar` and `key: [a, b]`, the list
+    optionally spread over several lines.
 
     The wiki's frontmatter schema (protocol.md §3) is flat by construction, so a
     real YAML parser would buy nothing and would drag in a dependency this script
-    exists to avoid.
+    exists to avoid. Multi-line lists are supported because `source_paths` now
+    carries a page's ADR globs alongside its code globs (protocol.md §3) — ten-odd
+    entries that are unreadable on one line.
     """
     if not lines or lines[0].strip() != "---":
         return {}, lines, 1
 
     meta: dict = {}
-    for i in range(1, len(lines)):
+    i = 1
+    while i < len(lines):
         if lines[i].strip() == "---":
             return meta, lines[i + 1:], i + 2
         raw = lines[i]
+        i += 1
         if not raw.strip() or raw.lstrip().startswith("#"):
             continue
         if ":" not in raw:
             continue
         key, _, value = raw.partition(":")
         key = key.strip()
+        # A list may be spread over several lines; absorb until the closing bracket.
+        if value.strip().startswith("[") and not value.strip().endswith("]"):
+            while i < len(lines) and lines[i].strip() != "---":
+                value += " " + lines[i].strip()
+                i += 1
+                if value.rstrip().endswith("]"):
+                    break
         value = value.split("#", 1)[0].strip() if key != "disputed_reason" else value.strip()
         if value.startswith("[") and value.endswith("]") and "[[" not in value:
             inner = value[1:-1].strip()
@@ -357,6 +371,45 @@ def check_8_budget(pages: list[Page], w: Warnings) -> None:
                   "a smell, not a gate: check the admission test (protocol.md §2) before splitting")
 
 
+def check_9_adrs_watched(pages: list[Page], root: Path, f: Failures) -> None:
+    """`decisions:` must be a subset of what `source_paths` watches (protocol.md §3).
+
+    ADRs are the dominant input to a page (~4,500 words), and the reader's staleness
+    check reads `source_paths` alone — so an ADR cited but not watched is invisible to
+    the sweep *and* to the reader, in the same direction. This check is what keeps the
+    two fields from drifting apart once they are written by hand.
+    """
+    adr_dir = root / "docs" / "adr"
+    for page in pages:
+        if page.kind not in COMPILED_KINDS:
+            continue  # a note's source_paths mean "what could falsify this"; ADRs don't
+        decisions = page.meta.get("decisions") or []
+        if not isinstance(decisions, list):
+            continue
+        patterns = page.meta.get("source_paths")
+        if not isinstance(patterns, list):
+            continue  # check 6 already reports the missing field
+        # What source_paths actually watches on disk, as repo-relative paths.
+        watched_files = {
+            match
+            for pattern in patterns
+            for match in globlib.glob(pattern, root_dir=root, recursive=True)
+        }
+        for entry in decisions:
+            m = ADR_ID.match(entry)
+            if not m:
+                continue  # check 3 already reports a malformed id
+            number = m.group(1)
+            files = [os.path.relpath(p, root) for p in adr_dir.glob(f"{number}-*.md")]
+            if not files:
+                continue  # check 3 already reports an ADR id matching no file
+            if not any(path in watched_files for path in files):
+                f.add(9, page.rel, None,
+                      f"`decisions: {entry}` is not watched by any source_paths glob — add "
+                      f"`docs/adr/{number}-*.md`, or the ADR can change without dirtying "
+                      "this page (protocol.md §3)")
+
+
 # --------------------------------------------------------------------------- driver
 
 
@@ -427,6 +480,7 @@ def main(argv: list[str]) -> int:
     check_5_checkpoint(pages, root, git_ok, f)
     check_6_orphans(pages, root, f)
     check_7_skeleton(pages, f)
+    check_9_adrs_watched(pages, root, f)
 
     w = Warnings()
     check_8_budget(pages, w)

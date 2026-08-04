@@ -97,7 +97,14 @@ Size remains a **review smell, never a trigger**: over budget with no admission 
 ---
 kind: structure                 # required; one of structure | feature | concept
 slug: backend-sabha             # required; globally unique, matches the filename
-source_paths: [apps/backend/sabha-service/**]   # required; ≥1 glob, what this was derived from
+source_paths: [               # required; ≥1 glob, what this was derived from. See below.
+  apps/backend/sabha-service/*/src/main/**,
+  apps/backend/sabha-service/*/pom.xml,
+  apps/backend/sabha-service/pom.xml,
+  docs/adr/0015-*.md,
+  docs/adr/0019-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0015, ADR-0019] # optional; bare ADR ids
 issues: [12, 84, 86]            # optional; feature pages mainly
 appears_in: [[backend-identity]], [[backend-sabha]]   # concept pages only
@@ -108,6 +115,49 @@ disputed_reason: <one line>     # required iff status: disputed
 ```
 
 There is **no** `draft`, `current`, `stale` or `orphaned` status. See §6.
+
+### What `source_paths` must contain
+
+`source_paths` is the **single** field that answers "has the world moved?" — the sweep's dirty set
+(§2a of the sweep skill) and the reader's staleness check (§5) both read it and nothing else. A
+source that shapes a page but isn't listed here is invisible to *both*, in the same direction. Three
+rules follow.
+
+**1. Every ADR in `decisions:` is also a glob here.** ADRs are ~4,500 words per page — the dominant
+input, larger than the code read — and until this rule they were watched by nothing at all: an
+ADR-only commit dirtied no page, and the reader agreed, because it reads the same field. Write one
+`docs/adr/<nnnn>-*.md` glob per cited ADR. The wildcard tail matters: `ADR-0011` is stable,
+`0011-role-appointment-authority.md` is one rename from broken, which is the same reason §8 cites
+ADRs bare in prose.
+
+The duplication with `decisions:` is deliberate and **lint-enforced** (check 9). A second frontmatter
+*axis* was rejected: the reader's check is one `git diff` over one field, so a sweep-only ADR axis
+would leave the two mechanisms computing different answers again — exactly the failure this rule
+exists to repair. `docs/adr/**` on every page was rejected too: across all 16 real ADR commits the
+per-ADR globs fan out to a **median of 1 page** (max 6, and that was the ADR-0015/17/18/19/20
+taxonomy commit, which genuinely governs all six backend units), where a blanket glob would dirty
+every page every time.
+
+**2. `CONTEXT.md` is on every compiled page.** The glossary is the vocabulary these pages are written
+in. Precision was not bought here — unlike ADRs there is no existing field mapping a term to the
+pages using it, and inventing one would be new machinery for an event that has occurred **3 times in
+199 commits**. Blanket over-firing costs ~2 spurious verdicts a year. Notes are excluded: their
+`source_paths` mean *what could falsify this*, and a reworded glossary entry falsifies no trap.
+
+**3. Production source and the manifest — never the test tree.** A structure page describes layout,
+routes, ports and tables; a test-only change cannot move a sentence in it. The container's
+`apps/backend/application-container/**` fired on 43 of 60 backend commits, **39% of them on
+`src/test/**` alone**, because every context's feature PR touches the shared integration suite. So
+name `<unit>/*/src/main/**` (or `<unit>/src/main/**` where the unit has no ring submodules) plus the
+`pom.xml`s — the manifest is load-bearing, since it is where a dependency edge appears.
+
+> **Write globs that `git` accepts, not that Python does.** Git's pathspec `**` matches **one or
+> more** path components; Python's `glob` matches **zero or more**. So
+> `identity-service/**/pom.xml` finds 6 files under git and 7 under Python — silently missing the
+> aggregator pom — and `common-domain/**/src/main/**` matches 42 files under Python and **nothing**
+> under git. Git is the operative engine (both the sweep and the reader run `git diff`), and lint is
+> the one that runs Python, so a glob can lint clean and detect nothing. Spell the levels out:
+> `<unit>/*/src/main/**` and a separate entry for the aggregator.
 
 ### `note`
 
@@ -167,7 +217,8 @@ where a detail below is arbitrary (section order, tag placement), that page is t
                        Individual endpoints belong to the feature dossier. -->
 ## Talks To       <!-- two labelled halves: **Outbound** (target context, port, protocol)
                        and **Inbound** (common-domain ports this unit IMPLEMENTS for others) -->
-## Data           <!-- tables owned; see the migration rule in §8 -->
+## Data           <!-- two labelled halves: **Owns** (this unit writes it) and
+                       **Reads** (it queries someone else's). See the migration rule in §8. -->
 ## Gotchas        <!-- module-local only; cross-cutting -> notes/.
                        Compiler-derived [[note-slug]] back-links land here (§7). -->
 ## Covered by     <!-- [[feature]] backlinks; structurally `_none_` until dossiers exist -->
@@ -182,6 +233,21 @@ list stays exactly the eight above on every page.
 has 2 outbound edges against 9 common-domain ports it implements. What a context *provides* is
 often the load-bearing fact. Inbound duplicates another page's outbound — accepted, because making
 a reader reconstruct nine edges by grepping port names defeats the point of the page.
+
+`Data` splits Owns/Reads under the **same bold-labels-inside-one-section** convention as `Talks To`,
+for the same reason — the section list stays exactly the eight above on every page. The split is not
+cosmetic: it is what §8's migration rule fires on, and it is the fix for this skeleton's known weak
+point. `Data` is where **every** confidently-wrong claim so far has landed, because ownership is
+inferred from adapter SQL and blurred prose let "this unit touches the table" and "this unit owns
+the table" be written as the same sentence. Forcing each table under one label or the other makes
+the claim explicit and therefore falsifiable — which is how `home_sabhas` was caught pointing the
+wrong way.
+
+A unit that neither owns nor reads a table simply doesn't list it. `backend-container` is the
+instructive case: it owns **no table's data** and reads none, so both labels are `_none_` and its
+prose carries the schema-custody fact instead — it holds the DDL for all 19 tables, which is a
+different axis from data ownership and must not be written as `Owns`, or "who owns `users`?" gets
+two answers and the blur is back.
 
 `Layout` keeps the ring table so all pages stay comparable, but the ring is identical everywhere by
 ADR-0015/0019 and already factored into `[[module-ring]]` — so on a large unit it gains a
@@ -422,11 +488,27 @@ rule, because the changelog under `apps/backend/application-container/src/main/r
 is central and partitioned by **slice/issue** — the `features/` axis — so no path glob on a
 `structure` page can ever reach it:
 
-> The sweep greps changed `.sql` files for table identifiers and dirties any page whose `Data`
-> section already lists that table.
+> The sweep greps changed `.sql` files for table identifiers and dirties any page listing that table
+> under **`Data` → Owns**. A table under **Reads** does not dirty the page.
 
 Putting the changelog glob on all 13 structure pages was rejected: correct by construction, but one
 one-table migration would then dirty all 13 pages on every batched sweep.
+
+**The Owns-only restriction is the whole rule.** The original version fired on any table a page's
+`Data` mentioned, and replaying it over all 15 real `.sql` commits showed it had never once done its
+job: **12 of 12** DDL commits shipped alongside the owning context's own code, so path intersection
+had already dirtied the owner and the grep added nothing. Of its 8 hits that path could *not* reach,
+**7 were `backend-analytics` merely reading a table somebody else had changed** — noise on the one
+context whose job is reading other people's data.
+
+The 8th hit is the shape the rule is now aimed at, and the only shape that needs it: a
+**cross-context column addition**. `ALTER TABLE users ADD default_city_id` was analytics' change to
+identity's table; no identity code moved, so no glob reached `backend-identity`, and the grep was the
+only thing that could. Under the Owns-only rule that replay yields **1 hit, and it is that one** —
+identity owns `users`, analytics only reads it.
+
+This is why the rule and the §4 skeleton split are one decision: without the Owns/Reads labels there
+is nothing for the grep to discriminate on, and the rule reverts to the noise it was.
 
 **Known gap, stated rather than hidden:** a migration introducing a **brand-new** table cannot dirty
 a page by name, because no page lists it yet. Such a migration also dirties via its slice directory →
@@ -445,8 +527,9 @@ An agent step was rejected: resolving every wikilink, path and glob is a fully s
 it is the category of work LLMs are least reliable at, and silently missing one broken link among
 sixty is an ordinary agent failure and an impossible one for `test -f`.
 
-The eight checks. Checks 1–7 are **failures** (exit 1); check 8 is a **warning** — printed in the
-same `file:line` format, never affecting the exit code:
+The nine checks. Checks 1–7 and 9 are **failures** (exit 1); check 8 is a **warning** — printed in
+the same `file:line` format, never affecting the exit code. Check 9 was appended rather than
+inserted so the existing numbers, which are cited across this file and the sweep skill, stay stable:
 
 | # | Check | Scope |
 |---|---|---|
@@ -458,6 +541,7 @@ same `file:line` format, never affecting the exit code:
 | 6 | each `source_paths` glob still matches ≥1 file — **the orphan check** | all kinds, incl. notes |
 | 7 | skeleton conformance: fixed per-kind sections, in order, empties written `_none_` | compiled kinds |
 | 8 | prose word count is within the §2 budget — **warning, not failure** | compiled kinds |
+| 9 | every ADR in `decisions:` is watched by a `source_paths` glob (§3) | compiled kinds |
 
 **Check 8 must not be a gate.** §2 fixes size as a smell and never a trigger, so a check that failed
 the build would overturn the contract it exists to report on — and would have failed the seed set's
@@ -468,6 +552,11 @@ primary evidence, not derivation, and have no skeleton to be long relative to.
 matching `source_paths`, so `git diff ∩ source_paths` can *never* fire on it — lint is the only way
 to catch a page whose subject no longer exists, which would otherwise stay `high`-tagged and
 current-looking forever.
+
+**Check 9 is what keeps §3's two fields from drifting.** `decisions:` and `source_paths` state the
+same ADR list twice, and hand-maintained duplication decays — silently, and in the direction that
+matters, since a page can cite ADR-0011 for years while nothing watches it. It is scoped to compiled
+kinds: a note's `source_paths` mean *what could falsify this*, so an ADR does not belong in them.
 
 Check 5 verifies the SHA is a real commit only when git is available; in a shallow checkout it
 degrades to a format check rather than failing. It also rejects any `status` other than `disputed` —
