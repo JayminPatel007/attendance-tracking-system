@@ -57,8 +57,11 @@ grep -rL "Empty scaffold" --include=package-info.java <unit>/
 4. **A mapping-annotation grep** (`@GetMapping`/`@PostMapping`/…) — this is what `Exposes` is built
    from.
 5. **A writer-SQL grep** (`INSERT INTO`/`UPDATE`/`DELETE FROM` across the unit's adapters) — this is
-   what `Data` ownership is inferred from, and the reason `Data` earns a `low`/`medium` tag more
-   often than any other section.
+   what `Data` → **Owns** is inferred from, and the reason `Data` earns a `low`/`medium` tag more
+   often than any other section. A table the unit only ever `SELECT`s belongs under **Reads**, and
+   that distinction is now load-bearing: §2b fires on Owns alone. When the grep leaves you unsure
+   which side a table falls on, that uncertainty *is* the section's coverage tag — say so rather
+   than picking a label to look decisive.
 
 Rungs 3–5 always work; rung 1 sometimes doesn't. **State the ladder as an order to try, not a law** —
 the previous version of this section named rung 1 as *the* high-yield source on a sample of one
@@ -91,6 +94,13 @@ git diff --name-only <page.last_compiled>..HEAD -- <each source_paths glob>
 
 Per-page SHAs mean N diffs instead of one; that is the price of never having a checkpoint that lies.
 
+`source_paths` now carries a page's **ADR globs and `CONTEXT.md`** alongside its code globs, so this
+one diff covers the hand-written docs that are the dominant input — they used to be watched by
+nothing. It also carries **production source and manifests only, never the test tree**. Both rules,
+and the git-versus-Python `**` trap that decides how the globs must be spelled, are `protocol.md` §3;
+when you create or edit a page's `source_paths`, follow it there rather than re-deriving. Lint check
+9 fails the build if a cited ADR goes unwatched.
+
 **b. The migration rule** — path intersection cannot reach migrations, because the changelog under
 `apps/backend/application-container/src/main/resources/db/changelog` is central and partitioned by
 slice/issue (the `features/` axis), not by context. So:
@@ -100,7 +110,21 @@ git diff --name-only <sha>..HEAD -- '*.sql'
 ```
 
 Grep the changed `.sql` for table identifiers (`CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`) and dirty
-any page whose `Data` section already lists that table.
+any page listing that table under **`Data` → Owns**. A table under **Reads** does **not** dirty the
+page.
+
+The Owns-only restriction is the rule, not a refinement of it. Replayed over all 15 real `.sql`
+commits, the unrestricted version never once added an owner — 12 of 12 DDL commits shipped with the
+owning context's code, which path intersection had already caught — and 7 of its 8 otherwise-
+unreachable hits were `backend-analytics` merely *reading* someone else's table. The one hit worth
+having was a **cross-context column addition** (analytics adding a column to identity's `users`),
+where no identity code moved and this grep was the only mechanism that could reach the page. Aimed
+at Owns, that replay yields exactly that hit and nothing else. See `protocol.md` §8.
+
+**A page compiled before the Owns/Reads split has no Owns list, so this rule cannot fire on it.**
+Migrate the section while you are recompiling the page anyway — the ownership judgement comes from
+rung 5's writer-SQL grep, which you are running for `Data` regardless. Say in the PR body which
+pages still lack the labels.
 
 *Known gap, state it in the PR body when it applies:* a **brand-new** table cannot dirty a page by
 name, because no page lists it yet. Route it via the slice directory to the owning feature dossier —
@@ -197,7 +221,7 @@ name (an issue *amends* one, never adds one), and a concept must recur in 3+ pag
 docs/wiki/lint
 ```
 
-Deterministic, eight checks, no LLM. Fix every failure and re-run until clean. Do not open the PR
+Deterministic, nine checks, no LLM. Fix every failure and re-run until clean. Do not open the PR
 with a failing lint — CI runs the same script on `docs/wiki/**` and will catch it anyway.
 
 **Check 8 is a warning, not a failure** — a page over its prose budget is a smell (`protocol.md` §2).

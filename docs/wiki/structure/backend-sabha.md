@@ -1,7 +1,17 @@
 ---
 kind: structure
 slug: backend-sabha
-source_paths: [apps/backend/sabha-service/**]
+source_paths: [
+  apps/backend/sabha-service/*/src/main/**,
+  apps/backend/sabha-service/*/pom.xml,
+  apps/backend/sabha-service/pom.xml,
+  docs/adr/0009-*.md,
+  docs/adr/0012-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0024-*.md,
+  docs/adr/0026-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0009, ADR-0012, ADR-0019, ADR-0024, ADR-0026]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---

@@ -1,7 +1,16 @@
 ---
 kind: structure
 slug: backend-analytics
-source_paths: [apps/backend/analytics-service/**]
+source_paths: [
+  apps/backend/analytics-service/*/src/main/**,
+  apps/backend/analytics-service/*/pom.xml,
+  apps/backend/analytics-service/pom.xml,
+  docs/adr/0010-*.md,
+  docs/adr/0019-*.md,
+  docs/adr/0023-*.md,
+  docs/adr/0027-*.md,
+  CONTEXT.md
+]
 decisions: [ADR-0010, ADR-0019, ADR-0023, ADR-0027]
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
