@@ -159,6 +159,19 @@ the sweep creates structure pages **without judgement**. A legitimately new-but-
 gets its page from the next sweep after code lands, which is the right default — an empty module has
 nothing to document.
 
+**`apps/web/angular.json` is deliberately absent from that glob list, and this is not an oversight.**
+The rule creates *one page per declared unit*, which is only sound where the taxonomy is one page per
+declared unit — true of Maven modules and Dart packages, false of web. Under #144 web is **a single
+fixed page** no matter how many Angular projects `angular.json` declares, so watching it here would
+make the sweep create a page per new library — the opposite of the taxonomy. The gap it appears to
+leave is closed one section up: `angular.json` is in [[web]]'s own `source_paths`, so a new project
+dirties the web page by **§2a path intersection** and gets folded into its `Layout` table, which is
+where a new library belongs. §2d creates pages; §2a maintains them, and web needs only the second.
+
+The count is not close, so this is unlikely to flip: `angular.json` declares 8 projects, and **four
+of the seven libraries are lone-`public-api.ts` scaffolds** with nothing to say under any skeleton
+section — the same emptiness the carve-out above already refuses to give a page to.
+
 Report the dirty set before compiling. If it is empty, say so and stop — an empty sweep is a
 successful sweep.
 
