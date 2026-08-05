@@ -1,6 +1,6 @@
 ---
 kind: index
-pages: 7
+pages: 8
 ---
 # Attendance Tracking System — Wiki
 
@@ -10,10 +10,10 @@ page contract.
 
 **The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win.**
 
-The backend is compiled: all six build units plus one feature dossier. **Web and mobile have no
-`structure/` pages yet** — the mobile packages and the web app are unwritten, so rows pointing at
-those units will land you in the Structure catalog with nothing to follow. Backfilling them is
-ordinary follow-up work.
+The backend is compiled: all six build units plus one feature dossier. The web app is compiled too.
+**Mobile has no `structure/` pages yet** — the five Dart packages and the app shell are unwritten,
+so rows pointing at those units will land you in the Structure catalog with nothing to follow.
+Backfilling them is ordinary follow-up work.
 
 ## Start here
 
@@ -38,7 +38,7 @@ kind's catalog: no `concepts/` page exists yet, and "what must I not break" is a
 ## Structure
 
 One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `application-container`),
-6 mobile (5 Dart packages plus the app shell), and web as one. Backend only, so far.
+6 mobile (5 Dart packages plus the app shell), and web as one. Mobile is still unwritten.
 
 | Page | Unit | Also known as |
 |---|---|---|
@@ -48,6 +48,7 @@ One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `app
 | [[backend-attendance]] | `apps/backend/attendance-service` | Occurrences and markings; Sabha Occurrence, Roster, Walk-in |
 | [[backend-analytics]] | `apps/backend/analytics-service` | dashboards, audit log, re-engagement; Nirdeshak/Sant reporting |
 | [[backend-container]] | `apps/backend/application-container` | the Spring Boot app; the composition root, the schema |
+| [[web]] | `apps/web` | the Angular admin panel; the web console, the BFF client, the sections |
 
 ## Features
 
