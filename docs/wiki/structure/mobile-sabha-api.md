@@ -1,0 +1,101 @@
+---
+kind: structure
+slug: mobile-sabha-api
+source_paths: [
+  apps/mobile/packages/sabha_api/lib/**,
+  apps/mobile/packages/sabha_api/pubspec.yaml,
+  apps/mobile/packages/sabha_api/.openapi-generator-ignore,
+  apps/mobile/melos.yaml,
+  docs/adr/0014-*.md,
+  docs/adr/0015-*.md,
+  CONTEXT.md
+]
+decisions: [ADR-0014, ADR-0015]
+issues: [73, 75]
+last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
+---
+
+# Mobile Sabha API Client
+
+## Purpose
+
+<!-- [coverage: high -- pubspec.yaml, .openapi-generator-ignore, melos.yaml generate:api script] -->
+
+The typed Dart client, **entirely generated** from `apps/backend/openapi.json` (issue #73). It is
+the mobile twin of [[web]]'s `shared-data-access` library and exists for the same reason: a
+hand-rolled parser drifts from the backend silently (issue #75), a generated one cannot.
+
+It is the **fifth** Dart package, and the only one added after the Slice-1 scaffold — ADR-0014 and
+ADR-0015 both describe a four-package mobile workspace. It is also the only mobile package other
+than [[mobile-shell]] with real code in it.
+
+## Layout
+
+<!-- [coverage: high -- directory listing and file counts] -->
+
+103 Dart files under `lib/`, flat by generator convention rather than by any ring:
+
+| Directory | Files | Holds |
+|---|---|---|
+| `lib/api/` | 20 | One service per backend controller, named after it — `AttendanceRestControllerApi`, `SelectionRestControllerApi`, `PersonDirectoryRestControllerApi`, and 17 more. |
+| `lib/model/` | 74 | Request/response models — `WalkInRequest`, `WalkInCandidate`, `NominateRequest`, `NominateResponse`, … |
+| `lib/auth/` | 5 | `HttpBearerAuth`, `ApiKeyAuth`, `OAuth`, `HttpBasicAuth` and the `Authentication` base. Mobile uses the bearer one. |
+| `lib/` root | 4 | `api.dart` (the barrel), `api_client.dart`, `api_exception.dart`, `api_helper.dart`. |
+
+Regenerate with `melos run generate:api`, which runs `@openapitools/openapi-generator-cli` against
+`../backend/openapi.json` at a version pinned in `openapitools.json`. **Do not hand-edit** anything
+here — the next regeneration overwrites it.
+
+## Exposes
+
+<!-- [coverage: high -- the barrel file and the api/ listing] -->
+
+`package:sabha_api/api.dart` re-exports the whole surface; consumers import that one barrel. No
+routes of its own — it *calls* routes. The 20 services cover **every** backend controller, `/bff/*`
+included, so the mobile binary compiles in the web BFF's client surface and never calls it. That
+mirrors [[web]] exactly, in the opposite direction.
+
+## Talks To
+
+<!-- [coverage: high -- pubspec.yaml, plus an import grep for consumers] -->
+
+**Outbound** — the backend over HTTP, through the `http` package. `ApiClient` takes a `basePath` and
+an `Authentication`; it holds no URL of its own, so the target is whatever the caller passes.
+
+**Inbound** — [[mobile-shell]] imports it in three files: `walk_in_api.dart`, `selection_api.dart`
+and `add_person_api.dart`. It is the only mobile package the shell actually imports.
+
+## Data
+
+<!-- [coverage: high -- no persistence dependency; models are transport DTOs] -->
+
+**Owns** — `_none_`. **Reads** — `_none_`.
+
+The 74 models are wire shapes, not stored rows. The generated client has no persistence dependency;
+nothing here reaches SQLite.
+
+## Gotchas
+
+<!-- [coverage: medium -- read off .openapi-generator-ignore and melos.yaml; the drift gate itself is a backend test not read here] -->
+
+- **`pubspec.yaml` and `test/**` are hand-stabilized**, listed in `.openapi-generator-ignore` so
+  regeneration does not clobber the workspace SDK and `http` constraints or ship generator skeleton
+  tests into the melos workspace. Everything else in the package is disposable.
+- **Nothing here is tested.** No `test/` directory, so `melos run test` skips it. The guarantee comes
+  from the backend's generate-and-diff gate (issue #73), not from mobile CI.
+- The generated `ApiException` is a different type from the shell's error contract. Every feature
+  client that uses this package bridges one to the other by hand — see `selection_api.dart`, which
+  reconstructs an `http.Response` from an `ApiException` so the shared `apiError` seam still applies.
+
+## Covered by
+
+<!-- [coverage: low -- no dossier names this page yet] -->
+
+`_none_`. [[attendance-marking]] describes the Walk-in path that runs through
+`AttendanceRestControllerApi` and `PersonDirectoryRestControllerApi` without naming this package.
+
+## Sources
+
+- [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md)
+- [CONTEXT.md](../../../CONTEXT.md) — Walk-in, Roster, Sabha Occurrence
+- `apps/mobile/packages/sabha_api/.openapi-generator-ignore`, `apps/mobile/melos.yaml` — the manifest rung, and the highest-yield source on this page
