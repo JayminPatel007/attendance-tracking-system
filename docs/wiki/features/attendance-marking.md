@@ -101,8 +101,10 @@ aggregate:
 - [[backend-container]] — `slice-2` (core schema + occurrence version), `slice-4` (`client_marked_at`),
   `slice-7` (walk-in marking type) migrations; the `ProblemDetail` mapping that turns
   `StaleRosterException` into `ROSTER_STALE`.
-- Mobile: `sabha_attendance/lib/roster/`, `lib/sync/` (`attendance_store.dart`, `sync_engine.dart`,
-  `pending_marking.dart`), `lib/walk_in/`.
+- [[mobile-shell]] — `lib/roster/`, `lib/sync/` (`attendance_store.dart`, `sync_engine.dart`,
+  `pending_marking.dart`), `lib/walk_in/`, and the three SQLite tables the offline queue owns.
+- [[mobile-sabha-api]] — the generated client the Walk-in path calls through.
+- [[mobile-attendance-domain]] is an empty scaffold, despite the name.
 
 ## Amendments
 

@@ -1,6 +1,6 @@
 ---
 kind: index
-pages: 8
+pages: 14
 ---
 # Attendance Tracking System — Wiki
 
@@ -10,10 +10,8 @@ page contract.
 
 **The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win.**
 
-The backend is compiled: all six build units plus one feature dossier. The web app is compiled too.
-**Mobile has no `structure/` pages yet** — the five Dart packages and the app shell are unwritten,
-so rows pointing at those units will land you in the Structure catalog with nothing to follow.
-Backfilling them is ordinary follow-up work.
+All thirteen `structure/` pages are compiled — backend, web and mobile — plus one feature dossier.
+`concepts/` and `notes/` are still empty.
 
 ## Start here
 
@@ -38,7 +36,7 @@ kind's catalog: no `concepts/` page exists yet, and "what must I not break" is a
 ## Structure
 
 One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `application-container`),
-6 mobile (5 Dart packages plus the app shell), and web as one. Mobile is still unwritten.
+6 mobile (5 Dart packages plus the app shell), and web as one.
 
 | Page | Unit | Also known as |
 |---|---|---|
@@ -49,6 +47,12 @@ One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `app
 | [[backend-analytics]] | `apps/backend/analytics-service` | dashboards, audit log, re-engagement; Nirdeshak/Sant reporting |
 | [[backend-container]] | `apps/backend/application-container` | the Spring Boot app; the composition root, the schema |
 | [[web]] | `apps/web` | the Angular admin panel; the web console, the BFF client, the sections |
+| [[mobile-shell]] | `apps/mobile/sabha_attendance` | the Flutter app; the Sanchalak's phone, hajri app, the offline queue |
+| [[mobile-sabha-api]] | `apps/mobile/packages/sabha_api` | the generated Dart client; the typed API client, the OpenAPI client |
+| [[mobile-shared-kernel]] | `apps/mobile/packages/shared_kernel` | the mobile shared kernel — **scaffold, no types yet** |
+| [[mobile-identity-domain]] | `apps/mobile/packages/identity_domain` | mobile User/Session types; Karyakar — **scaffold, no types yet** |
+| [[mobile-sabha-domain]] | `apps/mobile/packages/sabha_domain` | mobile Sabha/Occurrence/Roster types — **scaffold, no types yet** |
+| [[mobile-attendance-domain]] | `apps/mobile/packages/attendance_domain` | mobile Attendance Marking, Walk-in, offline queue — **scaffold, no types yet** |
 
 ## Features
 
