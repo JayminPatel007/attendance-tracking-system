@@ -204,14 +204,21 @@ between type directories rewrites its **inbound** links rather than none of them
 catches both, which is the point; but write them right the first time rather than treating the linter
 as the author.
 
-**Write `## Method` deliberately.** It is not a citation list — the citations live in `sources[]` —
-it is *how you compiled this page and where the next compiler should look first*. Nothing previously
-asked you to record your own technique, and it is the highest-value line on the page for the sweep
-after you. Say which rung of the ladder paid, and which was worthless.
+**Write `## Method` deliberately, and narrowly.** It is not a citation list — the citations live in
+`sources[]` — it is *how you compiled this page and where the next compiler should look first*. What
+it owes is **the yield judgement**: name the source that paid and say why it paid, in a sentence.
+That is the half a cold recompiling agent measured as changing its plan (`protocol.md` §3). Do **not**
+restate which greps fed which section: that is this ladder, in this order, and the next agent is
+reading it too. Extra bullets are permitted where the derivation genuinely took several distinct
+techniques; they are not owed, and "nice context" is not a reason to write one.
 
 **Frontmatter you now author**: `title`, `description`, `aliases` (search hooks, open list — this is
 where they live now, not in the catalog cell), `tags` (the closed vocabulary in `protocol.md` §3 —
-do not invent one), `resource` on structure pages, and `sources[]` with a stable `id` per document.
+do not invent one), `resource` on structure pages, `scaffold: true` on a structure page whose unit
+declares no types yet (**delete the key** in the sweep that first finds one — unlike `deprecated`,
+this one is yours to author, because you can see it by reading the package), and `sources[]` with a
+stable `id` per document. Keep the scaffold fact **out of `description`**: it has a field now, and
+the catalog derives its marker from the field.
 
 `docs/wiki/structure/backend-identity.md` is the **reference instance** of the `structure` skeleton.
 Read it before compiling your first structure page — it is cheaper than re-deriving the shape from
@@ -267,8 +274,8 @@ Never touch `last_verified` on a note.
 **The catalog is a pure function of the pages — regenerate it, don't re-judge it.** Every row is
 derived from frontmatter: the link from the filename, the middle cell from `resource` (structure) or
 `description` (everything else), the third cell from `aliases` comma-joined, and a `(deprecated)`
-marker from `status`. There is no hand-written cell left, which is the point: a wrong catalog is now
-a **frontmatter bug**, and lint check 2 asserts cell fidelity as well as *every page exactly once*.
+marker from `status` or a `(scaffold)` marker from `scaffold: true`. There is no hand-written cell
+left, which is the point: a wrong catalog is now a **frontmatter bug**, and lint check 2 asserts cell fidelity as well as *every page exactly once*.
 
 There is **no `pages:` count to refresh** — it is gone with `index.md`'s frontmatter, which now
 carries `okf_version` and nothing else.
