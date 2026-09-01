@@ -138,6 +138,9 @@ retries on.
 - [attendance-marking](../features/attendance-marking.md) — the marking and sync paths.
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the state machine, the scanners, shaping and reopen.
 - [sanchalak-proxy](../features/sanchalak-proxy.md) — the Nirikshak's borrowed toolkit and its attribution.
+- [re-engagement](../features/re-engagement.md) — for the `occurrences` and `attendance_markings` rows the
+  streak is derived from; analytics reads them, this unit owns them.
+- [audit-log](../features/audit-log.md) — for `occurrence_state_transitions`, the one proxy-bearing audit source.
 
 The lifecycle is deliberately **not** folded into the marking dossier.
 

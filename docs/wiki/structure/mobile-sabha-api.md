@@ -99,6 +99,7 @@ nothing here reaches SQLite.
 
 - [attendance-marking](../features/attendance-marking.md) — `AttendanceRestControllerApi` on the Walk-in path.
 - [person-directory](../features/person-directory.md) — `PersonDirectoryRestControllerApi`, which the mobile lookup calls whole.
+- [selection](../features/selection.md) — `SelectionRestControllerApi` on the nominate path.
 
 [authentication](../features/authentication.md) and [home-sabha-transfer](../features/home-sabha-transfer.md) route around this package on purpose: both
 mobile clients are hand-rolled `http`.

@@ -120,10 +120,14 @@ list is so long.
 
 ## Covered by
 
-<!-- [coverage: low -- no dossier covers analytics yet] -->
+<!-- [coverage: high -- derived: the three dossiers below name this page in their `Where the code is`] -->
 
-`_none_` — dashboards, the audit-log viewer and re-engagement are three distinct capabilities with no
-`features/` page yet. All three are dossier candidates.
+- [dashboards](../features/dashboards.md) — the scoping engine and the three scoped reads.
+- [audit-log](../features/audit-log.md) — the UNION feed, its engine and the BFF over them.
+- [re-engagement](../features/re-engagement.md) — the calculator, the thresholds and the projection.
+
+Three of three: every capability this unit holds is now covered, which is what a single-purpose read
+context should look like.
 
 ## Method
 

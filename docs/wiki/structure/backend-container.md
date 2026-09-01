@@ -126,6 +126,10 @@ own migrations**. The table-name grep exists solely to bridge that gap.
 - [sabha-definition](../features/sabha-definition.md) — `slice-12` and `issue-87`'s retire columns.
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — `OccurrenceCronJobs`, the `Clock` bean, and `slice-3` / `slice-5` / `slice-13`.
 - [sanchalak-proxy](../features/sanchalak-proxy.md) — `slice-14` and its seed, the only writer of the assignments table.
+- [selection](../features/selection.md) — `slice-16`'s nominations table and its two indexes.
+- [dashboards](../features/dashboards.md) — `slice-17`'s `users.default_city_id` and Sant seed.
+- [re-engagement](../features/re-engagement.md) — `AnalyticsCronJobs` and `slice-15`'s two tables.
+- [audit-log](../features/audit-log.md) — `slice-19`, which is seed rows and no schema.
 
 No dossier *owns* the container: it is crossed by every capability rather than implementing one, so
 it may never acquire a dedicated one.
