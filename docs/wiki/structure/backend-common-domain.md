@@ -99,7 +99,7 @@ objects; the rows behind them belong to the context that implements the correspo
   granted-scope module behind the per-context authorization engines. Each context keeps its own
   engine and reaches here only for the raw lookups. Resist the pull to hoist an
   `AuthorizationEngine` into common-domain — that has already been decided against. The engines and
-the vocabulary they share are [authorization](../patterns/authorization.md).
+  the vocabulary they share are [authorization](../patterns/authorization.md).
 - `SabhaKind` exists **twice**: `org.sabha.common.SabhaKind` (the cross-context value) and
   `org.sabha.sabha.domain.SabhaKind` (the aggregate sabha writes). Same name, different types.
 

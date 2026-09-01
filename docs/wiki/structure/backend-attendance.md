@@ -46,8 +46,8 @@ This is where the product's namesake capability actually runs.
 
 <!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold] -->
 
-The standard five-module [module-ring](../patterns/module-ring.md). 74 main source files — the second-largest backend unit, and unusually
-top-heavy: 47 of them sit in the use-case ring.
+The standard five-module [module-ring](../patterns/module-ring.md). 74 main source files — the
+second-largest backend unit, and unusually top-heavy: 47 of them sit in the use-case ring.
 
 | Module | Main files | Holds |
 |---|---|---|

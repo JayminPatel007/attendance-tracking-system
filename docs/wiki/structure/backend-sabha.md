@@ -44,7 +44,8 @@ It does **not** own who attends a Sabha or who runs it: rosters and role assignm
 
 <!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold and carries no information] -->
 
-The standard five-module [module-ring](../patterns/module-ring.md). Small unit — 50 main source files, roughly a quarter of identity's.
+The standard five-module [module-ring](../patterns/module-ring.md). Small unit — 50 main source
+files, roughly a quarter of identity's.
 
 | Module | Main files | Holds |
 |---|---|---|
