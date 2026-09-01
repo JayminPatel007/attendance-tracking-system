@@ -94,6 +94,8 @@ aggregate:
   is expected and non-substantive, so there is no conflict UI.
 - **Concurrency.** `occurrences` carries a `version` column; `OccurrenceWriter` retries on
   optimistic-lock conflict, which is what makes concurrent batches safe.
+- **Engine.** The *who* above, and the reopen tiers, are attendance's `AuthorizationEngine` —
+  [authorization](../patterns/authorization.md).
 - **Not audited.** Marking appends **no** `occurrence_state_transitions` row — it changes no
   lifecycle state. Attribution rides each marking's own `markedBy`.
 

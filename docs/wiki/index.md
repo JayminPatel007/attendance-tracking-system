@@ -19,7 +19,7 @@ The eight questions are fixed in `protocol.md`; the compiler fills only the targ
 | How do I run it locally? | [dev-setup](../dev-setup.md) |
 | Which app/module owns X? | [Structure](#structure) |
 | How does capability Y work end to end? | [Features](#features) |
-| How does authorization work? | [Patterns](#patterns) |
+| How does authorization work? | [authorization](patterns/authorization.md) |
 | Why is the backend shaped like this? | [backend-common-domain](structure/backend-common-domain.md) |
 | What must I not break? | [Structure](#structure) |
 | What did we learn the hard way? | [Notes](#notes) |
@@ -62,8 +62,8 @@ Recurring patterns that reconcile ADR clusters — the interlink surface over th
 
 | Page | Description | Also known as |
 |---|---|---|
-
-_none_
+| [authorization](patterns/authorization.md) | How every authority decision is made — one stateless engine per context, resolving current scope through identity-owned ports. | authz, permissions, Authorization Engine, who may, scope, RoleAssignmentLookup |
+| [module-ring](patterns/module-ring.md) | The five-module Clean-Architecture ring every backend bounded context is built from, and what the Maven graph enforces. | ring, the hexagon, five modules, Clean Architecture, domain-core, application-service, data-access |
 
 ## Notes
 

@@ -45,7 +45,8 @@ cross-context, and when in doubt it stays in the context that originated it.
 <!-- [coverage: high -- directory listing; 37 main source files] -->
 
 A **single flat module** with one package, `org.sabha.common` — no ring, because there is nothing
-to ring. It is a leaf that the ring modules of all four contexts depend on.
+to ring. It is a leaf that the ring modules of all four contexts depend on — a deviation from
+[module-ring](../patterns/module-ring.md).
 
 | Group | Types |
 |---|---|
@@ -97,7 +98,8 @@ objects; the rows behind them belong to the context that implements the correspo
 - ADR-0027 is a **negative** decision that shapes this module: there is deliberately **no** shared
   granted-scope module behind the per-context authorization engines. Each context keeps its own
   engine and reaches here only for the raw lookups. Resist the pull to hoist an
-  `AuthorizationEngine` into common-domain — that has already been decided against.
+  `AuthorizationEngine` into common-domain — that has already been decided against. The engines and
+  the vocabulary they share are [authorization](../patterns/authorization.md).
 - `SabhaKind` exists **twice**: `org.sabha.common.SabhaKind` (the cross-context value) and
   `org.sabha.sabha.domain.SabhaKind` (the aggregate sabha writes). Same name, different types.
 

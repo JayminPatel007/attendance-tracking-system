@@ -44,7 +44,8 @@ It does **not** own who attends a Sabha or who runs it: rosters and role assignm
 
 <!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold and carries no information] -->
 
-The standard five-module ring. Small unit — 50 main source files, roughly a quarter of identity's.
+The standard five-module [module-ring](../patterns/module-ring.md). Small unit — 50 main source
+files, roughly a quarter of identity's.
 
 | Module | Main files | Holds |
 |---|---|---|
@@ -70,7 +71,8 @@ ADR-0003: structural creation is a web-tier job.
 | `/bff/sabhas/mine`, `DELETE /bff/sabhas/{id}` | web | `SabhaListController`, `StructuralDeletionController` |
 
 `POST /bff/sabhas` is **not** here — Sabha definition is served by [backend-identity](backend-identity.md), because the
-authority check is identity's under ADR-0029 even though the Sabha it creates is this unit's.
+authority check is identity's under ADR-0029 even though the Sabha it creates is this unit's — see
+[authorization](../patterns/authorization.md).
 
 ## Talks To
 
