@@ -133,12 +133,13 @@ retries on.
 
 ## Covered by
 
-<!-- [coverage: high -- one dossier exists and it names this unit] -->
+<!-- [coverage: high -- derived: the three dossiers below name this unit] -->
 
-- [attendance-marking](../features/attendance-marking.md)
+- [attendance-marking](../features/attendance-marking.md) — the marking and sync paths.
+- [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the state machine, the scanners, shaping and reopen.
+- [sanchalak-proxy](../features/sanchalak-proxy.md) — the Nirikshak's borrowed toolkit and its attribution.
 
-Occurrence lifecycle (open / finalize / cancel / reschedule / reopen / proxy) is a distinct
-capability and a dossier candidate; it is deliberately **not** folded into the marking dossier.
+The lifecycle is deliberately **not** folded into the marking dossier.
 
 ## Method
 

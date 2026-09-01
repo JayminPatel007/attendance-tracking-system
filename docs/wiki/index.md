@@ -57,8 +57,12 @@ One page per durable capability. An issue amends a dossier; it never adds one.
 | [attendance-marking](features/attendance-marking.md) | Recording who attended a Sabha Occurrence, online or offline. | hajri, Roster marking, Walk-in, sync |
 | [authentication](features/authentication.md) | Signing in to the mobile and web apps, and resetting a forgotten password. | login, sign-in, OIDC, Keycloak, session, password reset, forgot password, OTP, who appointed me, reissue |
 | [home-sabha-transfer](features/home-sabha-transfer.md) | Moving a Person's Home Sabha into another Sabha, confirmed by an OTP to the Person themselves. | Verified Home Sabha Transfer, HSAT, transfer, Roster move, Sanchalak pull, OTP consent |
+| [occurrence-lifecycle](features/occurrence-lifecycle.md) | How a Sabha Occurrence comes into being, opens, finalizes, and is shaped or reopened along the way. | Sabha Occurrence, occurrence states, auto-open, auto-finalize, materialization, cancel, revert, reschedule, venue override, reopen, Effective Slot, monthly ad-hoc |
 | [person-directory](features/person-directory.md) | Finding a Person in the central Directory, and adding one under the two-signal de-duplication rule. | Directory, add person, de-duplication, dedup, mobile lookup, person picker, Karyakar lookup |
 | [role-appointment](features/role-appointment.md) | Appointing a Karyakar into a role at a scope, and revoking that role again. | appointment, Karyakar appointment, Nirdeshak, Sanchalak, Sanyojak, Regional Team, revocation, my authority, who may appoint |
+| [sabha-definition](features/sabha-definition.md) | Defining a Sabha and its Sanchalak in one act, and registering or retiring the Sabha Kind it is an instance of. | define a Sabha, Sabha Kind, Sabha Type, schedule shape, weekly recurring, monthly ad-hoc, soft-retire, retired kind, standing venue |
+| [sanchalak-proxy](features/sanchalak-proxy.md) | A Nirikshak exercising the Sanchalak's toolkit on an assigned Sabha when the Sanchalak is unavailable. | proxy mode, acting as Sanchalak, Nirikshak, on behalf of, last seen, assigned Sabhas, stand-in |
+| [structural-hierarchy](features/structural-hierarchy.md) | Creating and deleting the City, Zone and Kshetra chain the whole organisation hangs off. | structural admin, geography, City, Zone, Kshetra, Sanyojak, Regional Team, Madhyastha Karyalaya, block-if-non-empty, tier above |
 
 ## Patterns
 
