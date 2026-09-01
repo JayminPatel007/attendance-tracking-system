@@ -115,10 +115,16 @@ own migrations**. The table-name grep exists solely to bridge that gap.
 
 ## Covered by
 
-<!-- [coverage: low -- no dossier covers the composition root; it is crossed by all of them] -->
+<!-- [coverage: high -- derived: each dossier below names this page for its migrations or its security chains] -->
 
-`_none_` — no `features/` page owns the container. It is crossed by every capability rather than
-implementing one, so it may never acquire a dedicated dossier.
+- [attendance-marking](../features/attendance-marking.md) — `slice-2` / `slice-4` / `slice-7` and the `ROSTER_STALE` mapping.
+- [person-directory](../features/person-directory.md) — `slice-6`'s constraints, extensions and indexes.
+- [role-appointment](../features/role-appointment.md) — `slice-10` / `slice-11` / `issue-89`.
+- [authentication](../features/authentication.md) — `SecurityConfig`'s two chains, and `slice-18` / `issue-77`.
+- [home-sabha-transfer](../features/home-sabha-transfer.md) — `slice-8` and the `issue-77` scrub.
+
+No dossier *owns* the container: it is crossed by every capability rather than implementing one, so
+it may never acquire a dedicated one.
 
 ## Method
 

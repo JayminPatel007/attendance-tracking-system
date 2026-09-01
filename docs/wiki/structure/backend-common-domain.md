@@ -105,9 +105,16 @@ objects; the rows behind them belong to the context that implements the correspo
 
 ## Covered by
 
-<!-- [coverage: low -- one dossier exists so far; this unit is crossed by nearly every capability] -->
+<!-- [coverage: high -- derived: each dossier below names this page in its `Where the code is`] -->
 
 - [attendance-marking](../features/attendance-marking.md)
+- [person-directory](../features/person-directory.md)
+- [role-appointment](../features/role-appointment.md)
+- [authentication](../features/authentication.md)
+- [home-sabha-transfer](../features/home-sabha-transfer.md)
+
+Five of five so far, which is what a shared-kernel page should look like: this unit is crossed by
+nearly every capability rather than implementing one.
 
 ## Method
 

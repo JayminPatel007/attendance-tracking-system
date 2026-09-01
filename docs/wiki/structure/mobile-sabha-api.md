@@ -95,10 +95,13 @@ nothing here reaches SQLite.
 
 ## Covered by
 
-<!-- [coverage: low -- no dossier names this page yet] -->
+<!-- [coverage: high -- derived: both dossiers below link this page; the two that don't are named too] -->
 
-`_none_`. [attendance-marking](../features/attendance-marking.md) describes the Walk-in path that runs through
-`AttendanceRestControllerApi` and `PersonDirectoryRestControllerApi` without naming this package.
+- [attendance-marking](../features/attendance-marking.md) — `AttendanceRestControllerApi` on the Walk-in path.
+- [person-directory](../features/person-directory.md) — `PersonDirectoryRestControllerApi`, which the mobile lookup calls whole.
+
+[authentication](../features/authentication.md) and [home-sabha-transfer](../features/home-sabha-transfer.md) route around this package on purpose: both
+mobile clients are hand-rolled `http`.
 
 ## Method
 

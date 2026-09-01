@@ -152,12 +152,16 @@ by a zero-hit grep for every browser persistence API.
 
 ## Covered by
 
-<!-- [coverage: low -- one dossier exists so far; the rest are candidates only] -->
+<!-- [coverage: high -- derived: each dossier below names this page and the `lib/` directories it covers] -->
 
 - [attendance-marking](../features/attendance-marking.md) — the Roster, sync and Walk-in paths.
+- [person-directory](../features/person-directory.md) — `lib/add_person/`.
+- [authentication](../features/authentication.md) — `lib/auth/` and `lib/password_reset/`.
+- [home-sabha-transfer](../features/home-sabha-transfer.md) — `lib/home_sabha_transfer/`.
 
-Expected further pages, roughly one per feature directory: home-sabha-transfer, selection,
-password-reset, occurrence-control, person-directory.
+Still uncovered: `lib/selection/`, `lib/occurrence_control/` and `lib/monthly_occurrence/`, all
+dossier candidates. `password-reset`, listed here as a candidate before, was **merged** into
+[authentication](../features/authentication.md).
 
 ## Method
 

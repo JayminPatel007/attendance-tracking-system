@@ -55,6 +55,10 @@ One page per durable capability. An issue amends a dossier; it never adds one.
 | Page | Description | Also known as |
 |---|---|---|
 | [attendance-marking](features/attendance-marking.md) | Recording who attended a Sabha Occurrence, online or offline. | hajri, Roster marking, Walk-in, sync |
+| [authentication](features/authentication.md) | Signing in to the mobile and web apps, and resetting a forgotten password. | login, sign-in, OIDC, Keycloak, session, password reset, forgot password, OTP, who appointed me, reissue |
+| [home-sabha-transfer](features/home-sabha-transfer.md) | Moving a Person's Home Sabha into another Sabha, confirmed by an OTP to the Person themselves. | Verified Home Sabha Transfer, HSAT, transfer, Roster move, Sanchalak pull, OTP consent |
+| [person-directory](features/person-directory.md) | Finding a Person in the central Directory, and adding one under the two-signal de-duplication rule. | Directory, add person, de-duplication, dedup, mobile lookup, person picker, Karyakar lookup |
+| [role-appointment](features/role-appointment.md) | Appointing a Karyakar into a role at a scope, and revoking that role again. | appointment, Karyakar appointment, Nirdeshak, Sanchalak, Sanyojak, Regional Team, revocation, my authority, who may appoint |
 
 ## Patterns
 
