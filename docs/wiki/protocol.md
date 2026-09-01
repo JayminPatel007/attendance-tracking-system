@@ -1050,6 +1050,29 @@ the OKF migration kept that discipline: conformance is asserted by **clauses 1 a
 and 3** (the index skeleton, and the rule that `index.md` carries nothing but `okf_version`). No
 concept here is new enough to spend a number on.
 
+**Check 4 asserts a coverage tag's shape and never its content, and #197 ruled that no check will
+assert the content.** #191 found two `Covered by` tags whose prose stated a count its own section had
+outgrown — *"the seven dossiers below"* over eleven bullets, *"both"* over three — and #197's sweep of
+the other eleven structure pages found two more, *"the six"* over eight and *"the three"* over five,
+leaving the remaining nine clean. All four were invisible to all nine checks. The narrow check is
+conceivable: inside a `Covered by` section, parse a number word out of the tag and compare it to the
+bullets underneath. It is rejected
+for the same reason §5 leaves the verification claim unasserted. Coverage tags are **free prose by
+design**, so a check can only fire on the phrasings it happens to recognise, and the cheapest way to
+satisfy it is to stop writing the count — which deletes the reader's checksum in order to protect it.
+Parsing English is also precisely the category this section's opening rejects an agent step for; a
+linter is not a better place to do it. The counted phrasing stays a **convention held by the sweep**,
+not a rule held by lint: a sweep that adds a bullet to a `Covered by` list re-reads that section's
+tag, and
+
+```
+grep -rEn "coverage:.*\b(both|all|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen)\b" docs/wiki/
+```
+
+is the blunt instrument that stands in for it — over-matching happily, and blind to a digit or a
+count past `thirteen`, which is the point: an approximate grep a reader runs beats an exact check
+nobody can write.
+
 **Check 8 excludes `## Method`** along with frontmatter, coverage tags and table rows (§2). All four
 are either metadata about the page or addressed to the next compiler, and #179 measured the section
 as the entire overage on both pages that warned — under its old name as well as its new one, so the

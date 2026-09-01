@@ -23,7 +23,7 @@ sources:
   - { id: adr-0024, title: "Zone creation moves from Madhyastha Karyalaya to the Regional Team", resource: ../../adr/0024-zone-creation-moves-to-regional-team.md }
   - { id: adr-0026, title: "Deletion model: block-if-non-empty for geography, soft-retire for Sabha Kind, revoke-with-inheritance for roles", resource: ../../adr/0026-deletion-model.md }
   - { id: context, title: "CONTEXT.md — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team", resource: ../../../CONTEXT.md }
-last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Sabha Service
@@ -125,7 +125,7 @@ exception — it soft-retires via `retired_at`/`retired_by` rather than deleting
 
 ## Covered by
 
-<!-- [coverage: high -- derived: the six dossiers below name this page] -->
+<!-- [coverage: high -- derived: all eight dossiers below name this page, each backlink verified] -->
 
 - [person-directory](../features/person-directory.md) — for the Kshetra scope and the retired-kind guard.
 - [role-appointment](../features/role-appointment.md) — for the containment walk the appointment ladder reads.
@@ -136,8 +136,9 @@ exception — it soft-retires via `retired_at`/`retired_by` rather than deleting
 - [selection](../features/selection.md) — for the selective Sabha derivation in the same lookup.
 - [audit-log](../features/audit-log.md) — for the structural rows its feed resolves geography through.
 
-The first three and selection reach this unit only through `StructuralHierarchyLookup`; the other
-three are the capabilities it owns. No uncovered candidate remains here.
+The first three and selection reach this unit only through `StructuralHierarchyLookup`, and
+occurrence-lifecycle and audit-log likewise read it rather than live in it; structural-hierarchy and
+sabha-definition are the capabilities it owns. No uncovered candidate remains here.
 
 ## Method
 

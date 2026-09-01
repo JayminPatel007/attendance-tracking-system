@@ -6,6 +6,7 @@ aliases: [proxy mode, acting as Sanchalak, Nirikshak, on behalf of, last seen, a
 tags: [audit, bff]
 source_paths: [
   apps/backend/attendance-service/*/src/main/**,
+  apps/backend/common-domain/src/main/java/org/sabha/common/AuthorizedAction.java,
   apps/web/src/app/sections/sanchalak-proxy/**,
   apps/backend/application-container/src/main/resources/db/changelog/slice-14/**,
   docs/adr/0001-*.md,
@@ -17,7 +18,7 @@ sources:
   - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
   - { id: context, title: "CONTEXT.md — Nirikshak, Sanchalak, Sabha Occurrence", resource: ../../../CONTEXT.md }
-last_compiled: 85eaa7a00240b54e15e35da00229a19ee8c71ce7
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Sanchalak Proxy
@@ -71,7 +72,7 @@ while the Sanchalak works from the phone, so the same operations are reached fro
 
 ## Rules & authority
 
-<!-- [coverage: high -- AuthorizationEngine and the slice-14 migration read directly against ADR-0001 and CONTEXT.md] -->
+<!-- [coverage: high -- AuthorizationEngine, AuthorizedAction.SABHA_SHAPING_ACTIONS and the slice-14 migration read directly against ADR-0001 and CONTEXT.md's Nirikshak entry] -->
 
 - **Scope is the explicit assignment, not the role.** `nirikshak_sabha_assignments` is what the engine
   checks; a Nirikshak is refused on any Sabha outside it, even inside their own Kshetra. This is a
@@ -80,6 +81,13 @@ while the Sanchalak works from the phone, so the same operations are reached fro
 - **The proxy borrows the shaping set, and only it.** `SABHA_SHAPING_ACTIONS` is what the engine
   grants an assigned Nirikshak; the web toolkit surfaces three. It is not a second reopen
   path; reopen resolves through the role row.
+  **Three claims, not a conflict:** CONTEXT.md's Nirikshak entry also lists five proxy powers, and it
+  is a *different* five. Cancel, reschedule and standing-schedule change are in both;
+  `VENUE_OVERRIDE` and `CREATE_OCCURRENCE` are in the set and not in CONTEXT.md; and CONTEXT.md's
+  marking, walk-ins and directory-add are outside the set entirely — `canUserDo` returns `false` for
+  anything that is neither shaping nor `REOPEN`, so whatever grants those three, it is not this
+  engine. So: five in the set, five in CONTEXT.md, three in the toolkit — the last being the shipped
+  surface, not the granted one.
 - **Attribution is two ids, never one.** `actor_user_id` is the Nirikshak who acted;
   `on_behalf_of_user_id` is the Sanchalak it was done for. A Sanchalak acting on their own Sabha
   leaves the second null, so *"find all proxy actions"* is a partial index over non-null.
