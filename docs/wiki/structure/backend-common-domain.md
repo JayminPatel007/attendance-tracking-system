@@ -116,9 +116,13 @@ objects; the rows behind them belong to the context that implements the correspo
 - [sabha-definition](../features/sabha-definition.md)
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md)
 - [sanchalak-proxy](../features/sanchalak-proxy.md)
+- [selection](../features/selection.md)
+- [dashboards](../features/dashboards.md)
+- [audit-log](../features/audit-log.md)
 
-Nine of nine so far, which is what a shared-kernel page should look like: this unit is crossed by
-nearly every capability rather than implementing one.
+Twelve of thirteen, which is what a shared-kernel page should look like: this unit is crossed by
+nearly every capability rather than implementing one. The exception is
+[re-engagement](../features/re-engagement.md), which runs entirely inside analytics and needs no port.
 
 ## Method
 

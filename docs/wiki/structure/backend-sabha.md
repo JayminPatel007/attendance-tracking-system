@@ -133,9 +133,11 @@ exception — it soft-retires via `retired_at`/`retired_by` rather than deleting
 - [structural-hierarchy](../features/structural-hierarchy.md) — City, Zone and Kshetra creation and deletion.
 - [sabha-definition](../features/sabha-definition.md) — the `Sabha` and `SabhaKind` aggregates and the Kind lifecycle.
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the schedule and shape lookups the scanners resolve slots through.
+- [selection](../features/selection.md) — for the selective Sabha derivation in the same lookup.
+- [audit-log](../features/audit-log.md) — for the structural rows its feed resolves geography through.
 
-The first three reach this unit only through `StructuralHierarchyLookup`; the last three are the
-capabilities it owns. No uncovered candidate remains here.
+The first three and selection reach this unit only through `StructuralHierarchyLookup`; the other
+three are the capabilities it owns. No uncovered candidate remains here.
 
 ## Method
 

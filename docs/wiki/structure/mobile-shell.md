@@ -159,9 +159,10 @@ by a zero-hit grep for every browser persistence API.
 - [authentication](../features/authentication.md) — `lib/auth/` and `lib/password_reset/`.
 - [home-sabha-transfer](../features/home-sabha-transfer.md) — `lib/home_sabha_transfer/`.
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — `lib/occurrence_control/` and `lib/monthly_occurrence/`.
+- [selection](../features/selection.md) — `lib/selection/`, the nominate screen.
 
-Still uncovered: `lib/selection/`, a dossier candidate. `password-reset`, listed here as a candidate
-before, was **merged** into [authentication](../features/authentication.md).
+Every `lib/` feature directory is now covered. `password-reset`, listed here as a candidate before,
+was **merged** into [authentication](../features/authentication.md).
 
 ## Method
 

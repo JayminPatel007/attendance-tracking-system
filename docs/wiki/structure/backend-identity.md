@@ -153,8 +153,12 @@ belongs in `notes/`, not here.
 - [sabha-definition](../features/sabha-definition.md) — the `sabhadefinition` package.
 - [structural-hierarchy](../features/structural-hierarchy.md)
 - [sanchalak-proxy](../features/sanchalak-proxy.md)
+- [selection](../features/selection.md) — the `selection` package.
+- [audit-log](../features/audit-log.md) — the `VisibleSections` nav gate.
+- [dashboards](../features/dashboards.md) and [re-engagement](../features/re-engagement.md) — for tables analytics reads:
+  `users` and `home_sabhas`.
 
-Uncovered: selection, mk-bootstrap.
+Uncovered: mk-bootstrap.
 
 ## Method
 

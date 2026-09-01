@@ -139,8 +139,13 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the reopen section only.
 - [sanchalak-proxy](../features/sanchalak-proxy.md)
 
-Not [attendance-marking](../features/attendance-marking.md): web has no marking surface beyond the reopen. Uncovered:
-selection, audit-log, dashboards.
+- [selection](../features/selection.md)
+- [audit-log](../features/audit-log.md)
+- [dashboards](../features/dashboards.md)
+- [re-engagement](../features/re-engagement.md)
+
+Not [attendance-marking](../features/attendance-marking.md): web has no marking surface beyond the reopen. Nothing
+uncovered remains.
 
 ## Method
 
