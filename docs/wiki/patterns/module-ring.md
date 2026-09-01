@@ -5,9 +5,8 @@ description: The five-module Clean-Architecture ring every backend bounded conte
 aliases: [ring, the hexagon, five modules, Clean Architecture, domain-core, application-service, data-access]
 source_paths: [
   apps/backend/pom.xml,
-  apps/backend/*-service/pom.xml,
-  apps/backend/*-domain/pom.xml,
-  apps/backend/application-container/pom.xml,
+  apps/backend/*/pom.xml,
+  docs/adr/0014-*.md,
   docs/adr/0015-*.md,
   docs/adr/0017-*.md,
   docs/adr/0018-*.md,
@@ -15,6 +14,7 @@ source_paths: [
   CONTEXT.md
 ]
 sources:
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
   - { id: adr-0017, title: "REST adapters live in `*-application` modules", resource: ../../adr/0017-rest-adapters-live-in-application-modules.md }
   - { id: adr-0018, title: "Application services split: `*-application` vs `*-application-service`", resource: ../../adr/0018-application-service-split.md }
@@ -48,25 +48,25 @@ Three properties follow, and they are what makes the shape worth naming once:
   `-domain-core` cannot acquire a Spring dependency by accident.
 - **Cross-context traffic leaves through `common-domain` ports**, implemented in the owning
   context's `-data-access`. That is the same seam [authorization](authorization.md) travels on.
-- **All five ship even when empty.** `<ctx>-messaging` is often a lone `package-info.java`;
-  ADR-0014's pay-the-scaffolding-cost-up-front principle is what keeps it there.
+- **All five ship even when empty.** `<ctx>-messaging` is often a lone `package-info.java`, and
+  that is the policy working rather than a unit half-built.
 
 Because the ring is identical everywhere, each unit's page carries the same five rows and only its
 `Holds` column says anything unit-specific.
 
 ## Why
 
-<!-- [coverage: high -- ADR-0019 and the three ADRs it supersedes] -->
+<!-- [coverage: high -- ADR-0019's own supersession table, plus ADR-0014 for the scaffolding policy] -->
 
-ADR-0019 is the settled shape and **supersedes ADR-0015, ADR-0017 and ADR-0018**; the trail is worth
-keeping because the two boundaries it moved are the two a reader still gets wrong. ADR-0015 cut three
-modules per context and put use cases in a pure-Java `*-application`. ADR-0017 then let that module
-hold REST controllers *and* use cases. ADR-0018 split the application tier by *single-versus-cross
-aggregate* — a real distinction, but not a ring boundary, so the module names stopped matching the
-layer names. ADR-0019 recut the split by **layer**: presentation in `*-application`, orchestration in
-`*-application-service`. `bootstrap` became `application-container` and `shared-kernel` became
-`common-domain` in the same pass, so any older name in a comment is stale rather than a module you
-have not found.
+ADR-0019 is the settled shape and **supersedes ADR-0015, ADR-0017 and ADR-0018**. What it moved is
+one boundary: the earlier layout cut the application tier by *single-versus-cross aggregate*, which
+is a real distinction but not a ring, so the module names stopped naming layers. ADR-0019 recut it by
+**layer** — presentation in `*-application`, orchestration in `*-application-service` — which is why
+the module list reads as a ring today and why the older ADRs are worth reaching for only to date a
+comment. The two renames landed in the same pass: `bootstrap` → `application-container`,
+`shared-kernel` → `common-domain`. An older name in a comment is stale, not a module you have not
+found. Shipping all five modules empty is ADR-0014's pay-the-scaffolding-cost-up-front principle,
+not a per-context decision.
 
 ## Where it appears
 

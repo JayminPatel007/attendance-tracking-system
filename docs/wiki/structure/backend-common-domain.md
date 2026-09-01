@@ -45,8 +45,8 @@ cross-context, and when in doubt it stays in the context that originated it.
 <!-- [coverage: high -- directory listing; 37 main source files] -->
 
 A **single flat module** with one package, `org.sabha.common` — no ring, because there is nothing
-to ring. It is a leaf that the ring modules of all four contexts depend on, and one of the two
-deviations from [module-ring](../patterns/module-ring.md).
+to ring. It is a leaf that the ring modules of all four contexts depend on — a deviation from
+[module-ring](../patterns/module-ring.md).
 
 | Group | Types |
 |---|---|

@@ -43,8 +43,8 @@ global error contract, the cron triggers, and the **entire database schema**.
 
 <!-- [coverage: high -- full file listing; only 10 main Java files] -->
 
-Flat — no ring, because there is no domain here: this unit is the outermost ring, and the other
-deviation from [module-ring](../patterns/module-ring.md). Ten classes plus resources.
+Flat — no ring, because there is no domain here: a deviation from
+[module-ring](../patterns/module-ring.md). Ten classes plus resources.
 
 | Class | Role |
 |---|---|

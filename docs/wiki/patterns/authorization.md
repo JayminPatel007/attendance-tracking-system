@@ -11,6 +11,7 @@ source_paths: [
   apps/backend/**/DashboardAccess.java,
   apps/backend/**/AuditLogAccess.java,
   apps/backend/**/VisibleSections.java,
+  apps/backend/common-domain/src/main/java/org/sabha/common/*Lookup.java,
   apps/backend/common-domain/src/main/java/org/sabha/common/Role.java,
   apps/backend/common-domain/src/main/java/org/sabha/common/OversightRole.java,
   apps/backend/common-domain/src/main/java/org/sabha/common/AuthorizedAction.java,
@@ -42,7 +43,7 @@ last_compiled: 18c0993c1c22d3217d62a879beed639914f74aee
 
 ## The pattern
 
-<!-- [coverage: high -- the five engines' class javadocs and constructors, read against ADR-0025 and ADR-0027] -->
+<!-- [coverage: high -- the six engines' class javadocs and constructors, read against ADR-0025 and ADR-0027] -->
 
 Every *"may this caller do it?"* is answered by an **Authorization Engine**: a stateless class in the
 owning context's `-application-service` ring that takes the caller and the target, and returns a
@@ -92,16 +93,16 @@ relocates complexity instead of removing it, so the plurality below is the decis
 | `SabhaDefinitionAuthorization` | [backend-identity](../structure/backend-identity.md) | point — is the caller the Nirdeshak over this `(Kshetra, demographic)`? |
 | `StructuralScopeAuthority` | [backend-sabha](../structure/backend-sabha.md) | tiered — does the caller hold the scope one tier above? Create and delete share it |
 | `AuthorizationEngine` | [backend-attendance](../structure/backend-attendance.md) | point, keyed by the target Sabha — shaping, plus the Nirikshak proxy |
-| `AuthorizationEngine` (`REOPEN`) | [backend-attendance](../structure/backend-attendance.md) | scope-resolving — Sabha → `(Kshetra, demographic)`, then the Kshetra tiers only |
-| `AuditLogAccess` | [backend-analytics](../structure/backend-analytics.md) | enumeration — fold the caller's whole geography into a sealed `AuditScope` |
+| `AuthorizationEngine` (`REOPEN`) | [backend-attendance](../structure/backend-attendance.md) | scope-resolving — Sabha → `(Kshetra, demographic)`, then the Kshetra tiers only (ADR-0001) |
+| `AuditLogAccess` | [backend-analytics](../structure/backend-analytics.md) | enumeration — fold the caller's whole geography into a sealed `AuditScope` (ADR-0023) |
 | `DashboardAccess` | [backend-analytics](../structure/backend-analytics.md) | non-role policy — Sant universal read plus a persisted default City |
 | the ports and the vocabulary | [backend-common-domain](../structure/backend-common-domain.md) | the seam itself: the lookups, `Role`, `OversightRole`, `AuthorizedAction`, `AuditReadAccess` |
 | marking and reopen, end to end | [attendance-marking](../features/attendance-marking.md) | the same rules seen from the capability side |
-| section visibility | [web](../structure/web.md) | what the client renders once the BFF has decided |
+| section visibility | [web](../structure/web.md) | the client edge — renders what the BFF decided, and decides nothing (see `Deviations`) |
 
 ## Deviations
 
-<!-- [coverage: medium -- the four cases are each verified in source; that the list is exhaustive is not] -->
+<!-- [coverage: medium -- the five cases are each verified in source; that the list is exhaustive is not] -->
 
 - **`DashboardAccess` reads no roles.** It consults `SantLookup` and a persisted City and nothing
   else, so it is an engine by shape and contract but not by input — the fourth row of ADR-0027's

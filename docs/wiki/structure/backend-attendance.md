@@ -76,8 +76,8 @@ goes through it rather than touching `OccurrenceRepository` directly.
 | `/bff/proxy/*` | web | `SanchalakProxyBffController` |
 
 The split is ADR-0003 in one table: the Sanchalak's capture surface is `/api/*`, and the two
-higher-tier interventions (reopen, Nirikshak proxy) are `/bff/*`. Which tier may do which is
-`AuthorizationEngine`'s call — see [authorization](../patterns/authorization.md).
+higher-tier interventions (reopen, Nirikshak proxy) are `/bff/*`; which tier may do which is
+[authorization](../patterns/authorization.md).
 
 ## Talks To
 

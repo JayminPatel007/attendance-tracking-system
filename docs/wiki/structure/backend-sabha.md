@@ -71,8 +71,7 @@ ADR-0003: structural creation is a web-tier job.
 | `/bff/sabhas/mine`, `DELETE /bff/sabhas/{id}` | web | `SabhaListController`, `StructuralDeletionController` |
 
 `POST /bff/sabhas` is **not** here — Sabha definition is served by [backend-identity](backend-identity.md), because the
-authority check is identity's under ADR-0029 even though the Sabha it creates is this unit's. That
-split, and `StructuralScopeAuthority`'s shared create/delete predicate, are
+authority check is identity's under ADR-0029 even though the Sabha it creates is this unit's — see
 [authorization](../patterns/authorization.md).
 
 ## Talks To
