@@ -1,21 +1,31 @@
 #!/usr/bin/env python3
 """Deterministic linter for docs/wiki. No LLM, no network, stdlib only.
 
+The wiki is an **OKF v0.2 knowledge bundle** (docs/wiki/protocol.md). This script is
+the bundle's conformance checker as well as its producer linter — per the OKF
+reference-bundle research (#171) it is, as far as that survey could tell, the first
+§11 checker in existence: the spec ships no schema, no validator and no CI job.
+
 Implements the nine checks fixed in docs/wiki/protocol.md §9:
 
-  1. every [[slug]] resolves to an existing page
-  2. slugs are globally unique across kinds, and match their filename
-  3. relative links in `Sources` and reference paths in frontmatter resolve on disk
-  4. every prose section carries a coverage tag with a valid level (compiled kinds only)
-  5. the checkpoint (last_compiled / last_verified) is present and is a real commit
+  1. every in-wiki markdown link resolves AND its text is the target's filename stem
+  2. filename stems are unique across kind dirs, and index.md lists every page once
+  3. frontmatter conformance: §11 clauses 1-2, the required fields, and `sources[]`
+  4. every prose section carries a coverage tag with a valid level (compiled types)
+  5. the checkpoint is a real commit, and `status` is `disputed` or `deprecated`
   6. every source_paths glob still matches at least one file  <- the orphan check
-  7. skeleton conformance: fixed per-kind sections, in order, empties written `_none_`
+  7. skeleton conformance: fixed per-type sections, in order, empties written `_none_`
   8. prose word count is within the §2 budget  <- a WARNING, never affects the exit code
-  9. every ADR in `decisions:` is also watched by a `source_paths` glob
+  9. every in-repo `sources[].resource` is watched by a `source_paths` glob
 
-Linted files are index.md plus every page under the four kind directories.
+§11 conformance is spread across those numbers rather than spending one of its own
+(protocol.md §9): clause 1 (parseable frontmatter) and clause 2 (`type` present and
+non-empty) are check 3's first two assertions, and clause 3 (`index.md` follows §8)
+is the index skeleton in check 7 plus the index frontmatter rule in check 3.
+
+Linted files are index.md plus every page under the four type directories.
 `protocol.md` and `log.md` are excluded: protocol.md documents the contract and so
-quotes illustrative slugs and skeletons that are not real links.
+quotes illustrative links and skeletons that are not real.
 
 Usage:  docs/wiki/lint [repo-root]
 Exit:   0 clean, 1 on any failure, 2 on a usage/setup error.
@@ -23,6 +33,7 @@ Exit:   0 clean, 1 on any failure, 2 on a usage/setup error.
 
 from __future__ import annotations
 
+import functools
 import glob as globlib
 import os
 import re
@@ -30,13 +41,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-KIND_DIRS = {
+TYPE_DIRS = {
     "structure": "structure",
     "feature": "features",
-    "concept": "concepts",
+    "pattern": "patterns",
     "note": "notes",
 }
-COMPILED_KINDS = ("structure", "feature", "concept")
+COMPILED_TYPES = ("structure", "feature", "pattern")
+
+# The version of the OKF spec this bundle is written against. Declared once, at the
+# bundle root, and nowhere else (protocol.md §3).
+OKF_VERSION = "0.2"
 
 SKELETONS = {
     "structure": [
@@ -47,7 +62,7 @@ SKELETONS = {
         "Data",
         "Gotchas",
         "Covered by",
-        "Sources",
+        "Method",
     ],
     "feature": [
         "What it does",
@@ -55,46 +70,77 @@ SKELETONS = {
         "Rules & authority",
         "Where the code is",
         "Amendments",
-        "Sources",
+        "Method",
     ],
-    "concept": [
+    "pattern": [
         "The pattern",
         "Why",
         "Where it appears",
         "Deviations",
-        "Sources",
+        "Method",
+    ],
+    # index.md's sections were already fixed and ordered; §11 clause 3 asks that the
+    # bundle root follow §8, and this is what that assertion looks like here.
+    "index": [
+        "Start here",
+        "Structure",
+        "Features",
+        "Patterns",
+        "Notes",
     ],
 }
 
-# `Sources` is exempt from coverage tags: it *is* the evidence, not a derivation from it.
-COVERAGE_EXEMPT_SECTIONS = {"Sources"}
+# The catalog table under each of these index headings, and the type it lists.
+CATALOG_SECTIONS = {
+    "Structure": "structure",
+    "Features": "feature",
+    "Patterns": "pattern",
+    "Notes": "note",
+}
+
+# `Method` is exempt from coverage tags: it is a statement of *how the page was
+# compiled*, which is no more a derivation from evidence than evidence is
+# (protocol.md §4).
+COVERAGE_EXEMPT_SECTIONS = {"Method"}
+
+# The closed tag vocabulary (protocol.md §3). Closed because tags *partition*: an
+# open vocabulary over 14 pages degrades silently into authz/auth/authorization.
+TAGS = {"offline-sync", "audit", "bff"}
 
 # Prose-word budgets (protocol.md §2). `structure` is derived (n=6); `feature` is
-# provisional (n=1); `concept` inherits `feature`'s until one is measured.
+# provisional (n=1); `pattern` inherits `feature`'s until one is measured.
 BUDGETS = {
     "structure": 550,
     "feature": 750,
-    "concept": 750,
+    "pattern": 750,
 }
 
 CHECKPOINT_FIELD = {
     "structure": "last_compiled",
     "feature": "last_compiled",
-    "concept": "last_compiled",
+    "pattern": "last_compiled",
     "note": "last_verified",
 }
 
-WIKILINK = re.compile(r"\[\[([a-z0-9][a-z0-9-]*)\]\]")
+STORED_STATUSES = ("disputed", "deprecated")
+STATUS_REASON = {"disputed": "disputed_reason", "deprecated": "deprecated_reason"}
+
 HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 COVERAGE = re.compile(r"^<!--\s*\[coverage:\s*(high|medium|low)(\s+--\s+\S.*?)?\s*\]\s*-->$")
-MD_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+MD_LINK = re.compile(r"\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 SHA = re.compile(r"^[0-9a-f]{40}$")
-ADR_ID = re.compile(r"^ADR-(\d{4})$")
+ADR_SOURCE_ID = re.compile(r"^adr-(\d{4})$")
+SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+URL_SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*:")
+
+SOURCE_KEYS = ("id", "title", "resource")
 
 
 class Page:
-    def __init__(self, path: Path, rel: str, meta: dict, body: list[str], body_offset: int):
+    def __init__(self, path: Path, rel: str, meta: dict, body: list[str], body_offset: int,
+                 is_index: bool = False):
         self.path = path
+        self.is_index = is_index
         self.rel = rel
         self.meta = meta
         self.body = body            # list of lines, frontmatter stripped
@@ -104,8 +150,22 @@ class Page:
         return self.body_offset + idx
 
     @property
-    def kind(self) -> str:
-        return self.meta.get("kind", "")
+    def type(self) -> str:
+        """`index` is a position in the bundle, not a frontmatter value.
+
+        §11 clause 3 makes the bundle root the one file that carries no `type` (it may
+        carry `okf_version` and nothing else), so index-ness is tracked here rather
+        than injected into `meta`, where check 3 would then report it as an extra key.
+        """
+        return "index" if self.is_index else self.meta.get("type", "")
+
+    @property
+    def stem(self) -> str:
+        return self.path.stem
+
+    @property
+    def deprecated(self) -> bool:
+        return self.meta.get("status") == "deprecated"
 
 
 class Failures:
@@ -127,24 +187,89 @@ class Warnings(Failures):
 # --------------------------------------------------------------------------- parsing
 
 
-def parse_frontmatter(lines: list[str]) -> tuple[dict, list[str], int]:
-    """Minimal YAML-subset reader: `key: scalar` and `key: [a, b]`, the list
-    optionally spread over several lines.
+def split_outside_quotes(text: str, sep: str) -> list[str]:
+    """Split on `sep`, ignoring separators inside double quotes.
 
-    The wiki's frontmatter schema (protocol.md §3) is flat by construction, so a
-    real YAML parser would buy nothing and would drag in a dependency this script
-    exists to avoid. Multi-line lists are supported because `source_paths` now
-    carries a page's ADR globs alongside its code globs (protocol.md §3) — ten-odd
-    entries that are unreadable on one line.
+    Needed because a source's `title` is a real sentence: four ADR titles in this
+    repo contain a comma and two contain a colon.
+    """
+    out: list[str] = []
+    buf: list[str] = []
+    in_quotes = False
+    for ch in text:
+        if ch == '"':
+            in_quotes = not in_quotes
+            buf.append(ch)
+        elif ch == sep and not in_quotes:
+            out.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    out.append("".join(buf))
+    return out
+
+
+def strip_inline_comment(value: str) -> str:
+    """Drop a trailing ` # comment`, but never a `#` inside quotes or a path."""
+    in_quotes = False
+    for i, ch in enumerate(value):
+        if ch == '"':
+            in_quotes = not in_quotes
+        elif ch == "#" and not in_quotes and i > 0 and value[i - 1].isspace():
+            return value[:i]
+    return value
+
+
+def unquote(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
+def parse_flow_mapping(text: str) -> dict:
+    """`{ id: adr-0015, title: "…", resource: ../../adr/0015-….md }` -> dict."""
+    text = text.strip()
+    if text.startswith("{"):
+        text = text[1:]
+    if text.endswith("}"):
+        text = text[:-1]
+    entry: dict = {}
+    for chunk in split_outside_quotes(text, ","):
+        if not chunk.strip():
+            continue
+        key, sep, value = chunk.partition(":")
+        if not sep:
+            entry.setdefault("__malformed__", []).append(chunk.strip())
+            continue
+        entry[key.strip()] = unquote(value)
+    return entry
+
+
+def parse_frontmatter(lines: list[str]) -> tuple[dict, list[str], int, bool]:
+    """Minimal YAML-subset reader.
+
+    Handles `key: scalar`, `key: [a, b]` (the list optionally spread over several
+    lines), and a block sequence of flow mappings for `sources:`. The wiki's
+    frontmatter schema (protocol.md §3) is flat by construction apart from
+    `sources[]`, so a real YAML parser would buy little and would drag in the
+    dependency this script exists to avoid.
+
+    The multi-line handling is deliberate and load-bearing twice over: `source_paths`
+    carries a page's ADR globs alongside its code globs, and `sources[]` is one line
+    per document. An earlier single-line-only parser silently dropped everything past
+    the first entry — one of the two mechanism bugs #160 found.
+
+    Returns (meta, body, body_offset, had_frontmatter).
     """
     if not lines or lines[0].strip() != "---":
-        return {}, lines, 1
+        return {}, lines, 1, False
 
     meta: dict = {}
     i = 1
     while i < len(lines):
         if lines[i].strip() == "---":
-            return meta, lines[i + 1:], i + 2
+            return meta, lines[i + 1:], i + 2, True
         raw = lines[i]
         i += 1
         if not raw.strip() or raw.lstrip().startswith("#"):
@@ -153,20 +278,33 @@ def parse_frontmatter(lines: list[str]) -> tuple[dict, list[str], int]:
             continue
         key, _, value = raw.partition(":")
         key = key.strip()
-        # A list may be spread over several lines; absorb until the closing bracket.
+
+        # A block sequence: `sources:` followed by `  - { … }` lines.
+        if not value.strip():
+            entries: list[dict] = []
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                entries.append(parse_flow_mapping(lines[i].strip()[2:]))
+                i += 1
+            if entries:
+                meta[key] = entries
+                continue
+            meta[key] = ""
+            continue
+
+        # A flow list may be spread over several lines; absorb until the bracket closes.
         if value.strip().startswith("[") and not value.strip().endswith("]"):
             while i < len(lines) and lines[i].strip() != "---":
                 value += " " + lines[i].strip()
                 i += 1
                 if value.rstrip().endswith("]"):
                     break
-        value = value.split("#", 1)[0].strip() if key != "disputed_reason" else value.strip()
-        if value.startswith("[") and value.endswith("]") and "[[" not in value:
+        value = strip_inline_comment(value).strip()
+        if value.startswith("[") and value.endswith("]"):
             inner = value[1:-1].strip()
-            meta[key] = [v.strip() for v in inner.split(",") if v.strip()]
+            meta[key] = [unquote(v) for v in split_outside_quotes(inner, ",") if v.strip()]
         else:
-            meta[key] = value
-    return meta, [], len(lines) + 1
+            meta[key] = unquote(value)
+    return meta, [], len(lines) + 1, True
 
 
 def sections(page: Page) -> list[tuple[str, int, list[str]]]:
@@ -195,69 +333,283 @@ def strip_comments(text: str) -> str:
     return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
+def as_list(value) -> list:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return []
+
+
 # --------------------------------------------------------------------------- checks
 
 
-def check_1_wikilinks(pages: list[Page], slugs: set[str], f: Failures) -> None:
+def check_1_links(pages: list[Page], wiki: Path, stems: set[str], f: Failures) -> None:
+    """The in-wiki namespace: the href resolves, and the text is the target's stem.
+
+    Strictly stronger than the `[[slug]]` check it replaces (protocol.md §8): that
+    one could only assert the slug named a page, this one asserts the path resolves
+    *and* the text is right. A dangling link is now a 404 on GitHub rather than inert
+    text, so tolerating one costs more than it used to.
+    """
     for page in pages:
+        in_fence = False
         for idx, line in enumerate(page.body):
-            for m in WIKILINK.finditer(line):
-                if m.group(1) not in slugs:
-                    f.add(1, page.rel, page.line_no(idx), f"[[{m.group(1)}]] resolves to no page")
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            for m in MD_LINK.finditer(line):
+                text, href = m.group(1), m.group(2)
+                target = href.split("#", 1)[0]
+                if not target or URL_SCHEME.match(target):
+                    continue
+                resolved = (page.path.parent / target).resolve()
+                try:
+                    resolved.relative_to(wiki.resolve())
+                except ValueError:
+                    continue  # out of the wiki — check 3's namespace, not this one
+                if resolved.suffix != ".md":
+                    continue
+                if not resolved.exists():
+                    f.add(1, page.rel, page.line_no(idx),
+                          f"in-wiki link `{target}` resolves to no page")
+                elif text != resolved.stem:
+                    f.add(1, page.rel, page.line_no(idx),
+                          f"in-wiki link text `{text}` is not the target's filename stem "
+                          f"`{resolved.stem}` (protocol.md §8)")
+        # `bears_on` / `appears_in` take bare stems: frontmatter is machine-read and
+        # never rendered, so the argument that won the body links has no purchase here.
         for key in ("bears_on", "appears_in"):
-            value = page.meta.get(key)
-            if isinstance(value, str):
-                for m in WIKILINK.finditer(value):
-                    if m.group(1) not in slugs:
-                        f.add(1, page.rel, None, f"frontmatter {key}: [[{m.group(1)}]] resolves to no page")
+            for entry in as_list(page.meta.get(key)):
+                if entry not in stems:
+                    f.add(1, page.rel, None,
+                          f"frontmatter {key}: `{entry}` resolves to no page")
 
 
-def check_2_slugs(pages: list[Page], f: Failures) -> None:
+def catalog_rows(index: Page) -> dict[str, list[tuple[int, list[str]]]]:
+    """Per catalog section, the table rows as (line-index, cells)."""
+    out: dict[str, list[tuple[int, list[str]]]] = {}
+    for title, head_idx, content in sections(index):
+        if title not in CATALOG_SECTIONS:
+            continue
+        rows: list[tuple[int, list[str]]] = []
+        for offset, line in enumerate(content):
+            stripped = line.strip()
+            if not stripped.startswith("|"):
+                continue
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if not cells or set("".join(cells)) <= set("-: "):
+                continue  # the separator row
+            if cells[0] == "Page":
+                continue  # the header row
+            rows.append((head_idx + 1 + offset, cells))
+        out[title] = rows
+    return out
+
+
+def check_2_identity(pages: list[Page], index: Page | None, f: Failures) -> None:
+    """Filename identity, plus the catalog as a pure function of the pages.
+
+    #176 collapsed this check from three assertions to one when `slug` died — the
+    filename became the single identity — which left it room for the catalog, whose
+    load-bearing invariant is protocol.md §4's *every page exactly once*. Note the
+    direction: check 1 asserts link -> page; this asserts **page -> link**, and it is
+    the reverse edge that catches a page the sweep forgot to list.
+    """
     seen: dict[str, str] = {}
     for page in pages:
-        if page.kind == "index":
+        if page.type == "index":
             continue
-        slug = page.meta.get("slug")
-        if not isinstance(slug, str) or not slug:
-            f.add(2, page.rel, None, "missing frontmatter `slug`")
-            continue
-        stem = page.path.stem
-        if slug != stem:
-            f.add(2, page.rel, None, f"slug `{slug}` does not match filename `{stem}.md`")
-        if slug in seen:
-            f.add(2, page.rel, None, f"slug `{slug}` is already used by {seen[slug]}")
+        stem = page.stem
+        if stem in seen:
+            f.add(2, page.rel, None,
+                  f"filename stem `{stem}` is already used by {seen[stem]} — stems are the "
+                  "page identity and must be unique across type directories")
         else:
-            seen[slug] = page.rel
+            seen[stem] = page.rel
+
+    if index is None:
+        return
+    rows = catalog_rows(index)
+    listed: dict[str, tuple[int, list[str]]] = {}
+    for title, entries in rows.items():
+        for line, cells in entries:
+            m = MD_LINK.search(cells[0]) if cells else None
+            if not m:
+                f.add(2, index.rel, line, f"catalog row under `{title}` has no page link")
+                continue
+            stem = Path(m.group(2).split("#", 1)[0]).stem
+            if stem in listed:
+                f.add(2, index.rel, line, f"`{stem}` is listed in the catalog more than once")
+                continue
+            listed[stem] = (line, cells)
+
+    for page in pages:
+        if page.type == "index":
+            continue
+        if page.stem not in listed:
+            f.add(2, index.rel, None,
+                  f"`{page.stem}` is not listed in any catalog — protocol.md §4 requires "
+                  "every page exactly once, which is what makes orphan detection possible")
+            continue
+        line, cells = listed.pop(page.stem)
+        expected_middle = (page.meta.get("resource") if page.type == "structure"
+                           else page.meta.get("description"))
+        middle = cells[1] if len(cells) > 1 else ""
+        middle_bare = middle.strip("`")
+        if expected_middle and middle_bare != str(expected_middle):
+            f.add(2, index.rel, line,
+                  f"`{page.stem}` catalog cell 2 is {middle_bare!r}, but its frontmatter says "
+                  f"{str(expected_middle)!r} — the catalog is a pure function of the pages")
+        expected_aliases = ", ".join(as_list(page.meta.get("aliases")))
+        actual_aliases = cells[2] if len(cells) > 2 else ""
+        if actual_aliases != expected_aliases:
+            f.add(2, index.rel, line,
+                  f"`{page.stem}` catalog cell 3 is {actual_aliases!r}, but its frontmatter "
+                  f"`aliases` say {expected_aliases!r}")
+        marked = "(deprecated)" in cells[0]
+        if page.deprecated and not marked:
+            f.add(2, index.rel, line,
+                  f"`{page.stem}` is `status: deprecated` but its catalog row carries no "
+                  "`(deprecated)` marker (protocol.md §6)")
+        elif marked and not page.deprecated:
+            f.add(2, index.rel, line,
+                  f"`{page.stem}` is marked `(deprecated)` in the catalog but its frontmatter "
+                  "is not")
+
+    for stem, (line, _) in listed.items():
+        f.add(2, index.rel, line, f"catalog lists `{stem}`, which is not a page in this wiki")
 
 
-def check_3_paths(pages: list[Page], root: Path, f: Failures) -> None:
+def check_3_frontmatter(pages: list[Page], root: Path, wiki: Path, f: Failures) -> None:
+    """Frontmatter conformance, and the out-of-wiki link namespace.
+
+    Carries OKF §11 clauses 1 and 2 (parseable frontmatter; `type` present and
+    non-empty) alongside this producer's own required fields. Skipped entirely on a
+    `status: deprecated` page: every assertion here claims the subject still exists,
+    which is exactly what a deprecation retracts (protocol.md §6).
+    """
     adr_dir = root / "docs" / "adr"
     for page in pages:
-        for title, head_idx, content in sections(page):
-            if title != "Sources":
+        if page.type == "index":
+            if set(page.meta) - {"okf_version"}:
+                f.add(3, page.rel, None,
+                      f"index frontmatter may carry nothing but `okf_version`; found "
+                      f"{sorted(page.meta)} (OKF §8: only the bundle root declares it)")
+            elif page.meta.get("okf_version") != OKF_VERSION:
+                f.add(3, page.rel, None,
+                      f"`okf_version: {page.meta.get('okf_version')!r}` — this bundle is "
+                      f"written against OKF v{OKF_VERSION}")
+            continue
+        if page.deprecated:
+            continue
+
+        expected_dir = TYPE_DIRS.get(page.type)
+        if expected_dir is None:
+            f.add(3, page.rel, None,
+                  f"frontmatter `type: {page.type or '(missing)'}` is not one of "
+                  f"{sorted(TYPE_DIRS)} (OKF §11 clause 2)")
+            continue
+        if page.path.parent.name != expected_dir:
+            f.add(3, page.rel, None, f"type `{page.type}` belongs in docs/wiki/{expected_dir}/")
+
+        title = page.meta.get("title")
+        if not isinstance(title, str) or not title.strip():
+            f.add(3, page.rel, None, "missing frontmatter `title`")
+        description = page.meta.get("description")
+        if not isinstance(description, str) or not description.strip():
+            f.add(3, page.rel, None, "missing frontmatter `description`")
+
+        resource = page.meta.get("resource")
+        if page.type == "structure":
+            if not isinstance(resource, str) or not resource.strip():
+                f.add(3, page.rel, None,
+                      "missing frontmatter `resource` — a structure page names its build unit")
+            elif not (root / resource).exists():
+                f.add(3, page.rel, None, f"`resource: {resource}` does not exist on disk")
+            elif not any(str(g).startswith(resource) for g in as_list(page.meta.get("source_paths"))):
+                f.add(3, page.rel, None,
+                      f"`resource: {resource}` is not a prefix of any source_paths glob — the "
+                      "page would describe a unit it does not watch")
+        elif resource:
+            f.add(3, page.rel, None,
+                  f"`resource` is a `structure` field only; `{page.type}` describes a capability "
+                  "or an idea with no single asset to point at (OKF §4.1)")
+
+        for tag in as_list(page.meta.get("tags")):
+            if tag not in TAGS:
+                f.add(3, page.rel, None,
+                      f"`tags: {tag}` is outside the closed vocabulary {sorted(TAGS)} "
+                      "(protocol.md §3)")
+
+        sources = page.meta.get("sources")
+        entries = sources if isinstance(sources, list) else []
+        if page.type in COMPILED_TYPES and not entries:
+            f.add(3, page.rel, None,
+                  "missing frontmatter `sources` (at least one entry required on a "
+                  "compiled type)")
+        seen_ids: set[str] = set()
+        for entry in entries:
+            if not isinstance(entry, dict) or entry.get("__malformed__"):
+                f.add(3, page.rel, None, f"malformed `sources` entry: {entry!r}")
+                continue
+            extra = set(entry) - set(SOURCE_KEYS)
+            if extra:
+                f.add(3, page.rel, None,
+                      f"`sources` entry carries {sorted(extra)}; the keys are {list(SOURCE_KEYS)}")
+            source_id = entry.get("id", "")
+            if not source_id or not SLUG.match(source_id):
+                f.add(3, page.rel, None, f"`sources` entry id {source_id!r} is not a kebab slug")
+            elif source_id in seen_ids:
+                f.add(3, page.rel, None, f"`sources` id `{source_id}` is used twice on this page")
+            else:
+                seen_ids.add(source_id)
+            if not entry.get("title"):
+                f.add(3, page.rel, None, f"`sources` entry `{source_id}` has no `title`")
+            target = entry.get("resource", "")
+            if not target:
+                f.add(3, page.rel, None, f"`sources` entry `{source_id}` has no `resource`")
+                continue
+            if URL_SCHEME.match(target):
+                continue
+            resolved = (page.path.parent / target).resolve()
+            if not resolved.exists():
+                f.add(3, page.rel, None,
+                      f"`sources` resource `{target}` does not resolve on disk")
+                continue
+            adr = ADR_SOURCE_ID.match(source_id or "")
+            if adr and not resolved.name.startswith(f"{adr.group(1)}-"):
+                f.add(3, page.rel, None,
+                      f"`sources` id `{source_id}` names ADR {adr.group(1)} but its resource is "
+                      f"`{resolved.name}` — the stable id and the fragile path disagree")
+
+        # Out-of-wiki links in the body live in `## Method` and nowhere else. Only
+        # markdown links are path-checked: `## Method` also names globs and bare
+        # filenames, which are not followable and must not be (protocol.md §4).
+        for title_, head_idx, content in sections(page):
+            if title_ != "Method":
                 continue
             for offset, line in enumerate(content):
                 for m in MD_LINK.finditer(line):
-                    target = m.group(1).split("#", 1)[0]
-                    if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target):
-                        continue  # external scheme; out of scope for a filesystem check
+                    target = m.group(2).split("#", 1)[0]
+                    if not target or URL_SCHEME.match(target):
+                        continue
                     resolved = (page.path.parent / target).resolve()
+                    try:
+                        resolved.relative_to(wiki.resolve())
+                        continue  # in-wiki: check 1 owns it
+                    except ValueError:
+                        pass
                     if not resolved.exists():
                         f.add(3, page.rel, page.line_no(head_idx + 1 + offset),
-                              f"Sources link `{target}` does not resolve on disk")
-        decisions = page.meta.get("decisions") or []
-        if isinstance(decisions, list):
-            for entry in decisions:
-                m = ADR_ID.match(entry)
-                if not m:
-                    f.add(3, page.rel, None, f"frontmatter decisions: `{entry}` is not a bare ADR id")
-                elif not sorted(adr_dir.glob(f"{m.group(1)}-*.md")):
-                    f.add(3, page.rel, None, f"frontmatter decisions: `{entry}` matches no file in docs/adr/")
+                              f"Method link `{target}` does not resolve on disk")
 
 
 def check_4_coverage(pages: list[Page], f: Failures) -> None:
     for page in pages:
-        if page.kind not in COMPILED_KINDS:
+        if page.type not in COMPILED_TYPES:
             continue  # notes are primary evidence, not a derivation (protocol.md §5)
         for title, head_idx, content in sections(page):
             if title in COVERAGE_EXEMPT_SECTIONS:
@@ -279,20 +631,41 @@ def check_4_coverage(pages: list[Page], f: Failures) -> None:
 
 
 def check_5_checkpoint(pages: list[Page], root: Path, git_ok: bool, f: Failures) -> None:
+    """The checkpoint, and the two stored statuses.
+
+    `disputed` and `deprecated` are mutually exclusive by construction — one key
+    holding one of two directly opposed sweep instructions (protocol.md §6).
+    """
     for page in pages:
-        if page.kind == "index":
+        if page.type == "index":
             continue
-        field = CHECKPOINT_FIELD.get(page.kind)
+        field = CHECKPOINT_FIELD.get(page.type)
         if field is None:
             continue
         status = page.meta.get("status")
-        if status is not None:
-            if status != "disputed":
+        if status:
+            if status not in STORED_STATUSES:
                 f.add(5, page.rel, None,
-                      f"`status: {status}` is not a stored status — `disputed` is the only one "
-                      "(draft/current/stale/orphaned are computed or derived; protocol.md §6)")
-            elif not page.meta.get("disputed_reason"):
-                f.add(5, page.rel, None, "`status: disputed` without a `disputed_reason` line")
+                      f"`status: {status}` is not a stored status — the vocabulary is "
+                      f"{list(STORED_STATUSES)} (draft/current/stale/orphaned are computed "
+                      "or derived; protocol.md §6)")
+            else:
+                if status == "deprecated" and page.type == "note":
+                    f.add(5, page.rel, None,
+                          "`status: deprecated` is forbidden on a note — §7 already evicts a "
+                          "note by deleting it, and the link cascade `deprecated` prevents does "
+                          "not exist for notes")
+                reason = STATUS_REASON[status]
+                if not page.meta.get(reason):
+                    f.add(5, page.rel, None, f"`status: {status}` without a `{reason}` line")
+            for other, reason in STATUS_REASON.items():
+                if other != status and page.meta.get(reason):
+                    f.add(5, page.rel, None,
+                          f"`{reason}` is set but `status` is `{status}`")
+        else:
+            for reason in STATUS_REASON.values():
+                if page.meta.get(reason):
+                    f.add(5, page.rel, None, f"`{reason}` is set but `status` is not")
 
         value = page.meta.get(field)
         if not isinstance(value, str) or not value:
@@ -305,31 +678,55 @@ def check_5_checkpoint(pages: list[Page], root: Path, git_ok: bool, f: Failures)
             f.add(5, page.rel, None, f"`{field}: {value}` is not a commit in this repository")
 
 
-def check_6_orphans(pages: list[Page], root: Path, f: Failures) -> None:
+@functools.lru_cache(maxsize=None)
+def matching_files(pattern: str, root: Path, git_ok: bool) -> tuple[str, ...]:
+    """What a `source_paths` glob actually matches, under **git's** pathspec rules.
+
+    This is not a stylistic choice. Git's `**` matches one *or more* path components
+    where Python's `glob` matches zero or more, so `common-domain/**/src/main/**`
+    matches 42 files under Python and **nothing** under git — and git is the operative
+    engine, since both the sweep and the reader run `git diff`. A linter using Python's
+    semantics would let a glob lint clean and detect nothing, which is the second of
+    the two mechanism bugs #160 found. Falls back to Python only when git is
+    unavailable, where the degradation is announced.
+    """
+    if git_ok:
+        result = subprocess.run(
+            ["git", "ls-files", "-z", "--", pattern],
+            cwd=root, capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            return tuple(p for p in result.stdout.split("\0") if p)
+        return ()
+    return tuple(globlib.glob(pattern, root_dir=root, recursive=True))
+
+
+def check_6_orphans(pages: list[Page], root: Path, git_ok: bool, f: Failures) -> None:
     for page in pages:
-        if page.kind == "index":
-            continue
+        if page.type == "index" or page.deprecated:
+            continue  # a deprecation retracts the claim that the subject still exists
         patterns = page.meta.get("source_paths")
         if not isinstance(patterns, list) or not patterns:
             f.add(6, page.rel, None, "missing frontmatter `source_paths` (at least one glob required)")
             continue
         for pattern in patterns:
-            if not globlib.glob(pattern, root_dir=root, recursive=True):
+            if not matching_files(pattern, root, git_ok):
                 f.add(6, page.rel, None,
-                      f"source_paths glob `{pattern}` matches nothing — the subject may have been "
-                      "deleted or moved (orphan check)")
+                      f"source_paths glob `{pattern}` matches nothing under git — the subject may "
+                      "have been deleted or moved, or the glob may be spelled for Python's `**` "
+                      "rather than git's (orphan check; protocol.md §3)")
 
 
 def check_7_skeleton(pages: list[Page], f: Failures) -> None:
     for page in pages:
-        expected = SKELETONS.get(page.kind)
+        expected = SKELETONS.get(page.type)
         if expected is None:
             continue  # notes accrete facts, so they have no fixed section list
         found = sections(page)
         actual = [title for title, _, _ in found]
         if actual != expected:
             f.add(7, page.rel, None,
-                  f"sections do not match the {page.kind} skeleton\n"
+                  f"sections do not match the {page.type} skeleton\n"
                   f"        expected: {expected}\n"
                   f"        found:    {actual}")
             continue
@@ -361,53 +758,62 @@ def prose_words(page: Page) -> int:
 
 def check_8_budget(pages: list[Page], w: Warnings) -> None:
     for page in pages:
-        budget = BUDGETS.get(page.kind)
+        budget = BUDGETS.get(page.type)
         if budget is None:
             continue  # notes are primary evidence, not derivation — no skeleton, no budget
         count = prose_words(page)
         if count > budget:
             w.add(8, page.rel, None,
-                  f"{count} prose words against a ~{budget} budget for `{page.kind}` — "
+                  f"{count} prose words against a ~{budget} budget for `{page.type}` — "
                   "a smell, not a gate: check the admission test (protocol.md §2) before splitting")
 
 
-def check_9_adrs_watched(pages: list[Page], root: Path, f: Failures) -> None:
-    """`decisions:` must be a subset of what `source_paths` watches (protocol.md §3).
+def check_9_sources_watched(pages: list[Page], root: Path, git_ok: bool, f: Failures) -> None:
+    """Every in-repo `sources[].resource` is watched by a `source_paths` glob (§3).
 
-    ADRs are the dominant input to a page (~4,500 words), and the reader's staleness
-    check reads `source_paths` alone — so an ADR cited but not watched is invisible to
-    the sweep *and* to the reader, in the same direction. This check is what keeps the
-    two fields from drifting apart once they are written by hand.
+    This is what keeps `sources[]` from making a currency claim it cannot back. A page
+    can otherwise list a document it was derived from that nothing watches, and look
+    backed while being watched by nothing — verbatim the drift check 9 was written to
+    prevent for the `decisions:` field it replaced, and the discharge of #160's
+    binding condition on adopting `sources[]` at all.
+
+    Generalising it closed protocol.md §3 rule 2 for free: *`CONTEXT.md` on every
+    compiled page* was mandated by the contract and enforced by nothing.
     """
-    adr_dir = root / "docs" / "adr"
     for page in pages:
-        if page.kind not in COMPILED_KINDS:
-            continue  # a note's source_paths mean "what could falsify this"; ADRs don't
-        decisions = page.meta.get("decisions") or []
-        if not isinstance(decisions, list):
-            continue
+        if page.type not in COMPILED_TYPES or page.deprecated:
+            continue  # a note's source_paths mean "what could falsify this"
+        sources = page.meta.get("sources")
+        if not isinstance(sources, list):
+            continue  # check 3 already reports the missing field
         patterns = page.meta.get("source_paths")
         if not isinstance(patterns, list):
             continue  # check 6 already reports the missing field
-        # What source_paths actually watches on disk, as repo-relative paths.
-        watched_files = {
+        watched = {
             match
             for pattern in patterns
-            for match in globlib.glob(pattern, root_dir=root, recursive=True)
+            for match in matching_files(pattern, root, git_ok)
         }
-        for entry in decisions:
-            m = ADR_ID.match(entry)
-            if not m:
-                continue  # check 3 already reports a malformed id
-            number = m.group(1)
-            files = [os.path.relpath(p, root) for p in adr_dir.glob(f"{number}-*.md")]
-            if not files:
-                continue  # check 3 already reports an ADR id matching no file
-            if not any(path in watched_files for path in files):
+        for entry in sources:
+            if not isinstance(entry, dict):
+                continue
+            target = entry.get("resource", "")
+            if not target or URL_SCHEME.match(target):
+                continue  # an external URL has no source_paths analogue
+            resolved = (page.path.parent / target).resolve()
+            if not resolved.exists():
+                continue  # check 3 already reports it
+            try:
+                rel = os.path.relpath(resolved, root)
+            except ValueError:
+                continue
+            if rel.startswith(".."):
+                continue  # outside the repo entirely
+            if rel not in watched:
                 f.add(9, page.rel, None,
-                      f"`decisions: {entry}` is not watched by any source_paths glob — add "
-                      f"`docs/adr/{number}-*.md`, or the ADR can change without dirtying "
-                      "this page (protocol.md §3)")
+                      f"`sources` resource `{target}` is not watched by any source_paths glob — "
+                      "add a glob for it, or the document can change without dirtying this page "
+                      "(protocol.md §3)")
 
 
 # --------------------------------------------------------------------------- driver
@@ -428,34 +834,26 @@ def git_available(root: Path) -> bool:
     return result.returncode == 0
 
 
-def collect(wiki: Path, root: Path) -> tuple[list[Page], list[str]]:
+def collect(wiki: Path, root: Path, f: Failures) -> list[Page]:
     paths: list[Path] = []
     index = wiki / "index.md"
     if index.exists():
         paths.append(index)
-    for directory in sorted(set(KIND_DIRS.values())):
+    for directory in sorted(set(TYPE_DIRS.values())):
         paths.extend(sorted((wiki / directory).glob("*.md")))
 
     pages: list[Page] = []
-    errors: list[str] = []
     for path in paths:
         rel = os.path.relpath(path, root)
         lines = path.read_text(encoding="utf-8").splitlines()
-        meta, body, offset = parse_frontmatter(lines)
-        if not meta:
-            errors.append(f"{rel}: no frontmatter block")
+        meta, body, offset, had = parse_frontmatter(lines)
+        is_index = path.name == "index.md"
+        if not had:
+            # OKF §11 clause 1: every non-reserved .md file carries parseable frontmatter.
+            f.add(3, rel, None, "no frontmatter block (OKF §11 clause 1)")
             continue
-        kind = meta.get("kind")
-        if kind not in {"index", *KIND_DIRS}:
-            errors.append(f"{rel}: frontmatter `kind: {kind}` is not a known kind")
-            continue
-        if kind != "index":
-            expected_dir = KIND_DIRS[kind]
-            if path.parent.name != expected_dir:
-                errors.append(f"{rel}: kind `{kind}` belongs in docs/wiki/{expected_dir}/")
-                continue
-        pages.append(Page(path, rel, meta, body, offset))
-    return pages, errors
+        pages.append(Page(path, rel, meta, body, offset, is_index))
+    return pages
 
 
 def main(argv: list[str]) -> int:
@@ -465,28 +863,27 @@ def main(argv: list[str]) -> int:
         print(f"wiki lint: no wiki at {wiki}", file=sys.stderr)
         return 2
 
-    pages, errors = collect(wiki, root)
     f = Failures()
-    for error in errors:
-        f.add(0, error.split(":", 1)[0], None, error.split(":", 1)[1].strip())
-
-    slugs = {p.meta["slug"] for p in pages if isinstance(p.meta.get("slug"), str)}
+    pages = collect(wiki, root, f)
+    index = next((p for p in pages if p.type == "index"), None)
+    stems = {p.stem for p in pages if p.type != "index"}
     git_ok = git_available(root)
 
-    check_1_wikilinks(pages, slugs, f)
-    check_2_slugs(pages, f)
-    check_3_paths(pages, root, f)
+    check_1_links(pages, wiki, stems, f)
+    check_2_identity(pages, index, f)
+    check_3_frontmatter(pages, root, wiki, f)
     check_4_coverage(pages, f)
     check_5_checkpoint(pages, root, git_ok, f)
-    check_6_orphans(pages, root, f)
+    check_6_orphans(pages, root, git_ok, f)
     check_7_skeleton(pages, f)
-    check_9_adrs_watched(pages, root, f)
+    check_9_sources_watched(pages, root, git_ok, f)
 
     w = Warnings()
     check_8_budget(pages, w)
 
     if not git_ok:
-        print("wiki lint: git unavailable — check 5 degraded to a format check", file=sys.stderr)
+        print("wiki lint: git unavailable — check 5 degraded to a format check, and checks 6 "
+              "and 9 to Python glob semantics", file=sys.stderr)
 
     for item in w.items:
         print(item)

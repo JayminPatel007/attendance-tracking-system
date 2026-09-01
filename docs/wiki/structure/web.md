@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: web
+type: structure
+title: Web App
+description: The Angular admin panel and its BFF client — every operation the mobile app does not serve, section by section.
+resource: apps/web
+aliases: [the Angular admin panel, the web console, the BFF client, the sections]
+tags: [bff]
 source_paths: [
   apps/web/src/**,
   apps/web/projects/*/src/**,
@@ -18,7 +22,13 @@ source_paths: [
   docs/adr/0022-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0003, ADR-0004, ADR-0014, ADR-0016, ADR-0022]
+sources:
+  - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
+  - { id: adr-0004, title: "User Authentication: Custom Username + Password, Set by Assigner", resource: ../../adr/0004-user-authentication-username-password.md }
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
+  - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
+  - { id: context, title: "CONTEXT.md — Sanyojak, Nirdeshak, Sant, Madhyastha Karyalaya, Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: 9f14fa74fb1391c231274460d34b82ed34b17e18
 ---
 
@@ -78,12 +88,12 @@ of the generated client's `/api/*` services are compiled in and unused.
 
 | Prefix | Served by |
 |---|---|
-| `/bff/me`, `/bff/appointments/*`, `/bff/selection/*`, `/bff/directory/*`, `POST /bff/sabhas`, `/bff/password-reissue` | [[backend-identity]] |
-| `/bff/structure/*`, `/bff/sabhas/mine`, `DELETE /bff/sabhas/{id}` | [[backend-sabha]] |
-| `/bff/dashboard/*`, `/bff/audit-log` | [[backend-analytics]] |
-| `/bff/occurrences/*`, `/bff/proxy/*` | [[backend-attendance]] |
-| `/bff/logout`, `/oauth2/*`, `/login/*` | [[backend-container]] — Spring Security's chain, no controller |
-| `/api/password-reset/**`, `/api/who-appointed-me` | [[backend-identity]] — the public reset pair |
+| `/bff/me`, `/bff/appointments/*`, `/bff/selection/*`, `/bff/directory/*`, `POST /bff/sabhas`, `/bff/password-reissue` | [backend-identity](backend-identity.md) |
+| `/bff/structure/*`, `/bff/sabhas/mine`, `DELETE /bff/sabhas/{id}` | [backend-sabha](backend-sabha.md) |
+| `/bff/dashboard/*`, `/bff/audit-log` | [backend-analytics](backend-analytics.md) |
+| `/bff/occurrences/*`, `/bff/proxy/*` | [backend-attendance](backend-attendance.md) |
+| `/bff/logout`, `/oauth2/*`, `/login/*` | [backend-container](backend-container.md) — Spring Security's chain, no controller |
+| `/api/password-reset/**`, `/api/who-appointed-me` | [backend-identity](backend-identity.md) — the public reset pair |
 
 **Inbound** — `_none_`. Nothing calls the web app.
 
@@ -120,15 +130,13 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 
 <!-- [coverage: low -- no dossier names this page yet; the list below is expectation, not evidence] -->
 
-`_none_`. [[attendance-marking]] states that web has no part in marking beyond the reopen, which it
-routes through [[backend-attendance]].
+`_none_`. [attendance-marking](../features/attendance-marking.md) states that web has no part in marking beyond the reopen, which it
+routes through [backend-attendance](backend-attendance.md).
 
-Expected slugs, one per section: role-appointment, structural-admin, sabha-definition,
+Expected pages, one per section: role-appointment, structural-admin, sabha-definition,
 occurrence-reopen, sanchalak-proxy, selection, audit-log, dashboards, password-reset.
 
-## Sources
+## Method
 
-- [ADR-0003](../../adr/0003-platform-split-by-role.md), [ADR-0004](../../adr/0004-user-authentication-username-password.md), [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0016](../../adr/0016-oidc-auth-via-keycloak.md), [ADR-0022](../../adr/0022-web-session-via-bff-http-only-cookie.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sanyojak, Nirdeshak, Sant, Madhyastha Karyalaya, Sanchalak
-- `apps/web/angular.json`, `apps/web/tsconfig.json`, `apps/web/package.json` — the manifest rung
-- `apps/web/projects/*/src/public-api.ts` — seven docblocks; the highest-yield source on this page
+- The manifest rung — `angular.json`, `tsconfig.json`, `package.json` — gives the project list and path aliases, which is what `Layout` is built from.
+- `projects/*/src/public-api.ts` — seven docblocks; the highest-yield source here. Four of the seven libraries are lone-`public-api.ts` scaffolds.

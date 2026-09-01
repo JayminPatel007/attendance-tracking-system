@@ -1,6 +1,9 @@
 ---
-kind: feature
-slug: attendance-marking
+type: feature
+title: Attendance Marking
+description: Recording who attended a Sabha Occurrence, online or offline.
+aliases: [hajri, Roster marking, Walk-in, sync]
+tags: [offline-sync]
 source_paths: [
   apps/backend/attendance-service/*/src/main/**,
   apps/mobile/sabha_attendance/lib/roster/**,
@@ -15,8 +18,13 @@ source_paths: [
   docs/adr/0013-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0001, ADR-0003, ADR-0007, ADR-0013]
 issues: [3, 5]
+sources:
+  - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
+  - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
+  - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
+  - { id: adr-0013, title: "Directory De-duplication on Person Add", resource: ../../adr/0013-directory-de-duplication-on-person-add.md }
+  - { id: context, title: "CONTEXT.md — Attendance Marking, Walk-in, Roster, Sabha Occurrence, Sanchalak, Sah-Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -65,7 +73,7 @@ aggregate:
 - `Occurrence.record()` enforces the state guard and last-write-wins, and registers an
   `AttendanceMarked` domain event.
 
-**Web** — `_none_` for marking itself. See [[backend-attendance]] for the reopen and proxy surfaces.
+**Web** — `_none_` for marking itself. See [backend-attendance](../structure/backend-attendance.md) for the reopen and proxy surfaces.
 
 ## Rules & authority
 
@@ -93,18 +101,18 @@ aggregate:
 
 <!-- [coverage: high -- direct file paths, all verified present] -->
 
-- [[backend-attendance]] — the whole backend path: the `Occurrence` aggregate, `OccurrenceWriter`,
+- [backend-attendance](../structure/backend-attendance.md) — the whole backend path: the `Occurrence` aggregate, `OccurrenceWriter`,
   `MarkAttendanceApplicationService`, `SyncAttendanceApplicationService`, `AttendanceRestController`.
-- [[backend-identity]] — `CallerResolver` resolves the Keycloak subject to a User; `persons` and the
+- [backend-identity](../structure/backend-identity.md) — `CallerResolver` resolves the Keycloak subject to a User; `persons` and the
   walk-in Directory search are identity's.
-- [[backend-common-domain]] — `CallerResolver`, `UserActivityRecorder`, `OptimisticLockException`.
-- [[backend-container]] — `slice-2` (core schema + occurrence version), `slice-4` (`client_marked_at`),
+- [backend-common-domain](../structure/backend-common-domain.md) — `CallerResolver`, `UserActivityRecorder`, `OptimisticLockException`.
+- [backend-container](../structure/backend-container.md) — `slice-2` (core schema + occurrence version), `slice-4` (`client_marked_at`),
   `slice-7` (walk-in marking type) migrations; the `ProblemDetail` mapping that turns
   `StaleRosterException` into `ROSTER_STALE`.
-- [[mobile-shell]] — `lib/roster/`, `lib/sync/` (`attendance_store.dart`, `sync_engine.dart`,
+- [mobile-shell](../structure/mobile-shell.md) — `lib/roster/`, `lib/sync/` (`attendance_store.dart`, `sync_engine.dart`,
   `pending_marking.dart`), `lib/walk_in/`, and the three SQLite tables the offline queue owns.
-- [[mobile-sabha-api]] — the generated client the Walk-in path calls through.
-- [[mobile-attendance-domain]] is an empty scaffold, despite the name.
+- [mobile-sabha-api](../structure/mobile-sabha-api.md) — the generated client the Walk-in path calls through.
+- [mobile-attendance-domain](../structure/mobile-attendance-domain.md) is an empty scaffold, despite the name.
 
 ## Amendments
 
@@ -122,9 +130,7 @@ aggregate:
 yet in the Directory* offline. The implementation is stricter — recording a Walk-in is online-only
 outright, stated in `walk_in_api.dart`. Nothing has amended the ADR to match.
 
-## Sources
+## Method
 
-- [ADR-0001](../../adr/0001-sabha-occurrence-lifecycle.md), [ADR-0003](../../adr/0003-platform-split-by-role.md), [ADR-0007](../../adr/0007-offline-capable-attendance-marking.md), [ADR-0013](../../adr/0013-directory-de-duplication-on-person-add.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Attendance Marking, Walk-in, Roster, Sabha Occurrence, Sanchalak, Sah-Sanchalak
-- `Occurrence.java`, `MarkAttendanceApplicationService.java`, `SyncAttendanceApplicationService.java`
-- `apps/mobile/sabha_attendance/lib/sync/sync_engine.dart`, `apps/mobile/sabha_attendance/lib/walk_in/walk_in_api.dart`
+- Read end to end rather than sampled, which is what a dossier costs: `Occurrence.java`, `MarkAttendanceApplicationService.java`, `SyncAttendanceApplicationService.java`, then `sync_engine.dart` and `walk_in_api.dart`.
+- `Flow` is those two ends meeting at the sync endpoint; the `slice-2`/`slice-4`/`slice-7` changelogs supplied the schema half.

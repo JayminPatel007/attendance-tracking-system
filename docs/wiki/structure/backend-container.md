@@ -1,6 +1,9 @@
 ---
-kind: structure
-slug: backend-container
+type: structure
+title: Application Container
+description: The Spring Boot composition root: the single deployable, the whole Liquibase schema, and the global error contract.
+resource: apps/backend/application-container
+aliases: [the Spring Boot app, the composition root, the schema]
 source_paths: [
   apps/backend/application-container/src/main/**,
   apps/backend/application-container/pom.xml,
@@ -12,7 +15,14 @@ source_paths: [
   docs/adr/0022-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0014, ADR-0015, ADR-0016, ADR-0019, ADR-0021, ADR-0022]
+sources:
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
+  - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
+  - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -109,8 +119,7 @@ own migrations**. The table-name grep exists solely to bridge that gap.
 `_none_` — no `features/` page owns the container. It is crossed by every capability rather than
 implementing one, so it may never acquire a dedicated dossier.
 
-## Sources
+## Method
 
-- [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md), [ADR-0016](../../adr/0016-oidc-auth-via-keycloak.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0021](../../adr/0021-spring-scheduling-for-occurrence-cron.md), [ADR-0022](../../adr/0022-web-session-via-bff-http-only-cookie.md)
-- `apps/backend/application-container/src/main/resources/db/changelog/` — the whole schema
-- `GlobalExceptionHandler.java` — the RFC 9457 contract and the `code` discriminator
+- `src/main/resources/db/changelog/` read as a directory tree — the whole schema, partitioned by slice, and the reason this unit holds DDL custody for tables it owns no data in.
+- `GlobalExceptionHandler.java` for the RFC 9457 contract and the `code` discriminator; configuration classes for the composition wiring.

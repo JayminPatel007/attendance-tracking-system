@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: backend-analytics
+type: structure
+title: Analytics Service
+description: The read-side context: dashboards, the audit-log read model and the re-engagement candidate projection.
+resource: apps/backend/analytics-service
+aliases: [dashboards, audit log, re-engagement, Nirdeshak/Sant reporting]
+tags: [audit, bff]
 source_paths: [
   apps/backend/analytics-service/*/src/main/**,
   apps/backend/analytics-service/*/pom.xml,
@@ -11,7 +15,12 @@ source_paths: [
   docs/adr/0027-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0010, ADR-0019, ADR-0023, ADR-0027]
+sources:
+  - { id: adr-0010, title: "Re-engagement Candidate Definition", resource: ../../adr/0010-re-engagement-candidate-definition.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0023, title: "Audit log is a read-model over existing tables, viewable by Nirdeshak and above within scope", resource: ../../adr/0023-audit-log-read-model-and-viewer-authority.md }
+  - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
+  - { id: context, title: "CONTEXT.md — Sant, Madhyastha Karyalaya, Re-engagement Candidate", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -115,8 +124,7 @@ list is so long.
 `_none_` — dashboards, the audit-log viewer and re-engagement are three distinct capabilities with no
 `features/` page yet. All three are dossier candidates.
 
-## Sources
+## Method
 
-- [ADR-0010](../../adr/0010-re-engagement-candidate-definition.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0023](../../adr/0023-audit-log-read-model-and-viewer-authority.md), [ADR-0027](../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sant, Madhyastha Karyalaya, Re-engagement Candidate
-- Class listing + writer/reader SQL grep over `apps/backend/analytics-service/**`
+- Class listing plus a writer/reader SQL grep over `analytics-service/**`. The reader half matters more here than on any other page: this is the one context whose job is querying other people's tables, so `Data` → Reads is long and Owns is short.
+- All five `package-info.java` files are ADR-0019 ring scaffolds and were skipped.

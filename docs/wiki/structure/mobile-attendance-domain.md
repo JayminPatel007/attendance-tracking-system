@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: mobile-attendance-domain
+type: structure
+title: Mobile Attendance Domain
+description: Mobile Attendance Marking, Walk-in and offline-queue types — a scaffold with no types in it yet.
+resource: apps/mobile/packages/attendance_domain
+aliases: [mobile Attendance Marking, Walk-in, offline queue]
+tags: [offline-sync]
 source_paths: [
   apps/mobile/packages/attendance_domain/lib/**,
   apps/mobile/packages/attendance_domain/pubspec.yaml,
@@ -10,7 +14,12 @@ source_paths: [
   docs/adr/0015-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0003, ADR-0007, ADR-0014, ADR-0015]
+sources:
+  - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
+  - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: context, title: "CONTEXT.md — Attendance Marking, Walk-in, Roster", resource: ../../../CONTEXT.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 
@@ -20,7 +29,7 @@ last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 
 <!-- [coverage: high -- pubspec.yaml and the package's one library docblock] -->
 
-The mobile mirror of [[backend-attendance]] — intended to hold **Attendance Marking**, the Roster vs
+The mobile mirror of [backend-attendance](backend-attendance.md) — intended to hold **Attendance Marking**, the Roster vs
 Walk-in `MarkingType`, and the shape of the offline pending-action queue (ADR-0007). Its docblock
 predicts that mobile is the primary capture surface (ADR-0003) and that this package would therefore
 "evolve richer than the web's counterpart".
@@ -28,7 +37,7 @@ predicts that mobile is the primary capture surface (ADR-0003) and that this pac
 **The prediction held; the package did not.** Mobile is indeed the only capture surface and the only
 place in the product that works offline — but all of it was written in the app shell, in
 `sabha_attendance/lib/sync/` and `lib/roster/`. This package is still its Slice-1 placeholder. See
-[[mobile-shell]] and [[attendance-marking]].
+[mobile-shell](mobile-shell.md) and [attendance-marking](../features/attendance-marking.md).
 
 ## Layout
 
@@ -48,9 +57,9 @@ routes.
 
 <!-- [coverage: high -- pubspec.yaml dependency block, and an import grep across the workspace] -->
 
-**Outbound** — one declared `path:` dependency on [[mobile-shared-kernel]], imported by nothing.
+**Outbound** — one declared `path:` dependency on [mobile-shared-kernel](mobile-shared-kernel.md), imported by nothing.
 
-**Inbound** — [[mobile-shell]] declares this package and imports nothing from it.
+**Inbound** — [mobile-shell](mobile-shell.md) declares this package and imports nothing from it.
 
 ## Data
 
@@ -60,7 +69,7 @@ routes.
 
 This is the page a reader would most expect to own the offline queue, and it does not. The three
 SQLite tables — `roster_cache`, `pending_markings`, `sync_meta` — are created and written by
-`AttendanceStore` in the shell, so they are [[mobile-shell]]'s **Owns** and nothing here.
+`AttendanceStore` in the shell, so they are [mobile-shell](mobile-shell.md)'s **Owns** and nothing here.
 
 ## Gotchas
 
@@ -73,10 +82,8 @@ SQLite tables — `roster_cache`, `pending_markings`, `sync_meta` — are create
 
 <!-- [coverage: low -- no dossier names this page; the package holds no capability to name] -->
 
-`_none_`. [[attendance-marking]] is the dossier for this capability, and it points at the shell.
+`_none_`. [attendance-marking](../features/attendance-marking.md) is the dossier for this capability, and it points at the shell.
 
-## Sources
+## Method
 
-- [ADR-0003](../../adr/0003-platform-split-by-role.md), [ADR-0007](../../adr/0007-offline-capable-attendance-marking.md), [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Attendance Marking, Walk-in, Roster
-- `apps/mobile/packages/attendance_domain/lib/attendance_domain.dart`
+- `lib/attendance_domain.dart` plus the package manifest. A barrel file exporting nothing, so the method is the manifest rung and the finding is the emptiness.

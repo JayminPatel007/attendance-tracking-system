@@ -1,6 +1,9 @@
 ---
-kind: structure
-slug: mobile-shared-kernel
+type: structure
+title: Mobile Shared Kernel
+description: The mobile shared kernel — a declared Melos package that is still a scaffold with no types in it yet.
+resource: apps/mobile/packages/shared_kernel
+aliases: [the mobile shared kernel]
 source_paths: [
   apps/mobile/packages/shared_kernel/lib/**,
   apps/mobile/packages/shared_kernel/pubspec.yaml,
@@ -8,7 +11,10 @@ source_paths: [
   docs/adr/0015-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0014, ADR-0015]
+sources:
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: context, title: "CONTEXT.md — Sabha Occurrence", resource: ../../../CONTEXT.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 
@@ -18,13 +24,13 @@ last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 
 <!-- [coverage: high -- pubspec.yaml and the package's one library docblock] -->
 
-The mobile counterpart of [[backend-common-domain]]: cross-context value objects every other mobile
+The mobile counterpart of [backend-common-domain](backend-common-domain.md): cross-context value objects every other mobile
 package may depend on, and which may depend on nothing. Pure Dart with **no Flutter import**, so the
 type layer stays usable outside a Flutter host.
 
 **It is currently a scaffold.** The library declares one placeholder constant and no types. This is
 not rot — ADR-0015 budgeted "~4 Dart packages … most of them empty" as accepted one-time
-scaffolding, and nothing has yet needed a type here. See [[mobile-shell]], which holds the code the
+scaffolding, and nothing has yet needed a type here. See [mobile-shell](mobile-shell.md), which holds the code the
 package layout anticipated.
 
 ## Layout
@@ -50,8 +56,8 @@ The public library surface is `package:shared_kernel/shared_kernel.dart`, export
 enforcement ADR-0015 wanted: the bottom of the dependency order cannot reach upward, because there is
 no path entry that would let it compile.
 
-**Inbound** — declared by [[mobile-identity-domain]], [[mobile-sabha-domain]],
-[[mobile-attendance-domain]] and [[mobile-shell]], all four via a `path:` dependency. **Declared is
+**Inbound** — declared by [mobile-identity-domain](mobile-identity-domain.md), [mobile-sabha-domain](mobile-sabha-domain.md),
+[mobile-attendance-domain](mobile-attendance-domain.md) and [mobile-shell](mobile-shell.md), all four via a `path:` dependency. **Declared is
 not imported**: no file in any of them imports this package today. The edges are manifest-level only.
 
 ## Data
@@ -73,8 +79,6 @@ not imported**: no file in any of them imports this package today. The edges are
 
 `_none_`.
 
-## Sources
+## Method
 
-- [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sabha Occurrence
-- `apps/mobile/packages/shared_kernel/lib/shared_kernel.dart`, `apps/mobile/melos.yaml`
+- `lib/shared_kernel.dart` and `apps/mobile/melos.yaml`. The package is a single barrel file exporting nothing, so the manifest rung is the whole method — and the honest finding is the emptiness itself.

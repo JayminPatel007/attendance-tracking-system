@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: backend-attendance
+type: structure
+title: Attendance Service
+description: Owns Sabha Occurrences and the markings against them, including the offline sync path and walk-in capture.
+resource: apps/backend/attendance-service
+aliases: [Occurrences and markings, Sabha Occurrence, Roster, Walk-in]
+tags: [offline-sync]
 source_paths: [
   apps/backend/attendance-service/*/src/main/**,
   apps/backend/attendance-service/*/pom.xml,
@@ -13,7 +17,14 @@ source_paths: [
   docs/adr/0028-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0001, ADR-0007, ADR-0012, ADR-0019, ADR-0021, ADR-0028]
+sources:
+  - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
+  - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
+  - { id: adr-0012, title: "Sabha Schedule Shapes and Occurrence Materialization", resource: ../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
+  - { id: adr-0028, title: "Persistence stays on JdbcClient (no JPA); aggregate lifecycles stay in-aggregate (no Spring State Machine)", resource: ../../adr/0028-jdbcclient-persistence-and-in-aggregate-lifecycles.md }
+  - { id: context, title: "CONTEXT.md — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -123,13 +134,12 @@ retries on.
 
 <!-- [coverage: high -- one dossier exists and it names this unit] -->
 
-- [[attendance-marking]]
+- [attendance-marking](../features/attendance-marking.md)
 
 Occurrence lifecycle (open / finalize / cancel / reschedule / reopen / proxy) is a distinct
 capability and a dossier candidate; it is deliberately **not** folded into the marking dossier.
 
-## Sources
+## Method
 
-- [ADR-0001](../../adr/0001-sabha-occurrence-lifecycle.md), [ADR-0007](../../adr/0007-offline-capable-attendance-marking.md), [ADR-0012](../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0021](../../adr/0021-spring-scheduling-for-occurrence-cron.md), [ADR-0028](../../adr/0028-jdbcclient-persistence-and-in-aggregate-lifecycles.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak
-- `Occurrence.java`, `OccurrenceWriter.java`, `MarkAttendanceApplicationService.java` — javadoc, the highest-yield source in this unit
+- Javadoc on `Occurrence.java`, `OccurrenceWriter.java` and `MarkAttendanceApplicationService.java` — the highest-yield source in this unit, and unusually substantive for this repo.
+- Ring-module class listings, a mapping-annotation grep for `Exposes`, and a writer-SQL grep for `Data` → Owns.

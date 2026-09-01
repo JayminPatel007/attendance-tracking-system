@@ -1,6 +1,9 @@
 ---
-kind: structure
-slug: mobile-sabha-api
+type: structure
+title: Mobile Sabha API Client
+description: The Dart client generated from the backend's OpenAPI spec; the mobile app's only transport to the API.
+resource: apps/mobile/packages/sabha_api
+aliases: [the generated Dart client, the typed API client, the OpenAPI client]
 source_paths: [
   apps/mobile/packages/sabha_api/lib/**,
   apps/mobile/packages/sabha_api/pubspec.yaml,
@@ -10,8 +13,11 @@ source_paths: [
   docs/adr/0015-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0014, ADR-0015]
 issues: [73, 75]
+sources:
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: context, title: "CONTEXT.md — Walk-in, Roster, Sabha Occurrence", resource: ../../../CONTEXT.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 
@@ -22,12 +28,12 @@ last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 <!-- [coverage: high -- pubspec.yaml, .openapi-generator-ignore, melos.yaml generate:api script] -->
 
 The typed Dart client, **entirely generated** from `apps/backend/openapi.json` (issue #73). It is
-the mobile twin of [[web]]'s `shared-data-access` library and exists for the same reason: a
+the mobile twin of [web](web.md)'s `shared-data-access` library and exists for the same reason: a
 hand-rolled parser drifts from the backend silently (issue #75), a generated one cannot.
 
 It is the **fifth** Dart package, and the only one added after the Slice-1 scaffold — ADR-0014 and
 ADR-0015 both describe a four-package mobile workspace. It is also the only mobile package other
-than [[mobile-shell]] with real code in it.
+than [mobile-shell](mobile-shell.md) with real code in it.
 
 ## Layout
 
@@ -53,7 +59,7 @@ here — the next regeneration overwrites it.
 `package:sabha_api/api.dart` re-exports the whole surface; consumers import that one barrel. No
 routes of its own — it *calls* routes. The 20 services cover **every** backend controller, `/bff/*`
 included, so the mobile binary compiles in the web BFF's client surface and never calls it. That
-mirrors [[web]] exactly, in the opposite direction.
+mirrors [web](web.md) exactly, in the opposite direction.
 
 ## Talks To
 
@@ -62,7 +68,7 @@ mirrors [[web]] exactly, in the opposite direction.
 **Outbound** — the backend over HTTP, through the `http` package. `ApiClient` takes a `basePath` and
 an `Authentication`; it holds no URL of its own, so the target is whatever the caller passes.
 
-**Inbound** — [[mobile-shell]] imports it in three files: `walk_in_api.dart`, `selection_api.dart`
+**Inbound** — [mobile-shell](mobile-shell.md) imports it in three files: `walk_in_api.dart`, `selection_api.dart`
 and `add_person_api.dart`. It is the only mobile package the shell actually imports.
 
 ## Data
@@ -91,11 +97,10 @@ nothing here reaches SQLite.
 
 <!-- [coverage: low -- no dossier names this page yet] -->
 
-`_none_`. [[attendance-marking]] describes the Walk-in path that runs through
+`_none_`. [attendance-marking](../features/attendance-marking.md) describes the Walk-in path that runs through
 `AttendanceRestControllerApi` and `PersonDirectoryRestControllerApi` without naming this package.
 
-## Sources
+## Method
 
-- [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Walk-in, Roster, Sabha Occurrence
-- `apps/mobile/packages/sabha_api/.openapi-generator-ignore`, `apps/mobile/melos.yaml` — the manifest rung, and the highest-yield source on this page
+- `.openapi-generator-ignore` and `apps/mobile/melos.yaml` — the manifest rung, and the highest-yield source on this page: everything under `lib/` is generated, so the generator configuration says more than the output does.
+- The generated sources were listed, not read: reading generated Dart would describe the spec at one remove.

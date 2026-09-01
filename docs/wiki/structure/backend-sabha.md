@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: backend-sabha
+type: structure
+title: Sabha Service
+description: Owns the structural hierarchy — Kshetra, Zone, City — and the Sabha definitions and Sabha Kinds hung off it.
+resource: apps/backend/sabha-service
+aliases: [the structural hierarchy, Kshetra, Zone, City, Sabha Kind]
+tags: [bff]
 source_paths: [
   apps/backend/sabha-service/*/src/main/**,
   apps/backend/sabha-service/*/pom.xml,
@@ -12,7 +16,13 @@ source_paths: [
   docs/adr/0026-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0009, ADR-0012, ADR-0019, ADR-0024, ADR-0026]
+sources:
+  - { id: adr-0009, title: "Structural Creation Authority Lives at the Tier Above", resource: ../../adr/0009-structural-creation-authority.md }
+  - { id: adr-0012, title: "Sabha Schedule Shapes and Occurrence Materialization", resource: ../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0024, title: "Zone creation moves from Madhyastha Karyalaya to the Regional Team", resource: ../../adr/0024-zone-creation-moves-to-regional-team.md }
+  - { id: adr-0026, title: "Deletion model: block-if-non-empty for geography, soft-retire for Sabha Kind, revoke-with-inheritance for roles", resource: ../../adr/0026-deletion-model.md }
+  - { id: context, title: "CONTEXT.md — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -28,7 +38,7 @@ everyone else, and it is the authority on creating and deleting structure (ADR-0
 ADR-0026).
 
 It does **not** own who attends a Sabha or who runs it: rosters and role assignments are
-[[backend-identity]]'s, occurrences are [[backend-attendance]]'s.
+[backend-identity](backend-identity.md)'s, occurrences are [backend-attendance](backend-attendance.md)'s.
 
 ## Layout
 
@@ -59,7 +69,7 @@ ADR-0003: structural creation is a web-tier job.
 | `/bff/structure/*` | web | `StructuralCreationController` (12 routes), `StructuralDeletionController` (3 routes) |
 | `/bff/sabhas/mine`, `DELETE /bff/sabhas/{id}` | web | `SabhaListController`, `StructuralDeletionController` |
 
-`POST /bff/sabhas` is **not** here — Sabha definition is served by [[backend-identity]], because the
+`POST /bff/sabhas` is **not** here — Sabha definition is served by [backend-identity](backend-identity.md), because the
 authority check is identity's under ADR-0029 even though the Sabha it creates is this unit's.
 
 ## Talks To
@@ -118,8 +128,7 @@ exception — it soft-retires via `retired_at`/`retired_by` rather than deleting
 `_none_` — the capabilities this unit serves (structural creation, structural deletion, Sabha Kind
 lifecycle) have no `features/` page yet. All three are dossier candidates.
 
-## Sources
+## Method
 
-- [ADR-0009](../../adr/0009-structural-creation-authority.md), [ADR-0012](../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0024](../../adr/0024-zone-creation-moves-to-regional-team.md), [ADR-0026](../../adr/0026-deletion-model.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team
-- Class listing + mapping-annotation grep over `apps/backend/sabha-service/**` — the primary source, since the package-info files are empty scaffolds
+- Class listing plus a mapping-annotation grep over `sabha-service/**` — the primary method here, since all five `package-info.java` files are ADR-0019 ring scaffolds and carry zero information.
+- `Data` → Owns is inferred from a writer-SQL grep over `sabha-data-access`, which is why that section earns the thinnest tag on the page.
