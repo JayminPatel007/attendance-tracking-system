@@ -129,15 +129,18 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 
 ## Covered by
 
-<!-- [coverage: high -- derived: the three dossiers below name this page; the candidate list is judgement] -->
+<!-- [coverage: high -- derived: the seven dossiers below name this page; the candidate list is judgement] -->
 
 - [role-appointment](../features/role-appointment.md)
 - [person-directory](../features/person-directory.md)
 - [authentication](../features/authentication.md)
+- [structural-hierarchy](../features/structural-hierarchy.md)
+- [sabha-definition](../features/sabha-definition.md)
+- [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the reopen section only.
+- [sanchalak-proxy](../features/sanchalak-proxy.md)
 
-Not [attendance-marking](../features/attendance-marking.md): web has no marking surface beyond the reopen. Uncovered candidates:
-structural-admin, sabha-definition, occurrence-reopen, sanchalak-proxy, selection, audit-log,
-dashboards — the former `password-reset` one having **merged** into [authentication](../features/authentication.md).
+Not [attendance-marking](../features/attendance-marking.md): web has no marking surface beyond the reopen. Uncovered:
+selection, audit-log, dashboards.
 
 ## Method
 

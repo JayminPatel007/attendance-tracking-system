@@ -150,9 +150,11 @@ belongs in `notes/`, not here.
 - [role-appointment](../features/role-appointment.md) — the `appointment` feature package and its authority adapters.
 - [authentication](../features/authentication.md) — the `otp`, `passwordreset`, `session` packages and `identity-messaging`.
 - [home-sabha-transfer](../features/home-sabha-transfer.md) — the `transfer` package and its aggregate.
+- [sabha-definition](../features/sabha-definition.md) — the `sabhadefinition` package.
+- [structural-hierarchy](../features/structural-hierarchy.md)
+- [sanchalak-proxy](../features/sanchalak-proxy.md)
 
-Uncovered candidates: selection, sabha-definition, mk-bootstrap. The former `password-reset` and
-`web-session` candidates were **merged** into [authentication](../features/authentication.md).
+Uncovered: selection, mk-bootstrap.
 
 ## Method
 

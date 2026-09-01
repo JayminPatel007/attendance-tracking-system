@@ -112,8 +112,12 @@ objects; the rows behind them belong to the context that implements the correspo
 - [role-appointment](../features/role-appointment.md)
 - [authentication](../features/authentication.md)
 - [home-sabha-transfer](../features/home-sabha-transfer.md)
+- [structural-hierarchy](../features/structural-hierarchy.md)
+- [sabha-definition](../features/sabha-definition.md)
+- [occurrence-lifecycle](../features/occurrence-lifecycle.md)
+- [sanchalak-proxy](../features/sanchalak-proxy.md)
 
-Five of five so far, which is what a shared-kernel page should look like: this unit is crossed by
+Nine of nine so far, which is what a shared-kernel page should look like: this unit is crossed by
 nearly every capability rather than implementing one.
 
 ## Method

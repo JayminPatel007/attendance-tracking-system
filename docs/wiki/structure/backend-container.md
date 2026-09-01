@@ -115,13 +115,17 @@ own migrations**. The table-name grep exists solely to bridge that gap.
 
 ## Covered by
 
-<!-- [coverage: high -- derived: each dossier below names this page for its migrations or its security chains] -->
+<!-- [coverage: high -- derived: each dossier below names this page for its migrations, its cron entry points or its security chains] -->
 
 - [attendance-marking](../features/attendance-marking.md) — `slice-2` / `slice-4` / `slice-7` and the `ROSTER_STALE` mapping.
 - [person-directory](../features/person-directory.md) — `slice-6`'s constraints, extensions and indexes.
 - [role-appointment](../features/role-appointment.md) — `slice-10` / `slice-11` / `issue-89`.
 - [authentication](../features/authentication.md) — `SecurityConfig`'s two chains, and `slice-18` / `issue-77`.
 - [home-sabha-transfer](../features/home-sabha-transfer.md) — `slice-8` and the `issue-77` scrub.
+- [structural-hierarchy](../features/structural-hierarchy.md) — `slice-10`'s geographic tables.
+- [sabha-definition](../features/sabha-definition.md) — `slice-12` and `issue-87`'s retire columns.
+- [occurrence-lifecycle](../features/occurrence-lifecycle.md) — `OccurrenceCronJobs`, the `Clock` bean, and `slice-3` / `slice-5` / `slice-13`.
+- [sanchalak-proxy](../features/sanchalak-proxy.md) — `slice-14` and its seed, the only writer of the assignments table.
 
 No dossier *owns* the container: it is crossed by every capability rather than implementing one, so
 it may never acquire a dedicated one.
