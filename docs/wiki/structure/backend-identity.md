@@ -36,12 +36,14 @@ Owns **who a person is** (`persons`), **what authority they hold** (`role_assign
 **how they prove it** (`users`, OTP, password reset). It is also where an authority *check*
 lives even when the thing being created belongs elsewhere — Sabha definition and Selection are
 served from here because the decision "may this caller do it?" is identity's, per ADR-0029.
+Both checks follow [authorization](../patterns/authorization.md).
 
 ## Layout
 
 <!-- [coverage: high -- directory listing + 5 package-info.java] -->
 
-The standard five-module ring, identical across all four contexts by ADR-0019.
+The standard five-module ring, identical across all four contexts by ADR-0019 — the shape
+itself is [module-ring](../patterns/module-ring.md).
 
 | Module | Main files | Holds |
 |---|---|---|

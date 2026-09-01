@@ -46,7 +46,7 @@ This is where the product's namesake capability actually runs.
 
 <!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold] -->
 
-The standard five-module ring. 74 main source files — the second-largest backend unit, and unusually
+The standard five-module [module-ring](../patterns/module-ring.md). 74 main source files — the second-largest backend unit, and unusually
 top-heavy: 47 of them sit in the use-case ring.
 
 | Module | Main files | Holds |
@@ -76,7 +76,8 @@ goes through it rather than touching `OccurrenceRepository` directly.
 | `/bff/proxy/*` | web | `SanchalakProxyBffController` |
 
 The split is ADR-0003 in one table: the Sanchalak's capture surface is `/api/*`, and the two
-higher-tier interventions (reopen, Nirikshak proxy) are `/bff/*`.
+higher-tier interventions (reopen, Nirikshak proxy) are `/bff/*`. Which tier may do which is
+`AuthorizationEngine`'s call — see [authorization](../patterns/authorization.md).
 
 ## Talks To
 

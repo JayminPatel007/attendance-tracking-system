@@ -42,7 +42,8 @@ The operational surface for every tier **above** the Sabha, per ADR-0003: Sanyoj
 Sant, Regional Team and Madhyastha Karyalaya doing structural admin, role appointment, Sabha
 definition, dashboards, Occurrence reopen, Selection, Sanchalak proxy and the audit log. It
 deliberately has **no attendance-capture screen** — that is the Sanchalak's, on mobile. It is a
-pure client: it owns no data and enforces no authority, only renders what the BFF grants.
+pure client: it owns no data and enforces no authority, only renders what the BFF grants — the
+client-side edge of [authorization](../patterns/authorization.md).
 
 ## Layout
 

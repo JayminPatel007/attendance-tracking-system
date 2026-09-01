@@ -42,7 +42,7 @@ across context boundaries.
 
 <!-- [coverage: medium -- directory + class listing only; every package-info.java here is an empty ADR-0019 scaffold] -->
 
-The standard five-module ring. 48 main source files.
+The standard five-module [module-ring](../patterns/module-ring.md). 48 main source files.
 
 | Module | Main files | Holds |
 |---|---|---|
@@ -54,6 +54,7 @@ The standard five-module ring. 48 main source files.
 
 Two authorization engines live side by side here — `DashboardAccess` and `AuditLogAccess` — kept
 separate rather than unified, consistent with ADR-0027's refusal of a shared granted-scope module.
+Both are instances of [authorization](../patterns/authorization.md).
 
 ## Exposes
 
