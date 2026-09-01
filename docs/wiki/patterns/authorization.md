@@ -36,7 +36,7 @@ sources:
   - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
   - { id: context, title: "CONTEXT.md — Roles (each tier has its own role), Geographic hierarchy", resource: ../../../CONTEXT.md }
 appears_in: [backend-identity, backend-sabha, backend-attendance, backend-analytics, backend-common-domain, web, attendance-marking]
-last_compiled: 18c0993c1c22d3217d62a879beed639914f74aee
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Authorization
@@ -71,9 +71,10 @@ hold across all of them.
 <!-- [coverage: high -- ADR-0027's rejection argument and the ADR-0009/0011 → 0025 → 0029 trail] -->
 
 Two ladders come first. ADR-0009 puts structural creation at the tier *above* the thing created, and
-ADR-0011 puts appointment one rung *above* the role being filled, at its parent scope. ADR-0025 then
-rebinds both to **scope rather than creator**, lets the Regional Team appoint its own peers behind a
-last-one-out guard, and strips the Sah-Nirdeshak of administrative authority. ADR-0029 draws the line
+ADR-0011 puts appointment with the **Nirdeshak of the appointee's Kshetra**, and only from the
+Nirdeshak upward with the tier a geographic level above — the eight arms are enumerated in
+[role-appointment](../features/role-appointment.md). ADR-0025 then rebinds both to **scope rather
+than creator**, lets the Regional Team appoint its own peers behind a last-one-out guard, and strips the Sah-Nirdeshak of administrative authority. ADR-0029 draws the line
 the ports depend on: projections may join, checks must not.
 
 ADR-0027 is why there are several engines and not one. A shared granted-scope module was designed
@@ -89,7 +90,7 @@ relocates complexity instead of removing it, so the plurality below is the decis
 
 | Engine | Page | Question shape |
 |---|---|---|
-| `AppointmentAuthorization` | [backend-identity](../structure/backend-identity.md) | inverted — does the appointer hold the tier one rung above, at the parent scope? |
+| `AppointmentAuthorization` | [backend-identity](../structure/backend-identity.md) | inverted — is the appointer the Nirdeshak of the appointee's Kshetra, or, from Nirdeshak upward, the tier one geographic level above? The eight arms are enumerated in [role-appointment](../features/role-appointment.md); do not re-derive them from this row |
 | `SabhaDefinitionAuthorization` | [backend-identity](../structure/backend-identity.md) | point — is the caller the Nirdeshak over this `(Kshetra, demographic)`? |
 | `StructuralScopeAuthority` | [backend-sabha](../structure/backend-sabha.md) | tiered — does the caller hold the scope one tier above? Create and delete share it |
 | `AuthorizationEngine` | [backend-attendance](../structure/backend-attendance.md) | point, keyed by the target Sabha — shaping, plus the Nirikshak proxy |

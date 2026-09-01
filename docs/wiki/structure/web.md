@@ -29,7 +29,7 @@ sources:
   - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
   - { id: context, title: "CONTEXT.md — Sanyojak, Nirdeshak, Sant, Madhyastha Karyalaya, Sanchalak", resource: ../../../CONTEXT.md }
-last_compiled: 9f14fa74fb1391c231274460d34b82ed34b17e18
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Web App
@@ -129,7 +129,7 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 
 ## Covered by
 
-<!-- [coverage: high -- derived: the seven dossiers below name this page; the candidate list is judgement] -->
+<!-- [coverage: high -- derived: all eleven dossiers below name this page, each backlink verified] -->
 
 - [role-appointment](../features/role-appointment.md)
 - [person-directory](../features/person-directory.md)
@@ -138,7 +138,6 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 - [sabha-definition](../features/sabha-definition.md)
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the reopen section only.
 - [sanchalak-proxy](../features/sanchalak-proxy.md)
-
 - [selection](../features/selection.md)
 - [audit-log](../features/audit-log.md)
 - [dashboards](../features/dashboards.md)

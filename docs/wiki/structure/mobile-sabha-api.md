@@ -18,7 +18,7 @@ sources:
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
   - { id: context, title: "CONTEXT.md — Walk-in, Roster, Sabha Occurrence", resource: ../../../CONTEXT.md }
-last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Mobile Sabha API Client
@@ -95,7 +95,7 @@ nothing here reaches SQLite.
 
 ## Covered by
 
-<!-- [coverage: high -- derived: both dossiers below link this page; the two that don't are named too] -->
+<!-- [coverage: high -- derived: all three dossiers below link this page; the two that don't are named too] -->
 
 - [attendance-marking](../features/attendance-marking.md) — `AttendanceRestControllerApi` on the Walk-in path.
 - [person-directory](../features/person-directory.md) — `PersonDirectoryRestControllerApi`, which the mobile lookup calls whole.

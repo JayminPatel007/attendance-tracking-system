@@ -25,7 +25,7 @@ sources:
   - { id: adr-0012, title: "Sabha Schedule Shapes and Occurrence Materialization", resource: ../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md }
   - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
   - { id: context, title: "CONTEXT.md — Sabha Occurrence, Occurrence States, Effective Slot, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
-last_compiled: 85eaa7a00240b54e15e35da00229a19ee8c71ce7
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Occurrence Lifecycle
@@ -87,6 +87,10 @@ state, so a missed firing self-heals on the next tick.
 - **Reopen is the Kshetra tier only** — Nirikshak, Nirdeshak, Sah-Nirdeshak — and never the Sanchalak
   who owns shaping, nor the oversight tiers (Sanyojak, Sant, MK), who are kept out of the data-edit
   path by design.
+- **Reopen keeps the markings.** `Occurrence.reopen()` flips the state and does not touch the
+  markings map: markings taken before finalization are retained as-is, and the reopened window is for
+  edits and additions, not a fresh start. No ADR says this — ADR-0001 argues the *why* and skips
+  the consequence — so it is stated here.
 - **Two windows, both 24h and both configurable.** Auto-finalize fires a grace period after the
   Effective Slot ends; the revert window closes the same interval after it. Past that, a Cancelled
   Occurrence locks.

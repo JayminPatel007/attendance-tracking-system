@@ -25,7 +25,7 @@ sources:
   - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
   - { id: adr-0028, title: "Persistence stays on JdbcClient (no JPA); aggregate lifecycles stay in-aggregate (no Spring State Machine)", resource: ../../adr/0028-jdbcclient-persistence-and-in-aggregate-lifecycles.md }
   - { id: context, title: "CONTEXT.md — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
-last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Attendance Service
@@ -133,7 +133,7 @@ retries on.
 
 ## Covered by
 
-<!-- [coverage: high -- derived: the three dossiers below name this unit] -->
+<!-- [coverage: high -- derived: all five dossiers below name this unit, each backlink verified] -->
 
 - [attendance-marking](../features/attendance-marking.md) — the marking and sync paths.
 - [occurrence-lifecycle](../features/occurrence-lifecycle.md) — the state machine, the scanners, shaping and reopen.

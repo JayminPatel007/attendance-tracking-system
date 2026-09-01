@@ -32,7 +32,7 @@ sources:
   - { id: adr-0026, title: "Deletion Model", resource: ../../adr/0026-deletion-model.md }
   - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
   - { id: context, title: "CONTEXT.md — Roles (each tier has its own role), Geographic hierarchy, Karyakar", resource: ../../../CONTEXT.md }
-last_compiled: 6e43fd984ca097e05d67237d341afc11c0bf41ea
+last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
 # Role Appointment
@@ -75,14 +75,20 @@ serves the reissue path described in [authentication](authentication.md).
 
 <!-- [coverage: high -- AppointmentAuthorization and RoleRevocationService read line by line against ADR-0011 and ADR-0025] -->
 
-- **The ladder.** `AppointmentAuthorization` resolves the target's geographic containment upward
-  (Sabha → Kshetra → Zone → City) and asks whether the appointer holds the tier **one rung above at
-  the parent scope**. It is the inverted-predicate engine of
+- **The ladder.** Every appointment goes to the **Nirdeshak of the appointee's Kshetra** — Sanchalak
+  and Sah-Sanchalak at one of its Sabhas, Nirikshak and Sah-Nirdeshak at the Kshetra itself —
+  **except from the Nirdeshak upward, where authority sits one geographic level above**: the Zone's
+  Sanyojak appoints the Kshetra's Nirdeshak, the City's Regional Team appoints the Zone's Sanyojak.
+  `AppointmentAuthorization` resolves containment (Sabha → Kshetra, Kshetra → Zone, Zone → City) only
+  on the four arms that need it; the Nirikshak and Sah-Nirdeshak arms check the Nirdeshak at the
+  **same** `(Kshetra, demographic)` with no walk at all, which is why a Sah-Nirdeshak — scoped
+  exactly like the Nirdeshak who appoints them — never reaches the Zone's Sanyojak. It is the
+  inverted-predicate engine of
   [authorization](../patterns/authorization.md), and revocation reuses it unchanged — which is what
   makes authority a function of **current scope**, never of who appointed (ADR-0025).
-- **Two exceptions to the ladder.** The Regional Team is **self-replicating**: a peer at the same
-  (City, demographic) may appoint another, alongside the Madhyastha Karyalaya's bootstrap path. A
-  Sant is recorded by the MK, not appointed by a tier.
+- **Two exceptions to the ladder** — the last two of `canAppoint`'s eight arms. The Regional Team is
+  **self-replicating**: a peer at the same (City, demographic) may appoint another, alongside the
+  Madhyastha Karyalaya's bootstrap path. A Sant is recorded by the MK, not appointed by a tier.
 - **The Sah-Nirdeshak holds no appointment authority at all** (ADR-0025) and is capped at **two** per
   (Kshetra, demographic). `SahNirdeshakCap` owns both the threshold and the *reached* rule so the
   write path and the chip cannot disagree; breaching it is `SahNirdeshakCapReachedException` → **409**.
@@ -129,9 +135,11 @@ be exercised from.
 ## Method
 
 - `AppointmentAuthorization.canAppoint` is a single switch over the eight appointable roles and is
-  the source that paid: it is the whole ladder, the two exceptions and the Sant carve-out in twenty
-  lines, where ADR-0011 and ADR-0025 take three thousand words and disagree on the Regional Team
-  until you read which supersedes which.
+  the source that paid: it is the whole ladder and both exceptions in twenty lines, where ADR-0011
+  and ADR-0025 take three thousand words and disagree on the Regional Team until you read which
+  supersedes which. **Check any restatement of the ladder against those eight arms** — #197 corrected
+  one that read the walk as universal, and its first replacement generalised too far in the other
+  direction. Enumerate; do not summarise.
 - The divergence in `Rules & authority` came from reading `VisibleSections.forMember` beside that
   switch. Neither file is suspicious alone; only the pair shows the authority with no surface, so
   re-check them together on recompile.
