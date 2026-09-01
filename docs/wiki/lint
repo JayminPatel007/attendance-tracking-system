@@ -98,10 +98,12 @@ CATALOG_SECTIONS = {
     "Notes": "note",
 }
 
-# `Method` is exempt from coverage tags: it is a statement of *how the page was
-# compiled*, which is no more a derivation from evidence than evidence is
-# (protocol.md §4).
-COVERAGE_EXEMPT_SECTIONS = {"Method"}
+# `Method` is written for the *next compiler*, not for a reader answering a question:
+# it states how the page was compiled, which is no more a derivation from evidence
+# than evidence is (protocol.md §4). One constant, two exemptions — no coverage tag
+# (check 4) and no place in the word budget (check 8, protocol.md §2), because that is
+# the same reasoning `prose_words` already uses to exclude coverage tags and table rows.
+COMPILER_ONLY_SECTIONS = {"Method"}
 
 # The closed tag vocabulary (protocol.md §3). Closed because tags *partition*: an
 # open vocabulary over 14 pages degrades silently into authz/auth/authorization.
@@ -166,6 +168,16 @@ class Page:
     @property
     def deprecated(self) -> bool:
         return self.meta.get("status") == "deprecated"
+
+    @property
+    def scaffold(self) -> bool:
+        """The build unit exists and is declared, but holds no types yet (protocol.md §3).
+
+        Not a `status`: §6's two states are opposed on the recompile axis and are
+        mutually exclusive for that reason, while a scaffold page recompiles like any
+        other and may perfectly well also be `disputed`.
+        """
+        return self.meta.get("scaffold") == "true"
 
 
 class Failures:
@@ -469,15 +481,17 @@ def check_2_identity(pages: list[Page], index: Page | None, f: Failures) -> None
             f.add(2, index.rel, line,
                   f"`{page.stem}` catalog cell 3 is {actual_aliases!r}, but its frontmatter "
                   f"`aliases` say {expected_aliases!r}")
-        marked = "(deprecated)" in cells[0]
-        if page.deprecated and not marked:
-            f.add(2, index.rel, line,
-                  f"`{page.stem}` is `status: deprecated` but its catalog row carries no "
-                  "`(deprecated)` marker (protocol.md §6)")
-        elif marked and not page.deprecated:
-            f.add(2, index.rel, line,
-                  f"`{page.stem}` is marked `(deprecated)` in the catalog but its frontmatter "
-                  "is not")
+        for marker, held, where in (("(deprecated)", page.deprecated, "protocol.md §6"),
+                                    ("(scaffold)", page.scaffold, "protocol.md §3")):
+            marked = marker in cells[0]
+            if held and not marked:
+                f.add(2, index.rel, line,
+                      f"`{page.stem}` carries the frontmatter for `{marker}` but its catalog "
+                      f"row has no marker ({where})")
+            elif marked and not held:
+                f.add(2, index.rel, line,
+                      f"`{page.stem}` is marked `{marker}` in the catalog but its frontmatter "
+                      f"is not ({where})")
 
     for stem, (line, _) in listed.items():
         f.add(2, index.rel, line, f"catalog lists `{stem}`, which is not a page in this wiki")
@@ -537,6 +551,19 @@ def check_3_frontmatter(pages: list[Page], root: Path, wiki: Path, f: Failures) 
             f.add(3, page.rel, None,
                   f"`resource` is a `structure` field only; `{page.type}` describes a capability "
                   "or an idea with no single asset to point at (OKF §4.1)")
+
+        scaffold = page.meta.get("scaffold")
+        if scaffold:  # a bare `scaffold:` reads as absence, exactly as check 5 reads `status:`
+            if scaffold != "true":
+                f.add(3, page.rel, None,
+                      f"`scaffold: {scaffold!r}` — the only permitted value is `true`; absence "
+                      "means the unit holds code, exactly as an absent `status` means current "
+                      "(protocol.md §3)")
+            elif page.type != "structure":
+                f.add(3, page.rel, None,
+                      f"`scaffold` is a `structure` field only; `{page.type}` describes a "
+                      "capability or an idea, not a build unit that could be empty "
+                      "(protocol.md §3)")
 
         for tag in as_list(page.meta.get("tags")):
             if tag not in TAGS:
@@ -612,7 +639,7 @@ def check_4_coverage(pages: list[Page], f: Failures) -> None:
         if page.type not in COMPILED_TYPES:
             continue  # notes are primary evidence, not a derivation (protocol.md §5)
         for title, head_idx, content in sections(page):
-            if title in COVERAGE_EXEMPT_SECTIONS:
+            if title in COMPILER_ONLY_SECTIONS:
                 continue
             tag_line = next((line for line in content if line.strip()), None)
             if tag_line is None or "[coverage:" not in tag_line:
@@ -742,13 +769,24 @@ def check_7_skeleton(pages: list[Page], f: Failures) -> None:
 
 
 def prose_words(page: Page) -> int:
-    """Words a reader actually reads: no frontmatter, no HTML comments, no table rows.
+    """Words a reader actually reads: no frontmatter, no comments, no tables, no `Method`.
 
-    Those three are ~45% of a structure page's `wc -w` (protocol.md §2) and none of
+    The first three are ~45% of a structure page's `wc -w` (protocol.md §2) and none of
     them is what the budget is for — coverage tags are metadata about the page, and a
-    table is scanned rather than read.
+    table is scanned rather than read. `Method` is excluded on the same reasoning and
+    on measurement (#179): it is addressed to the next compiler, and `web` read 543
+    words excluding it both before and after the OKF migration, so the section was
+    always the entire overage rather than growth the budgets had failed to anticipate.
+
+    Everything before the first `##` — the H1 and any preamble — is counted, so this
+    is a subtraction from the whole body rather than a sum over listed sections.
     """
-    text = strip_comments("\n".join(page.body))
+    skipped: set[int] = set()
+    for title, head_idx, content in sections(page):
+        if title in COMPILER_ONLY_SECTIONS:
+            skipped.update(range(head_idx, head_idx + len(content) + 1))
+    kept = [line for idx, line in enumerate(page.body) if idx not in skipped]
+    text = strip_comments("\n".join(kept))
     return sum(
         len(line.split())
         for line in text.splitlines()

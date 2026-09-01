@@ -1,8 +1,9 @@
 ---
 type: structure
 title: Mobile Identity Domain
-description: Mobile User and Session types — a scaffold with no types in it yet; the app shell still holds them.
+description: Mobile User and Session types; the app shell still holds them.
 resource: apps/mobile/packages/identity_domain
+scaffold: true
 aliases: [mobile User/Session types, Karyakar]
 source_paths: [
   apps/mobile/packages/identity_domain/lib/**,

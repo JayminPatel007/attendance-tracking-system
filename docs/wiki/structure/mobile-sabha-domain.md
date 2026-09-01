@@ -1,8 +1,9 @@
 ---
 type: structure
 title: Mobile Sabha Domain
-description: Mobile Sabha, Occurrence and Roster types — a scaffold with no types in it yet.
+description: Mobile Sabha, Occurrence and Roster types.
 resource: apps/mobile/packages/sabha_domain
+scaffold: true
 aliases: [mobile Sabha/Occurrence/Roster types]
 source_paths: [
   apps/mobile/packages/sabha_domain/lib/**,

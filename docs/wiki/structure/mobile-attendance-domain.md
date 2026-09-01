@@ -1,8 +1,9 @@
 ---
 type: structure
 title: Mobile Attendance Domain
-description: Mobile Attendance Marking, Walk-in and offline-queue types — a scaffold with no types in it yet.
+description: Mobile Attendance Marking, Walk-in and offline-queue types.
 resource: apps/mobile/packages/attendance_domain
+scaffold: true
 aliases: [mobile Attendance Marking, Walk-in, offline queue]
 tags: [offline-sync]
 source_paths: [

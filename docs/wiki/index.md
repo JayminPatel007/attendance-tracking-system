@@ -40,11 +40,11 @@ One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `app
 | [backend-container](structure/backend-container.md) | `apps/backend/application-container` | the Spring Boot app, the composition root, the schema |
 | [backend-identity](structure/backend-identity.md) | `apps/backend/identity-service` | People, Users, roles, Karyakar, Person, Directory |
 | [backend-sabha](structure/backend-sabha.md) | `apps/backend/sabha-service` | the structural hierarchy, Kshetra, Zone, City, Sabha Kind |
-| [mobile-attendance-domain](structure/mobile-attendance-domain.md) | `apps/mobile/packages/attendance_domain` | mobile Attendance Marking, Walk-in, offline queue |
-| [mobile-identity-domain](structure/mobile-identity-domain.md) | `apps/mobile/packages/identity_domain` | mobile User/Session types, Karyakar |
+| [mobile-attendance-domain](structure/mobile-attendance-domain.md) (scaffold) | `apps/mobile/packages/attendance_domain` | mobile Attendance Marking, Walk-in, offline queue |
+| [mobile-identity-domain](structure/mobile-identity-domain.md) (scaffold) | `apps/mobile/packages/identity_domain` | mobile User/Session types, Karyakar |
 | [mobile-sabha-api](structure/mobile-sabha-api.md) | `apps/mobile/packages/sabha_api` | the generated Dart client, the typed API client, the OpenAPI client |
-| [mobile-sabha-domain](structure/mobile-sabha-domain.md) | `apps/mobile/packages/sabha_domain` | mobile Sabha/Occurrence/Roster types |
-| [mobile-shared-kernel](structure/mobile-shared-kernel.md) | `apps/mobile/packages/shared_kernel` | the mobile shared kernel |
+| [mobile-sabha-domain](structure/mobile-sabha-domain.md) (scaffold) | `apps/mobile/packages/sabha_domain` | mobile Sabha/Occurrence/Roster types |
+| [mobile-shared-kernel](structure/mobile-shared-kernel.md) (scaffold) | `apps/mobile/packages/shared_kernel` | the mobile shared kernel |
 | [mobile-shell](structure/mobile-shell.md) | `apps/mobile/sabha_attendance` | the Flutter app, the Sanchalak's phone, hajri app, the offline queue |
 | [web](structure/web.md) | `apps/web` | the Angular admin panel, the web console, the BFF client, the sections |
 

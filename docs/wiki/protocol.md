@@ -105,16 +105,17 @@ its `Flow` section is written per app.
 
 ### Word budget — prose only, a smell only
 
-The budget counts **prose words**: everything except frontmatter, HTML comments (the coverage tags)
-and table rows. Those three are ~45% of a structure page's `wc -w` and none of them is what the
-budget is for — coverage tags are metadata *about* the page and invisible to a reader, and a table
-is scanned rather than read, so charging a 5-row ring table at the same rate as 150 words of
-argument measures the wrong thing. Lint check 8 (§9) computes it, as a **warning**.
+The budget counts **prose words**: everything except frontmatter, HTML comments (the coverage tags),
+table rows and the `## Method` section. None of the four is what the budget is for — coverage tags
+are metadata *about* the page and invisible to a reader, a table is scanned rather than read, and
+`## Method` is addressed to the next compiler rather than to a reader answering a question (§3). So
+charging a 5-row ring table at the same rate as 150 words of argument measures the wrong thing, and
+so does charging a method statement. Lint check 8 (§9) computes it, as a **warning**.
 
 | `type` | Budget | Evidence |
 |---|---|---|
-| `structure` | ~550 | **derived** — n=6, observed 383–527 across four different unit shapes |
-| `feature` | ~750 | **provisional** — n=1 (`attendance-marking`, 720) |
+| `structure` | ~550 | **derived** — n=13, observed 226–541 across backend contexts, Dart packages and the web app |
+| `feature` | ~750 | **provisional** — n=1 (`attendance-marking`, 725) |
 | `pattern` | inherits `feature`'s | **unmeasured** — n=0 |
 
 The provisional marks are load-bearing. The first budget (~700/~500) was stated as settled from a
@@ -122,9 +123,21 @@ single page's `wc -w`, and the first real sweep appeared to falsify it on all 7 
 actually happened was that the units drifted out from under the number. State the sample size, or
 the next reader inherits a law where there was an observation.
 
-Both numbers predate `## Method` (§3), which added a section of genuine prose to every compiled page,
-so they are due a re-measure rather than a defence the next time a sweep touches enough pages to
-resample them.
+**The re-measure this section briefly promised is withdrawn, not deferred.** The worry was that
+`## Method` added a section of genuine prose to every compiled page and so falsified numbers that
+predate it. #179 measured it and the premise is wrong: body prose excluding the citation section is
+identical pre- and post-migration on all 14 pages, delta exactly 0. `## Method` is `## Sources`
+renamed and grown, and `web` read 543 words excluding it *both before and after* — so the section,
+under either name, was always the entire overage. The budgets were never falsified. What was wrong
+was the counter, and the counter is what changed: `## Method` now leaves `prose_words` on the same
+reasoning that already excluded coverage tags. Both standing check-8 warnings cleared on that change
+alone, with no budget touched.
+
+The bands above were then re-read under the corrected counter, which also drops the `## Method`
+heading line itself. `structure` gains its seven newer pages, so **n goes 6 → 13 and the band widens
+downward**; the ceiling barely moves (527 → 541, on `web`, the same page that used to warn) and stays
+under ~550. The **marks** are what carry forward, not the digits: state the sample size, or the next
+reader inherits a law where there was an observation.
 
 Size remains a **review smell, never a trigger**: over budget with no admission test met is
 *misfiled*, not due for a split.
@@ -141,6 +154,7 @@ type: structure                 # required; one of structure | feature | pattern
 title: Identity Service         # required; the page's display label
 description: Owns who a person is, what authority they hold, and how they prove it.
 resource: apps/backend/identity-service   # `structure` only; the build unit this page describes
+scaffold: true                  # optional, `structure` only; the unit holds no types yet. Omit otherwise.
 aliases: [People, Users, roles, Karyakar]  # optional; open list of search hooks
 tags: [bff]                     # optional; closed vocabulary, see below
 source_paths: [                 # required; ≥1 glob, what invalidates this page. See below.
@@ -182,6 +196,41 @@ single asset to point at, and inventing a URI for it is worse than the field's a
 and its own bundles abandoned it across 152 links because it 404s on GitHub — the reference viewer
 dropped support, and the surviving absolute links contribute zero edges to its graph. Same trade
 here, same answer, and the same reasoning governs §8's links.
+
+`scaffold` is **`structure`-only, optional, and takes exactly `true`**: the build unit is declared and
+buildable but holds no types yet. Four of the six mobile packages are in that state, budgeted by
+ADR-0015 as accepted one-time scaffolding.
+
+It exists to give that fact a **structural home**, which it did not have. §4 made the catalog a pure
+function of the pages and gave the `structure` table three columns with `resource` in the middle,
+which left the four `— **scaffold, no types yet**` annotations nowhere to go; they were absorbed into
+each page's `description` as prose, and #179's cold read-test named that **the one reader-visible fact
+the migration subtracted**. Prose is not a field a generator can key off, so the catalog could not
+derive the marker back. Hence a field — and the `description` clause is **gone**, not kept beside it,
+because two homes for one fact is the second copy this contract keeps deleting. The unit's shape
+(*"a declared Melos package"*, *"the app shell still holds them"*) stays in `description`, where it is
+not derivable from anything.
+
+**It is not a `status`.** §6's two states are mutually exclusive because they are directly opposed on
+the one axis either of them drives — recompile unconditionally, or never recompile. A scaffold page
+recompiles like any other and may perfectly well also be `disputed`; folding it into `status` would
+forbid that combination for nothing.
+
+**It is not `draft` either**, which §6 kills and keeps dead. `draft` is a claim about the *page* — how
+finished the compiler's work is — and this wiki makes that claim 96 times at section granularity in
+its coverage tags. `scaffold` is a claim about the *subject*, in the same family as `deprecated`: one
+says the unit is gone, the other that it is not built out yet. Both are facts a reader wants on the
+scanning surface, and §4 marks both there the same way.
+
+**Absence means the unit holds code**, exactly as an absent `status` means current. `scaffold: false`
+is a lint failure rather than a synonym for absence: one way to say each thing, or the catalog's
+derivation has two inputs to reconcile.
+
+**The sweep may author and clear it**, by writing the key when a package holds no types and deleting
+it in the sweep that first finds one. This is the opposite of `deprecated`'s human-only rule (§6), and
+the difference is what the compiler can actually see: *"this package declares no types"* is answered
+by reading the package, where *"this unit was deleted"* is indistinguishable from *"these globs are
+wrong"*.
 
 `aliases` is **optional, open, and any type**: a list of search hooks. This domain's vocabulary is
 Gujarati, so an agent searching "regional lead" needs a way to reach *Nirdeshak*. It is open —
@@ -411,8 +460,29 @@ That is a method plus a **yield judgement**. OKF has no field for it anywhere, a
 highest-value line on the page for a recompiling agent. So OKF §13.1's supersession cleanly claims
 the first two bullets and does not reach the third.
 
-Two consequences. `## Method` **names globs and bare filenames**, which are not followable, so lint
-path-checks only genuine markdown links inside it. And the glossary term list that used to trail the
+**What is required is the yield judgement, and only that.** #179 put a second cold agent through
+`backend-attendance`'s section bullet by bullet, planning a recompile, with *"nice context"* counting
+as a NO. Bullet 1 — *"Javadoc on `Occurrence.java`, `OccurrenceWriter.java` and
+`MarkAttendanceApplicationService.java`, the highest-yield source in this unit"* — **changed its
+plan**: without it the agent would have walked the sweep skill's generic ladder to rung 1, found it
+thin, and reached the three docblocks by exhaustive grep or by luck. It is recoverable from nowhere
+else — not `sources[]`, which excludes code by rule; not `source_paths`, which is a glob and not a
+file; not the skill, whose ladder is generic by construction. Bullet 2 — which greps fed which
+section — restated the skill's own rungs 3–5, in the same order, for the same sections:
+**reconstructible, and therefore a NO**. The verdict was *"one sentence dressed as two bullets."*
+
+So the obligation is: **name the source that paid, and say why it paid.** Anything a reader could
+reconstruct from the sweep skill's ladder is not owed and should not be written — that is the reading
+this narrowing closes, under which a compiler could have satisfied the section with bullet 2 alone.
+Further bullets stay **permitted, not required**: the evidence is n=1, one page and one agent, and a
+unit whose derivation genuinely was several distinct techniques must still be able to say so. The next
+sweep is the honest instrument for resampling that, and this narrowing does not pre-empt it.
+
+The change is **body-level and sits inert**: no page is rewritten for it. Each `## Method` is rewritten
+by the sweep that next recompiles its page, which is the same deferral #160 established.
+
+Two further consequences. `## Method` **names globs and bare filenames**, which are not followable, so
+lint path-checks only genuine markdown links inside it. And the glossary term list that used to trail the
 `CONTEXT.md` bullet (`— Nirdeshak, Sanchalak, Nirikshak, Kshetra`) lives on in the `context` entry's
 `title`, where it is still greppable.
 
@@ -496,6 +566,13 @@ The middle column is `resource` **or** `description` because `resource` is struc
 the tables come out the same width for the same reason. §8's *"SHOULD include the description"* is
 honoured exactly where the cell holds one, and **declined on the structure table**: a fourth column
 would sit beside `dashboards, audit log, re-engagement` as one more second copy.
+
+Column 1 may carry a **one-token marker** after the page link: `(deprecated)` (§6) or `(scaffold)`
+(§3). Both are derived from frontmatter and asserted **in both directions** by check 2 — present when
+the field is, absent when it is not — so neither can be hand-written and neither can drift. They stay
+markers rather than a fourth column for the reason that declined the description column: a column
+spends thirteen cells to carry four facts, where a marker spends four tokens. This is the whole of
+what the catalog says that is not a column.
 
 Because the catalog is a pure function of the pages, **a wrong catalog is a frontmatter bug**, and
 lint check 2 asserts cell fidelity rather than merely membership.
@@ -894,6 +971,11 @@ the OKF migration kept that discipline: conformance is asserted by **clauses 1 a
 (parseable frontmatter; `type` present, non-empty and one of the four) and **clause 3 across checks 7
 and 3** (the index skeleton, and the rule that `index.md` carries nothing but `okf_version`). No
 concept here is new enough to spend a number on.
+
+**Check 8 excludes `## Method`** along with frontmatter, coverage tags and table rows (§2). All four
+are either metadata about the page or addressed to the next compiler, and #179 measured the section
+as the entire overage on both pages that warned — under its old name as well as its new one, so the
+budgets were never falsified and no re-measure is owed.
 
 **Check 8 must not be a gate.** §2 fixes size as a smell and never a trigger, so a check that failed
 the build would overturn the contract it exists to report on. Notes are exempt with the other

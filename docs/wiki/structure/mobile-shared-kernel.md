@@ -1,8 +1,9 @@
 ---
 type: structure
 title: Mobile Shared Kernel
-description: The mobile shared kernel — a declared Melos package that is still a scaffold with no types in it yet.
+description: The mobile shared kernel — a declared Melos package.
 resource: apps/mobile/packages/shared_kernel
+scaffold: true
 aliases: [the mobile shared kernel]
 source_paths: [
   apps/mobile/packages/shared_kernel/lib/**,

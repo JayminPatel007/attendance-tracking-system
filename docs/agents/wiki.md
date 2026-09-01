@@ -25,8 +25,13 @@ immutable, and the wiki cites them rather than restating them. Glossary terms an
 **bare** in wiki prose; the resolvable links live in each page's `sources[]` frontmatter, one entry
 per document, keyed `adr-0011` / `context`.
 
-A page's `## Method` section is **not** a citation list. It says *how the page was compiled and where
-to look first* — read it if you are about to verify something, and skip it otherwise.
+A page's `## Method` section is **not** a citation list. It names *the source that paid and why* —
+read it if you are about to verify or recompile something, and skip it otherwise.
+
+`index.md` marks two facts inline, after the page link: **`(deprecated)`** — the unit this page
+describes is gone, so the page makes no currency claim — and **`(scaffold)`** — the unit is declared
+and buildable but holds no types yet, so the page describes an empty package rather than a thin one.
+Both are derived from frontmatter and lint-checked, so neither can lie to you.
 
 The full page contract is `docs/wiki/protocol.md`. You only need it if you are compiling.
 
