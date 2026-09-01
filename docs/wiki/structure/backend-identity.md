@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: backend-identity
+type: structure
+title: Identity Service
+description: Owns who a person is, what authority they hold, and how they prove it — persons, role assignments, users, OTP and password reset.
+resource: apps/backend/identity-service
+aliases: [People, Users, roles, Karyakar, Person, Directory]
+tags: [bff]
 source_paths: [
   apps/backend/identity-service/*/src/main/**,
   apps/backend/identity-service/*/pom.xml,
@@ -12,7 +16,13 @@ source_paths: [
   docs/adr/0029-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0015, ADR-0017, ADR-0018, ADR-0019, ADR-0029]
+sources:
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: adr-0017, title: "REST adapters live in `*-application` modules", resource: ../../adr/0017-rest-adapters-live-in-application-modules.md }
+  - { id: adr-0018, title: "Application services split: `*-application` vs `*-application-service`", resource: ../../adr/0018-application-service-split.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
+  - { id: context, title: "CONTEXT.md — Nirdeshak, Sanchalak, Nirikshak, Kshetra", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -68,7 +78,7 @@ side in `identity-application`. Route prefixes only — individual endpoints bel
 | `/bff/sabhas`, `/bff/password-reissue` | web | `SabhaDefinitionController`, `PasswordReissueController` |
 
 `/bff/sabhas` is **split across two contexts**: `POST` is identity's (`SabhaDefinitionController`),
-while `GET /bff/sabhas/mine` and `DELETE /bff/sabhas/{id}` are [[backend-sabha]]'s. The prefix alone
+while `GET /bff/sabhas/mine` and `DELETE /bff/sabhas/{id}` are [backend-sabha](backend-sabha.md)'s. The prefix alone
 does not tell you the owner.
 
 ## Talks To
@@ -89,7 +99,7 @@ of another context's packages from anywhere in this unit.
 `CallerResolver`, `RoleAssignmentLookup`, `SantLookup`, `MadhyasthaKaryalayaLookup`,
 `SanyojakZoneLookup`, `NirdeshakScopeLookup`, `NirikshakAssignmentLookup`,
 `RegionalTeamCityLookup`, `UserActivityRecorder`. This is the most-depended-on unit in the
-backend — see the port table on [[backend-common-domain]] for the whole wiring diagram.
+backend — see the port table on [backend-common-domain](backend-common-domain.md) for the whole wiring diagram.
 
 ## Data
 
@@ -133,13 +143,12 @@ belongs in `notes/`, not here.
 
 <!-- [coverage: low -- one dossier exists so far; the other eight are candidates only] -->
 
-- [[attendance-marking]] — for `CallerResolver`, `persons` and the walk-in directory search.
+- [attendance-marking](../features/attendance-marking.md) — for `CallerResolver`, `persons` and the walk-in directory search.
 
-Expected further slugs, one per feature package: role-appointment, person-directory, selection,
+Expected further pages, one per feature package: role-appointment, person-directory, selection,
 password-reset, home-sabha-transfer, sabha-definition, mk-bootstrap, web-session.
 
-## Sources
+## Method
 
-- [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md), [ADR-0017](../../adr/0017-rest-adapters-live-in-application-modules.md), [ADR-0018](../../adr/0018-application-service-split.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0029](../../adr/0029-role-assignments-access-rule.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Nirdeshak, Sanchalak, Nirikshak, Kshetra
-- `apps/backend/identity-service/**/package-info.java` — five files, the highest-yield source on this page
+- Ring-module class listings, a mapping-annotation grep for `Exposes`, and a writer-SQL grep across every `Jdbc*` adapter for `Data` → Owns.
+- `identity-service/**/package-info.java` — five substantive files, the highest-yield source here; nine document a feature package in domain vocabulary.

@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: backend-common-domain
+type: structure
+title: Common Domain
+description: The shared kernel: the cross-context ports, the AggregateRoot base class and the domain events every backend context depends on.
+resource: apps/backend/common-domain
+aliases: [the shared kernel, the ports module]
+tags: [audit]
 source_paths: [
   apps/backend/common-domain/src/main/**,
   apps/backend/common-domain/pom.xml,
@@ -11,7 +15,13 @@ source_paths: [
   docs/adr/0027-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0008, ADR-0015, ADR-0019, ADR-0020, ADR-0027]
+sources:
+  - { id: adr-0008, title: "Single Bounded Context, with Internal Package Seams", resource: ../../adr/0008-single-bounded-context-with-internal-seams.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0020, title: "AggregateRoot base class, domain events, and optimistic locking", resource: ../../adr/0020-aggregate-root-and-domain-events.md }
+  - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
+  - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 
@@ -95,10 +105,9 @@ objects; the rows behind them belong to the context that implements the correspo
 
 <!-- [coverage: low -- one dossier exists so far; this unit is crossed by nearly every capability] -->
 
-- [[attendance-marking]]
+- [attendance-marking](../features/attendance-marking.md)
 
-## Sources
+## Method
 
-- [ADR-0008](../../adr/0008-single-bounded-context-with-internal-seams.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md), [ADR-0019](../../adr/0019-bounded-context-module-taxonomy.md), [ADR-0020](../../adr/0020-aggregate-root-and-domain-events.md), [ADR-0027](../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md)
-- `apps/backend/common-domain/src/main/java/org/sabha/common/package-info.java`
-- Import scan across all six backend units — the evidence for both halves of Talks To
+- Class listing over `common-domain/src/main/**`, then an import scan across all six backend units — the evidence for both halves of `Talks To`, and the highest-yield method on this page.
+- `org/sabha/common/package-info.java` enumerates the library and is the one substantive docblock in this unit.

@@ -22,6 +22,12 @@ link rules — is `docs/wiki/protocol.md`. Read it before compiling anything; do
 - **Recompiling a page re-reads *all* its sources**, not only the changed ones.
 - **Never write `notes/` bodies.** Notes are human-authored (`docs/agents/wiki.md`); you read them as
   input only.
+- **Never author or clear `status: deprecated`.** It is human-only, set in the PR that deletes the
+  subject. You are the one actor that **cannot** tell "this unit was deleted" from "these globs are
+  wrong" — the human deleting the module knows; you are guessing. See `protocol.md` §6.
+- **Never drop a `sources[]` entry on recompile.** Adding one is ordinary; removing one sheds
+  provenance quietly, which is exactly the drift `sources[]` exists to stop. If a source genuinely no
+  longer informs the page, say so in the PR body rather than deleting it silently.
 - **Never rewrite `CONTEXT.md` or `docs/adr/`.** They are canonical and immutable. Cite them.
 - **Sweeps are separate and batched** — never folded into a feature PR. The per-page cost is
   dominated by *input* (~4,500 words of ADRs for one page), so batching amortises the re-reads.
@@ -46,6 +52,11 @@ tells you whether it is here:
 grep -rL "Empty scaffold" --include=package-info.java <unit>/
 ```
 
+0. **The page's own `## Method` section**, if it has one. It is a method statement plus a yield
+   judgement written by the last compiler — *"seven docblocks; the highest-yield source on this
+   page"* — and it is the cheapest rung on this ladder. Read it before choosing the others, and
+   **rewrite it** when you are done, so the next sweep inherits what you learned rather than what
+   the sweep before you did.
 1. **`package-info.java` — but only the files that grep lists.** Substantive in `identity`
    (14 files; 9 are feature-package docs naming the feature in domain vocabulary), `attendance`
    (5, multi-paragraph) and `common-domain` (1, enumerates the library). In `sabha` and `analytics`
@@ -133,6 +144,12 @@ where a new capability's schema belongs anyway — or to the candidates list (st
 **c. `status: disputed`** — unconditionally dirty, regardless of `last_compiled`. This is the one
 signal meaning "recompile even though nothing moved."
 
+**A `status: deprecated` page is never dirty, by any rule above.** Skip it entirely: do not diff it,
+do not recompile it, do not clear the marker. Its subject is gone, so §2a's diff comes back clean
+anyway (the globs match nothing) — which is precisely why deprecation is a suppression of the
+currency claim and not merely a lint exemption. This is the one sweep obligation that is purely *not
+touching* something.
+
 **d. Missing `structure/` pages** — build units are manifest-declared, so this needs no judgement:
 
 ```sh
@@ -164,7 +181,7 @@ The rule creates *one page per declared unit*, which is only sound where the tax
 declared unit — true of Maven modules and Dart packages, false of web. Under #144 web is **a single
 fixed page** no matter how many Angular projects `angular.json` declares, so watching it here would
 make the sweep create a page per new library — the opposite of the taxonomy. The gap it appears to
-leave is closed one section up: `angular.json` is in [[web]]'s own `source_paths`, so a new project
+leave is closed one section up: `angular.json` is in the `web` page's own `source_paths`, so a new project
 dirties the web page by **§2a path intersection** and gets folded into its `Layout` table, which is
 where a new library belongs. §2d creates pages; §2a maintains them, and web needs only the second.
 
@@ -178,12 +195,36 @@ successful sweep.
 ## 3. Compile each dirty page
 
 Per `protocol.md`: fixed sections in order, empties written `_none_`, a coverage tag as the first
-non-empty line of every prose section except `Sources`, `[[slug]]` inside the wiki and relative links
-only in `Sources` and frontmatter.
+non-empty line of every prose section except `Method`.
+
+**Links are the one obligation you can get mechanically wrong.** Every in-wiki link is an ordinary
+markdown link whose href is a **file-relative path** and whose text is the **target's filename stem**
+— so you must now *compute a path* where you previously emitted a bare slug, and a page you **move**
+between type directories rewrites its **inbound** links rather than none of them. Lint check 1
+catches both, which is the point; but write them right the first time rather than treating the linter
+as the author.
+
+**Write `## Method` deliberately.** It is not a citation list — the citations live in `sources[]` —
+it is *how you compiled this page and where the next compiler should look first*. Nothing previously
+asked you to record your own technique, and it is the highest-value line on the page for the sweep
+after you. Say which rung of the ladder paid, and which was worthless.
+
+**Frontmatter you now author**: `title`, `description`, `aliases` (search hooks, open list — this is
+where they live now, not in the catalog cell), `tags` (the closed vocabulary in `protocol.md` §3 —
+do not invent one), `resource` on structure pages, and `sources[]` with a stable `id` per document.
 
 `docs/wiki/structure/backend-identity.md` is the **reference instance** of the `structure` skeleton.
 Read it before compiling your first structure page — it is cheaper than re-deriving the shape from
 the contract, and it is the tiebreak wherever the contract leaves a detail arbitrary.
+
+**Respect a human verification in a coverage tag.** A tag reading
+`[coverage: high -- verified 2026-08-31 by human:jaymin against SabhaJdbcAdapter; compiled medium]`
+records a check a person actually performed. If your recompile leaves that section **byte-identical**,
+**leave it standing**. If you rewrite the prose, **demote it** to your own honest level and move the
+verification into the reason as history — `[coverage: medium -- shape from adapters; human:jaymin
+verified at 09fb207, prose has since changed]` — and report the lapse in the PR body (step 9). Wiping
+it silently reintroduces the non-compounding defect through the back door; preserving it across a
+rewrite claims a person read prose they never saw.
 
 Tag honestly. Coverage is **reader obligation**, not source count: `high` means *don't open the
 source*, so it is a promise, not a compliment. The count rule is explicitly rejected — twenty-one
@@ -193,8 +234,11 @@ confidently-wrong claims the prototype produced landed in sections it had alread
 
 ## 4. Derive the note back-links
 
-For each compiled `structure`/`concept` page, scan `notes/*` frontmatter for `bears_on` entries
-naming that page and emit `[[note-slug]]` links into its `Gotchas` section. Link, never restate.
+For each compiled `structure`/`pattern` page, scan `notes/*` frontmatter for `bears_on` entries
+naming that page and emit a markdown link to the note into its `Gotchas` section — file-relative
+href, text equal to the note's filename stem, like every other in-wiki link. Link, never restate.
+
+`bears_on` itself carries **bare stems**, not links: frontmatter is machine-read and never rendered.
 
 Authors may have hand-added a back-link in a feature PR (this is *marking*, not authoring, and is
 allowed) — **reconcile** it rather than duplicating or deleting it.
@@ -207,7 +251,8 @@ If a page carried `status: disputed` and the recompile settles it, drop `status`
 `disputed_reason`. Every cleared dispute goes in the PR body as a review trigger — you are asserting
 either that the reader was wrong or that the fix is right, and that deserves eyes.
 
-Only compiled pages. A disputed **note** is cleared by a human.
+Only compiled pages. A disputed **note** is cleared by a human. **`deprecated` is never cleared by
+anyone** — there is no un-deleting, so do not look for a clearing path.
 
 ## 6. Advance the checkpoints
 
@@ -217,16 +262,25 @@ checkpoints: a partial sweep records real progress without any checkpoint lying.
 
 Never touch `last_verified` on a note.
 
-## 7. Update `index.md`, and propose — don't create
+## 7. Regenerate `index.md`, and propose — don't create
 
-Refresh the catalogs so **every page is listed exactly once** (that is what makes lint's orphan
-detection possible), refresh `pages:`, and fill router rows 5–7 with a `[[slug]]` once the target
-page exists. The eight router questions are fixed in `protocol.md` — never re-judge them.
+**The catalog is a pure function of the pages — regenerate it, don't re-judge it.** Every row is
+derived from frontmatter: the link from the filename, the middle cell from `resource` (structure) or
+`description` (everything else), the third cell from `aliases` comma-joined, and a `(deprecated)`
+marker from `status`. There is no hand-written cell left, which is the point: a wrong catalog is now
+a **frontmatter bug**, and lint check 2 asserts cell fidelity as well as *every page exactly once*.
 
-`features/` and `concepts/` pages are **proposed in the PR body and not created**. Their admission
+There is **no `pages:` count to refresh** — it is gone with `index.md`'s frontmatter, which now
+carries `okf_version` and nothing else.
+
+The one judgement left is the router: fill rows 5–7 with a link once the target page exists,
+otherwise leave the row pointing at its type's catalog anchor. The eight router questions are fixed
+in `protocol.md` — never re-judge them.
+
+`features/` and `patterns/` pages are **proposed in the PR body and not created**. Their admission
 tests are judgement calls that stay with a human: a dossier is a durable capability a user could
-name (an issue *amends* one, never adds one), and a concept must recur in 3+ pages *and* be cited by
-2+ ADRs. Don't force concepts.
+name (an issue *amends* one, never adds one), and a pattern must recur in 3+ pages *and* be cited by
+2+ ADRs. Don't force patterns.
 
 ## 8. Lint
 
@@ -234,7 +288,8 @@ name (an issue *amends* one, never adds one), and a concept must recur in 3+ pag
 docs/wiki/lint
 ```
 
-Deterministic, nine checks, no LLM. Fix every failure and re-run until clean. Do not open the PR
+Deterministic, nine checks, no LLM — and it is this bundle's OKF §11 conformance checker as well as
+its producer linter. Fix every failure and re-run until clean. Do not open the PR
 with a failing lint — CI runs the same script on `docs/wiki/**` and will catch it anyway.
 
 **Check 8 is a warning, not a failure** — a page over its prose budget is a smell (`protocol.md` §2).
@@ -250,18 +305,19 @@ somebody.
 
 ```markdown
 ## Pages rewritten
-- [[slug]] — <one line: what moved, why it was dirty (path / table / disputed / new unit)>
+- <stem> — <one line: what moved, why it was dirty (path / table / disputed / new unit)>
 
-## Review these  <!-- DERIVED: changed prose ∩ a low|medium tag, tags that got worse, cleared disputes -->
-- [[slug]] · `<section>` · `[coverage: low -- …]` — <the claim you are least sure of>
+## Review these  <!-- DERIVED: changed prose ∩ a low|medium tag, tags that got worse, cleared disputes, demoted verifications -->
+- <stem> · `<section>` · `[coverage: low -- …]` — <the claim you are least sure of>
+- <stem> · `<section>` — **verification demoted**: <who verified it, and what prose changed under it>
 
 ## Findings  <!-- free text, NOT a review trigger -->
 <what you learned about the wiki's own design — a skeleton section that produced filler, a
 mechanism that could not be satisfied. Feeds protocol.md amendments or new issues.>
 
 ## Candidates  <!-- proposed only; not created -->
-- feature: `<slug>` — <the capability, and what suggested it>
-- concept: `<slug>` — <the pattern, which pages, which ADRs>
+- feature: `<stem>` — <the capability, and what suggested it>
+- pattern: `<stem>` — <the pattern, which pages, which ADRs>
 ```
 
 **Review these** is the reviewer's whole job. It is deliberately *not* "every `low` section": the

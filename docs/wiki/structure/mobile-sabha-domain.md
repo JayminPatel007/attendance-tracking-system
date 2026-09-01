@@ -1,6 +1,9 @@
 ---
-kind: structure
-slug: mobile-sabha-domain
+type: structure
+title: Mobile Sabha Domain
+description: Mobile Sabha, Occurrence and Roster types — a scaffold with no types in it yet.
+resource: apps/mobile/packages/sabha_domain
+aliases: [mobile Sabha/Occurrence/Roster types]
 source_paths: [
   apps/mobile/packages/sabha_domain/lib/**,
   apps/mobile/packages/sabha_domain/pubspec.yaml,
@@ -9,7 +12,11 @@ source_paths: [
   docs/adr/0015-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0003, ADR-0014, ADR-0015]
+sources:
+  - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: context, title: "CONTEXT.md — Sabha, Sabha Occurrence, Roster, Sanchalak, Sah-Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 
@@ -19,15 +26,15 @@ last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 
 <!-- [coverage: high -- pubspec.yaml and the package's one library docblock] -->
 
-The mobile mirror of [[backend-sabha]] — intended to hold **Sabha**, **Sabha Occurrence** and
+The mobile mirror of [backend-sabha](backend-sabha.md) — intended to hold **Sabha**, **Sabha Occurrence** and
 **Roster** as the mobile app sees them. The docblock records a real design constraint worth keeping:
 mobile's permission model is narrow, own Sabha(s) only per ADR-0003, so this package would only ever
 expose the *read* shapes a Sanchalak or Sah-Sanchalak needs — never the structural-admin surface that
-is [[web]]'s.
+is [web](web.md)'s.
 
 **It is a scaffold.** The read shapes it describes were written in the app shell instead, as
 `OccurrenceView` and `RosterEntry` in `sabha_attendance/lib/roster/roster_api.dart`. See
-[[mobile-shell]].
+[mobile-shell](mobile-shell.md).
 
 ## Layout
 
@@ -46,9 +53,9 @@ taxonomy governs the JVM contexts only.
 
 <!-- [coverage: high -- pubspec.yaml dependency block, and an import grep across the workspace] -->
 
-**Outbound** — one declared `path:` dependency on [[mobile-shared-kernel]], imported by nothing.
+**Outbound** — one declared `path:` dependency on [mobile-shared-kernel](mobile-shared-kernel.md), imported by nothing.
 
-**Inbound** — [[mobile-shell]] declares this package and imports nothing from it.
+**Inbound** — [mobile-shell](mobile-shell.md) declares this package and imports nothing from it.
 
 ## Data
 
@@ -70,11 +77,9 @@ would move with it.
 
 <!-- [coverage: low -- no dossier names this page; the package holds no capability to name] -->
 
-`_none_`. [[attendance-marking]] names `sabha_attendance/lib/roster/` for the Roster shapes, which is
+`_none_`. [attendance-marking](../features/attendance-marking.md) names `sabha_attendance/lib/roster/` for the Roster shapes, which is
 where they actually live.
 
-## Sources
+## Method
 
-- [ADR-0003](../../adr/0003-platform-split-by-role.md), [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sabha, Sabha Occurrence, Roster, Sanchalak, Sah-Sanchalak
-- `apps/mobile/packages/sabha_domain/lib/sabha_domain.dart`
+- `lib/sabha_domain.dart` plus the package manifest. A barrel file exporting nothing, so the method is the manifest rung and the finding is the emptiness.

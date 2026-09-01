@@ -1,6 +1,10 @@
 ---
-kind: structure
-slug: mobile-shell
+type: structure
+title: Mobile App Shell
+description: The Flutter app the Sanchalak carries: roster marking, walk-in capture and the offline queue that syncs them.
+resource: apps/mobile/sabha_attendance
+aliases: [the Flutter app, the Sanchalak's phone, hajri app, the offline queue]
+tags: [offline-sync]
 source_paths: [
   apps/mobile/sabha_attendance/lib/**,
   apps/mobile/sabha_attendance/pubspec.yaml,
@@ -18,8 +22,19 @@ source_paths: [
   docs/adr/0016-*.md,
   CONTEXT.md
 ]
-decisions: [ADR-0001, ADR-0002, ADR-0003, ADR-0006, ADR-0007, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016]
 issues: [67, 73]
+sources:
+  - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
+  - { id: adr-0002, title: "Sanchalak-Initiated Home Sabha Transfer Requires Person Verification", resource: ../../adr/0002-home-sabha-transfer-requires-person-verification.md }
+  - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
+  - { id: adr-0006, title: "BSS Membership Is Additive, Not Replacement", resource: ../../adr/0006-bss-is-additive-not-replacement.md }
+  - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
+  - { id: adr-0012, title: "Sabha Schedule Shapes and Occurrence Materialization", resource: ../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md }
+  - { id: adr-0013, title: "Directory De-duplication on Person Add", resource: ../../adr/0013-directory-de-duplication-on-person-add.md }
+  - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
+  - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
+  - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
+  - { id: context, title: "CONTEXT.md — Sanchalak, Sah-Sanchalak, Sabha Occurrence, Roster, Walk-in, Home Sabha", resource: ../../../CONTEXT.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 
@@ -31,7 +46,7 @@ last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 
 The Flutter app for the **Sanchalak** and **Sah-Sanchalak** — the tier *at* the Sabha, per ADR-0003.
 It is the product's only attendance-capture surface and the only part of it that works **offline**
-(ADR-0007). Everything above the Sabha is [[web]]'s.
+(ADR-0007). Everything above the Sabha is [web](web.md)'s.
 
 It is also, in practice, the whole mobile app: the four domain packages the workspace declares are
 placeholders, so all mobile logic lives here.
@@ -89,10 +104,10 @@ of the ADR-0022 split.
 
 | Target | Via |
 |---|---|
-| [[backend-attendance]] | `/api/sanchalak/*`, `/api/occurrences/*`, `/api/sync` |
-| [[backend-identity]] | `/api/directory/*`, `/api/home-sabha-transfers/*`, `/api/sanchalak/nominations`, `/api/password-reset/*`, `/api/who-appointed-me` |
+| [backend-attendance](backend-attendance.md) | `/api/sanchalak/*`, `/api/occurrences/*`, `/api/sync` |
+| [backend-identity](backend-identity.md) | `/api/directory/*`, `/api/home-sabha-transfers/*`, `/api/sanchalak/nominations`, `/api/password-reset/*`, `/api/who-appointed-me` |
 | Keycloak | Authorization Code + PKCE via `flutter_appauth` (ADR-0016), issuer from `--dart-define` |
-| [[mobile-sabha-api]] | the generated client, imported by `walk_in_api`, `selection_api`, `add_person_api` |
+| [mobile-sabha-api](mobile-sabha-api.md) | the generated client, imported by `walk_in_api`, `selection_api`, `add_person_api` |
 
 **Inbound** — `_none_`. Nothing calls the app.
 
@@ -109,7 +124,7 @@ of the ADR-0022 split.
 | `pending_markings` | The offline queue, keyed `(occurrence_id, person_id)` so a re-mark replaces rather than duplicates. Carries `client_marked_at`, which is what last-write-wins resolves on. |
 | `sync_meta` | Key/value; today only `last_synced_at`. |
 
-This is **real local data**, and the only client-side store in the product — [[web]] owns nothing,
+This is **real local data**, and the only client-side store in the product — [web](web.md) owns nothing,
 by a zero-hit grep for every browser persistence API.
 
 **Reads** — `_none_`. Every backend table is reached over HTTP, never directly.
@@ -119,9 +134,9 @@ by a zero-hit grep for every browser persistence API.
 <!-- [coverage: medium -- each read off the named source file; none exercised at runtime] -->
 
 - **The four domain packages are declared and never imported.** `pubspec.yaml` `path:`-depends on
-  [[mobile-shared-kernel]], [[mobile-identity-domain]], [[mobile-sabha-domain]] and
-  [[mobile-attendance-domain]]; an import grep across `lib/` and `test/` finds **zero** references to
-  any of them. Only [[mobile-sabha-api]] is really used, in three files. The ADR-0015 seam is
+  [mobile-shared-kernel](mobile-shared-kernel.md), [mobile-identity-domain](mobile-identity-domain.md), [mobile-sabha-domain](mobile-sabha-domain.md) and
+  [mobile-attendance-domain](mobile-attendance-domain.md); an import grep across `lib/` and `test/` finds **zero** references to
+  any of them. Only [mobile-sabha-api](mobile-sabha-api.md) is really used, in three files. The ADR-0015 seam is
   enforced by a graph nothing crosses because nothing is there to cross it.
 - **Platform directories are not committed.** `sabha_attendance/{android,ios}` are gitignored and
   regenerated; a fresh clone needs `flutter create --platforms=android,ios
@@ -139,13 +154,12 @@ by a zero-hit grep for every browser persistence API.
 
 <!-- [coverage: low -- one dossier exists so far; the rest are candidates only] -->
 
-- [[attendance-marking]] — the Roster, sync and Walk-in paths.
+- [attendance-marking](../features/attendance-marking.md) — the Roster, sync and Walk-in paths.
 
-Expected further slugs, roughly one per feature directory: home-sabha-transfer, selection,
+Expected further pages, roughly one per feature directory: home-sabha-transfer, selection,
 password-reset, occurrence-control, person-directory.
 
-## Sources
+## Method
 
-- [ADR-0001](../../adr/0001-sabha-occurrence-lifecycle.md), [ADR-0002](../../adr/0002-home-sabha-transfer-requires-person-verification.md), [ADR-0003](../../adr/0003-platform-split-by-role.md), [ADR-0006](../../adr/0006-bss-is-additive-not-replacement.md), [ADR-0007](../../adr/0007-offline-capable-attendance-marking.md), [ADR-0012](../../adr/0012-sabha-schedule-shapes-and-occurrence-materialization.md), [ADR-0013](../../adr/0013-directory-de-duplication-on-person-add.md), [ADR-0014](../../adr/0014-monorepo-and-framework-scaffolding.md), [ADR-0015](../../adr/0015-bounded-context-seams-as-build-modules.md), [ADR-0016](../../adr/0016-oidc-auth-via-keycloak.md)
-- [CONTEXT.md](../../../CONTEXT.md) — Sanchalak, Sah-Sanchalak, Sabha Occurrence, Roster, Walk-in, Home Sabha
-- `apps/mobile/sabha_attendance/lib/main.dart`, `lib/sync/attendance_store.dart`, `apps/mobile/melos.yaml` — the highest-yield sources on this page
+- `lib/main.dart`, `lib/sync/attendance_store.dart` and `apps/mobile/melos.yaml` — the highest-yield sources here; the sync engine is where the offline contract is written down.
+- Directory listing over `lib/` for the feature-folder axis: a Flutter app has no `package-info.java` rung to try.
