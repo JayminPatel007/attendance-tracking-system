@@ -129,13 +129,15 @@ holds it in an in-memory signal, resolved once by an `APP_INITIALIZER` and gone 
 
 ## Covered by
 
-<!-- [coverage: low -- no dossier names this page yet; the list below is expectation, not evidence] -->
+<!-- [coverage: high -- derived: the three dossiers below name this page; the candidate list is judgement] -->
 
-`_none_`. [attendance-marking](../features/attendance-marking.md) states that web has no part in marking beyond the reopen, which it
-routes through [backend-attendance](backend-attendance.md).
+- [role-appointment](../features/role-appointment.md)
+- [person-directory](../features/person-directory.md)
+- [authentication](../features/authentication.md)
 
-Expected pages, one per section: role-appointment, structural-admin, sabha-definition,
-occurrence-reopen, sanchalak-proxy, selection, audit-log, dashboards, password-reset.
+Not [attendance-marking](../features/attendance-marking.md): web has no marking surface beyond the reopen. Uncovered candidates:
+structural-admin, sabha-definition, occurrence-reopen, sanchalak-proxy, selection, audit-log,
+dashboards — the former `password-reset` one having **merged** into [authentication](../features/authentication.md).
 
 ## Method
 

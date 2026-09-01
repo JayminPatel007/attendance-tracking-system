@@ -125,10 +125,15 @@ exception — it soft-retires via `retired_at`/`retired_by` rather than deleting
 
 ## Covered by
 
-<!-- [coverage: low -- no dossier covers structural creation yet] -->
+<!-- [coverage: high -- derived: the three dossiers below name this page; the candidate list is judgement] -->
 
-`_none_` — the capabilities this unit serves (structural creation, structural deletion, Sabha Kind
-lifecycle) have no `features/` page yet. All three are dossier candidates.
+- [person-directory](../features/person-directory.md) — for the Kshetra scope and the retired-kind guard.
+- [role-appointment](../features/role-appointment.md) — for the containment walk the appointment ladder reads.
+- [home-sabha-transfer](../features/home-sabha-transfer.md) — for the retired-kind guard on the destination.
+
+All three reach this unit only through `StructuralHierarchyLookup`. The capabilities this unit
+*owns* — structural creation, structural deletion, Sabha Kind lifecycle — still have no `features/`
+page. All three are dossier candidates.
 
 ## Method
 

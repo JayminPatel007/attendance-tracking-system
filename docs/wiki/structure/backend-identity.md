@@ -143,12 +143,16 @@ belongs in `notes/`, not here.
 
 ## Covered by
 
-<!-- [coverage: low -- one dossier exists so far; the other eight are candidates only] -->
+<!-- [coverage: high -- derived: every dossier below names this page in its `Where the code is`] -->
 
 - [attendance-marking](../features/attendance-marking.md) — for `CallerResolver`, `persons` and the walk-in directory search.
+- [person-directory](../features/person-directory.md) — the `directory` feature package and `JdbcPersonDirectory`.
+- [role-appointment](../features/role-appointment.md) — the `appointment` feature package and its authority adapters.
+- [authentication](../features/authentication.md) — the `otp`, `passwordreset`, `session` packages and `identity-messaging`.
+- [home-sabha-transfer](../features/home-sabha-transfer.md) — the `transfer` package and its aggregate.
 
-Expected further pages, one per feature package: role-appointment, person-directory, selection,
-password-reset, home-sabha-transfer, sabha-definition, mk-bootstrap, web-session.
+Uncovered candidates: selection, sabha-definition, mk-bootstrap. The former `password-reset` and
+`web-session` candidates were **merged** into [authentication](../features/authentication.md).
 
 ## Method
 
