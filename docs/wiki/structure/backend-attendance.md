@@ -4,7 +4,7 @@ title: Attendance Service
 description: Owns Sabha Occurrences and the markings against them, including the offline sync path and walk-in capture.
 resource: apps/backend/attendance-service
 aliases: [Occurrences and markings, Sabha Occurrence, Roster, Walk-in]
-tags: [offline-sync]
+tags: [offline-sync, bff]
 source_paths: [
   apps/backend/attendance-service/*/src/main/**,
   apps/backend/attendance-service/*/pom.xml,

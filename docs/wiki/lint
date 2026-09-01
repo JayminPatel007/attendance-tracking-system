@@ -106,11 +106,17 @@ CATALOG_SECTIONS = {
 COMPILER_ONLY_SECTIONS = {"Method"}
 
 # The closed tag vocabulary (protocol.md §3). Closed because tags *partition*: an
-# open vocabulary over 14 pages degrades silently into authz/auth/authorization.
+# open vocabulary degrades silently into authz/auth/authorization. This check
+# enforces *membership only*: §3's 3+ floor and <=-half ceiling are a protocol
+# judgement made at re-measure time, not computed here, so a tag may sit over its
+# ceiling — recorded in §3's table — on a clean run. Counts live in §3, not here.
 TAGS = {"offline-sync", "audit", "bff"}
 
-# Prose-word budgets (protocol.md §2). `structure` is derived (n=6); `feature` is
-# provisional (n=1); `pattern` inherits `feature`'s until one is measured.
+# Prose-word budgets (protocol.md §2), all three derived over the finished corpus
+# with `prose_words` below. The sample sizes and observed ranges are §2's table;
+# they are not repeated here, because a copy of a number nothing recomputes can
+# only drift. What belongs here is why these three stay put: a band that widens
+# to silence a check-8 warning is not an observation.
 BUDGETS = {
     "structure": 550,
     "feature": 750,

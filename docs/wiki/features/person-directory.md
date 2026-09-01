@@ -3,6 +3,7 @@ type: feature
 title: Person Directory
 description: Finding a Person in the central Directory, and adding one under the two-signal de-duplication rule.
 aliases: [Directory, add person, de-duplication, dedup, mobile lookup, person picker, Karyakar lookup]
+tags: [bff]
 source_paths: [
   apps/backend/identity-service/*/src/main/**,
   apps/mobile/sabha_attendance/lib/add_person/**,

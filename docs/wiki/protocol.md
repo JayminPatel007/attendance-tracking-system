@@ -114,16 +114,17 @@ so does charging a method statement. Lint check 8 (§9) computes it, as a **warn
 
 | `type` | Budget | Evidence |
 |---|---|---|
-| `structure` | ~550 | **derived** — n=13, observed 226–541 across backend contexts, Dart packages and the web app |
-| `feature` | ~750 | **provisional** — n=1 (`attendance-marking`, 725) |
-| `pattern` | inherits `feature`'s | **unmeasured** — n=0 |
+| `structure` | ~550 | **derived** — n=13, observed 226–572 across backend contexts, Dart packages and the web app |
+| `feature` | ~750 | **derived** — n=13, observed 638–750 across the full dossier set; ceiling censored, see below |
+| `pattern` | inherits `feature`'s | **derived, inherited** — n=2, observed 446–642, both inside `feature`'s band |
 
 The provisional marks are load-bearing. The first budget (~700/~500) was stated as settled from a
 single page's `wc -w`, and the first real sweep appeared to falsify it on all 7 pages — when what had
 actually happened was that the units drifted out from under the number. State the sample size, or
 the next reader inherits a law where there was an observation.
 
-**The re-measure this section briefly promised is withdrawn, not deferred.** The worry was that
+**The re-measure this section briefly promised is withdrawn, not deferred** — the one owed to
+`## Method`, which is a different question from #190's below. The worry was that
 `## Method` added a section of genuine prose to every compiled page and so falsified numbers that
 predate it. #179 measured it and the premise is wrong: body prose excluding the citation section is
 identical pre- and post-migration on all 14 pages, delta exactly 0. `## Method` is `## Sources`
@@ -138,6 +139,33 @@ heading line itself. `structure` gains its seven newer pages, so **n goes 6 → 
 downward**; the ceiling barely moves (527 → 541, on `web`, the same page that used to warn) and stays
 under ~550. The **marks** are what carry forward, not the digits: state the sample size, or the next
 reader inherits a law where there was an observation.
+
+**All three bands were then measured against the finished corpus** (#190), with `docs/wiki/lint`'s
+own `prose_words` and never `wc -w` — #183 found the ad-hoc count sat two words high on both pages it
+checked, because it charged the `## Method` heading line the implementation drops along with the
+section. A band recorded under a counter that no longer exists is the defect this section exists to
+avoid.
+
+`feature` goes **provisional n=1 → derived n=13**, and the band it confirms is `638–750`. **Its
+ceiling is censored and the mark says so.** All 13 dossiers were compiled under a stated ~750 cap and
+three of them — `audit-log`, `authentication`, `dashboards` — read *exactly* 750, which is what a
+sample written against its own budget looks like. So `638` is an observation and `750` is the cap
+observing itself; the number is unchanged because nothing falsified it, not because 13 independent
+pages landed under it. The next reader is owed that distinction, which is the same debt the original
+provisional mark was paying.
+
+`pattern` gets its **first measurement, n=2** — `authorization` at 642 and `module-ring` at 446 — and
+**keeps inheriting `feature`'s ~750** rather than deriving its own. Two pages is a sample that can
+state a range and cannot support a band; both sit inside `feature`'s, so there is nothing to separate
+yet. `unmeasured, n=0` is retired: the pages exist and have been counted.
+
+`structure` keeps **~550** and its observed range moves `226–541` → **`226–572`**. Two pages are now
+over the cap — `backend-identity` at 572 and `web` at 555 — and **the budget does not move to meet
+them**. A band that widens because the corpus grew is an observation; a band that widens to silence a
+warning is not. Both warnings stand, and neither is a split: `structure` admission is *fixed by the
+build*, so a page can only be split by splitting the Maven module or Dart package beneath it. Over
+budget here points at the prose, never at the page count — which is exactly what "a smell, never a
+trigger" was written to mean.
 
 Size remains a **review smell, never a trigger**: over budget with no admission test met is
 *misfiled*, not due for a split.
@@ -241,11 +269,61 @@ row a merge, and merges are where drift lives.
 
 `tags` is **optional, and a closed vocabulary** — currently `offline-sync`, `audit`, `bff`, enforced
 by lint check 3. Tags **partition**, which is why they are closed where aliases are open: an open tag
-set over 14 pages splits one query into `authz` / `auth` / `authorization` silently. Admission is a
+set over 28 pages splits one query into `authz` / `auth` / `authorization` silently. Admission is a
 floor **and a ceiling**: a tag must apply to **3+ pages and no more than half of them**. The floor
 kills the single-use tag, which is a description of one page and that field now exists. The ceiling
-exists on evidence — `ring` would hit 14/14 pages and `port` 13/14, clearing any floor while
-partitioning nothing. A tag matching every page is a fact *about* the wiki, not an axis *through* it.
+exists on evidence — measured over the 14-page corpus of the time, `ring` would have hit 14/14 pages
+and `port` 13/14, clearing any floor while partitioning nothing. A tag matching every page is a fact
+*about* the wiki, not an axis *through* it.
+
+**Re-measured over the finished corpus** (#190). The denominator is **28 taggable pages** — 13
+`structure`, 13 `feature`, 2 `pattern`, and no notes — so the floor is 3 and the ceiling is 14. Lint
+reports 29 because `collect` also returns `index.md`, which check 3 forbids from carrying frontmatter
+beyond `okf_version` and which therefore cannot hold a tag; a page that cannot be tagged is not a
+page a tag can fail to partition. The verdicts do not turn on the choice — ⌊29/2⌋ is 14 either way —
+but the number the ratios are stated against should be the one that means something.
+
+| Tag | Pages | Of 28 | Floor (3+) | Ceiling (≤14) |
+|---|---|---|---|---|
+| `bff` | 15 | 54% | ✓ | **✗ — over by one** |
+| `audit` | 5 | 18% | ✓ | ✓ |
+| `offline-sync` | 4 | 14% | ✓ | ✓ |
+
+**`bff` is over its ceiling, and that is recorded rather than acted on.** It read 13/28 before this
+measurement and passed; it reads 15 because the measurement found two pages that meet the tag's own
+criterion — *the page's subject owns a `/bff/*` surface* — and had been missed as the corpus doubled:
+`person-directory` (`DirectoryBffController`) and `backend-attendance` (`OccurrenceReopenBffController`,
+`SanchalakProxyBffController`). Both are now tagged. Leaving them untagged so the count reads 13 would
+be moving the measurement to keep the tag, which is the same move §2 forbids for a budget.
+`re-engagement` was checked against the same criterion and **stays untagged**, stated here so the
+call is visible rather than looking like a third miss: it names `PUT /bff/dashboard/thresholds`, but
+that route is a `DashboardBffController` method — the [dashboards](../features/dashboards.md)
+surface, which already carries the tag. Reading another dossier's BFF route is not owning one, or the
+criterion collapses into "mentions the BFF" and takes 20 pages. Retiring
+`bff` from 15 pages is a bigger edit than a measurement PR should make on its own authority, so the
+number stands here as the finding and the decision is a follow-up. Note that lint check 3 enforces
+**membership only** — it does not compute the floor or the ceiling, so a breach is a protocol
+judgement and never a red build.
+
+**`authorization` is re-rejected, and the direction of the failure flipped.** #172 measured it at
+**2 pages** and rejected it on the *floor*. It now measures **21 of 28** — the 20 pages carrying an
+outbound link to `patterns/authorization.md`, plus that page itself — and is rejected on the
+*ceiling*. The cause is structural rather than incidental: the `feature` skeleton (§7) mandates a
+`## Rules & authority` section, so all 13 dossiers document an authority decision **by
+construction**, and the rest is 6 structure pages, `module-ring`, and `authorization` itself — the
+tag's subject rather than a page linking to it. That puts `authorization` in `ring`'s and `port`'s
+company — a fact about the page contract, not an axis through the corpus. The one criterion that
+would clear the ceiling, *"the pattern appears here"*, is `appears_in` on `patterns/authorization.md`
+re-typed onto 7 pages, and a second copy of a field that already exists is what this contract keeps
+deleting.
+
+**`otp` was measured as an addition and declined.** It reaches 6 pages only by counting a single
+table row on `backend-container` and `mobile-shell` and a *negative* mention on `role-appointment`
+("needs no OTP"); the substantive set is 3 — `authentication`, `home-sabha-transfer`,
+`backend-identity` — all inside one bounded context, which is a description of the identity orbit and
+not an axis through the wiki. Clearing the floor on counted mentions is not clearing it on substance.
+
+No tag was added to or removed from the vocabulary, so lint check 3's list is unchanged.
 
 ### `sources[]` — what was read, as distinct from what is watched
 
@@ -975,7 +1053,9 @@ concept here is new enough to spend a number on.
 **Check 8 excludes `## Method`** along with frontmatter, coverage tags and table rows (§2). All four
 are either metadata about the page or addressed to the next compiler, and #179 measured the section
 as the entire overage on both pages that warned — under its old name as well as its new one, so the
-budgets were never falsified and no re-measure is owed.
+budgets were never falsified and **no re-measure was owed on that premise**. #190's re-measure is a
+different question with a different cause: the corpus doubled, and a band derived from half of it
+states a sample size that no longer holds.
 
 **Check 8 must not be a gate.** §2 fixes size as a smell and never a trigger, so a check that failed
 the build would overturn the contract it exists to report on. Notes are exempt with the other
