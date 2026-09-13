@@ -13,51 +13,21 @@ part of openapi.api;
 class ProxySabhaListItem {
   /// Returns a new [ProxySabhaListItem] instance.
   ProxySabhaListItem({
-    this.lastSeenAt,
-    this.sabhaId,
-    this.sabhaLabel,
-    this.sanchalakName,
-    this.sanchalakUserId,
+    required this.lastSeenAt,
+    required this.sabhaId,
+    required this.sabhaLabel,
+    required this.sanchalakName,
+    required this.sanchalakUserId,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   DateTime? lastSeenAt;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? sabhaId;
+  String sabhaId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? sabhaLabel;
+  String sabhaLabel;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? sanchalakName;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? sanchalakUserId;
 
   @override
@@ -72,8 +42,8 @@ class ProxySabhaListItem {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (lastSeenAt == null ? 0 : lastSeenAt!.hashCode) +
-    (sabhaId == null ? 0 : sabhaId!.hashCode) +
-    (sabhaLabel == null ? 0 : sabhaLabel!.hashCode) +
+    (sabhaId.hashCode) +
+    (sabhaLabel.hashCode) +
     (sanchalakName == null ? 0 : sanchalakName!.hashCode) +
     (sanchalakUserId == null ? 0 : sanchalakUserId!.hashCode);
 
@@ -87,16 +57,8 @@ class ProxySabhaListItem {
     } else {
       json[r'lastSeenAt'] = null;
     }
-    if (this.sabhaId != null) {
       json[r'sabhaId'] = this.sabhaId;
-    } else {
-      json[r'sabhaId'] = null;
-    }
-    if (this.sabhaLabel != null) {
       json[r'sabhaLabel'] = this.sabhaLabel;
-    } else {
-      json[r'sabhaLabel'] = null;
-    }
     if (this.sanchalakName != null) {
       json[r'sanchalakName'] = this.sanchalakName;
     } else {
@@ -121,13 +83,20 @@ class ProxySabhaListItem {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'lastSeenAt'), 'Required key "ProxySabhaListItem[lastSeenAt]" is missing from JSON.');
+        assert(json.containsKey(r'sabhaId'), 'Required key "ProxySabhaListItem[sabhaId]" is missing from JSON.');
+        assert(json[r'sabhaId'] != null, 'Required key "ProxySabhaListItem[sabhaId]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaLabel'), 'Required key "ProxySabhaListItem[sabhaLabel]" is missing from JSON.');
+        assert(json[r'sabhaLabel'] != null, 'Required key "ProxySabhaListItem[sabhaLabel]" has a null value in JSON.');
+        assert(json.containsKey(r'sanchalakName'), 'Required key "ProxySabhaListItem[sanchalakName]" is missing from JSON.');
+        assert(json.containsKey(r'sanchalakUserId'), 'Required key "ProxySabhaListItem[sanchalakUserId]" is missing from JSON.');
         return true;
       }());
 
       return ProxySabhaListItem(
         lastSeenAt: mapDateTime(json, r'lastSeenAt', r''),
-        sabhaId: mapValueOfType<String>(json, r'sabhaId'),
-        sabhaLabel: mapValueOfType<String>(json, r'sabhaLabel'),
+        sabhaId: mapValueOfType<String>(json, r'sabhaId')!,
+        sabhaLabel: mapValueOfType<String>(json, r'sabhaLabel')!,
         sanchalakName: mapValueOfType<String>(json, r'sanchalakName'),
         sanchalakUserId: mapValueOfType<String>(json, r'sanchalakUserId'),
       );
@@ -177,6 +146,11 @@ class ProxySabhaListItem {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'lastSeenAt',
+    'sabhaId',
+    'sabhaLabel',
+    'sanchalakName',
+    'sanchalakUserId',
   };
 }
 

@@ -14,18 +14,12 @@ class DashboardOverview {
   /// Returns a new [DashboardOverview] instance.
   DashboardOverview({
     this.headlineCandidates = const [],
-    this.kpis,
+    required this.kpis,
   });
 
   List<CandidateRow> headlineCandidates;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  Kpis? kpis;
+  Kpis kpis;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is DashboardOverview &&
@@ -36,7 +30,7 @@ class DashboardOverview {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (headlineCandidates.hashCode) +
-    (kpis == null ? 0 : kpis!.hashCode);
+    (kpis.hashCode);
 
   @override
   String toString() => 'DashboardOverview[headlineCandidates=$headlineCandidates, kpis=$kpis]';
@@ -44,11 +38,7 @@ class DashboardOverview {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'headlineCandidates'] = this.headlineCandidates;
-    if (this.kpis != null) {
       json[r'kpis'] = this.kpis;
-    } else {
-      json[r'kpis'] = null;
-    }
     return json;
   }
 
@@ -63,12 +53,16 @@ class DashboardOverview {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'headlineCandidates'), 'Required key "DashboardOverview[headlineCandidates]" is missing from JSON.');
+        assert(json[r'headlineCandidates'] != null, 'Required key "DashboardOverview[headlineCandidates]" has a null value in JSON.');
+        assert(json.containsKey(r'kpis'), 'Required key "DashboardOverview[kpis]" is missing from JSON.');
+        assert(json[r'kpis'] != null, 'Required key "DashboardOverview[kpis]" has a null value in JSON.');
         return true;
       }());
 
       return DashboardOverview(
         headlineCandidates: CandidateRow.listFromJson(json[r'headlineCandidates']),
-        kpis: Kpis.fromJson(json[r'kpis']),
+        kpis: Kpis.fromJson(json[r'kpis'])!,
       );
     }
     return null;
@@ -116,6 +110,8 @@ class DashboardOverview {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'headlineCandidates',
+    'kpis',
   };
 }
 

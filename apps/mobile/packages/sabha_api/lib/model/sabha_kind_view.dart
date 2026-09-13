@@ -13,31 +13,19 @@ part of openapi.api;
 class SabhaKindView {
   /// Returns a new [SabhaKindView] instance.
   SabhaKindView({
-    this.demographic,
-    this.id,
-    this.retiredAt,
-    this.track,
+    required this.demographic,
+    required this.id,
+    required this.retiredAt,
+    required this.track,
   });
 
-  SabhaKindViewDemographicEnum? demographic;
+  SabhaKindViewDemographicEnum demographic;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   DateTime? retiredAt;
 
-  SabhaKindViewTrackEnum? track;
+  SabhaKindViewTrackEnum track;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SabhaKindView &&
@@ -49,36 +37,24 @@ class SabhaKindView {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (demographic == null ? 0 : demographic!.hashCode) +
-    (id == null ? 0 : id!.hashCode) +
+    (demographic.hashCode) +
+    (id.hashCode) +
     (retiredAt == null ? 0 : retiredAt!.hashCode) +
-    (track == null ? 0 : track!.hashCode);
+    (track.hashCode);
 
   @override
   String toString() => 'SabhaKindView[demographic=$demographic, id=$id, retiredAt=$retiredAt, track=$track]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.demographic != null) {
       json[r'demographic'] = this.demographic;
-    } else {
-      json[r'demographic'] = null;
-    }
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
     if (this.retiredAt != null) {
       json[r'retiredAt'] = this.retiredAt!.toUtc().toIso8601String();
     } else {
       json[r'retiredAt'] = null;
     }
-    if (this.track != null) {
       json[r'track'] = this.track;
-    } else {
-      json[r'track'] = null;
-    }
     return json;
   }
 
@@ -93,14 +69,21 @@ class SabhaKindView {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'demographic'), 'Required key "SabhaKindView[demographic]" is missing from JSON.');
+        assert(json[r'demographic'] != null, 'Required key "SabhaKindView[demographic]" has a null value in JSON.');
+        assert(json.containsKey(r'id'), 'Required key "SabhaKindView[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "SabhaKindView[id]" has a null value in JSON.');
+        assert(json.containsKey(r'retiredAt'), 'Required key "SabhaKindView[retiredAt]" is missing from JSON.');
+        assert(json.containsKey(r'track'), 'Required key "SabhaKindView[track]" is missing from JSON.');
+        assert(json[r'track'] != null, 'Required key "SabhaKindView[track]" has a null value in JSON.');
         return true;
       }());
 
       return SabhaKindView(
-        demographic: SabhaKindViewDemographicEnum.fromJson(json[r'demographic']),
-        id: mapValueOfType<String>(json, r'id'),
+        demographic: SabhaKindViewDemographicEnum.fromJson(json[r'demographic'])!,
+        id: mapValueOfType<String>(json, r'id')!,
         retiredAt: mapDateTime(json, r'retiredAt', r''),
-        track: SabhaKindViewTrackEnum.fromJson(json[r'track']),
+        track: SabhaKindViewTrackEnum.fromJson(json[r'track'])!,
       );
     }
     return null;
@@ -148,6 +131,10 @@ class SabhaKindView {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'demographic',
+    'id',
+    'retiredAt',
+    'track',
   };
 }
 

@@ -13,34 +13,16 @@ part of openapi.api;
 class SahNirdeshakCapResponse {
   /// Returns a new [SahNirdeshakCapResponse] instance.
   SahNirdeshakCapResponse({
-    this.active,
-    this.cap,
-    this.reached,
+    required this.active,
+    required this.cap,
+    required this.reached,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? active;
+  int active;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? cap;
+  int cap;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? reached;
+  bool reached;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SahNirdeshakCapResponse &&
@@ -51,30 +33,18 @@ class SahNirdeshakCapResponse {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (active == null ? 0 : active!.hashCode) +
-    (cap == null ? 0 : cap!.hashCode) +
-    (reached == null ? 0 : reached!.hashCode);
+    (active.hashCode) +
+    (cap.hashCode) +
+    (reached.hashCode);
 
   @override
   String toString() => 'SahNirdeshakCapResponse[active=$active, cap=$cap, reached=$reached]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.active != null) {
       json[r'active'] = this.active;
-    } else {
-      json[r'active'] = null;
-    }
-    if (this.cap != null) {
       json[r'cap'] = this.cap;
-    } else {
-      json[r'cap'] = null;
-    }
-    if (this.reached != null) {
       json[r'reached'] = this.reached;
-    } else {
-      json[r'reached'] = null;
-    }
     return json;
   }
 
@@ -89,13 +59,19 @@ class SahNirdeshakCapResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'active'), 'Required key "SahNirdeshakCapResponse[active]" is missing from JSON.');
+        assert(json[r'active'] != null, 'Required key "SahNirdeshakCapResponse[active]" has a null value in JSON.');
+        assert(json.containsKey(r'cap'), 'Required key "SahNirdeshakCapResponse[cap]" is missing from JSON.');
+        assert(json[r'cap'] != null, 'Required key "SahNirdeshakCapResponse[cap]" has a null value in JSON.');
+        assert(json.containsKey(r'reached'), 'Required key "SahNirdeshakCapResponse[reached]" is missing from JSON.');
+        assert(json[r'reached'] != null, 'Required key "SahNirdeshakCapResponse[reached]" has a null value in JSON.');
         return true;
       }());
 
       return SahNirdeshakCapResponse(
-        active: mapValueOfType<int>(json, r'active'),
-        cap: mapValueOfType<int>(json, r'cap'),
-        reached: mapValueOfType<bool>(json, r'reached'),
+        active: mapValueOfType<int>(json, r'active')!,
+        cap: mapValueOfType<int>(json, r'cap')!,
+        reached: mapValueOfType<bool>(json, r'reached')!,
       );
     }
     return null;
@@ -143,6 +119,9 @@ class SahNirdeshakCapResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'active',
+    'cap',
+    'reached',
   };
 }
 

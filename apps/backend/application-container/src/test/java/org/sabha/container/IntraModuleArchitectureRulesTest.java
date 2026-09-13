@@ -2,12 +2,22 @@ package org.sabha.container;
 
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
@@ -21,10 +31,17 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.sabha.common.AggregateRoot;
 import org.sabha.common.DomainEvent;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * Executable encoding of the intra-module architecture rules that the Maven
@@ -76,6 +93,165 @@ class IntraModuleArchitectureRulesTest {
                     }
                 }
             };
+
+    /** The {@code @RequestMapping} shortcuts, in the order {@link #routeOf} tries them. */
+    private static final Map<Class<? extends Annotation>, String> MAPPING_SHORTCUTS = mappingShortcuts();
+
+    private static Map<Class<? extends Annotation>, String> mappingShortcuts() {
+        Map<Class<? extends Annotation>, String> shortcuts = new LinkedHashMap<>();
+        shortcuts.put(GetMapping.class, "GET");
+        shortcuts.put(PostMapping.class, "POST");
+        shortcuts.put(PutMapping.class, "PUT");
+        shortcuts.put(PatchMapping.class, "PATCH");
+        shortcuts.put(DeleteMapping.class, "DELETE");
+        return Map.copyOf(shortcuts);
+    }
+
+    /**
+     * The handlers allowed to resolve no caller, each with the reason it is
+     * allowed (issue #210). Two kinds of entry, and the difference is the point:
+     *
+     * <ul>
+     *   <li><b>public by design</b> — the endpoint is reachable before or without
+     *       authentication, so there is no caller to resolve;</li>
+     *   <li><b>unreviewed</b> — the endpoint is authenticated and resolves nobody.
+     *       {@code SecurityConfig} is {@code anyRequest().authenticated()} on both
+     *       chains and there is no {@code @PreAuthorize} in the codebase, so
+     *       "is logged in" is the entire authorization check. Each of these is a
+     *       gap until triage says otherwise.</li>
+     * </ul>
+     *
+     * <p>An exemption is a line someone has to delete or rewrite, which is what
+     * makes this list worth more than the silence it replaces: {@code
+     * GET /api/sabhas/{sabhaId}/monthly-compliance} was callerless for four
+     * months (issue #209) and nothing said so. This list should be empty of
+     * {@code unreviewed} entries when #210 closes.
+     */
+    private static final Map<String, String> HANDLERS_THAT_RESOLVE_NO_CALLER = handlersThatResolveNoCaller();
+
+    private static Map<String, String> handlersThatResolveNoCaller() {
+        Map<String, String> exempt = new LinkedHashMap<>();
+
+        exempt.put("POST /api/password-reset/request", "public by design: pre-authentication (Slice 18)");
+        exempt.put("POST /api/password-reset/verify", "public by design: pre-authentication (Slice 18)");
+        exempt.put("POST /api/password-reset/complete", "public by design: pre-authentication (Slice 18)");
+        exempt.put("GET /api/who-appointed-me", "public by design: lost-mobile lookup keyed on username (ADR-0004)");
+
+        exempt.put("GET /api/directory/persons", "unreviewed (#210): unscoped Person search");
+        exempt.put("GET /api/directory/name-search", "unreviewed (#210): unscoped Person search");
+        exempt.put("GET /api/directory/walk-in-search", "unreviewed (#210): unscoped Person search");
+        exempt.put("GET /api/directory/persons/{id}", "unreviewed (#210): unscoped Person read");
+        exempt.put("GET /bff/directory/search", "unreviewed (#210): unscoped Person search");
+        exempt.put("GET /bff/directory/name-search", "unreviewed (#210): unscoped Person search");
+        exempt.put("GET /bff/structure/cities", "unreviewed (#210): reference data, probably fine");
+        exempt.put("GET /bff/structure/zones", "unreviewed (#210): reference data, probably fine");
+        exempt.put("GET /bff/structure/kshetras", "unreviewed (#210): reference data, probably fine");
+        exempt.put("GET /bff/structure/sabha-kinds", "unreviewed (#210): reference data, probably fine");
+        exempt.put("GET /bff/appointments/sah-nirdeshak-cap", "unreviewed (#210): Sah-Nirdeshak count per Kshetra (#86)");
+        exempt.put("POST /api/home-sabha-transfers/{id}/confirm", "unreviewed (#210): a write — check the OTP is the authorization");
+
+        return Map.copyOf(exempt);
+    }
+
+    /**
+     * ADR-0030: a handler that never learns who is calling cannot authorize
+     * anything below it. Three ways to fail, because an allowlist that only ever
+     * grows is a way of forgetting:
+     *
+     * <ol>
+     *   <li>a handler takes no {@code @CurrentUser} and is not exempt;</li>
+     *   <li>an exempt handler has since gained a caller — its entry is now a lie
+     *       and must go;</li>
+     *   <li>an entry matches no handler at all — a renamed or deleted route left
+     *       its exemption behind.</li>
+     * </ol>
+     */
+    private static final ArchCondition<JavaMethod> RESOLVE_THEIR_CALLER =
+            new ArchCondition<>("resolve their caller with @CurrentUser (ADR-0030)") {
+                private Set<String> unmatchedExemptions;
+
+                @Override
+                public void init(Collection<JavaMethod> handlers) {
+                    unmatchedExemptions = new TreeSet<>(HANDLERS_THAT_RESOLVE_NO_CALLER.keySet());
+                }
+
+                @Override
+                public void check(JavaMethod handler, ConditionEvents events) {
+                    String route = routeOf(handler);
+                    boolean resolvesCaller = handler.getParameters().stream()
+                            .anyMatch(parameter -> parameter.isAnnotatedWith(CurrentUser.class));
+
+                    if (HANDLERS_THAT_RESOLVE_NO_CALLER.containsKey(route)) {
+                        unmatchedExemptions.remove(route);
+                        events.add(new SimpleConditionEvent(handler, !resolvesCaller,
+                                route + " now takes a @CurrentUser — delete its exemption"));
+                        return;
+                    }
+                    events.add(new SimpleConditionEvent(handler, resolvesCaller,
+                            route + " takes no @CurrentUser parameter (" + handler.getFullName() + ")"));
+                }
+
+                @Override
+                public void finish(ConditionEvents events) {
+                    for (String route : unmatchedExemptions) {
+                        events.add(SimpleConditionEvent.violated(route,
+                                "exempt route " + route + " matches no handler — delete its exemption"));
+                    }
+                }
+            };
+
+    /**
+     * Spring's own definition: every mapping shortcut is meta-annotated
+     * {@code @RequestMapping}, and so is any composed annotation a future
+     * controller might introduce. Asking the meta-annotation — rather than
+     * listing the five shortcuts — is what keeps the gate from having the same
+     * shape of blind spot it exists to close. A handler it cannot name still
+     * gets checked; only its key degrades, and since a degraded key is in no
+     * exemption list, the failure is loud.
+     */
+    private static final DescribedPredicate<JavaMethod> ARE_HTTP_MAPPED =
+            DescribedPredicate.describe("are HTTP-mapped",
+                    method -> method.isAnnotatedWith(RequestMapping.class)
+                            || method.isMetaAnnotatedWith(RequestMapping.class));
+
+    /**
+     * The exemption key for a handler: {@code "GET /api/sanchalak/current-roster"}.
+     * Falls back to the method's full name for a mapping this cannot read —
+     * a composed annotation, or one that names its path some third way. That
+     * fallback matches no exemption, so an unreadable mapping fails rather than
+     * slips through.
+     */
+    private static String routeOf(JavaMethod method) {
+        for (Map.Entry<Class<? extends Annotation>, String> shortcut : MAPPING_SHORTCUTS.entrySet()) {
+            if (method.isAnnotatedWith(shortcut.getKey())) {
+                return shortcut.getValue() + " " + pathOf(method.getAnnotationOfType(shortcut.getKey().getName()));
+            }
+        }
+        if (method.isAnnotatedWith(RequestMapping.class)) {
+            JavaAnnotation<?> mapping = method.getAnnotationOfType(RequestMapping.class.getName());
+            Object[] verbs = (Object[]) mapping.get("method").orElse(new Object[0]);
+            // A JavaEnumConstant prints as "RequestMethod.GET"; the key reads as the
+            // route a person would type, so take the constant's bare name.
+            String verb = verbs.length == 0 ? "ANY" : ((JavaEnumConstant) verbs[0]).name();
+            return verb + " " + pathOf(mapping);
+        }
+        return method.getFullName();
+    }
+
+    /**
+     * {@code value} and {@code path} are {@code @AliasFor} each other, and ArchUnit
+     * reads bytecode, where an alias is just the other member left at its default —
+     * so both have to be asked.
+     */
+    private static String pathOf(JavaAnnotation<?> mapping) {
+        for (String member : List.of("value", "path")) {
+            Object[] paths = (Object[]) mapping.get(member).orElse(new Object[0]);
+            if (paths.length > 0) {
+                return String.valueOf(paths[0]);
+            }
+        }
+        return "(no path)";
+    }
 
     private static final ArchCondition<JavaClass> WRAP_ONE_QUERY_PORT =
             new ArchCondition<>("wrap a single query port") {
@@ -261,6 +437,39 @@ class IntraModuleArchitectureRulesTest {
                     .should(WRAP_ONE_QUERY_PORT)
                     .as("an application service must not be a wrapper over one query port (issue #203)")
                     .because("presentation reads straight through the port; a delegating service hides nothing");
+
+    /**
+     * ADR-0030 resolved the caller at the edge; this keeps every handler asking
+     * for it. The decision it guards is not "controllers call use cases" — nine
+     * controllers inject a read-side query port directly and that is the accepted
+     * shape — but the narrower, load-bearing one: <em>a handler resolves a caller
+     * and passes it down</em>. {@code AttendanceRestController} is the example.
+     * Its first two handlers go straight to a query port, and they are fine,
+     * because they go {@code query.findForSanchalak(caller)}. The eleventh went
+     * {@code query.needsOccurrence(sabhaId, today)} and was the one hole.
+     *
+     * <p>This rule has teeth for the same reason ADR-0030's does: omitting a
+     * parameter compiles. Nothing else in the build notices — not the type
+     * system, and not the OpenAPI drift gate, which documents a callerless
+     * handler as happily as any other.
+     *
+     * <p><b>What it checks is that the parameter is declared, not that it is
+     * used.</b> A handler could take {@code @CurrentUser UserId caller} and
+     * ignore it, reproducing issue #209's hole while passing. That gap is
+     * accepted: a parameter's use lives in local-variable bytecode that ArchUnit
+     * does not model, and the alternative — matching against method calls that
+     * happen to pass a {@code UserId} — would argue with every handler that
+     * legitimately forwards the caller through a DTO. The regression this
+     * catches is the one that actually happened: an omission nobody wrote down.
+     */
+    @ArchTest
+    static final ArchRule every_handler_resolves_its_caller =
+            methods()
+                    .that().areDeclaredInClassesThat().resideInAPackage("..application..")
+                    .and(ARE_HTTP_MAPPED)
+                    .should(RESOLVE_THEIR_CALLER)
+                    .as("every HTTP handler must take a @CurrentUser parameter or be listed as exempt (ADR-0030, issue #210)")
+                    .because("a handler that never learns who is calling cannot authorize anything below it");
 
     @ArchTest
     static final ArchRule domain_events_live_in_domain_core =

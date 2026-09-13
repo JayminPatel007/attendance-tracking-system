@@ -13,25 +13,13 @@ part of openapi.api;
 class AppointerContact {
   /// Returns a new [AppointerContact] instance.
   AppointerContact({
-    this.mobile,
-    this.name,
+    required this.mobile,
+    required this.name,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? mobile;
+  String mobile;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? name;
+  String name;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AppointerContact &&
@@ -41,24 +29,16 @@ class AppointerContact {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (mobile == null ? 0 : mobile!.hashCode) +
-    (name == null ? 0 : name!.hashCode);
+    (mobile.hashCode) +
+    (name.hashCode);
 
   @override
   String toString() => 'AppointerContact[mobile=$mobile, name=$name]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.mobile != null) {
       json[r'mobile'] = this.mobile;
-    } else {
-      json[r'mobile'] = null;
-    }
-    if (this.name != null) {
       json[r'name'] = this.name;
-    } else {
-      json[r'name'] = null;
-    }
     return json;
   }
 
@@ -73,12 +53,16 @@ class AppointerContact {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'mobile'), 'Required key "AppointerContact[mobile]" is missing from JSON.');
+        assert(json[r'mobile'] != null, 'Required key "AppointerContact[mobile]" has a null value in JSON.');
+        assert(json.containsKey(r'name'), 'Required key "AppointerContact[name]" is missing from JSON.');
+        assert(json[r'name'] != null, 'Required key "AppointerContact[name]" has a null value in JSON.');
         return true;
       }());
 
       return AppointerContact(
-        mobile: mapValueOfType<String>(json, r'mobile'),
-        name: mapValueOfType<String>(json, r'name'),
+        mobile: mapValueOfType<String>(json, r'mobile')!,
+        name: mapValueOfType<String>(json, r'name')!,
       );
     }
     return null;
@@ -126,6 +110,8 @@ class AppointerContact {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'mobile',
+    'name',
   };
 }
 

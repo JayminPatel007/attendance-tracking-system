@@ -251,8 +251,6 @@ class ApiClient {
           return MarkRequest.fromJson(value);
         case 'MarkingItem':
           return MarkingItem.fromJson(value);
-        case 'MonthlyComplianceResponse':
-          return MonthlyComplianceResponse.fromJson(value);
         case 'MonthlySabha':
           return MonthlySabha.fromJson(value);
         case 'NameCandidate':

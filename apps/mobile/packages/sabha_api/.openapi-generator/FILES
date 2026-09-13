@@ -64,7 +64,6 @@ lib/model/kshetra.dart
 lib/model/kshetra_view.dart
 lib/model/mark_request.dart
 lib/model/marking_item.dart
-lib/model/monthly_compliance_response.dart
 lib/model/monthly_sabha.dart
 lib/model/name_candidate.dart
 lib/model/new_person_payload.dart

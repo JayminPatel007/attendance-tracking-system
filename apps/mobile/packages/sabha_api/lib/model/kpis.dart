@@ -13,34 +13,16 @@ part of openapi.api;
 class Kpis {
   /// Returns a new [Kpis] instance.
   Kpis({
-    this.priorityCandidates,
-    this.sabhasWithCandidates,
-    this.totalCandidates,
+    required this.priorityCandidates,
+    required this.sabhasWithCandidates,
+    required this.totalCandidates,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? priorityCandidates;
+  int priorityCandidates;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? sabhasWithCandidates;
+  int sabhasWithCandidates;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? totalCandidates;
+  int totalCandidates;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is Kpis &&
@@ -51,30 +33,18 @@ class Kpis {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (priorityCandidates == null ? 0 : priorityCandidates!.hashCode) +
-    (sabhasWithCandidates == null ? 0 : sabhasWithCandidates!.hashCode) +
-    (totalCandidates == null ? 0 : totalCandidates!.hashCode);
+    (priorityCandidates.hashCode) +
+    (sabhasWithCandidates.hashCode) +
+    (totalCandidates.hashCode);
 
   @override
   String toString() => 'Kpis[priorityCandidates=$priorityCandidates, sabhasWithCandidates=$sabhasWithCandidates, totalCandidates=$totalCandidates]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.priorityCandidates != null) {
       json[r'priorityCandidates'] = this.priorityCandidates;
-    } else {
-      json[r'priorityCandidates'] = null;
-    }
-    if (this.sabhasWithCandidates != null) {
       json[r'sabhasWithCandidates'] = this.sabhasWithCandidates;
-    } else {
-      json[r'sabhasWithCandidates'] = null;
-    }
-    if (this.totalCandidates != null) {
       json[r'totalCandidates'] = this.totalCandidates;
-    } else {
-      json[r'totalCandidates'] = null;
-    }
     return json;
   }
 
@@ -89,13 +59,19 @@ class Kpis {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'priorityCandidates'), 'Required key "Kpis[priorityCandidates]" is missing from JSON.');
+        assert(json[r'priorityCandidates'] != null, 'Required key "Kpis[priorityCandidates]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhasWithCandidates'), 'Required key "Kpis[sabhasWithCandidates]" is missing from JSON.');
+        assert(json[r'sabhasWithCandidates'] != null, 'Required key "Kpis[sabhasWithCandidates]" has a null value in JSON.');
+        assert(json.containsKey(r'totalCandidates'), 'Required key "Kpis[totalCandidates]" is missing from JSON.');
+        assert(json[r'totalCandidates'] != null, 'Required key "Kpis[totalCandidates]" has a null value in JSON.');
         return true;
       }());
 
       return Kpis(
-        priorityCandidates: mapValueOfType<int>(json, r'priorityCandidates'),
-        sabhasWithCandidates: mapValueOfType<int>(json, r'sabhasWithCandidates'),
-        totalCandidates: mapValueOfType<int>(json, r'totalCandidates'),
+        priorityCandidates: mapValueOfType<int>(json, r'priorityCandidates')!,
+        sabhasWithCandidates: mapValueOfType<int>(json, r'sabhasWithCandidates')!,
+        totalCandidates: mapValueOfType<int>(json, r'totalCandidates')!,
       );
     }
     return null;
@@ -143,6 +119,9 @@ class Kpis {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'priorityCandidates',
+    'sabhasWithCandidates',
+    'totalCandidates',
   };
 }
 

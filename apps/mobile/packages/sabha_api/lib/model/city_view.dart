@@ -13,34 +13,16 @@ part of openapi.api;
 class CityView {
   /// Returns a new [CityView] instance.
   CityView({
-    this.id,
-    this.name,
-    this.zoneCount,
+    required this.id,
+    required this.name,
+    required this.zoneCount,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? name;
+  String name;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? zoneCount;
+  int zoneCount;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is CityView &&
@@ -51,30 +33,18 @@ class CityView {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (id == null ? 0 : id!.hashCode) +
-    (name == null ? 0 : name!.hashCode) +
-    (zoneCount == null ? 0 : zoneCount!.hashCode);
+    (id.hashCode) +
+    (name.hashCode) +
+    (zoneCount.hashCode);
 
   @override
   String toString() => 'CityView[id=$id, name=$name, zoneCount=$zoneCount]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
-    if (this.name != null) {
       json[r'name'] = this.name;
-    } else {
-      json[r'name'] = null;
-    }
-    if (this.zoneCount != null) {
       json[r'zoneCount'] = this.zoneCount;
-    } else {
-      json[r'zoneCount'] = null;
-    }
     return json;
   }
 
@@ -89,13 +59,19 @@ class CityView {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'id'), 'Required key "CityView[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "CityView[id]" has a null value in JSON.');
+        assert(json.containsKey(r'name'), 'Required key "CityView[name]" is missing from JSON.');
+        assert(json[r'name'] != null, 'Required key "CityView[name]" has a null value in JSON.');
+        assert(json.containsKey(r'zoneCount'), 'Required key "CityView[zoneCount]" is missing from JSON.');
+        assert(json[r'zoneCount'] != null, 'Required key "CityView[zoneCount]" has a null value in JSON.');
         return true;
       }());
 
       return CityView(
-        id: mapValueOfType<String>(json, r'id'),
-        name: mapValueOfType<String>(json, r'name'),
-        zoneCount: mapValueOfType<int>(json, r'zoneCount'),
+        id: mapValueOfType<String>(json, r'id')!,
+        name: mapValueOfType<String>(json, r'name')!,
+        zoneCount: mapValueOfType<int>(json, r'zoneCount')!,
       );
     }
     return null;
@@ -143,6 +119,9 @@ class CityView {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'id',
+    'name',
+    'zoneCount',
   };
 }
 

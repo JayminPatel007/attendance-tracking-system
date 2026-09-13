@@ -83,7 +83,6 @@ part 'model/kshetra.dart';
 part 'model/kshetra_view.dart';
 part 'model/mark_request.dart';
 part 'model/marking_item.dart';
-part 'model/monthly_compliance_response.dart';
 part 'model/monthly_sabha.dart';
 part 'model/name_candidate.dart';
 part 'model/new_person_payload.dart';

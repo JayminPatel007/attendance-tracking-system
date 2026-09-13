@@ -13,34 +13,16 @@ part of openapi.api;
 class Sabha {
   /// Returns a new [Sabha] instance.
   Sabha({
-    this.candidateCount,
-    this.sabhaId,
-    this.sabhaKind,
+    required this.candidateCount,
+    required this.sabhaId,
+    required this.sabhaKind,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? candidateCount;
+  int candidateCount;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? sabhaId;
+  String sabhaId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? sabhaKind;
+  String sabhaKind;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is Sabha &&
@@ -51,30 +33,18 @@ class Sabha {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (candidateCount == null ? 0 : candidateCount!.hashCode) +
-    (sabhaId == null ? 0 : sabhaId!.hashCode) +
-    (sabhaKind == null ? 0 : sabhaKind!.hashCode);
+    (candidateCount.hashCode) +
+    (sabhaId.hashCode) +
+    (sabhaKind.hashCode);
 
   @override
   String toString() => 'Sabha[candidateCount=$candidateCount, sabhaId=$sabhaId, sabhaKind=$sabhaKind]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.candidateCount != null) {
       json[r'candidateCount'] = this.candidateCount;
-    } else {
-      json[r'candidateCount'] = null;
-    }
-    if (this.sabhaId != null) {
       json[r'sabhaId'] = this.sabhaId;
-    } else {
-      json[r'sabhaId'] = null;
-    }
-    if (this.sabhaKind != null) {
       json[r'sabhaKind'] = this.sabhaKind;
-    } else {
-      json[r'sabhaKind'] = null;
-    }
     return json;
   }
 
@@ -89,13 +59,19 @@ class Sabha {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidateCount'), 'Required key "Sabha[candidateCount]" is missing from JSON.');
+        assert(json[r'candidateCount'] != null, 'Required key "Sabha[candidateCount]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaId'), 'Required key "Sabha[sabhaId]" is missing from JSON.');
+        assert(json[r'sabhaId'] != null, 'Required key "Sabha[sabhaId]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaKind'), 'Required key "Sabha[sabhaKind]" is missing from JSON.');
+        assert(json[r'sabhaKind'] != null, 'Required key "Sabha[sabhaKind]" has a null value in JSON.');
         return true;
       }());
 
       return Sabha(
-        candidateCount: mapValueOfType<int>(json, r'candidateCount'),
-        sabhaId: mapValueOfType<String>(json, r'sabhaId'),
-        sabhaKind: mapValueOfType<String>(json, r'sabhaKind'),
+        candidateCount: mapValueOfType<int>(json, r'candidateCount')!,
+        sabhaId: mapValueOfType<String>(json, r'sabhaId')!,
+        sabhaKind: mapValueOfType<String>(json, r'sabhaKind')!,
       );
     }
     return null;
@@ -143,6 +119,9 @@ class Sabha {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidateCount',
+    'sabhaId',
+    'sabhaKind',
   };
 }
 

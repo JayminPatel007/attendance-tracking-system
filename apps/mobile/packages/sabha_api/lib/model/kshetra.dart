@@ -13,35 +13,17 @@ part of openapi.api;
 class Kshetra {
   /// Returns a new [Kshetra] instance.
   Kshetra({
-    this.candidateCount,
-    this.kshetraId,
-    this.kshetraName,
+    required this.candidateCount,
+    required this.kshetraId,
+    required this.kshetraName,
     this.sabhas = const [],
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? candidateCount;
+  int candidateCount;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? kshetraId;
+  String kshetraId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? kshetraName;
+  String kshetraName;
 
   List<Sabha> sabhas;
 
@@ -55,9 +37,9 @@ class Kshetra {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (candidateCount == null ? 0 : candidateCount!.hashCode) +
-    (kshetraId == null ? 0 : kshetraId!.hashCode) +
-    (kshetraName == null ? 0 : kshetraName!.hashCode) +
+    (candidateCount.hashCode) +
+    (kshetraId.hashCode) +
+    (kshetraName.hashCode) +
     (sabhas.hashCode);
 
   @override
@@ -65,21 +47,9 @@ class Kshetra {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.candidateCount != null) {
       json[r'candidateCount'] = this.candidateCount;
-    } else {
-      json[r'candidateCount'] = null;
-    }
-    if (this.kshetraId != null) {
       json[r'kshetraId'] = this.kshetraId;
-    } else {
-      json[r'kshetraId'] = null;
-    }
-    if (this.kshetraName != null) {
       json[r'kshetraName'] = this.kshetraName;
-    } else {
-      json[r'kshetraName'] = null;
-    }
       json[r'sabhas'] = this.sabhas;
     return json;
   }
@@ -95,13 +65,21 @@ class Kshetra {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidateCount'), 'Required key "Kshetra[candidateCount]" is missing from JSON.');
+        assert(json[r'candidateCount'] != null, 'Required key "Kshetra[candidateCount]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetraId'), 'Required key "Kshetra[kshetraId]" is missing from JSON.');
+        assert(json[r'kshetraId'] != null, 'Required key "Kshetra[kshetraId]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetraName'), 'Required key "Kshetra[kshetraName]" is missing from JSON.');
+        assert(json[r'kshetraName'] != null, 'Required key "Kshetra[kshetraName]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhas'), 'Required key "Kshetra[sabhas]" is missing from JSON.');
+        assert(json[r'sabhas'] != null, 'Required key "Kshetra[sabhas]" has a null value in JSON.');
         return true;
       }());
 
       return Kshetra(
-        candidateCount: mapValueOfType<int>(json, r'candidateCount'),
-        kshetraId: mapValueOfType<String>(json, r'kshetraId'),
-        kshetraName: mapValueOfType<String>(json, r'kshetraName'),
+        candidateCount: mapValueOfType<int>(json, r'candidateCount')!,
+        kshetraId: mapValueOfType<String>(json, r'kshetraId')!,
+        kshetraName: mapValueOfType<String>(json, r'kshetraName')!,
         sabhas: Sabha.listFromJson(json[r'sabhas']),
       );
     }
@@ -150,6 +128,10 @@ class Kshetra {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidateCount',
+    'kshetraId',
+    'kshetraName',
+    'sabhas',
   };
 }
 

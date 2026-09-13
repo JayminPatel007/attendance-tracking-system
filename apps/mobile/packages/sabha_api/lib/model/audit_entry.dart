@@ -13,91 +13,37 @@ part of openapi.api;
 class AuditEntry {
   /// Returns a new [AuditEntry] instance.
   AuditEntry({
-    this.action,
-    this.actorName,
-    this.actorUserId,
-    this.at,
-    this.detail,
-    this.id,
-    this.onBehalfName,
-    this.onBehalfOfUserId,
-    this.targetId,
-    this.targetType,
+    required this.action,
+    required this.actorName,
+    required this.actorUserId,
+    required this.at,
+    required this.detail,
+    required this.id,
+    required this.onBehalfName,
+    required this.onBehalfOfUserId,
+    required this.targetId,
+    required this.targetType,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? action;
+  String action;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? actorName;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? actorUserId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  DateTime? at;
+  DateTime at;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? detail;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? onBehalfName;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? onBehalfOfUserId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? targetId;
+  String targetId;
 
-  AuditEntryTargetTypeEnum? targetType;
+  AuditEntryTargetTypeEnum targetType;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AuditEntry &&
@@ -115,27 +61,23 @@ class AuditEntry {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (action == null ? 0 : action!.hashCode) +
+    (action.hashCode) +
     (actorName == null ? 0 : actorName!.hashCode) +
     (actorUserId == null ? 0 : actorUserId!.hashCode) +
-    (at == null ? 0 : at!.hashCode) +
+    (at.hashCode) +
     (detail == null ? 0 : detail!.hashCode) +
-    (id == null ? 0 : id!.hashCode) +
+    (id.hashCode) +
     (onBehalfName == null ? 0 : onBehalfName!.hashCode) +
     (onBehalfOfUserId == null ? 0 : onBehalfOfUserId!.hashCode) +
-    (targetId == null ? 0 : targetId!.hashCode) +
-    (targetType == null ? 0 : targetType!.hashCode);
+    (targetId.hashCode) +
+    (targetType.hashCode);
 
   @override
   String toString() => 'AuditEntry[action=$action, actorName=$actorName, actorUserId=$actorUserId, at=$at, detail=$detail, id=$id, onBehalfName=$onBehalfName, onBehalfOfUserId=$onBehalfOfUserId, targetId=$targetId, targetType=$targetType]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.action != null) {
       json[r'action'] = this.action;
-    } else {
-      json[r'action'] = null;
-    }
     if (this.actorName != null) {
       json[r'actorName'] = this.actorName;
     } else {
@@ -146,21 +88,13 @@ class AuditEntry {
     } else {
       json[r'actorUserId'] = null;
     }
-    if (this.at != null) {
-      json[r'at'] = this.at!.toUtc().toIso8601String();
-    } else {
-      json[r'at'] = null;
-    }
+      json[r'at'] = this.at.toUtc().toIso8601String();
     if (this.detail != null) {
       json[r'detail'] = this.detail;
     } else {
       json[r'detail'] = null;
     }
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
     if (this.onBehalfName != null) {
       json[r'onBehalfName'] = this.onBehalfName;
     } else {
@@ -171,16 +105,8 @@ class AuditEntry {
     } else {
       json[r'onBehalfOfUserId'] = null;
     }
-    if (this.targetId != null) {
       json[r'targetId'] = this.targetId;
-    } else {
-      json[r'targetId'] = null;
-    }
-    if (this.targetType != null) {
       json[r'targetType'] = this.targetType;
-    } else {
-      json[r'targetType'] = null;
-    }
     return json;
   }
 
@@ -195,20 +121,35 @@ class AuditEntry {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'action'), 'Required key "AuditEntry[action]" is missing from JSON.');
+        assert(json[r'action'] != null, 'Required key "AuditEntry[action]" has a null value in JSON.');
+        assert(json.containsKey(r'actorName'), 'Required key "AuditEntry[actorName]" is missing from JSON.');
+        assert(json.containsKey(r'actorUserId'), 'Required key "AuditEntry[actorUserId]" is missing from JSON.');
+        assert(json.containsKey(r'at'), 'Required key "AuditEntry[at]" is missing from JSON.');
+        assert(json[r'at'] != null, 'Required key "AuditEntry[at]" has a null value in JSON.');
+        assert(json.containsKey(r'detail'), 'Required key "AuditEntry[detail]" is missing from JSON.');
+        assert(json.containsKey(r'id'), 'Required key "AuditEntry[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "AuditEntry[id]" has a null value in JSON.');
+        assert(json.containsKey(r'onBehalfName'), 'Required key "AuditEntry[onBehalfName]" is missing from JSON.');
+        assert(json.containsKey(r'onBehalfOfUserId'), 'Required key "AuditEntry[onBehalfOfUserId]" is missing from JSON.');
+        assert(json.containsKey(r'targetId'), 'Required key "AuditEntry[targetId]" is missing from JSON.');
+        assert(json[r'targetId'] != null, 'Required key "AuditEntry[targetId]" has a null value in JSON.');
+        assert(json.containsKey(r'targetType'), 'Required key "AuditEntry[targetType]" is missing from JSON.');
+        assert(json[r'targetType'] != null, 'Required key "AuditEntry[targetType]" has a null value in JSON.');
         return true;
       }());
 
       return AuditEntry(
-        action: mapValueOfType<String>(json, r'action'),
+        action: mapValueOfType<String>(json, r'action')!,
         actorName: mapValueOfType<String>(json, r'actorName'),
         actorUserId: mapValueOfType<String>(json, r'actorUserId'),
-        at: mapDateTime(json, r'at', r''),
+        at: mapDateTime(json, r'at', r'')!,
         detail: mapValueOfType<String>(json, r'detail'),
-        id: mapValueOfType<String>(json, r'id'),
+        id: mapValueOfType<String>(json, r'id')!,
         onBehalfName: mapValueOfType<String>(json, r'onBehalfName'),
         onBehalfOfUserId: mapValueOfType<String>(json, r'onBehalfOfUserId'),
-        targetId: mapValueOfType<String>(json, r'targetId'),
-        targetType: AuditEntryTargetTypeEnum.fromJson(json[r'targetType']),
+        targetId: mapValueOfType<String>(json, r'targetId')!,
+        targetType: AuditEntryTargetTypeEnum.fromJson(json[r'targetType'])!,
       );
     }
     return null;
@@ -256,6 +197,16 @@ class AuditEntry {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'action',
+    'actorName',
+    'actorUserId',
+    'at',
+    'detail',
+    'id',
+    'onBehalfName',
+    'onBehalfOfUserId',
+    'targetId',
+    'targetType',
   };
 }
 

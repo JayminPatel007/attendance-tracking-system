@@ -13,45 +13,21 @@ part of openapi.api;
 class AppointmentResponse {
   /// Returns a new [AppointmentResponse] instance.
   AppointmentResponse({
-    this.assignmentId,
+    required this.assignmentId,
     this.candidates = const [],
-    this.personId,
-    this.requiresOverride,
-    this.userId,
+    required this.personId,
+    required this.requiresOverride,
+    required this.userId,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? assignmentId;
 
   List<NameCandidate> candidates;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? personId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? requiresOverride;
+  bool requiresOverride;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? userId;
 
   @override
@@ -68,7 +44,7 @@ class AppointmentResponse {
     (assignmentId == null ? 0 : assignmentId!.hashCode) +
     (candidates.hashCode) +
     (personId == null ? 0 : personId!.hashCode) +
-    (requiresOverride == null ? 0 : requiresOverride!.hashCode) +
+    (requiresOverride.hashCode) +
     (userId == null ? 0 : userId!.hashCode);
 
   @override
@@ -87,11 +63,7 @@ class AppointmentResponse {
     } else {
       json[r'personId'] = null;
     }
-    if (this.requiresOverride != null) {
       json[r'requiresOverride'] = this.requiresOverride;
-    } else {
-      json[r'requiresOverride'] = null;
-    }
     if (this.userId != null) {
       json[r'userId'] = this.userId;
     } else {
@@ -111,6 +83,13 @@ class AppointmentResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'assignmentId'), 'Required key "AppointmentResponse[assignmentId]" is missing from JSON.');
+        assert(json.containsKey(r'candidates'), 'Required key "AppointmentResponse[candidates]" is missing from JSON.');
+        assert(json[r'candidates'] != null, 'Required key "AppointmentResponse[candidates]" has a null value in JSON.');
+        assert(json.containsKey(r'personId'), 'Required key "AppointmentResponse[personId]" is missing from JSON.');
+        assert(json.containsKey(r'requiresOverride'), 'Required key "AppointmentResponse[requiresOverride]" is missing from JSON.');
+        assert(json[r'requiresOverride'] != null, 'Required key "AppointmentResponse[requiresOverride]" has a null value in JSON.');
+        assert(json.containsKey(r'userId'), 'Required key "AppointmentResponse[userId]" is missing from JSON.');
         return true;
       }());
 
@@ -118,7 +97,7 @@ class AppointmentResponse {
         assignmentId: mapValueOfType<String>(json, r'assignmentId'),
         candidates: NameCandidate.listFromJson(json[r'candidates']),
         personId: mapValueOfType<String>(json, r'personId'),
-        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride'),
+        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride')!,
         userId: mapValueOfType<String>(json, r'userId'),
       );
     }
@@ -167,6 +146,11 @@ class AppointmentResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'assignmentId',
+    'candidates',
+    'personId',
+    'requiresOverride',
+    'userId',
   };
 }
 

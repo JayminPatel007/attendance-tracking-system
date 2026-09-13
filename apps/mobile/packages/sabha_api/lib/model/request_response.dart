@@ -13,16 +13,10 @@ part of openapi.api;
 class RequestResponse {
   /// Returns a new [RequestResponse] instance.
   RequestResponse({
-    this.resetId,
+    required this.resetId,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? resetId;
+  String resetId;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is RequestResponse &&
@@ -31,18 +25,14 @@ class RequestResponse {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (resetId == null ? 0 : resetId!.hashCode);
+    (resetId.hashCode);
 
   @override
   String toString() => 'RequestResponse[resetId=$resetId]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.resetId != null) {
       json[r'resetId'] = this.resetId;
-    } else {
-      json[r'resetId'] = null;
-    }
     return json;
   }
 
@@ -57,11 +47,13 @@ class RequestResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'resetId'), 'Required key "RequestResponse[resetId]" is missing from JSON.');
+        assert(json[r'resetId'] != null, 'Required key "RequestResponse[resetId]" has a null value in JSON.');
         return true;
       }());
 
       return RequestResponse(
-        resetId: mapValueOfType<String>(json, r'resetId'),
+        resetId: mapValueOfType<String>(json, r'resetId')!,
       );
     }
     return null;
@@ -109,6 +101,7 @@ class RequestResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'resetId',
   };
 }
 

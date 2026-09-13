@@ -32,7 +32,6 @@ export * from './kshetra';
 export * from './kshetra-view';
 export * from './mark-request';
 export * from './marking-item';
-export * from './monthly-compliance-response';
 export * from './monthly-sabha';
 export * from './name-candidate';
 export * from './new-person-payload';
