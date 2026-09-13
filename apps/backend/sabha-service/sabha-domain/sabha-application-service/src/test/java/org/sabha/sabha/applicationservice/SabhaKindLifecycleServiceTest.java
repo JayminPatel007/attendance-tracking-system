@@ -11,11 +11,11 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.UserId;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.SabhaKind;
 import org.sabha.sabha.domain.SabhaKindAlreadyRetiredException;
-import org.sabha.sabha.domain.SabhaKindNotFoundException;
 import org.sabha.sabha.domain.SabhaKindNotRetiredException;
 import org.sabha.sabha.domain.Track;
 

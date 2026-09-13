@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.appointment.AppointRole;

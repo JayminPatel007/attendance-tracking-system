@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.SabhaNotFoundException;
 import org.sabha.common.StructuralHierarchyLookup;
 import org.sabha.common.UserId;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
@@ -64,7 +65,7 @@ public class AddPersonApplicationService {
         }
 
         UUID kshetraId = directory.kshetraIdOfSabha(command.homeSabhaId())
-                .orElseThrow(() -> new HomeSabhaNotFoundException(command.homeSabhaId()));
+                .orElseThrow(() -> new SabhaNotFoundException(command.homeSabhaId()));
 
         if (hierarchy.isSabhaKindRetired(command.homeSabhaId())) {
             throw new SabhaKindRetiredException(command.homeSabhaId());

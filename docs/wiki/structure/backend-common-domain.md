@@ -27,7 +27,7 @@ sources:
   - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
 last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
 status: disputed
-disputed_reason: "`org.sabha.common.SabhaKind` is now `SabhaKindCode` (#217) — the page still records the two-types-one-name collision as a live hazard."
+disputed_reason: "`org.sabha.common.SabhaKind` is now `SabhaKindCode` (#217), and common-domain now also holds the merged `City`/`Sabha`/`SabhaKind` `NotFoundException`s (#218) — the page records the name collision as a live hazard and lists only the exception bases."
 ---
 
 # Common Domain

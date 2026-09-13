@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.sabha.common.CityNotFoundException;
 import org.sabha.common.SantLookup;
 import org.sabha.common.UserId;
 
