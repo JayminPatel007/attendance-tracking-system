@@ -23,7 +23,7 @@ sources:
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
 appears_in: [backend-identity, backend-sabha, backend-attendance, backend-analytics, backend-common-domain, backend-container]
-last_compiled: 1c3588b88221e78f549bcc0565c88b7693dcd2e4
+last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
 ---
 
 # Module Ring
@@ -54,8 +54,10 @@ Three properties follow, and they are what makes the shape worth naming once:
 - **All five ship even when empty.** `<ctx>-messaging` is often a lone `package-info.java`, and
   that is the policy working rather than a unit half-built.
 - **Aggregator poms group, they never parent.** Every module here — leaf and aggregator alike —
-  declares `backend-parent` as its `<parent>` with an explicit `<relativePath>`, and repeats the
-  `spring-boot-maven-plugin` `<skip>` block. An aggregator owns a `<modules>` list and nothing else.
+  declares `backend-parent` as its `<parent>` and repeats the `spring-boot-maven-plugin` `<skip>`
+  block; an aggregator owns a `<modules>` list and nothing else. `<relativePath>` appears only
+  where Maven's `../pom.xml` default would be wrong, which is every nested module and no top-level
+  one (ADR-0031).
 
 Because the ring is identical everywhere, each unit's page carries the same five rows and only its
 `Holds` column says anything unit-specific.
@@ -71,8 +73,9 @@ is a real distinction but not a ring, so the module names stopped naming layers.
 the module list reads as a ring today and why the older ADRs are worth reaching for only to date a
 comment. The two renames landed in the same pass: `bootstrap` → `application-container`,
 `shared-kernel` → `common-domain`. An older name in a comment is stale, not a module you have not
-found. ADR-0031 later moved `common-domain` and `common-application` under an `apps/backend/common/`
-aggregator — a path change only, with every artifactId and package left alone. Shipping all five modules empty is ADR-0014's pay-the-scaffolding-cost-up-front principle,
+found. ADR-0031 later moved `common-domain` and `common-application` under an
+`apps/backend/common/` aggregator — a path change only, with every artifactId and package left
+alone. Shipping all five modules empty is ADR-0014's pay-the-scaffolding-cost-up-front principle,
 not a per-context decision.
 
 ## Where it appears

@@ -25,7 +25,7 @@ sources:
   - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
   - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
   - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
-last_compiled: 1c3588b88221e78f549bcc0565c88b7693dcd2e4
+last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
 ---
 
 # Common Domain
@@ -105,9 +105,8 @@ objects; the rows behind them belong to the context that implements the correspo
   engine and reaches here only for the raw lookups. Resist the pull to hoist an
   `AuthorizationEngine` into common-domain — that has already been decided against. The engines and
   the vocabulary they share are [authorization](../patterns/authorization.md).
-- `common/common-domain` is a **leaf**, yet a context's `-domain` module is an *aggregator* over a
-  `-domain-core` / `-application-service` pair. There is no `common-domain-core` — this module is the
-  whole entities ring. ADR-0031 accepted the collision rather than pay a rename across 15 poms.
+- `common/common-domain` is a **leaf** — there is no `common-domain-core`, though a context's
+  `-domain` module is an aggregator over one. ADR-0031 accepted the collision rather than rename.
 - `SabhaKind` exists **twice**: `org.sabha.common.SabhaKind` (the cross-context value) and
   `org.sabha.sabha.domain.SabhaKind` (the aggregate sabha writes). Same name, different types.
 
