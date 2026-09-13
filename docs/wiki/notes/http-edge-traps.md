@@ -4,8 +4,8 @@ title: HTTP Edge Traps
 description: Traps in the request edge — the argument resolver that identifies the caller, and what springdoc makes of it.
 bears_on: [backend-container, module-ring]
 source_paths: [
-  apps/backend/common-application/src/main/**,
-  apps/backend/common-application/pom.xml,
+  apps/backend/common/common-application/src/main/**,
+  apps/backend/common/common-application/pom.xml,
   apps/backend/application-container/src/main/java/org/sabha/container/OpenApiConfig.java,
   apps/backend/application-container/src/main/java/org/sabha/container/SecurityConfig.java,
   apps/backend/application-container/src/test/java/org/sabha/container/IntraModuleArchitectureRulesTest.java

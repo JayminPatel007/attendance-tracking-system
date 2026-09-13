@@ -2,17 +2,19 @@
 type: structure
 title: Common Domain
 description: The shared kernel: the cross-context ports, the AggregateRoot base class and the domain events every backend context depends on.
-resource: apps/backend/common-domain
+resource: apps/backend/common/common-domain
 aliases: [the shared kernel, the ports module]
 tags: [audit]
 source_paths: [
-  apps/backend/common-domain/src/main/**,
-  apps/backend/common-domain/pom.xml,
+  apps/backend/common/common-domain/src/main/**,
+  apps/backend/common/common-domain/pom.xml,
+  apps/backend/common/pom.xml,
   docs/adr/0008-*.md,
   docs/adr/0015-*.md,
   docs/adr/0019-*.md,
   docs/adr/0020-*.md,
   docs/adr/0027-*.md,
+  docs/adr/0031-*.md,
   CONTEXT.md
 ]
 sources:
@@ -21,8 +23,9 @@ sources:
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0020, title: "AggregateRoot base class, domain events, and optimistic locking", resource: ../../adr/0020-aggregate-root-and-domain-events.md }
   - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
+  - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
   - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
-last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
+last_compiled: 1c3588b88221e78f549bcc0565c88b7693dcd2e4
 ---
 
 # Common Domain
@@ -44,9 +47,11 @@ cross-context, and when in doubt it stays in the context that originated it.
 
 <!-- [coverage: high -- directory listing; 37 main source files] -->
 
-A **single flat module** with one package, `org.sabha.common` — no ring, because there is nothing
-to ring. It is a leaf that the ring modules of all four contexts depend on — a deviation from
-[module-ring](../patterns/module-ring.md).
+A **single flat leaf module** with one package, `org.sabha.common` — no ring, because there is
+nothing to ring. Every context's ring modules depend on it — a deviation from
+[module-ring](../patterns/module-ring.md). Since ADR-0031 it sits under the `apps/backend/common/`
+aggregator beside `common-application`; that aggregator only groups and builds the pair, it is not
+their Maven parent.
 
 | Group | Types |
 |---|---|
@@ -100,6 +105,9 @@ objects; the rows behind them belong to the context that implements the correspo
   engine and reaches here only for the raw lookups. Resist the pull to hoist an
   `AuthorizationEngine` into common-domain — that has already been decided against. The engines and
   the vocabulary they share are [authorization](../patterns/authorization.md).
+- `common/common-domain` is a **leaf**, yet a context's `-domain` module is an *aggregator* over a
+  `-domain-core` / `-application-service` pair. There is no `common-domain-core` — this module is the
+  whole entities ring. ADR-0031 accepted the collision rather than pay a rename across 15 poms.
 - `SabhaKind` exists **twice**: `org.sabha.common.SabhaKind` (the cross-context value) and
   `org.sabha.sabha.domain.SabhaKind` (the aggregate sabha writes). Same name, different types.
 
@@ -126,5 +134,5 @@ nearly every capability rather than implementing one. The exception is
 
 ## Method
 
-- Class listing over `common-domain/src/main/**`, then an import scan across all six backend units — the evidence for both halves of `Talks To`, and the highest-yield method on this page.
+- Class listing over `common/common-domain/src/main/**`, then an import scan across all six backend units — the evidence for both halves of `Talks To`, and the highest-yield method on this page.
 - `org/sabha/common/package-info.java` enumerates the library and is the one substantive docblock in this unit.
