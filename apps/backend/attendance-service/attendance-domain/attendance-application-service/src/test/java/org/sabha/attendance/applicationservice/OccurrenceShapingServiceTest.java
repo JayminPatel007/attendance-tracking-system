@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
@@ -28,6 +27,7 @@ import org.sabha.common.SabhaScheduleLookup;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -36,12 +36,12 @@ class OccurrenceShapingServiceTest {
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 24);
-    private static final UUID SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000005");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
-    private static final UUID SAH_SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000008");
+    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
     private static final UUID SAH_SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000007");
-    private static final UUID NIRIKSHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000052");
+    private static final UserId SAH_SANCHALAK_CALLER = UserId.of(SAH_SANCHALAK_USER);
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000051");
+    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
     // The Sabha ends 20:00 on the Occurrence date; scheduled-end Instant is 2026-05-24T20:00:00Z.
     private static final Instant SCHEDULED_END = Instant.parse("2026-05-24T20:00:00Z");
 
@@ -49,7 +49,7 @@ class OccurrenceShapingServiceTest {
     void sanchalakCancelsAScheduledOccurrenceWithReasonAndAnAuditRowIsAppended() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        f.service().cancel(SANCHALAK_SUBJECT, OCCURRENCE_ID, "Festival clash");
+        f.service().cancel(SANCHALAK_CALLER, OCCURRENCE_ID, "Festival clash");
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
@@ -69,7 +69,7 @@ class OccurrenceShapingServiceTest {
     void anAssignedNirikshakProxyingACancelIsAuditedActingForTheAbsentSanchalak() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        f.service().cancel(NIRIKSHAK_SUBJECT, OCCURRENCE_ID, "Sanchalak unreachable");
+        f.service().cancel(NIRIKSHAK_CALLER, OCCURRENCE_ID, "Sanchalak unreachable");
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
@@ -83,7 +83,7 @@ class OccurrenceShapingServiceTest {
     void sahSanchalakCancelIsRejectedWithNoSideEffects() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        assertThatThrownBy(() -> f.service().cancel(SAH_SANCHALAK_SUBJECT, OCCURRENCE_ID, "trying"))
+        assertThatThrownBy(() -> f.service().cancel(SAH_SANCHALAK_CALLER, OCCURRENCE_ID, "trying"))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -95,7 +95,7 @@ class OccurrenceShapingServiceTest {
     void cancelWithoutAReasonIsRejected() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        assertThatThrownBy(() -> f.service().cancel(SANCHALAK_SUBJECT, OCCURRENCE_ID, "  "))
+        assertThatThrownBy(() -> f.service().cancel(SANCHALAK_CALLER, OCCURRENCE_ID, "  "))
                 .isInstanceOf(CancellationReasonRequiredException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -107,7 +107,7 @@ class OccurrenceShapingServiceTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.CANCELLED);
         f.now = SCHEDULED_END.plus(Duration.ofHours(23));
 
-        f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID);
+        f.service().revert(SANCHALAK_CALLER, OCCURRENCE_ID);
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.SCHEDULED);
@@ -122,7 +122,7 @@ class OccurrenceShapingServiceTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.CANCELLED);
         f.now = SCHEDULED_END.plus(Duration.ofHours(25));
 
-        assertThatThrownBy(() -> f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID))
+        assertThatThrownBy(() -> f.service().revert(SANCHALAK_CALLER, OCCURRENCE_ID))
                 .isInstanceOf(RevertWindowExpiredException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -137,7 +137,7 @@ class OccurrenceShapingServiceTest {
         Fixture f = Fixture.withMonthlyAdHocOccurrence();
         f.now = SCHEDULED_END.plus(Duration.ofHours(25));
 
-        assertThatThrownBy(() -> f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID))
+        assertThatThrownBy(() -> f.service().revert(SANCHALAK_CALLER, OCCURRENCE_ID))
                 .isInstanceOf(RevertWindowExpiredException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -148,7 +148,7 @@ class OccurrenceShapingServiceTest {
         Fixture f = Fixture.withMonthlyAdHocOccurrence();
         f.now = SCHEDULED_END.plus(Duration.ofHours(23));
 
-        f.service().revert(SANCHALAK_SUBJECT, OCCURRENCE_ID);
+        f.service().revert(SANCHALAK_CALLER, OCCURRENCE_ID);
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.SCHEDULED);
@@ -159,7 +159,7 @@ class OccurrenceShapingServiceTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
         LocalDate newDate = LocalDate.of(2026, 5, 31);
 
-        f.service().reschedule(SANCHALAK_SUBJECT, OCCURRENCE_ID,
+        f.service().reschedule(SANCHALAK_CALLER, OCCURRENCE_ID,
                 newDate, LocalTime.of(18, 0), LocalTime.of(19, 30));
 
         Occurrence saved = f.occurrences.saved.get(0);
@@ -175,7 +175,7 @@ class OccurrenceShapingServiceTest {
     void sanchalakSetsAVenueOverrideOnAScheduledOccurrence() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        f.service().overrideVenue(SANCHALAK_SUBJECT, OCCURRENCE_ID, "Community Hall Annexe");
+        f.service().overrideVenue(SANCHALAK_CALLER, OCCURRENCE_ID, "Community Hall Annexe");
 
         Occurrence saved = f.occurrences.saved.get(0);
         assertThat(saved.venueOverride()).isEqualTo("Community Hall Annexe");
@@ -214,18 +214,6 @@ class OccurrenceShapingServiceTest {
         }
 
         OccurrenceShapingService service() {
-            CallerResolver callerResolver = subject -> {
-                if (subject.equals(SANCHALAK_SUBJECT)) {
-                    return Optional.of(SANCHALAK_USER);
-                }
-                if (subject.equals(SAH_SANCHALAK_SUBJECT)) {
-                    return Optional.of(SAH_SANCHALAK_USER);
-                }
-                if (subject.equals(NIRIKSHAK_SUBJECT)) {
-                    return Optional.of(NIRIKSHAK_USER);
-                }
-                return Optional.empty();
-            };
             RoleAssignmentLookup roles = new RoleAssignmentLookup() {
                 @Override
                 public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
@@ -280,7 +268,7 @@ class OccurrenceShapingServiceTest {
                         }
                     };
             OccurrenceWriter writer = new OccurrenceWriter(
-                    callerResolver, new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
+                    new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
             return new OccurrenceShapingService(writer, new EffectiveSlotResolver(schedule, clock),
                     clock, Duration.ofHours(24));

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
@@ -15,7 +17,6 @@ import org.sabha.identity.applicationservice.appointment.RoleAppointmentService;
 import org.sabha.identity.applicationservice.appointment.SahNirdeshakCap;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,9 +31,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * a single appointment that resolves-or-creates the Person, mints credentials
  * when needed, and records the RoleAssignment in one transaction. The
  * directory-first candidate search the form uses lives in
- * {@link DirectoryBffController}. Authenticated by the server-side OIDC session,
- * so the caller is the Keycloak subject in {@link Authentication#getName()}; an
- * authenticated subject with no local User is unauthorized (403). Authority, the
+ * {@link DirectoryBffController}. Authenticated by the server-side OIDC session;
+ * the caller arrives already resolved to the local User by the edge, which
+ * rejects an authenticated subject with no local User (403, ADR-0030). Authority, the
  * mobile hard block, the name soft-warn, and username uniqueness are arbitrated
  * by {@link RoleAppointmentService} and mapped by the global exception handler.
  */
@@ -52,9 +53,8 @@ public class RoleAppointmentController {
 
     @PostMapping("/bff/appointments")
     public ResponseEntity<AppointmentResponse> appoint(
-            @RequestBody AppointmentRequest req, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        AppointmentResult result = appointments.appoint(subject, req.toCommand());
+            @RequestBody AppointmentRequest req, @CurrentUser UserId caller) {
+        AppointmentResult result = appointments.appoint(caller, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(AppointmentResponse.softWarn(result.candidates()));
         }
@@ -71,9 +71,8 @@ public class RoleAppointmentController {
      * {@link RevokeRole} and mapped by the global exception handler. Returns 204.
      */
     @PostMapping("/bff/appointments/{id}/revoke")
-    public ResponseEntity<Void> revoke(@PathVariable UUID id, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        revokeRole.revoke(subject, id);
+    public ResponseEntity<Void> revoke(@PathVariable UUID id, @CurrentUser UserId caller) {
+        revokeRole.revoke(caller, id);
         return ResponseEntity.noContent().build();
     }
 

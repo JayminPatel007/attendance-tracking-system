@@ -115,10 +115,6 @@ class MkBootstrapServiceTest {
     private static final class FakeUserRepository implements UserRepository {
         final List<User> saved = new ArrayList<>();
 
-        @Override
-        public Optional<User> findByKeycloakUserId(UUID keycloakUserId) {
-            return saved.stream().filter(u -> u.keycloakUserId().equals(keycloakUserId)).findFirst();
-        }
 
         @Override
         public Optional<User> findByPersonId(UUID personId) {

@@ -31,6 +31,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * through {@code requireUserId} (instead of a controller-local bodyless
  * {@code 403.build()}) means every caller-unknown refusal — REST or BFF — carries
  * the same RFC 9457 {@code problem+json} body.
+ *
+ * <p>ADR-0030 moves where the refusal happens — the {@code @CurrentUser} resolver
+ * at the edge, before any use case runs — without changing what it is. Two cases
+ * change status: a read that used to fuse "unknown caller" into its empty result
+ * now refuses, and a subject that is not a UUID is refused rather than bursting
+ * out of {@code UUID.fromString} as a 500.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -66,6 +72,59 @@ class ExceptionTaxonomyIntegrationTest extends KeycloakIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isForbidden());
+    }
+
+    /**
+     * Before ADR-0030 this read resolved the caller inside the use case and folded
+     * an unknown one into {@code Optional.empty()} → 404, which said "no Sabha to
+     * mark" when the truth was "I do not know who you are".
+     */
+    @Test
+    void unknownCallerOnAReadThatUsedToAnswerNotFoundIsNowForbidden() throws Exception {
+        mockMvc.perform(get("/api/sanchalak/current-roster")
+                        .with(jwt().jwt(j -> j.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+    }
+
+    /**
+     * A subject claim that is not a UUID — a service account, a second identity
+     * provider, a hand-rolled test token — used to throw {@link
+     * IllegalArgumentException} out of {@code UUID.fromString} at the top of the
+     * controller and surface as a 500.
+     */
+    @Test
+    void aSubjectThatIsNotAUuidIsForbiddenRatherThanAServerError() throws Exception {
+        mockMvc.perform(get("/api/sanchalak/current-roster")
+                        .with(jwt().jwt(j -> j.subject("service-account-batch"))))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
+     * The other half of the contract: a caller the system <em>does</em> know still
+     * gets the empty answer, not a refusal. The 404/empty result now means only
+     * "nothing to show".
+     */
+    @Test
+    void aKnownCallerWithNothingToShowStillGetsTheEmptyAnswer() throws Exception {
+        mockMvc.perform(get("/api/sanchalak/monthly-sabhas")
+                        .with(jwt().jwt(j -> j.subject("00000000-0000-0000-0000-000000000005"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    /**
+     * The load-bearing 404. {@code occurrence_control_api.dart} reads a 404 here as
+     * "no Occurrence right now" and renders an empty state, so this code must keep
+     * meaning that — for a <em>known</em> caller — even though an unknown one has
+     * moved to 403. The Slice 13 reopen-tier Nirikshak is a real User who presides
+     * over no Sabha as Sanchalak.
+     */
+    @Test
+    void aKnownCallerWithNoCurrentOccurrenceStillGetsNotFound() throws Exception {
+        mockMvc.perform(get("/api/sanchalak/current-occurrence")
+                        .with(jwt().jwt(j -> j.subject("00000000-0000-0000-0000-000000000052"))))
+                .andExpect(status().isNotFound());
     }
 
     @Test

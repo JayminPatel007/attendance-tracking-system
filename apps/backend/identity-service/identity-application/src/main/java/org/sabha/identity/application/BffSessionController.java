@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.session.WebSessionService;
 import org.sabha.identity.domain.Section;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,10 +17,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Backend-for-Frontend session endpoint for the Angular web shell (ADR-0022).
- * The request is authenticated by the server-side OIDC session (oauth2Login),
- * not a Bearer token; {@link Authentication#getName()} yields the Keycloak
- * subject (the {@code sub} claim). Returns the shell view-model — username, MK
- * and Regional Team membership, and the visible {@link Section}s.
+ * The request is authenticated by the server-side OIDC session (oauth2Login), not
+ * a Bearer token; either way the caller arrives already resolved to the local
+ * User by the edge (ADR-0030). Returns the shell view-model — username, MK and
+ * Regional Team membership, and the visible {@link Section}s.
  */
 @RestController
 public class BffSessionController {
@@ -31,9 +32,8 @@ public class BffSessionController {
     }
 
     @GetMapping("/bff/me")
-    public ResponseEntity<WebSessionResponse> me(Authentication authentication) {
-        UUID keycloakSubject = UUID.fromString(authentication.getName());
-        return sessions.describe(keycloakSubject)
+    public ResponseEntity<WebSessionResponse> me(@CurrentUser UserId caller) {
+        return sessions.describe(caller)
                 .map(s -> new WebSessionResponse(
                         s.username(), s.madhyasthaKaryalaya(), s.regionalTeam(), inDeclarationOrder(s.sections())))
                 .map(ResponseEntity::ok)

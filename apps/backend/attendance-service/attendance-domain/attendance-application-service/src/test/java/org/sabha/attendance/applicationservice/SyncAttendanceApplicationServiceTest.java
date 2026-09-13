@@ -15,19 +15,19 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.CallerUnknownException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.UserActivityRecorder;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SyncAttendanceApplicationServiceTest {
 
-    private static final UUID SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000300");
     private static final UUID MARKED_BY = UUID.fromString("00000000-0000-0000-0000-000000000004");
+    private static final UserId CALLER = UserId.of(MARKED_BY);
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID PERSON_A = UUID.fromString("00000000-0000-0000-0000-000000000101");
@@ -39,7 +39,7 @@ class SyncAttendanceApplicationServiceTest {
         Fixture f = openOccurrence();
         Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
 
-        SyncResult result = f.service.execute(SUBJECT, fresh, List.of(
+        SyncResult result = f.service.execute(CALLER, fresh, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(10))),
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_B, false, SERVER_NOW.minus(Duration.ofMinutes(5)))));
 
@@ -53,7 +53,7 @@ class SyncAttendanceApplicationServiceTest {
         Fixture f = openOccurrence();
         Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
 
-        f.service.execute(SUBJECT, fresh, List.of(
+        f.service.execute(CALLER, fresh, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(10)))));
 
         assertThat(f.recorder.syncs).containsExactly(Map.entry(MARKED_BY, SERVER_NOW));
@@ -64,7 +64,7 @@ class SyncAttendanceApplicationServiceTest {
         Fixture f = openOccurrence();
         Instant stale = SERVER_NOW.minus(Duration.ofDays(7)).minus(Duration.ofSeconds(1));
 
-        assertThatThrownBy(() -> f.service.execute(SUBJECT, stale, List.of(
+        assertThatThrownBy(() -> f.service.execute(CALLER, stale, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW))))
                 .isInstanceOf(StaleRosterException.class);
 
@@ -76,7 +76,7 @@ class SyncAttendanceApplicationServiceTest {
         Fixture f = openOccurrence();
         Instant stale = SERVER_NOW.minus(Duration.ofDays(7)).minus(Duration.ofSeconds(1));
 
-        assertThatThrownBy(() -> f.service.execute(SUBJECT, stale, List.of(
+        assertThatThrownBy(() -> f.service.execute(CALLER, stale, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW))))
                 .isInstanceOf(StaleRosterException.class);
 
@@ -89,7 +89,7 @@ class SyncAttendanceApplicationServiceTest {
         Fixture f = openOccurrence();
         Instant edge = SERVER_NOW.minus(Duration.ofDays(7));
 
-        SyncResult result = f.service.execute(SUBJECT, edge, List.of(
+        SyncResult result = f.service.execute(CALLER, edge, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW)));
 
         assertThat(result.appliedCount()).isEqualTo(1);
@@ -103,8 +103,8 @@ class SyncAttendanceApplicationServiceTest {
         List<SyncRequestItem> batch = List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, clientMarkedAt));
 
-        f.service.execute(SUBJECT, fresh, batch);
-        f.service.execute(SUBJECT, fresh, batch);
+        f.service.execute(CALLER, fresh, batch);
+        f.service.execute(CALLER, fresh, batch);
 
         Occurrence saved = f.occurrences.savedOccurrences().get(f.occurrences.savedOccurrences().size() - 1);
         assertThat(saved.markings()).hasSize(1);
@@ -120,16 +120,14 @@ class SyncAttendanceApplicationServiceTest {
         occurrences.put(new Occurrence(otherOccurrenceId, SABHA_ID,
                 LocalDate.of(2026, 5, 24), OccurrenceState.OPEN_FOR_MARKING));
         CapturingPublisher publisher = new CapturingPublisher();
-        CallerResolver resolver = subject ->
-                subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
         MarkAttendanceApplicationService markUseCase =
-                markAttendance(resolver, occurrences, publisher, clock);
+                markAttendance(occurrences, publisher, clock);
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
-                resolver, markUseCase, new RecordingActivity(), clock);
+                markUseCase, new RecordingActivity(), clock);
 
         Instant fresh = SERVER_NOW.minus(Duration.ofHours(1));
-        SyncResult result = service.execute(SUBJECT, fresh, List.of(
+        SyncResult result = service.execute(CALLER, fresh, List.of(
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(10))),
                 new SyncRequestItem(OCCURRENCE_ID, PERSON_B, false, SERVER_NOW.minus(Duration.ofMinutes(9))),
                 new SyncRequestItem(otherOccurrenceId, PERSON_A, true, SERVER_NOW.minus(Duration.ofMinutes(8))),
@@ -142,44 +140,24 @@ class SyncAttendanceApplicationServiceTest {
         assertThat(occurrences.saveCount(otherOccurrenceId)).isEqualTo(1);
     }
 
-    @Test
-    void anUnknownKeycloakSubjectIsRejectedBeforeAnyMarkingsAreApplied() {
-        Fixture f = openOccurrence();
-        SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
-                subject -> Optional.empty(),
-                f.markUseCase,
-                new RecordingActivity(),
-                Clock.fixed(SERVER_NOW, ZoneOffset.UTC));
-
-        UUID unknown = UUID.fromString("00000000-0000-0000-0000-000000000999");
-        assertThatThrownBy(() -> service.execute(unknown, SERVER_NOW, List.of(
-                new SyncRequestItem(OCCURRENCE_ID, PERSON_A, true, SERVER_NOW))))
-                .isInstanceOf(CallerUnknownException.class);
-        assertThat(f.occurrences.savedOccurrences()).isEmpty();
-    }
-
     private Fixture openOccurrence() {
         InMemoryOccurrenceRepository occurrences = new InMemoryOccurrenceRepository();
         occurrences.put(new Occurrence(OCCURRENCE_ID, SABHA_ID,
                 LocalDate.of(2026, 5, 23), OccurrenceState.OPEN_FOR_MARKING));
         CapturingPublisher publisher = new CapturingPublisher();
-        CallerResolver resolver = subject ->
-                subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
         Clock clock = Clock.fixed(SERVER_NOW, ZoneOffset.UTC);
         MarkAttendanceApplicationService markUseCase =
-                markAttendance(resolver, occurrences, publisher, clock);
+                markAttendance(occurrences, publisher, clock);
         RecordingActivity recorder = new RecordingActivity();
         SyncAttendanceApplicationService service = new SyncAttendanceApplicationService(
-                resolver, markUseCase, recorder, clock);
+                markUseCase, recorder, clock);
         return new Fixture(occurrences, publisher, markUseCase, recorder, service);
     }
 
     private static MarkAttendanceApplicationService markAttendance(
-            CallerResolver resolver, OccurrenceRepository occurrences,
-            DomainEventPublisher publisher, Clock clock) {
+            OccurrenceRepository occurrences, DomainEventPublisher publisher, Clock clock) {
         return new MarkAttendanceApplicationService(OccurrenceWriterTest.unauthorizedWriter(
-                resolver, occurrences, new OccurrenceWriterTest.InMemoryTransitionLog(),
-                publisher, clock));
+                occurrences, new OccurrenceWriterTest.InMemoryTransitionLog(), publisher, clock));
     }
 
     private record Fixture(

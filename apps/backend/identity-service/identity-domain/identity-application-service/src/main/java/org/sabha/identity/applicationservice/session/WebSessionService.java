@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuditReadAccess;
 import org.sabha.common.RegionalTeamCityLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.bootstrap.MadhyasthaKaryalayaMembership;
 import org.sabha.identity.domain.MemberAuthority;
@@ -47,8 +48,8 @@ public class WebSessionService {
         this.roles = roles;
     }
 
-    public Optional<WebSession> describe(UUID keycloakSubject) {
-        return users.findByKeycloakUserId(keycloakSubject).map(user -> {
+    public Optional<WebSession> describe(UserId caller) {
+        return users.findById(caller.value()).map(user -> {
             MemberAuthority authority = new MemberAuthority(
                     membership.isMember(user.id()),
                     !regionalTeamCities.citiesOf(user.id()).isEmpty(),

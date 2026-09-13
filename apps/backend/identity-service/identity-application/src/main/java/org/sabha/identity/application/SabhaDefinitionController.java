@@ -6,6 +6,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.appointment.Appointee;
 import org.sabha.identity.applicationservice.directory.NameCandidate;
@@ -14,7 +16,6 @@ import org.sabha.identity.applicationservice.sabhadefinition.SabhaDefinitionResu
 import org.sabha.identity.applicationservice.sabhadefinition.SabhaDefinitionService;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,8 +26,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * Sabha-definition BFF endpoint (ADR-0012, ADR-0022): the Angular web shell posts
  * a single request that creates a Sabha and appoints its Sanchalak (and optional
  * Sah-Sanchalak) in one transaction. Authenticated by the server-side OIDC
- * session, so the caller is the Keycloak subject in {@link Authentication#getName()};
- * an authenticated subject with no local User is unauthorized (403). Nirdeshak
+ * session; the caller arrives already resolved to the local User by the edge,
+ * which rejects an authenticated subject with no local User (403, ADR-0030). Nirdeshak
  * authority, the schedule-shape invariants, the inline-Person dedup soft-warn, and
  * username uniqueness are arbitrated by {@link SabhaDefinitionService} and the
  * reused appointment flow, then mapped by the global exception handler.
@@ -42,9 +43,8 @@ public class SabhaDefinitionController {
 
     @PostMapping("/bff/sabhas")
     public ResponseEntity<SabhaDefinitionResponse> define(
-            @RequestBody DefineSabhaRequest req, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        SabhaDefinitionResult result = sabhaDefinition.define(subject, req.toCommand());
+            @RequestBody DefineSabhaRequest req, @CurrentUser UserId caller) {
+        SabhaDefinitionResult result = sabhaDefinition.define(caller, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(SabhaDefinitionResponse.softWarn(result.candidates()));
         }

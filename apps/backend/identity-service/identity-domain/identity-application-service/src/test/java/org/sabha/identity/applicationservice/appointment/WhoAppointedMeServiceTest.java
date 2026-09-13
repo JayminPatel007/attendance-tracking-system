@@ -72,10 +72,6 @@ class WhoAppointedMeServiceTest {
             byId.put(user.id(), user);
         }
 
-        @Override
-        public Optional<User> findByKeycloakUserId(UUID keycloakUserId) {
-            return byId.values().stream().filter(u -> keycloakUserId.equals(u.keycloakUserId())).findFirst();
-        }
 
         @Override
         public Optional<User> findByPersonId(UUID personId) {

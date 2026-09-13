@@ -1,7 +1,5 @@
 package org.sabha.analytics.applicationservice;
 
-import java.util.UUID;
-
 import org.sabha.analytics.domain.Thresholds;
 import org.sabha.common.UserId;
 

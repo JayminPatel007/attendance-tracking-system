@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
@@ -46,8 +46,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HomeSabhaTransferServiceTest {
 
-    private static final UUID KEYCLOAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
     private static final UUID INITIATOR_USER = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+    private static final UserId INITIATOR = UserId.of(INITIATOR_USER);
     private static final UUID PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000b3");
     private static final UUID DESTINATION_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b4");
     private static final UUID OLD_YUVAK_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b5");
@@ -62,7 +62,7 @@ class HomeSabhaTransferServiceTest {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
 
-        UUID transferId = f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         HomeSabhaTransfer saved = f.transfers.findById(transferId).orElseThrow();
         assertThat(saved.status()).isEqualTo(TransferStatus.PENDING);
@@ -92,7 +92,7 @@ class HomeSabhaTransferServiceTest {
                 new HomeSabhaRef(OLD_YUVAK_SABHA, YUVAK_KIND),
                 new HomeSabhaRef(SANYUKTA_SABHA, SANYUKTA_KIND)));
         HomeSabhaTransferService service = f.service();
-        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = service.initiate(INITIATOR, PERSON, DESTINATION_SABHA);
         f.publisher.events.clear();
 
         service.confirm(transferId, FIXED_OTP);
@@ -119,7 +119,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedSabhaKind(DESTINATION_SABHA, YUVAK_KIND);
         f.directory.seedHomeSabhas(PERSON, List.of(new HomeSabhaRef(OLD_YUVAK_SABHA, YUVAK_KIND)));
         HomeSabhaTransferService service = f.service();
-        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = service.initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         assertThatThrownBy(() -> service.confirm(transferId, "000000"))
                 .isInstanceOf(WrongOtpException.class);
@@ -138,7 +138,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedSabhaKind(DESTINATION_SABHA, YUVAK_KIND);
         f.directory.seedHomeSabhas(PERSON, List.of(new HomeSabhaRef(OLD_YUVAK_SABHA, YUVAK_KIND)));
         HomeSabhaTransferService service = f.service();
-        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = service.initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         f.clock.advance(Duration.ofMinutes(6));
 
@@ -160,7 +160,7 @@ class HomeSabhaTransferServiceTest {
         // rejection comes from the swap phase, after the OTP is consumed.
         f.directory.seedHomeSabhas(PERSON, List.of(new HomeSabhaRef(SANYUKTA_SABHA, SANYUKTA_KIND)));
         HomeSabhaTransferService service = f.service();
-        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = service.initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         assertThatThrownBy(() -> service.confirm(transferId, FIXED_OTP))
                 .isInstanceOf(NoMatchingHomeSabhaException.class);
@@ -176,7 +176,7 @@ class HomeSabhaTransferServiceTest {
         Person child = Person.create(PERSON, "Child Patel", Gender.MALE, null, null, UUID.randomUUID());
         f.directory.seedPerson(child);
 
-        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
+        assertThatThrownBy(() -> f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA))
                 .isInstanceOf(PersonHasNoMobileException.class);
         assertThat(f.gateway.sentCode).isNull();
     }
@@ -187,7 +187,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
         f.roleAssignments.revoke(INITIATOR_USER, DESTINATION_SABHA);
 
-        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
+        assertThatThrownBy(() -> f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA))
                 .isInstanceOf(TransferNotAuthorizedException.class);
         assertThat(f.gateway.sentCode).isNull();
     }
@@ -198,7 +198,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
         f.hierarchy.retiredSabhas.add(DESTINATION_SABHA);
 
-        assertThatThrownBy(() -> f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA))
+        assertThatThrownBy(() -> f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA))
                 .isInstanceOf(SabhaKindRetiredException.class);
         assertThat(f.gateway.sentCode).isNull();
         assertThat(f.transfers.findById(PERSON)).isEmpty();
@@ -210,7 +210,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
         f.roleAssignments.grant(INITIATOR_USER, DESTINATION_SABHA, Role.SAH_SANCHALAK);
 
-        UUID transferId = f.service().initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         assertThat(f.transfers.findById(transferId)).isPresent();
         assertThat(f.gateway.sentCode).isEqualTo(FIXED_OTP);
@@ -223,7 +223,7 @@ class HomeSabhaTransferServiceTest {
         f.directory.seedSabhaKind(DESTINATION_SABHA, YUVAK_KIND);
         f.directory.seedHomeSabhas(PERSON, List.of(new HomeSabhaRef(OLD_YUVAK_SABHA, YUVAK_KIND)));
         HomeSabhaTransferService service = f.service();
-        UUID transferId = service.initiate(KEYCLOAK_SUBJECT, PERSON, DESTINATION_SABHA);
+        UUID transferId = service.initiate(INITIATOR, PERSON, DESTINATION_SABHA);
 
         for (int attempt = 0; attempt < 4; attempt++) {
             assertThatThrownBy(() -> service.confirm(transferId, "000000"))
@@ -262,15 +262,10 @@ class HomeSabhaTransferServiceTest {
             roleAssignments.grant(INITIATOR_USER, DESTINATION_SABHA, Role.SANCHALAK);
         }
 
-        CallerResolver caller() {
-            return subject -> subject.equals(KEYCLOAK_SUBJECT)
-                    ? Optional.of(INITIATOR_USER) : Optional.empty();
-        }
-
         HomeSabhaTransferService service() {
             OtpGuardedFlow otpFlow = OtpFlowFixture.sending(FIXED_OTP, gateway, publisher, clock);
             return new HomeSabhaTransferService(
-                    caller(), roleAssignments, directory, transfers, otpFlow, hierarchy);
+                    roleAssignments, directory, transfers, otpFlow, hierarchy);
         }
     }
 

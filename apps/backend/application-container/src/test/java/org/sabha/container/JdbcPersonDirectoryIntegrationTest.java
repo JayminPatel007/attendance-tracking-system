@@ -1,5 +1,6 @@
 package org.sabha.container;
 
+import org.sabha.common.UserId;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -42,7 +43,7 @@ class JdbcPersonDirectoryIntegrationTest extends PostgresIntegrationTest {
     private static final UUID SABHA_TRACER = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID SEEDED_RAMESH = UUID.fromString("00000000-0000-0000-0000-000000000110");
     private static final String RAMESH_MOBILE = "+910000000110";
-    private static final UUID SANCHALAK_KEYCLOAK = UUID.fromString("00000000-0000-0000-0000-000000000005");
+    private static final UserId SANCHALAK = UserId.of(UUID.fromString("00000000-0000-0000-0000-000000000004"));
     private static final UUID OTHER_KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000009ff");
 
     @Autowired
@@ -80,7 +81,7 @@ class JdbcPersonDirectoryIntegrationTest extends PostgresIntegrationTest {
 
     @Test
     void addsAFreshPersonThatIsThenRetrievable() {
-        AddResult result = addPerson.add(SANCHALAK_KEYCLOAK, new AddPersonCommand(
+        AddResult result = addPerson.add(SANCHALAK, new AddPersonCommand(
                 "Brand New Karyakar", Gender.MALE, null, "+919999000111", null, SABHA_TRACER, false));
 
         assertThat(result.created()).isTrue();
@@ -92,7 +93,7 @@ class JdbcPersonDirectoryIntegrationTest extends PostgresIntegrationTest {
 
     @Test
     void hardBlocksAnAddWhoseMobileAlreadyExists() {
-        assertThatThrownBy(() -> addPerson.add(SANCHALAK_KEYCLOAK, new AddPersonCommand(
+        assertThatThrownBy(() -> addPerson.add(SANCHALAK, new AddPersonCommand(
                 "Ramesh Duplicate", Gender.MALE, null, RAMESH_MOBILE, null, SABHA_TRACER, false)))
                 .isInstanceOf(MobileAlreadyRegisteredException.class);
     }

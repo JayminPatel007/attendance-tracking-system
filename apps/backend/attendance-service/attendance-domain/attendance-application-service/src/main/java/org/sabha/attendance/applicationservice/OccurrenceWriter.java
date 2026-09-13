@@ -10,10 +10,10 @@ import java.util.function.Function;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.OptimisticLockException;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +48,6 @@ public class OccurrenceWriter {
 
     private static final int MAX_OPTIMISTIC_LOCK_ATTEMPTS = 3;
 
-    private final CallerResolver callerResolver;
     private final AuthorizationEngine authorization;
     private final OccurrenceRepository occurrences;
     private final OccurrenceStateTransitionRepository transitions;
@@ -56,13 +55,11 @@ public class OccurrenceWriter {
     private final Clock clock;
 
     public OccurrenceWriter(
-            CallerResolver callerResolver,
             AuthorizationEngine authorization,
             OccurrenceRepository occurrences,
             OccurrenceStateTransitionRepository transitions,
             DomainEventPublisher events,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.authorization = authorization;
         this.occurrences = occurrences;
         this.transitions = transitions;
@@ -75,8 +72,8 @@ public class OccurrenceWriter {
      * either side of {@code mutation}, so it captures what actually happened
      * rather than what was asked for.
      *
-     * @param actor     who is driving the write; a signed-in actor is resolved and
-     *                  authorized against the Occurrence's Sabha first
+     * @param actor     who is driving the write; a signed-in actor is authorized
+     *                  against the Occurrence's Sabha first
      * @param auditedAs the action recorded on the audit row — may differ from the
      *                  actor's authority (e.g. REVERT audited under CANCEL authority)
      * @param reason    free-text reason for the audit row, or {@code null}
@@ -85,7 +82,7 @@ public class OccurrenceWriter {
     @Transactional
     public void transition(UUID occurrenceId, TransitionActor actor, OccurrenceAction auditedAs,
                            String reason, Consumer<Occurrence> mutation) {
-        UUID actorUserId = resolve(actor);
+        UUID actorUserId = actorUserId(actor);
         write(occurrenceId, occurrence -> {
             UUID onBehalfOf = authorize(actor, actorUserId, occurrence);
             OccurrenceState from = occurrence.state();
@@ -106,11 +103,10 @@ public class OccurrenceWriter {
      * {@link AuthorizationEngine}.</p>
      */
     @Transactional
-    public void mutateUnaudited(UUID occurrenceId, UUID keycloakSubject,
+    public void mutateUnaudited(UUID occurrenceId, UserId caller,
                                  BiConsumer<Occurrence, UUID> mutation) {
-        UUID actorUserId = callerResolver.requireUserId(keycloakSubject);
         write(occurrenceId, occurrence -> {
-            mutation.accept(occurrence, actorUserId);
+            mutation.accept(occurrence, caller.value());
             return null;
         });
     }
@@ -144,14 +140,9 @@ public class OccurrenceWriter {
         throw new ConcurrentModificationException(occurrenceId, lastConflict);
     }
 
-    /**
-     * Resolves the calling user before the aggregate is loaded, so an unknown
-     * caller is rejected without touching the Occurrence.
-     */
-    private UUID resolve(TransitionActor actor) {
-        return actor instanceof TransitionActor.SignedIn user
-                ? callerResolver.requireUserId(user.keycloakSubject())
-                : null;
+    /** The acting user, or {@code null} for the cron actor, which holds no identity. */
+    private static UUID actorUserId(TransitionActor actor) {
+        return actor instanceof TransitionActor.SignedIn user ? user.caller().value() : null;
     }
 
     /**

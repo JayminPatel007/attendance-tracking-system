@@ -54,7 +54,10 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     /** Package-visible so the resolution rules can be tested without a servlet stack. */
     UserId resolve(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw CallerUnknownException.unusableSubject(String.valueOf(authentication));
+            // Never the Authentication itself: the global handler puts this message
+            // straight into the RFC 9457 `detail`, and a token's toString carries
+            // its principal and authorities.
+            throw CallerUnknownException.unusableSubject("no authentication");
         }
         String name = authentication.getName();
         UUID subject;
@@ -63,6 +66,8 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         } catch (IllegalArgumentException | NullPointerException e) {
             throw CallerUnknownException.unusableSubject(name);
         }
-        return UserId.of(callers.requireUserId(subject));
+        return callers.resolveUserId(subject)
+                .map(UserId::of)
+                .orElseThrow(() -> new CallerUnknownException(subject));
     }
 }

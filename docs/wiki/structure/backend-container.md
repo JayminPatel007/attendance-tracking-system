@@ -13,7 +13,6 @@ source_paths: [
   docs/adr/0019-*.md,
   docs/adr/0021-*.md,
   docs/adr/0022-*.md,
-  docs/adr/0030-*.md,
   CONTEXT.md
 ]
 sources:
@@ -23,7 +22,6 @@ sources:
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
-  - { id: adr-0030, title: "Caller identity is resolved at the HTTP edge; below it, signatures speak UserId", resource: ../../adr/0030-caller-identity-resolved-at-the-http-edge.md }
   - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
@@ -105,7 +103,7 @@ own migrations**. The table-name grep exists solely to bridge that gap.
 
 ## Gotchas
 
-<!-- [coverage: medium -- two verified from the changelog and the seed file; no exhaustive sweep; springdoc entry added 2026-09-13 from issue #203] -->
+<!-- [coverage: medium -- two verified from the changelog and the seed file; no exhaustive sweep] -->
 
 - **The changelog is partitioned by slice, not by context.** `slice-12/001-sabha-definition.sql`
   creates tables three different contexts read. Don't infer table ownership from the directory it
@@ -114,9 +112,7 @@ own migrations**. The table-name grep exists solely to bridge that gap.
   read that table and nothing in production writes it.
 - Cron classes live here rather than beside the scanners they trigger, so a scanner looks unused
   from inside its own context. Grep this module before concluding a scanner is dead code.
-- **A custom argument-resolver parameter becomes a required query parameter in the OpenAPI
-  document** unless its annotation is in `SpringDocUtils.addAnnotationsToIgnore` — which is what
-  `OpenApiConfig`'s static block does for `@CurrentUser` (ADR-0030).
+- [http-edge-traps](../notes/http-edge-traps.md)
 
 ## Covered by
 

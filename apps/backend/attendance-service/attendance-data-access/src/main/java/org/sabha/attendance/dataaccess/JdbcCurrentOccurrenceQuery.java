@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.sabha.attendance.applicationservice.CurrentOccurrence;
 import org.sabha.attendance.applicationservice.CurrentOccurrenceQuery;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.common.UserId;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +28,7 @@ public class JdbcCurrentOccurrenceQuery implements CurrentOccurrenceQuery {
     }
 
     @Override
-    public Optional<CurrentOccurrence> findShapeableForSanchalak(UUID sanchalakUserId) {
+    public Optional<CurrentOccurrence> findShapeableForSanchalak(UserId sanchalak) {
         return jdbc.sql("""
                 SELECT o.id, o.sabha_id, o.occurrence_date, o.state,
                        o.venue_override, o.rescheduled_date,
@@ -42,7 +43,7 @@ public class JdbcCurrentOccurrenceQuery implements CurrentOccurrenceQuery {
                 ORDER BY o.occurrence_date DESC
                 LIMIT 1
                 """)
-                .param(sanchalakUserId)
+                .param(sanchalak.value())
                 .query((rs, n) -> new CurrentOccurrence(
                         rs.getObject("id", UUID.class),
                         rs.getObject("sabha_id", UUID.class),
