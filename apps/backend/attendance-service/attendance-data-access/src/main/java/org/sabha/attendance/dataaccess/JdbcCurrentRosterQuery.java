@@ -11,6 +11,7 @@ import org.sabha.attendance.applicationservice.CurrentRoster.OccurrenceView;
 import org.sabha.attendance.applicationservice.CurrentRoster.RosterEntry;
 import org.sabha.attendance.applicationservice.CurrentRosterQuery;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.common.UserId;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -31,7 +32,7 @@ public class JdbcCurrentRosterQuery implements CurrentRosterQuery {
     }
 
     @Override
-    public Optional<CurrentRoster> findForSanchalak(UUID sanchalakUserId) {
+    public Optional<CurrentRoster> findForSanchalak(UserId sanchalak) {
         Optional<OccurrenceView> openOccurrence = jdbc.sql("""
                 SELECT o.id AS occurrence_id, o.occurrence_date, o.state, o.sabha_id
                 FROM role_assignments ra
@@ -44,7 +45,7 @@ public class JdbcCurrentRosterQuery implements CurrentRosterQuery {
                 ORDER BY o.occurrence_date DESC
                 LIMIT 1
                 """)
-                .param(sanchalakUserId)
+                .param(sanchalak.value())
                 .query((rs, n) -> new OccurrenceView(
                         rs.getObject("occurrence_id", UUID.class),
                         rs.getObject("occurrence_date", LocalDate.class),

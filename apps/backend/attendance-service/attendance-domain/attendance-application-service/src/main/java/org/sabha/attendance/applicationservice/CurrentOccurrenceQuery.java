@@ -1,10 +1,11 @@
 package org.sabha.attendance.applicationservice;
 
 import java.util.Optional;
-import java.util.UUID;
+
+import org.sabha.common.UserId;
 
 /**
- * Read-side port: for a given Sanchalak {@code users.id}, find the Occurrence on
+ * Read-side port: for a given Sanchalak, find the Occurrence on
  * the Sabha they preside over that is currently shapeable — i.e. still
  * {@code SCHEDULED} / {@code RESCHEDULED}, or {@code CANCELLED} and thus
  * revertable (ADR-0001). The adapter lives in {@code attendance-data-access} and
@@ -13,5 +14,5 @@ import java.util.UUID;
  */
 public interface CurrentOccurrenceQuery {
 
-    Optional<CurrentOccurrence> findShapeableForSanchalak(UUID sanchalakUserId);
+    Optional<CurrentOccurrence> findShapeableForSanchalak(UserId sanchalak);
 }

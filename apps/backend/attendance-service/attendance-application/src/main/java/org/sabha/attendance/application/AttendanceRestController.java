@@ -9,9 +9,9 @@ import java.util.UUID;
 
 import org.sabha.attendance.applicationservice.CreateMonthlyOccurrenceApplicationService;
 import org.sabha.attendance.applicationservice.CurrentOccurrence;
+import org.sabha.attendance.applicationservice.CurrentOccurrenceQuery;
 import org.sabha.attendance.applicationservice.CurrentRoster;
-import org.sabha.attendance.applicationservice.GetCurrentOccurrenceUseCase;
-import org.sabha.attendance.applicationservice.GetCurrentRosterUseCase;
+import org.sabha.attendance.applicationservice.CurrentRosterQuery;
 import org.sabha.attendance.applicationservice.ListSanchalakMonthlySabhasUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AttendanceRestController {
 
-    private final GetCurrentRosterUseCase getCurrentRoster;
-    private final GetCurrentOccurrenceUseCase getCurrentOccurrence;
+    private final CurrentRosterQuery currentRoster;
+    private final CurrentOccurrenceQuery currentOccurrence;
     private final MarkAttendanceApplicationService markAttendance;
     private final SyncAttendanceApplicationService syncAttendance;
     private final OccurrenceShapingService shapeOccurrence;
@@ -44,8 +44,8 @@ public class AttendanceRestController {
     private final Clock clock;
 
     public AttendanceRestController(
-            GetCurrentRosterUseCase getCurrentRoster,
-            GetCurrentOccurrenceUseCase getCurrentOccurrence,
+            CurrentRosterQuery currentRoster,
+            CurrentOccurrenceQuery currentOccurrence,
             MarkAttendanceApplicationService markAttendance,
             SyncAttendanceApplicationService syncAttendance,
             OccurrenceShapingService shapeOccurrence,
@@ -53,8 +53,8 @@ public class AttendanceRestController {
             MonthlyComplianceQuery monthlyCompliance,
             ListSanchalakMonthlySabhasUseCase listMonthlySabhas,
             Clock clock) {
-        this.getCurrentRoster = getCurrentRoster;
-        this.getCurrentOccurrence = getCurrentOccurrence;
+        this.currentRoster = currentRoster;
+        this.currentOccurrence = currentOccurrence;
         this.markAttendance = markAttendance;
         this.syncAttendance = syncAttendance;
         this.shapeOccurrence = shapeOccurrence;
@@ -66,14 +66,14 @@ public class AttendanceRestController {
 
     @GetMapping("/api/sanchalak/current-roster")
     public ResponseEntity<CurrentRoster> currentRoster(@CurrentUser UserId caller) {
-        return getCurrentRoster.execute(caller)
+        return currentRoster.findForSanchalak(caller)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/api/sanchalak/current-occurrence")
     public ResponseEntity<CurrentOccurrence> currentOccurrence(@CurrentUser UserId caller) {
-        return getCurrentOccurrence.execute(caller)
+        return currentOccurrence.findShapeableForSanchalak(caller)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
