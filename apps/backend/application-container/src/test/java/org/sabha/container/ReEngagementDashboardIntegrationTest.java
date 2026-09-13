@@ -15,16 +15,28 @@ import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
 import org.sabha.analytics.domain.Thresholds;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.sabha.common.UserId;
 
 /**
  * End-to-end for the re-engagement read-model (Slice 15, ADR-0010): the projection
@@ -37,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Thresholds round-trip through the admin port.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 @Import(ReEngagementDashboardIntegrationTest.NoAuthConfig.class)
 @Transactional
 class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
@@ -54,6 +67,13 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b01");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000b02");
     private static final UUID SANT_USER = UUID.fromString("00000000-0000-0000-0000-000000000b04");
+
+    /** Keycloak subjects for the BFF tests, which drive the endpoints over HTTP. */
+    private static final UUID MK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000c01");
+    private static final UUID SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000c02");
+
+    @Autowired
+    MockMvc mockMvc;
 
     @Autowired
     JdbcClient jdbc;
@@ -94,16 +114,16 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         scanner.refresh();
 
         // Picking the City persists it as the default and scopes the view to it.
-        assertThat(access.selectCity(SANT_USER, CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(access.selectCity(UserId.of(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
 
         // Universal read: the Sant holds no role over either Kshetra, yet sees both
         // candidates — the rejection that limited the Nirdeshak to PERSON_1 does not
         // apply (ADR-0011 Sant exception).
-        assertThat(dashboard.people(access.viewFor(SANT_USER))).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(access.viewFor(UserId.of(SANT_USER)))).extracting(CandidateRow::personId)
                 .contains(PERSON_1, PERSON_2);
 
         // The default survives a fresh resolution (across logins).
-        assertThat(access.viewFor(SANT_USER)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(access.viewFor(UserId.of(SANT_USER))).isEqualTo(new DashboardScope.CityScoped(CITY));
     }
 
     @Test
@@ -131,7 +151,7 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         user(MK_USER, "mk-user"); // updated_by stamps a real User
         assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(3, 6));
 
-        thresholdAdmin.update(new Thresholds(2, 5), MK_USER);
+        thresholdAdmin.update(new Thresholds(2, 5), UserId.of(MK_USER));
 
         assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(2, 5));
     }
@@ -169,12 +189,16 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     }
 
     private void user(UUID id, String username) {
+        user(id, username, UUID.randomUUID());
+    }
+
+    private void user(UUID id, String username, UUID keycloakSubject) {
         jdbc.sql("""
                 INSERT INTO persons (id, full_name, gender, mobile) VALUES (?, ?, 'MALE', ?)
                 """).params(id, username + "-person", "+91" + username.hashCode()).update();
         jdbc.sql("""
                 INSERT INTO users (id, person_id, username, keycloak_user_id) VALUES (?, ?, ?, ?)
-                """).params(id, id, username, UUID.randomUUID()).update();
+                """).params(id, id, username, keycloakSubject).update();
     }
 
     private void mkUser(UUID id, String username) {
@@ -225,6 +249,106 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     private void roleAssignment(UUID userId, String role, String scopeColumn, UUID scopeId, String demographic) {
         jdbc.sql("INSERT INTO role_assignments (id, user_id, role, " + scopeColumn + ", demographic) VALUES (?, ?, ?, ?, ?)")
                 .params(UUID.randomUUID(), userId, role, scopeId, demographic).update();
+    }
+
+    // --- the BFF surface (ADR-0022, ADR-0030) ------------------------------
+    //
+    // The tests above call the application services directly. These drive the same
+    // reads over HTTP, which is the only place the @CurrentUser binding, the
+    // session chain and the JSON shape are exercised together.
+
+    @Test
+    void everyDashboardReadServesTheSignedInCallerOverTheBff() throws Exception {
+        seedTwoSabhasEachWithACandidate();
+        signInAs(MK_USER, MK_SUBJECT);
+        scanner.refresh();
+
+        mockMvc.perform(get("/bff/dashboard/overview").with(signedIn(MK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kpis").exists());
+        mockMvc.perform(get("/bff/dashboard/people").with(signedIn(MK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+        mockMvc.perform(get("/bff/dashboard/sabha-tree").with(signedIn(MK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.zones").isArray());
+        mockMvc.perform(get("/bff/dashboard/thresholds").with(signedIn(MK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.candidate").value(3));
+    }
+
+    /**
+     * The City chip is inert for a non-Sant, and picking a City is a Sant-only act
+     * — the 403 comes from {@code NotASantException}, not from the edge, so it also
+     * shows the caller resolved fine and was refused on authority.
+     */
+    @Test
+    void theCityChipIsInertForANonSantAndPickingACityIsRefused() throws Exception {
+        user(SANCHALAK_USER, "sanchalak-bff", SANCHALAK_SUBJECT);
+
+        mockMvc.perform(get("/bff/dashboard/scope").with(signedIn(SANCHALAK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sant").value(false));
+
+        mockMvc.perform(post("/bff/dashboard/city")
+                        .with(signedIn(SANCHALAK_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"cityId\": \"" + CITY + "\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    /** The Sant happy path: picking a City persists it and the chip reflects the pick. */
+    @Test
+    void aSantPicksACityOverTheBffAndTheChipReflectsIt() throws Exception {
+        seedTwoSabhasEachWithACandidate();
+        santUser(SANT_USER, "sant-bff");
+        signInAs(SANT_USER, MK_SUBJECT);
+
+        mockMvc.perform(post("/bff/dashboard/city")
+                        .with(signedIn(MK_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"cityId\": \"" + CITY + "\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/bff/dashboard/scope").with(signedIn(MK_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sant").value(true))
+                .andExpect(jsonPath("$.selectedCityId").value(CITY.toString()));
+    }
+
+    /** Thresholds are readable by any known caller but writable only by the MK. */
+    @Test
+    void onlyTheMadhyasthaKaryalayaMayWriteThresholds() throws Exception {
+        mkUser(MK_USER, "mk-writer");
+        signInAs(MK_USER, MK_SUBJECT);
+        user(SANCHALAK_USER, "sanchalak-writer", SANCHALAK_SUBJECT);
+
+        mockMvc.perform(put("/bff/dashboard/thresholds")
+                        .with(signedIn(SANCHALAK_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"candidate\": 2, \"priority\": 5}"))
+                .andExpect(status().isForbidden());
+        assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(3, 6));
+
+        mockMvc.perform(put("/bff/dashboard/thresholds")
+                        .with(signedIn(MK_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"candidate\": 2, \"priority\": 5}"))
+                .andExpect(status().isNoContent());
+        assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(2, 5));
+    }
+
+    /** Give an already-seeded User a known Keycloak subject, so the BFF can be driven as them. */
+    private void signInAs(UUID userId, UUID subject) {
+        jdbc.sql("UPDATE users SET keycloak_user_id = ? WHERE id = ?").params(subject, userId).update();
+    }
+
+    private static SecurityMockMvcRequestPostProcessors.OidcLoginRequestPostProcessor signedIn(UUID subject) {
+        return oidcLogin().idToken(token -> token.subject(subject.toString()));
     }
 
     @TestConfiguration(proxyBeanMethods = false)

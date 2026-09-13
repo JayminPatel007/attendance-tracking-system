@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.UserId;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.SabhaKind;
 import org.sabha.sabha.domain.SabhaKindAlreadyRetiredException;
@@ -40,7 +41,7 @@ class SabhaKindLifecycleServiceTest {
     void mkRetiresAnActiveKindAttributedToThemselves() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        service.retire(MK, kindId);
+        service.retire(UserId.of(MK), kindId);
 
         SabhaKind retired = sabhaKinds.byId.get(kindId);
         assertThat(retired.isRetired()).isTrue();
@@ -51,9 +52,9 @@ class SabhaKindLifecycleServiceTest {
     @Test
     void mkReactivatesARetiredKind() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(MK, kindId);
+        service.retire(UserId.of(MK), kindId);
 
-        service.reactivate(MK, kindId);
+        service.reactivate(UserId.of(MK), kindId);
 
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isFalse();
     }
@@ -62,7 +63,7 @@ class SabhaKindLifecycleServiceTest {
     void nonMkRetiringIsDeniedAndNothingChanges() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        assertThatThrownBy(() -> service.retire(NON_MK, kindId))
+        assertThatThrownBy(() -> service.retire(UserId.of(NON_MK), kindId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isFalse();
     }
@@ -70,25 +71,25 @@ class SabhaKindLifecycleServiceTest {
     @Test
     void nonMkReactivatingIsDenied() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(MK, kindId);
+        service.retire(UserId.of(MK), kindId);
 
-        assertThatThrownBy(() -> service.reactivate(NON_MK, kindId))
+        assertThatThrownBy(() -> service.reactivate(UserId.of(NON_MK), kindId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isTrue();
     }
 
     @Test
     void retiringAnUnknownKindIsNotFound() {
-        assertThatThrownBy(() -> service.retire(MK, UUID.randomUUID()))
+        assertThatThrownBy(() -> service.retire(UserId.of(MK), UUID.randomUUID()))
                 .isInstanceOf(SabhaKindNotFoundException.class);
     }
 
     @Test
     void retiringAnAlreadyRetiredKindIsRejected() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(MK, kindId);
+        service.retire(UserId.of(MK), kindId);
 
-        assertThatThrownBy(() -> service.retire(MK, kindId))
+        assertThatThrownBy(() -> service.retire(UserId.of(MK), kindId))
                 .isInstanceOf(SabhaKindAlreadyRetiredException.class);
     }
 
@@ -96,7 +97,7 @@ class SabhaKindLifecycleServiceTest {
     void reactivatingAnActiveKindIsRejected() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        assertThatThrownBy(() -> service.reactivate(MK, kindId))
+        assertThatThrownBy(() -> service.reactivate(UserId.of(MK), kindId))
                 .isInstanceOf(SabhaKindNotRetiredException.class);
     }
 

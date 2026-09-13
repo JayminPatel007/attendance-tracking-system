@@ -3,6 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.UUID;
 
 import org.sabha.analytics.domain.Thresholds;
+import org.sabha.common.UserId;
 
 /**
  * Write port for the MK-owned re-engagement {@link Thresholds} (ADR-0010). The
@@ -10,5 +11,5 @@ import org.sabha.analytics.domain.Thresholds;
  */
 public interface ThresholdAdmin {
 
-    void update(Thresholds thresholds, UUID updatedBy);
+    void update(Thresholds thresholds, UserId updatedBy);
 }

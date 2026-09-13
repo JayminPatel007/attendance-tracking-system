@@ -13,10 +13,10 @@ import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
 import org.sabha.analytics.domain.Thresholds;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Re-engagement dashboard BFF for the Angular web shell (Slice 15, ADR-0010,
- * ADR-0022). Cookie/session authenticated, so the caller is the Keycloak subject
- * in {@link Authentication#getName()}; an authenticated subject with no local User
- * is unauthorized (403). Every read is scoped to the caller's roles inside
+ * ADR-0022). Cookie/session authenticated; the caller arrives already resolved
+ * to the local User by the edge (ADR-0030), which rejects an authenticated
+ * subject with no local User (403). Every read is scoped to the caller's roles inside
  * {@link DashboardQueries}. Thresholds are readable by any resolved caller but
  * updatable only by the Madhyastha Karyalaya.
  */
@@ -38,36 +38,33 @@ public class DashboardBffController {
     private final DashboardAccess access;
     private final ThresholdConfig thresholdConfig;
     private final ThresholdAdmin thresholdAdmin;
-    private final CallerResolver callers;
     private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
     public DashboardBffController(DashboardQueries queries,
                                   DashboardAccess access,
                                   ThresholdConfig thresholdConfig,
                                   ThresholdAdmin thresholdAdmin,
-                                  CallerResolver callers,
                                   MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
         this.queries = queries;
         this.access = access;
         this.thresholdConfig = thresholdConfig;
         this.thresholdAdmin = thresholdAdmin;
-        this.callers = callers;
         this.madhyasthaKaryalaya = madhyasthaKaryalaya;
     }
 
     @GetMapping("/bff/dashboard/overview")
-    public ResponseEntity<DashboardOverview> overview(Authentication authentication) {
-        return forScope(authentication, queries::overview);
+    public ResponseEntity<DashboardOverview> overview(@CurrentUser UserId caller) {
+        return forScope(caller, queries::overview);
     }
 
     @GetMapping("/bff/dashboard/people")
-    public ResponseEntity<List<CandidateRow>> people(Authentication authentication) {
-        return forScope(authentication, queries::people);
+    public ResponseEntity<List<CandidateRow>> people(@CurrentUser UserId caller) {
+        return forScope(caller, queries::people);
     }
 
     @GetMapping("/bff/dashboard/sabha-tree")
-    public ResponseEntity<SabhaTree> sabhaTree(Authentication authentication) {
-        return forScope(authentication, queries::sabhaTree);
+    public ResponseEntity<SabhaTree> sabhaTree(@CurrentUser UserId caller) {
+        return forScope(caller, queries::sabhaTree);
     }
 
     /**
@@ -76,8 +73,8 @@ public class DashboardBffController {
      * static scope indicator.
      */
     @GetMapping("/bff/dashboard/scope")
-    public ResponseEntity<DashboardAccess.CityChip> scope(Authentication authentication) {
-        return forCaller(authentication, access::cityChip);
+    public ResponseEntity<DashboardAccess.CityChip> scope(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(access.cityChip(caller));
     }
 
     /**
@@ -87,37 +84,30 @@ public class DashboardBffController {
      */
     @PostMapping("/bff/dashboard/city")
     public ResponseEntity<Void> chooseCity(@RequestBody ChooseCityRequest request,
-                                           Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        access.selectCity(callers.requireUserId(subject), request.cityId());
+                                           @CurrentUser UserId caller) {
+        access.selectCity(caller, request.cityId());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/bff/dashboard/thresholds")
-    public ResponseEntity<Thresholds> thresholds(Authentication authentication) {
-        return forCaller(authentication, userId -> thresholdConfig.current());
+    public ResponseEntity<Thresholds> thresholds(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(thresholdConfig.current());
     }
 
     @PutMapping("/bff/dashboard/thresholds")
     public ResponseEntity<Void> updateThresholds(@RequestBody ThresholdsRequest request,
-                                                 Authentication authentication) {
-        UUID userId = callers.requireUserId(UUID.fromString(authentication.getName()));
-        if (!madhyasthaKaryalaya.isMember(userId)) {
+                                                 @CurrentUser UserId caller) {
+        if (!madhyasthaKaryalaya.isMember(caller.value())) {
             return ResponseEntity.status(403).build();
         }
         // Invalid thresholds surface as 422 via the domain invariant on Thresholds.
-        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), userId);
+        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), caller);
         return ResponseEntity.noContent().build();
     }
 
-    private <T> ResponseEntity<T> forCaller(Authentication authentication, Function<UUID, T> read) {
-        UUID userId = callers.requireUserId(UUID.fromString(authentication.getName()));
-        return ResponseEntity.ok(read.apply(userId));
-    }
-
     /** Resolves the caller's {@link DashboardScope} then runs a scope-filtered read. */
-    private <T> ResponseEntity<T> forScope(Authentication authentication, Function<DashboardScope, T> read) {
-        return forCaller(authentication, userId -> read.apply(access.viewFor(userId)));
+    private <T> ResponseEntity<T> forScope(UserId caller, Function<DashboardScope, T> read) {
+        return ResponseEntity.ok(read.apply(access.viewFor(caller)));
     }
 
     public record ThresholdsRequest(int candidate, int priority) {

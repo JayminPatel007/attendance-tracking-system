@@ -12,6 +12,7 @@ import org.sabha.common.SantLookup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.sabha.common.UserId;
 
 /**
  * Unit behaviours of the dashboard Authorization Engine (Slice 17): a Sant reads
@@ -32,7 +33,7 @@ class DashboardAccessTest {
 
     @Test
     void aNonSantCallerKeepsTheRoleScopedView() {
-        assertThat(access.viewFor(NIRDESHAK)).isEqualTo(new DashboardScope.RoleScoped(NIRDESHAK));
+        assertThat(access.viewFor(UserId.of(NIRDESHAK))).isEqualTo(new DashboardScope.RoleScoped(NIRDESHAK));
     }
 
     @Test
@@ -40,14 +41,14 @@ class DashboardAccessTest {
         sants.add(SANT);
         defaults.choose(SANT, CITY_A);
 
-        assertThat(access.viewFor(SANT)).isEqualTo(new DashboardScope.CityScoped(CITY_A));
+        assertThat(access.viewFor(UserId.of(SANT))).isEqualTo(new DashboardScope.CityScoped(CITY_A));
     }
 
     @Test
     void aSantWhoHasNotChosenAcityYetSeesNothing() {
         sants.add(SANT);
 
-        assertThat(access.viewFor(SANT)).isEqualTo(new DashboardScope.NoCity());
+        assertThat(access.viewFor(UserId.of(SANT))).isEqualTo(new DashboardScope.NoCity());
     }
 
     @Test
@@ -55,7 +56,7 @@ class DashboardAccessTest {
         sants.add(SANT);
         cities.add(CITY_A);
 
-        DashboardScope scope = access.selectCity(SANT, CITY_A);
+        DashboardScope scope = access.selectCity(UserId.of(SANT), CITY_A);
 
         assertThat(scope).isEqualTo(new DashboardScope.CityScoped(CITY_A));
         assertThat(defaults.defaultCityOf(SANT)).contains(CITY_A);
@@ -65,7 +66,7 @@ class DashboardAccessTest {
     void aNonSantCannotPickACityAndNothingIsPersisted() {
         cities.add(CITY_A);
 
-        assertThatThrownBy(() -> access.selectCity(NIRDESHAK, CITY_A))
+        assertThatThrownBy(() -> access.selectCity(UserId.of(NIRDESHAK), CITY_A))
                 .isInstanceOf(NotASantException.class);
         assertThat(defaults.defaultCityOf(NIRDESHAK)).isEmpty();
     }
@@ -74,7 +75,7 @@ class DashboardAccessTest {
     void pickingAnUnknownCityIsRejectedAndNothingIsPersisted() {
         sants.add(SANT);
 
-        assertThatThrownBy(() -> access.selectCity(SANT, CITY_A))
+        assertThatThrownBy(() -> access.selectCity(UserId.of(SANT), CITY_A))
                 .isInstanceOf(CityNotFoundException.class);
         assertThat(defaults.defaultCityOf(SANT)).isEmpty();
     }
@@ -85,7 +86,7 @@ class DashboardAccessTest {
         cities.add(CITY_A);
         defaults.choose(SANT, CITY_A);
 
-        DashboardAccess.CityChip chip = access.cityChip(SANT);
+        DashboardAccess.CityChip chip = access.cityChip(UserId.of(SANT));
 
         assertThat(chip.sant()).isTrue();
         assertThat(chip.selectedCityId()).isEqualTo(CITY_A);
@@ -96,7 +97,7 @@ class DashboardAccessTest {
     void aNonSantGetsAnInertChipWithNoCities() {
         cities.add(CITY_A);
 
-        DashboardAccess.CityChip chip = access.cityChip(NIRDESHAK);
+        DashboardAccess.CityChip chip = access.cityChip(UserId.of(NIRDESHAK));
 
         assertThat(chip.sant()).isFalse();
         assertThat(chip.selectedCityId()).isNull();

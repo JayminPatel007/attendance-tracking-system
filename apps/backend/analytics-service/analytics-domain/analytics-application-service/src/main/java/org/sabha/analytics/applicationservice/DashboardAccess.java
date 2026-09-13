@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.SantLookup;
 import org.springframework.stereotype.Service;
+import org.sabha.common.UserId;
 
 /**
  * The dashboard Authorization Engine (Slice 17, ADR-0010). Decides which
@@ -28,7 +29,8 @@ public class DashboardAccess {
     }
 
     /** The view to serve on landing: a Sant's chosen City, or the caller's role scope. */
-    public DashboardScope viewFor(UUID userId) {
+    public DashboardScope viewFor(UserId caller) {
+        UUID userId = caller.value();
         if (!sants.isSant(userId)) {
             return new DashboardScope.RoleScoped(userId);
         }
@@ -41,7 +43,8 @@ public class DashboardAccess {
      * A Sant picks a City: persist it as their default (the chosen City <em>is</em>
      * the default) and return the City-scoped view to render immediately.
      */
-    public DashboardScope selectCity(UUID userId, UUID cityId) {
+    public DashboardScope selectCity(UserId caller, UUID cityId) {
+        UUID userId = caller.value();
         if (!sants.isSant(userId)) {
             throw new NotASantException(userId);
         }
@@ -57,7 +60,8 @@ public class DashboardAccess {
      * full City list and their current choice; everyone else gets an inert chip
      * (the web shows a non-interactive scope indicator instead).
      */
-    public CityChip cityChip(UUID userId) {
+    public CityChip cityChip(UserId caller) {
+        UUID userId = caller.value();
         if (!sants.isSant(userId)) {
             return new CityChip(false, null, List.of());
         }

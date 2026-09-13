@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.UserId;
 import org.sabha.sabha.domain.City;
 import org.sabha.sabha.domain.CityNotFoundException;
 import org.sabha.sabha.domain.Demographic;
@@ -46,47 +47,51 @@ public class StructuralCreationService {
     }
 
     @Transactional
-    public UUID createCity(UUID caller, String name) {
-        if (!authz.holdsStateScope(caller)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_CITY);
+    public UUID createCity(UserId caller, String name) {
+        UUID callerId = caller.value();
+        if (!authz.holdsStateScope(callerId)) {
+            throw new AuthorizationDeniedException(callerId, AuthorizedAction.CREATE_CITY);
         }
-        City city = City.create(name, caller);
+        City city = City.create(name, callerId);
         cities.save(city);
         return city.id();
     }
 
     @Transactional
-    public UUID createZone(UUID caller, UUID cityId, String name) {
-        if (!authz.holdsCityScope(caller, cityId)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_ZONE);
+    public UUID createZone(UserId caller, UUID cityId, String name) {
+        UUID callerId = caller.value();
+        if (!authz.holdsCityScope(callerId, cityId)) {
+            throw new AuthorizationDeniedException(callerId, AuthorizedAction.CREATE_ZONE);
         }
         if (!cities.existsById(cityId)) {
             throw new CityNotFoundException(cityId);
         }
-        Zone zone = Zone.create(cityId, name, caller);
+        Zone zone = Zone.create(cityId, name, callerId);
         zones.save(zone);
         return zone.id();
     }
 
     @Transactional
-    public UUID createSabhaKind(UUID caller, Demographic demographic, Track track) {
-        if (!authz.holdsStateScope(caller)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_SABHA_KIND);
+    public UUID createSabhaKind(UserId caller, Demographic demographic, Track track) {
+        UUID callerId = caller.value();
+        if (!authz.holdsStateScope(callerId)) {
+            throw new AuthorizationDeniedException(callerId, AuthorizedAction.CREATE_SABHA_KIND);
         }
         if (sabhaKinds.exists(demographic, track)) {
             throw new SabhaKindAlreadyRegisteredException(demographic, track);
         }
-        SabhaKind kind = SabhaKind.register(demographic, track, caller);
+        SabhaKind kind = SabhaKind.register(demographic, track, callerId);
         sabhaKinds.save(kind);
         return kind.id();
     }
 
     @Transactional
-    public UUID createKshetra(UUID caller, UUID zoneId, String name) {
-        if (!authz.holdsZoneScope(caller, zoneId)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_KSHETRA);
+    public UUID createKshetra(UserId caller, UUID zoneId, String name) {
+        UUID callerId = caller.value();
+        if (!authz.holdsZoneScope(callerId, zoneId)) {
+            throw new AuthorizationDeniedException(callerId, AuthorizedAction.CREATE_KSHETRA);
         }
-        Kshetra kshetra = Kshetra.create(zoneId, name, caller);
+        Kshetra kshetra = Kshetra.create(zoneId, name, callerId);
         kshetras.save(kshetra);
         return kshetra.id();
     }

@@ -3,11 +3,14 @@ package org.sabha.common;
 import java.util.UUID;
 
 /**
- * The failure mode of {@link CallerResolver#requireUserId(UUID)}: an
- * authenticated Keycloak subject maps to no local {@code users} row. Lives in
+ * An authenticated credential that maps to no local {@code users} row. Lives in
  * common-domain beside the port it belongs to (issue #78) so every bounded
  * context resolves "who is calling?" through the same type and the same HTTP
  * mapping.
+ *
+ * <p>Raised at the HTTP edge by the {@code @CurrentUser} argument resolver
+ * (ADR-0030), and by {@link CallerResolver#requireUserId(UUID)} for the two
+ * callers that are not request-bound.</p>
  *
  * <p>Extends {@link AuthorizationDeniedException} — a caller the system cannot
  * identify is forbidden (403), not a server error — so the global handler maps
@@ -15,14 +18,21 @@ import java.util.UUID;
  */
 public class CallerUnknownException extends AuthorizationDeniedException {
 
-    private final UUID keycloakSubject;
-
     public CallerUnknownException(UUID keycloakSubject) {
         super("No local user mapped to Keycloak subject " + keycloakSubject);
-        this.keycloakSubject = keycloakSubject;
     }
 
-    public UUID keycloakSubject() {
-        return keycloakSubject;
+    private CallerUnknownException(String message) {
+        super(message);
+    }
+
+    /**
+     * The credential carried no usable subject at all — absent, anonymous, or a
+     * subject claim that is not a UUID. Before ADR-0030 the last of those threw
+     * {@link IllegalArgumentException} out of {@code UUID.fromString} and
+     * surfaced as a 500; it is a 403 like every other unidentifiable caller.
+     */
+    public static CallerUnknownException unusableSubject(String rawSubject) {
+        return new CallerUnknownException("Authenticated request carried no usable subject: " + rawSubject);
     }
 }

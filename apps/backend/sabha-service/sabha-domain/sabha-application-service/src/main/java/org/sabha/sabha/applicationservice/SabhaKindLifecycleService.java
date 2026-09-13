@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.UserId;
 import org.sabha.sabha.domain.SabhaKind;
 import org.sabha.sabha.domain.SabhaKindNotFoundException;
 import org.springframework.stereotype.Service;
@@ -38,20 +39,20 @@ public class SabhaKindLifecycleService {
     }
 
     @Transactional
-    public void retire(UUID caller, UUID kindId) {
+    public void retire(UserId caller, UUID kindId) {
         SabhaKind kind = requireStateAuthorityOver(caller, kindId, AuthorizedAction.RETIRE_SABHA_KIND);
-        sabhaKinds.update(kind.retire(caller, clock.instant()));
+        sabhaKinds.update(kind.retire(caller.value(), clock.instant()));
     }
 
     @Transactional
-    public void reactivate(UUID caller, UUID kindId) {
+    public void reactivate(UserId caller, UUID kindId) {
         SabhaKind kind = requireStateAuthorityOver(caller, kindId, AuthorizedAction.REACTIVATE_SABHA_KIND);
         sabhaKinds.update(kind.reactivate());
     }
 
-    private SabhaKind requireStateAuthorityOver(UUID caller, UUID kindId, AuthorizedAction action) {
-        if (!authz.holdsStateScope(caller)) {
-            throw new AuthorizationDeniedException(caller, action);
+    private SabhaKind requireStateAuthorityOver(UserId caller, UUID kindId, AuthorizedAction action) {
+        if (!authz.holdsStateScope(caller.value())) {
+            throw new AuthorizationDeniedException(caller.value(), action);
         }
         return sabhaKinds.findById(kindId).orElseThrow(() -> new SabhaKindNotFoundException(kindId));
     }
