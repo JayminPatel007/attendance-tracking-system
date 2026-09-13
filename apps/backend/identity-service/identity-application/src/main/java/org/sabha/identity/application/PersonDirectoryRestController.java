@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.directory.AddResult;
@@ -14,8 +16,6 @@ import org.sabha.identity.applicationservice.directory.SearchWalkInCandidatesUse
 import org.sabha.identity.applicationservice.directory.WalkInCandidate;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,9 +58,8 @@ public class PersonDirectoryRestController {
     @PostMapping("/api/directory/persons")
     public ResponseEntity<AddPersonResponse> add(
             @RequestBody AddPersonRequest req,
-            @AuthenticationPrincipal Jwt jwt) {
-        UUID subject = UUID.fromString(jwt.getSubject());
-        AddResult result = addPerson.add(subject, new AddPersonCommand(
+            @CurrentUser UserId caller) {
+        AddResult result = addPerson.add(caller, new AddPersonCommand(
                 req.fullName(), req.gender(), req.dateOfBirth(), req.mobile(),
                 req.guardianPersonId(), req.homeSabhaId(), req.overrideDuplicateWarning()));
 

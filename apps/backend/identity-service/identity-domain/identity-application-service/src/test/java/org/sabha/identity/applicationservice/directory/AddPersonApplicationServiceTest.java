@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.SabhaKindRetiredException;
@@ -28,8 +28,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AddPersonApplicationServiceTest {
 
-    private static final UUID KEYCLOAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID ADDER_USER = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
+    private static final UserId ADDER = UserId.of(ADDER_USER);
     private static final UUID HOME_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a3");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000a4");
     private static final UUID OTHER_KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000a5");
@@ -40,7 +40,7 @@ class AddPersonApplicationServiceTest {
         RecordingPublisher publisher = new RecordingPublisher();
         AddPersonApplicationService service = service(directory, publisher);
 
-        AddResult result = service.add(KEYCLOAK_SUBJECT, addCommand("Ravi Patel", "+919820111000"));
+        AddResult result = service.add(ADDER, addCommand("Ravi Patel", "+919820111000"));
 
         assertThat(result.created()).isTrue();
         assertThat(directory.findById(result.personId())).isPresent();
@@ -54,7 +54,7 @@ class AddPersonApplicationServiceTest {
         directory.seed(existing);
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
-        assertThatThrownBy(() -> service.add(KEYCLOAK_SUBJECT, addCommand("Ravi P", "+919820111000")))
+        assertThatThrownBy(() -> service.add(ADDER, addCommand("Ravi P", "+919820111000")))
                 .isInstanceOf(MobileAlreadyRegisteredException.class)
                 .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.type(MobileAlreadyRegisteredException.class))
                 .extracting(ex -> ex.existing().id())
@@ -68,7 +68,7 @@ class AddPersonApplicationServiceTest {
         directory.seedCandidates(KSHETRA, List.of(candidate));
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
-        AddResult result = service.add(KEYCLOAK_SUBJECT, addCommand("Ravee Patel", "+919820111999"));
+        AddResult result = service.add(ADDER, addCommand("Ravee Patel", "+919820111999"));
 
         assertThat(result.softWarned()).isTrue();
         assertThat(result.candidates()).containsExactly(candidate);
@@ -82,7 +82,7 @@ class AddPersonApplicationServiceTest {
                 List.of(new NameCandidate(UUID.randomUUID(), "Ravi Patel", List.of("REGULAR_YUVAK", "REGULAR_SANYUKTA"))));
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
-        AddResult result = service.add(KEYCLOAK_SUBJECT, addCommand("Ravee Patel", "+919820112000"));
+        AddResult result = service.add(ADDER, addCommand("Ravee Patel", "+919820112000"));
 
         assertThat(result.created()).isTrue();
     }
@@ -95,7 +95,7 @@ class AddPersonApplicationServiceTest {
         RecordingPublisher publisher = new RecordingPublisher();
         AddPersonApplicationService service = service(directory, publisher);
 
-        AddResult result = service.add(KEYCLOAK_SUBJECT, new AddPersonCommand(
+        AddResult result = service.add(ADDER, new AddPersonCommand(
                 "Ravee Patel", Gender.MALE, null, "+919820112001", null, HOME_SABHA, true));
 
         assertThat(result.created()).isTrue();
@@ -112,7 +112,7 @@ class AddPersonApplicationServiceTest {
         UUID parent = UUID.randomUUID();
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
-        AddResult result = service.add(KEYCLOAK_SUBJECT, new AddPersonCommand(
+        AddResult result = service.add(ADDER, new AddPersonCommand(
                 "Child Patel", Gender.MALE, null, null, parent, HOME_SABHA, false));
 
         assertThat(result.created()).isTrue();
@@ -126,7 +126,7 @@ class AddPersonApplicationServiceTest {
         InMemoryDirectory directory = directoryAt(KSHETRA);
         AddPersonApplicationService service = service(directory, new RecordingPublisher());
 
-        assertThatThrownBy(() -> service.add(KEYCLOAK_SUBJECT, new AddPersonCommand(
+        assertThatThrownBy(() -> service.add(ADDER, new AddPersonCommand(
                 "Nobody", Gender.MALE, null, null, null, HOME_SABHA, false)))
                 .isInstanceOf(GuardianOrMobileRequiredException.class);
     }
@@ -138,7 +138,7 @@ class AddPersonApplicationServiceTest {
         hierarchy.retiredSabhas.add(HOME_SABHA);
         AddPersonApplicationService service = service(directory, new RecordingPublisher(), hierarchy);
 
-        assertThatThrownBy(() -> service.add(KEYCLOAK_SUBJECT, addCommand("Ravi Patel", "+919820111000")))
+        assertThatThrownBy(() -> service.add(ADDER, addCommand("Ravi Patel", "+919820111000")))
                 .isInstanceOf(SabhaKindRetiredException.class);
         assertThat(directory.findByMobile("+919820111000")).isEmpty();
     }
@@ -159,10 +159,8 @@ class AddPersonApplicationServiceTest {
 
     private AddPersonApplicationService service(
             PersonDirectory directory, DomainEventPublisher publisher, StructuralHierarchyLookup hierarchy) {
-        CallerResolver caller = subject ->
-                subject.equals(KEYCLOAK_SUBJECT) ? Optional.of(ADDER_USER) : Optional.empty();
         return new AddPersonApplicationService(
-                caller, directory, hierarchy, publisher, java.time.Clock.systemUTC());
+                directory, hierarchy, publisher, java.time.Clock.systemUTC());
     }
 
     /** Cross-context structural lookup fake — only retirement matters here. */

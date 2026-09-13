@@ -1,10 +1,11 @@
 package org.sabha.attendance.applicationservice;
 
 import java.util.Optional;
-import java.util.UUID;
+
+import org.sabha.common.UserId;
 
 /**
- * Read-side port: for a given Sanchalak {@code users.id}, find the current
+ * Read-side port: for a given Sanchalak, find the current
  * Occurrence that is open for marking on the Sabha they preside over, along
  * with the roster of expected attendees and any markings already made.
  *
@@ -14,5 +15,5 @@ import java.util.UUID;
  */
 public interface CurrentRosterQuery {
 
-    Optional<CurrentRoster> findForSanchalak(UUID sanchalakUserId);
+    Optional<CurrentRoster> findForSanchalak(UserId sanchalak);
 }

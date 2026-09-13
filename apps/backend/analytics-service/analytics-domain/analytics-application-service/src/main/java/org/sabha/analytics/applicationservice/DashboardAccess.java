@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sabha.common.SantLookup;
-import org.springframework.stereotype.Service;
 import org.sabha.common.UserId;
+import org.springframework.stereotype.Service;
 
 /**
  * The dashboard Authorization Engine (Slice 17, ADR-0010). Decides which

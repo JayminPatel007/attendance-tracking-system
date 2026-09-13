@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.SabhaShapeLookup;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
  * no standing schedule to materialize from.
  *
  * <ol>
- *   <li>Resolve the caller via {@link CallerResolver}.</li>
  *   <li>Guard the Sabha is monthly-ad-hoc via {@link SabhaShapeLookup} — weekly
  *       Sabhas materialize automatically and reject manual creation (422); an
  *       unknown Sabha is a 404.</li>
@@ -31,35 +30,30 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CreateMonthlyOccurrenceApplicationService {
 
-    private final CallerResolver callerResolver;
     private final AuthorizationEngine authz;
     private final SabhaShapeLookup sabhaShapes;
     private final OccurrenceInsert occurrences;
 
     public CreateMonthlyOccurrenceApplicationService(
-            CallerResolver callerResolver,
             AuthorizationEngine authz,
             SabhaShapeLookup sabhaShapes,
             OccurrenceInsert occurrences) {
-        this.callerResolver = callerResolver;
         this.authz = authz;
         this.sabhaShapes = sabhaShapes;
         this.occurrences = occurrences;
     }
 
     @Transactional
-    public UUID create(UUID keycloakSubject, UUID sabhaId, LocalDate date,
+    public UUID create(UserId caller, UUID sabhaId, LocalDate date,
                        LocalTime startTime, LocalTime endTime, String venue) {
-        UUID caller = callerResolver.requireUserId(keycloakSubject);
-
         String shape = sabhaShapes.scheduleShapeOf(sabhaId)
                 .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
         if (!"MONTHLY_AD_HOC".equals(shape)) {
             throw new NotMonthlyAdHocException(sabhaId);
         }
 
-        if (!authz.canUserDo(caller, AuthorizedAction.CREATE_OCCURRENCE, sabhaId)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.CREATE_OCCURRENCE);
+        if (!authz.canUserDo(caller.value(), AuthorizedAction.CREATE_OCCURRENCE, sabhaId)) {
+            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.CREATE_OCCURRENCE);
         }
 
         Occurrence occurrence = Occurrence.scheduledAt(UUID.randomUUID(), sabhaId, date, startTime, endTime, venue);

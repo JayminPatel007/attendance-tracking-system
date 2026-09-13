@@ -1,8 +1,7 @@
 package org.sabha.attendance.applicationservice;
 
-import java.util.UUID;
-
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.UserId;
 
 /**
  * Who is driving a write to an Occurrence, and by what authority. This is the
@@ -13,11 +12,11 @@ import org.sabha.common.AuthorizedAction;
  * scanner (ADR-0021). It holds no role, so it bypasses the {@link
  * AuthorizationEngine} entirely and is audited as {@link ActorKind#SYSTEM}.</p>
  *
- * <p>A {@link SignedIn} actor is a request-bound user identified by their
- * Keycloak subject (ADR-0016). The writer resolves the subject to a User id and
- * checks {@code authority} against the Occurrence's Sabha before the mutation
- * runs; a Nirikshak exercising the Sanchalak proxy (Slice 14) is attributed to
- * the absent Sanchalak on the audit row.</p>
+ * <p>A {@link SignedIn} actor is a request-bound user, already resolved to their
+ * local {@code users.id} at the edge (ADR-0030). The writer checks {@code
+ * authority} against the Occurrence's Sabha before the mutation runs; a Nirikshak
+ * exercising the Sanchalak proxy (Slice 14) is attributed to the absent Sanchalak
+ * on the audit row.</p>
  */
 public sealed interface TransitionActor {
 
@@ -28,8 +27,8 @@ public sealed interface TransitionActor {
         return new Cron();
     }
 
-    static TransitionActor user(UUID keycloakSubject, AuthorizedAction authority) {
-        return new SignedIn(keycloakSubject, authority);
+    static TransitionActor user(UserId caller, AuthorizedAction authority) {
+        return new SignedIn(caller, authority);
     }
 
     record Cron() implements TransitionActor {
@@ -40,7 +39,7 @@ public sealed interface TransitionActor {
         }
     }
 
-    record SignedIn(UUID keycloakSubject, AuthorizedAction authority) implements TransitionActor {
+    record SignedIn(UserId caller, AuthorizedAction authority) implements TransitionActor {
 
         @Override
         public ActorKind kind() {

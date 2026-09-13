@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
@@ -40,7 +40,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RoleAppointmentService implements AppointRole {
 
-    private final CallerResolver callerResolver;
     private final AppointmentAuthorization authz;
     private final AddPersonApplicationService addPerson;
     private final UserRepository users;
@@ -51,7 +50,6 @@ public class RoleAppointmentService implements AppointRole {
     private final Clock clock;
 
     public RoleAppointmentService(
-            CallerResolver callerResolver,
             AppointmentAuthorization authz,
             AddPersonApplicationService addPerson,
             UserRepository users,
@@ -60,7 +58,6 @@ public class RoleAppointmentService implements AppointRole {
             SahNirdeshakCap sahNirdeshakCap,
             StructuralHierarchyLookup hierarchy,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.authz = authz;
         this.addPerson = addPerson;
         this.users = users;
@@ -73,8 +70,8 @@ public class RoleAppointmentService implements AppointRole {
 
     @Override
     @Transactional
-    public AppointmentResult appoint(UUID keycloakSubject, RoleAppointmentCommand command) {
-        UUID appointer = callerResolver.requireUserId(keycloakSubject);
+    public AppointmentResult appoint(UserId caller, RoleAppointmentCommand command) {
+        UUID appointer = caller.value();
 
         if (!authz.canAppoint(appointer, command.scope())) {
             throw new AuthorizationDeniedException(appointer, AuthorizedAction.APPOINT_ROLE);
@@ -85,7 +82,7 @@ public class RoleAppointmentService implements AppointRole {
 
         UUID personId;
         if (command.createsNewPerson()) {
-            AddResult added = addPerson.add(keycloakSubject, command.newPerson());
+            AddResult added = addPerson.add(caller, command.newPerson());
             if (added.softWarned()) {
                 return AppointmentResult.softWarn(added.candidates());
             }

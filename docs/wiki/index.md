@@ -83,5 +83,4 @@ Session learnings. Never compiler-written; see `docs/agents/wiki.md` for when on
 
 | Page | Description | Also known as |
 |---|---|---|
-
-_none_
+| [http-edge-traps](notes/http-edge-traps.md) | Traps in the request edge — the argument resolver that identifies the caller, and what springdoc makes of it. | |

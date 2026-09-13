@@ -1,11 +1,17 @@
 package org.sabha.container;
 
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import java.util.List;
+
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -16,6 +22,8 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.sabha.common.AggregateRoot;
 import org.sabha.common.DomainEvent;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -41,15 +49,18 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Tests are excluded from the import so the rules judge production code only.
  *
- * <p><b>Which rules have teeth.</b> Two of these rules catch violations the
+ * <p><b>Which rules have teeth.</b> Four of these rules catch violations the
  * compiler permits and are the load-bearing ones: {@code @Transactional}
- * placement (spring-tx is on the adapter classpath) and aggregate/event residence
+ * placement (spring-tx is on the adapter classpath); aggregate/event residence
  * (an application-service can reference the {@code common-domain} base types and
- * declare a subtype). The presentation→adapter rule and the adapter-isolation
- * rules are <em>defense-in-depth</em>: the Maven module graph (ADR-0019) already
- * makes those dependencies impossible to compile, so they cannot fire today. They
- * are kept anyway — cheaply — as executable intent that becomes live the moment a
- * module's pom gains a forbidden dependency.
+ * declare a subtype); credential handling (spring-security is on every
+ * {@code *-application} classpath, so re-introducing a subject parse compiles
+ * fine — ADR-0030); and the query-port wrapper rule (nothing stops a new
+ * delegating {@code @Service}). The presentation→adapter rule and the
+ * adapter-isolation rules are <em>defense-in-depth</em>: the Maven module graph
+ * (ADR-0019) already makes those dependencies impossible to compile, so they
+ * cannot fire today. They are kept anyway — cheaply — as executable intent that
+ * becomes live the moment a module's pom gains a forbidden dependency.
  */
 @AnalyzeClasses(packages = "org.sabha", importOptions = ImportOption.DoNotIncludeTests.class)
 class IntraModuleArchitectureRulesTest {
@@ -63,6 +74,35 @@ class IntraModuleArchitectureRulesTest {
                                 && "consume".equals(call.getTarget().getName());
                         events.add(new SimpleConditionEvent(call, isConsume, call.getDescription()));
                     }
+                }
+            };
+
+    private static final ArchCondition<JavaClass> WRAP_ONE_QUERY_PORT =
+            new ArchCondition<>("wrap a single query port") {
+                @Override
+                public void check(JavaClass type, ConditionEvents events) {
+                    // Instance fields only: getFields() includes statics, so counting
+                    // them would let any constant — an unused one included — defeat
+                    // the rule. Verified: adding `private static final int` to a
+                    // wrapper made it pass.
+                    List<JavaField> fields = type.getFields().stream()
+                            .filter(field -> !field.getModifiers().contains(JavaModifier.STATIC))
+                            .toList();
+                    if (fields.size() == 1 && isQueryPort(fields.get(0))) {
+                        events.add(new SimpleConditionEvent(type, true,
+                                type.getName() + " wraps only " + fields.get(0).getRawType().getSimpleName()));
+                    }
+                }
+
+                /**
+                 * The repo's naming for a read-side port. Not restricted to
+                 * interfaces: {@code MonthlyComplianceQuery} is a concrete
+                 * {@code @Service} carrying the suffix, so wrapping one is the same
+                 * smell and should fire the same way.
+                 */
+                private boolean isQueryPort(JavaField field) {
+                    String name = field.getRawType().getSimpleName();
+                    return name.endsWith("Query") || name.endsWith("Queries");
                 }
             };
 
@@ -164,6 +204,63 @@ class IntraModuleArchitectureRulesTest {
                     .should().resideInAnyPackage("..domain..", "org.sabha.common")
                     .as("AggregateRoot subclasses must live in *-domain-core (ADR-0020)")
                     .because("aggregates are entities and belong in the innermost ring, not in a use case or adapter");
+
+    /**
+     * ADR-0030: caller identity is resolved once, at the HTTP edge. Exactly two
+     * packages may know what a credential looks like — {@code common-application}
+     * (the {@code @CurrentUser} resolver) and {@code application-container} (the
+     * filter chains). Everything else takes a resolved {@code UserId}.
+     *
+     * <p>This rule has teeth: {@code spring-security-core} and
+     * {@code -oauth2-jose} are on every {@code *-application} module's classpath
+     * (ADR-0019), so re-introducing {@code UUID.fromString(jwt.getSubject())} in a
+     * controller compiles perfectly well. Before this rule, four controllers
+     * resolved at the edge and thirteen did not.
+     *
+     * <p>It also forecloses reading any other claim in a controller. No endpoint
+     * needs one today; if one ever does, the honest move is to widen what the edge
+     * resolves, not to reach for the token in presentation.
+     */
+    @ArchTest
+    static final ArchRule only_the_edge_knows_what_a_credential_is =
+            noClasses()
+                    .that().resideOutsideOfPackages("org.sabha.common.web..", "org.sabha.container..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "org.springframework.security.core..",
+                            "org.springframework.security.oauth2..")
+                    .as("only common-application and application-container may touch a credential (ADR-0030)")
+                    .because("the caller is resolved once at the edge; everything below takes a UserId");
+
+    /**
+     * Issue #203's tail: a read-only application service that wraps exactly one
+     * query port hides nothing. {@code GetCurrentRosterUseCase} and
+     * {@code GetCurrentOccurrenceUseCase} each hid one decision — resolve the
+     * caller first — and when ADR-0030 moved that decision to the edge, both
+     * collapsed to {@code query.find…(caller)} and were deleted. Nine controllers
+     * across the four contexts now inject a query port directly for reads; none
+     * wraps one.
+     *
+     * <p>Deliberately narrow: it keys on a single field whose type name ends
+     * {@code Query}/{@code Queries}, which is this repo's naming for a read-side
+     * port. A one-field service over a differently-named port (identity's
+     * {@code PersonDirectory}) is the same smell and escapes — accepted, because
+     * the alternative is bytecode heuristics for "does this method only
+     * delegate?", which would argue with legitimately thin services that hide a
+     * page size or a fallback. A rule that catches the exact regression we fixed,
+     * with no false positives, beats a cleverer one nobody trusts.
+     */
+    @ArchTest
+    static final ArchRule application_services_do_not_wrap_a_single_query_port =
+            noClasses()
+                    .that().resideInAPackage("..applicationservice..")
+                    // Grouped deliberately: the fluent `.and().areAnnotatedWith(A)
+                    // .or().areAnnotatedWith(B)` reads as (package AND A) OR B, which
+                    // drops the package restriction entirely. Verified — it fired on a
+                    // @Component in org.sabha.container.
+                    .and(annotatedWith(Service.class).or(annotatedWith(Component.class)))
+                    .should(WRAP_ONE_QUERY_PORT)
+                    .as("an application service must not be a wrapper over one query port (issue #203)")
+                    .because("presentation reads straight through the port; a delegating service hides nothing");
 
     @ArchTest
     static final ArchRule domain_events_live_in_domain_core =

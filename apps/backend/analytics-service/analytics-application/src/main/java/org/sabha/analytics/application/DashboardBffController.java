@@ -89,6 +89,13 @@ public class DashboardBffController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Readable by any caller the system knows. {@code caller} is deliberately
+     * unread: binding it is what requires a resolved local User, so an
+     * authenticated subject with no {@code users} row is refused here exactly as
+     * it was before ADR-0030 — when this endpoint ran through {@code
+     * requireUserId} and discarded the result just the same.
+     */
     @GetMapping("/bff/dashboard/thresholds")
     public ResponseEntity<Thresholds> thresholds(@CurrentUser UserId caller) {
         return ResponseEntity.ok(thresholdConfig.current());

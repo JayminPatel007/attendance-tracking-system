@@ -1,6 +1,7 @@
 package org.sabha.identity.applicationservice.appointment;
 
 import java.util.UUID;
+import org.sabha.common.UserId;
 
 /**
  * The role-revocation use case (ADR-0025 §1-2, ADR-0026): "deleting" a
@@ -12,5 +13,5 @@ import java.util.UUID;
  */
 public interface RevokeRole {
 
-    void revoke(UUID keycloakSubject, UUID assignmentId);
+    void revoke(UserId caller, UUID assignmentId);
 }

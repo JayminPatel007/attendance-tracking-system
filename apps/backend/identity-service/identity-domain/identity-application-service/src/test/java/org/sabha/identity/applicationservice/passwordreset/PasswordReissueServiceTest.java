@@ -13,7 +13,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
 import org.sabha.common.SantLookup;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
@@ -25,13 +25,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PasswordReissueServiceTest {
 
-    private static final UUID APPOINTER_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000d1");
     private static final UUID APPOINTER_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d2");
+    private static final UserId APPOINTER = UserId.of(APPOINTER_USER);
     private static final UUID TARGET_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d3");
     private static final UUID TARGET_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000d4");
     private static final UUID TARGET_KEYCLOAK = UUID.fromString("00000000-0000-0000-0000-0000000000d5");
-    private static final UUID MK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000d6");
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d7");
+    private static final UserId MK = UserId.of(MK_USER);
 
     @Test
     void originalAppointerCanReissueWithAForceChangePasswordAndAuditsTheAct() {
@@ -39,7 +39,7 @@ class PasswordReissueServiceTest {
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "target.user", TARGET_KEYCLOAK));
         f.authority.recordAppointment(TARGET_USER, APPOINTER_USER);
 
-        f.service().reissue(APPOINTER_SUBJECT, TARGET_USER, "fresh-secret-1");
+        f.service().reissue(APPOINTER, TARGET_USER, "fresh-secret-1");
 
         assertThat(f.identityProvider.lastKeycloakUserId).isEqualTo(TARGET_KEYCLOAK);
         assertThat(f.identityProvider.lastRawPassword).isEqualTo("fresh-secret-1");
@@ -59,7 +59,7 @@ class PasswordReissueServiceTest {
         f.sants.markSant(TARGET_USER);
         f.mkMembership.grant(MK_USER);
 
-        f.service().reissue(MK_SUBJECT, TARGET_USER, "fresh-secret-2");
+        f.service().reissue(MK, TARGET_USER, "fresh-secret-2");
 
         assertThat(f.identityProvider.lastKeycloakUserId).isEqualTo(TARGET_KEYCLOAK);
         assertThat(f.identityProvider.lastRequirePasswordChange).isTrue();
@@ -71,9 +71,9 @@ class PasswordReissueServiceTest {
     void aCallerWhoIsNeitherTheAppointerNorMkIsDeniedAndChangesNoPassword() {
         Fixture f = new Fixture();
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "target.user", TARGET_KEYCLOAK));
-        // APPOINTER_SUBJECT did not appoint TARGET_USER, and TARGET_USER is not a Sant.
+        // APPOINTER did not appoint TARGET_USER, and TARGET_USER is not a Sant.
 
-        assertThatThrownBy(() -> f.service().reissue(APPOINTER_SUBJECT, TARGET_USER, "fresh-secret-3"))
+        assertThatThrownBy(() -> f.service().reissue(APPOINTER, TARGET_USER, "fresh-secret-3"))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.identityProvider.lastRawPassword).isNull();
@@ -85,9 +85,9 @@ class PasswordReissueServiceTest {
         Fixture f = new Fixture();
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "sant.user", TARGET_KEYCLOAK));
         f.sants.markSant(TARGET_USER);
-        // APPOINTER_SUBJECT (APPOINTER_USER) is not an MK member.
+        // APPOINTER is not an MK member.
 
-        assertThatThrownBy(() -> f.service().reissue(APPOINTER_SUBJECT, TARGET_USER, "fresh-secret-4"))
+        assertThatThrownBy(() -> f.service().reissue(APPOINTER, TARGET_USER, "fresh-secret-4"))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.identityProvider.lastRawPassword).isNull();
@@ -105,21 +105,9 @@ class PasswordReissueServiceTest {
         final RecordingIdentityProvider identityProvider = new RecordingIdentityProvider();
         final MutableClock clock = new MutableClock(Instant.parse("2026-06-07T10:00:00Z"));
 
-        CallerResolver caller() {
-            return subject -> {
-                if (subject.equals(APPOINTER_SUBJECT)) {
-                    return Optional.of(APPOINTER_USER);
-                }
-                if (subject.equals(MK_SUBJECT)) {
-                    return Optional.of(MK_USER);
-                }
-                return Optional.empty();
-            };
-        }
-
         PasswordReissueService service() {
             return new PasswordReissueService(
-                    caller(), authority, sants, mkMembership, users, identityProvider, audit, clock);
+                    authority, sants, mkMembership, users, identityProvider, audit, clock);
         }
     }
 
@@ -130,10 +118,6 @@ class PasswordReissueServiceTest {
             byId.put(user.id(), user);
         }
 
-        @Override
-        public Optional<User> findByKeycloakUserId(UUID keycloakUserId) {
-            return byId.values().stream().filter(u -> keycloakUserId.equals(u.keycloakUserId())).findFirst();
-        }
 
         @Override
         public Optional<User> findByPersonId(UUID personId) {

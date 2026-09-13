@@ -3,11 +3,11 @@ package org.sabha.identity.applicationservice.transfer;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.HomeSabhaSwap;
 import org.sabha.identity.domain.HomeSabhaTransfer;
@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HomeSabhaTransferService {
 
-    private final CallerResolver callerResolver;
     private final RoleAssignmentLookup roleAssignments;
     private final HomeSabhaDirectory directory;
     private final HomeSabhaTransferRepository transfers;
@@ -41,13 +40,11 @@ public class HomeSabhaTransferService {
     private final StructuralHierarchyLookup hierarchy;
 
     public HomeSabhaTransferService(
-            CallerResolver callerResolver,
             RoleAssignmentLookup roleAssignments,
             HomeSabhaDirectory directory,
             HomeSabhaTransferRepository transfers,
             OtpGuardedFlow otpFlow,
             StructuralHierarchyLookup hierarchy) {
-        this.callerResolver = callerResolver;
         this.roleAssignments = roleAssignments;
         this.directory = directory;
         this.transfers = transfers;
@@ -56,8 +53,8 @@ public class HomeSabhaTransferService {
     }
 
     @Transactional
-    public UUID initiate(UUID keycloakSubject, UUID personId, UUID destinationSabhaId) {
-        UUID initiatingUserId = callerResolver.requireUserId(keycloakSubject);
+    public UUID initiate(UserId caller, UUID personId, UUID destinationSabhaId) {
+        UUID initiatingUserId = caller.value();
 
         Set<Role> roles = roleAssignments.rolesForUserOnSabha(initiatingUserId, destinationSabhaId);
         if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {

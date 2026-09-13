@@ -3,13 +3,13 @@ package org.sabha.identity.application;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.selection.PendingNominationItem;
 import org.sabha.identity.applicationservice.selection.SelectedPersonItem;
 import org.sabha.identity.applicationservice.selection.SelectionQueries;
 import org.sabha.identity.applicationservice.selection.SelectionService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,31 +42,25 @@ public class SelectionBffController {
 
     private final SelectionService selection;
     private final SelectionQueries queries;
-    private final CallerResolver callers;
 
-    public SelectionBffController(
-            SelectionService selection, SelectionQueries queries, CallerResolver callers) {
+    public SelectionBffController(SelectionService selection, SelectionQueries queries) {
         this.selection = selection;
         this.queries = queries;
-        this.callers = callers;
     }
 
     @GetMapping("/bff/selection/nominations")
-    public ResponseEntity<List<PendingNominationItem>> queue(Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(queries.pendingQueueFor(callers.requireUserId(subject)));
+    public ResponseEntity<List<PendingNominationItem>> queue(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(queries.pendingQueueFor(caller.value()));
     }
 
     @GetMapping("/bff/selection/selected")
-    public ResponseEntity<List<SelectedPersonItem>> selected(Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(queries.selectedFor(callers.requireUserId(subject)));
+    public ResponseEntity<List<SelectedPersonItem>> selected(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(queries.selectedFor(caller.value()));
     }
 
     @PostMapping("/bff/selection/nominations/{id}/approve")
-    public ResponseEntity<Void> approve(@PathVariable UUID id, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        selection.approve(subject, id);
+    public ResponseEntity<Void> approve(@PathVariable UUID id, @CurrentUser UserId caller) {
+        selection.approve(caller, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -74,17 +68,15 @@ public class SelectionBffController {
     public ResponseEntity<Void> reject(
             @PathVariable UUID id,
             @RequestBody RejectRequest req,
-            Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        selection.reject(subject, id, req.reason());
+            @CurrentUser UserId caller) {
+        selection.reject(caller, id, req.reason());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/bff/selection/deselect")
     public ResponseEntity<Void> deselect(
-            @RequestBody DeselectRequest req, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        selection.deselect(subject, req.personId(), req.selectiveSabhaId());
+            @RequestBody DeselectRequest req, @CurrentUser UserId caller) {
+        selection.deselect(caller, req.personId(), req.selectiveSabhaId());
         return ResponseEntity.noContent().build();
     }
 

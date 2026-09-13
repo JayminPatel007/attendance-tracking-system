@@ -4,12 +4,12 @@ import java.time.Clock;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.domain.NoSelectiveSabhaException;
 import org.sabha.identity.domain.NominationNotFoundException;
@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SelectionService {
 
-    private final CallerResolver callerResolver;
     private final RoleAssignmentLookup roleAssignments;
     private final SelectionRoster roster;
     private final StructuralHierarchyLookup hierarchy;
@@ -45,7 +44,6 @@ public class SelectionService {
     private final Clock clock;
 
     public SelectionService(
-            CallerResolver callerResolver,
             RoleAssignmentLookup roleAssignments,
             SelectionRoster roster,
             StructuralHierarchyLookup hierarchy,
@@ -53,7 +51,6 @@ public class SelectionService {
             SelectionRepository nominations,
             DomainEventPublisher events,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.roleAssignments = roleAssignments;
         this.roster = roster;
         this.hierarchy = hierarchy;
@@ -64,8 +61,8 @@ public class SelectionService {
     }
 
     @Transactional
-    public UUID nominate(UUID keycloakSubject, UUID personId, UUID regularSabhaId) {
-        UUID nominatorUserId = resolveCaller(keycloakSubject);
+    public UUID nominate(UserId caller, UUID personId, UUID regularSabhaId) {
+        UUID nominatorUserId = caller.value();
 
         Set<Role> roles = roleAssignments.rolesForUserOnSabha(nominatorUserId, regularSabhaId);
         if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {
@@ -100,8 +97,8 @@ public class SelectionService {
     }
 
     @Transactional
-    public void approve(UUID keycloakSubject, UUID nominationId) {
-        UUID deciderUserId = resolveCaller(keycloakSubject);
+    public void approve(UserId caller, UUID nominationId) {
+        UUID deciderUserId = caller.value();
         SelectionNomination nomination = nominations.findById(nominationId)
                 .orElseThrow(() -> new NominationNotFoundException(nominationId));
         requireNirdeshak(deciderUserId, nomination.kshetraId(), nomination.demographic());
@@ -113,8 +110,8 @@ public class SelectionService {
     }
 
     @Transactional
-    public void reject(UUID keycloakSubject, UUID nominationId, String reason) {
-        UUID deciderUserId = resolveCaller(keycloakSubject);
+    public void reject(UserId caller, UUID nominationId, String reason) {
+        UUID deciderUserId = caller.value();
         SelectionNomination nomination = nominations.findById(nominationId)
                 .orElseThrow(() -> new NominationNotFoundException(nominationId));
         requireNirdeshak(deciderUserId, nomination.kshetraId(), nomination.demographic());
@@ -125,8 +122,8 @@ public class SelectionService {
     }
 
     @Transactional
-    public void deselect(UUID keycloakSubject, UUID personId, UUID selectiveSabhaId) {
-        UUID deciderUserId = resolveCaller(keycloakSubject);
+    public void deselect(UserId caller, UUID personId, UUID selectiveSabhaId) {
+        UUID deciderUserId = caller.value();
         SabhaScope scope = hierarchy.sabhaScope(selectiveSabhaId).orElseThrow();
         requireNirdeshak(deciderUserId, scope.kshetraId(), scope.demographic());
 
@@ -136,10 +133,6 @@ public class SelectionService {
         roster.removeHomeSabha(personId, selectiveSabhaId);
         nominations.save(nomination);
         events.publishAll(nomination.pullDomainEvents());
-    }
-
-    private UUID resolveCaller(UUID keycloakSubject) {
-        return callerResolver.requireUserId(keycloakSubject);
     }
 
     /**

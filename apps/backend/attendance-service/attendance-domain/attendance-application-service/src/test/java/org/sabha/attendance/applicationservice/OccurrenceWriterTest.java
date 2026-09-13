@@ -21,7 +21,6 @@ import org.sabha.attendance.domain.OccurrenceOpened;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.CallerUnknownException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainEvent;
@@ -33,6 +32,7 @@ import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -47,12 +47,12 @@ class OccurrenceWriterTest {
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID KSHETRA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final UUID SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000005");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
-    private static final UUID NIRIKSHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000041");
+    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000031");
-    private static final UUID STRANGER_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000051");
+    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
     private static final UUID STRANGER_USER = UUID.fromString("00000000-0000-0000-0000-000000000052");
+    private static final UserId STRANGER_CALLER = UserId.of(STRANGER_USER);
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 26);
     private static final Instant FIXED_NOW = Instant.parse("2026-05-26T09:00:00Z");
     private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
@@ -89,7 +89,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
         f.writer().transition(OCCURRENCE_ID,
-                TransitionActor.user(SANCHALAK_SUBJECT, AuthorizedAction.CANCEL),
+                TransitionActor.user(SANCHALAK_CALLER, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, "Hall flooded", Occurrence::cancel);
 
         assertThat(f.occurrences.saved).singleElement()
@@ -107,7 +107,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
         f.writer().transition(OCCURRENCE_ID,
-                TransitionActor.user(NIRIKSHAK_SUBJECT, AuthorizedAction.CANCEL),
+                TransitionActor.user(NIRIKSHAK_CALLER, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, "Sanchalak unreachable", Occurrence::cancel);
 
         OccurrenceStateTransition row = f.transitions.appended.get(0);
@@ -120,27 +120,13 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
         assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID,
-                TransitionActor.user(STRANGER_SUBJECT, AuthorizedAction.CANCEL),
+                TransitionActor.user(STRANGER_CALLER, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, "let me in", Occurrence::cancel))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
         assertThat(f.transitions.appended).isEmpty();
         assertThat(f.publisher.published).isEmpty();
-    }
-
-    @Test
-    void anUnknownKeycloakSubjectIsRejectedBeforeTheOccurrenceIsLoaded() {
-        Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
-        UUID unknownSubject = UUID.fromString("00000000-0000-0000-0000-000000000999");
-
-        assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID,
-                TransitionActor.user(unknownSubject, AuthorizedAction.CANCEL),
-                OccurrenceAction.CANCEL, "who am I", Occurrence::cancel))
-                .isInstanceOf(CallerUnknownException.class);
-
-        assertThat(f.occurrences.loads).isZero();
-        assertThat(f.occurrences.saved).isEmpty();
     }
 
     // --- failure modes shared by every caller ------------------------------
@@ -201,7 +187,7 @@ class OccurrenceWriterTest {
     void anUnauditedMutationSharesTheSameRetryContract() {
         Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.OPEN_FOR_MARKING, 99);
 
-        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_SUBJECT,
+        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER,
                 (occurrence, actorUserId) -> occurrence.markWalkIn(
                         UUID.randomUUID(), actorUserId, FIXED_NOW)))
                 .isInstanceOf(ConcurrentModificationException.class);
@@ -234,7 +220,7 @@ class OccurrenceWriterTest {
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         List<UUID> markedBy = new ArrayList<>();
 
-        f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_SUBJECT, (occurrence, actorUserId) -> {
+        f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER, (occurrence, actorUserId) -> {
             markedBy.add(actorUserId);
             occurrence.mark(personId, true, actorUserId, FIXED_NOW);
         });
@@ -243,20 +229,6 @@ class OccurrenceWriterTest {
         assertThat(f.occurrences.saved).hasSize(1);
         assertThat(f.transitions.appended).isEmpty();
         assertThat(f.publisher.published).hasSize(1);
-    }
-
-    @Test
-    void anUnauditedMutationWithAnUnknownSubjectIsRejectedBeforeTheOccurrenceIsLoaded() {
-        Fixture f = Fixture.withOccurrence(OccurrenceState.OPEN_FOR_MARKING);
-        UUID unknownSubject = UUID.fromString("00000000-0000-0000-0000-000000000999");
-
-        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, unknownSubject,
-                (occurrence, actorUserId) -> occurrence.mark(
-                        UUID.randomUUID(), true, actorUserId, FIXED_NOW)))
-                .isInstanceOf(CallerUnknownException.class);
-
-        assertThat(f.occurrences.loads).isZero();
-        assertThat(f.occurrences.saved).isEmpty();
     }
 
     // --- fixture -----------------------------------------------------------
@@ -297,18 +269,6 @@ class OccurrenceWriterTest {
         }
 
         OccurrenceWriter writer(Clock clock) {
-            CallerResolver callerResolver = subject -> {
-                if (subject.equals(SANCHALAK_SUBJECT)) {
-                    return Optional.of(SANCHALAK_USER);
-                }
-                if (subject.equals(NIRIKSHAK_SUBJECT)) {
-                    return Optional.of(NIRIKSHAK_USER);
-                }
-                if (subject.equals(STRANGER_SUBJECT)) {
-                    return Optional.of(STRANGER_USER);
-                }
-                return Optional.empty();
-            };
             RoleAssignmentLookup roles = new RoleAssignmentLookup() {
                 @Override
                 public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
@@ -355,24 +315,23 @@ class OccurrenceWriterTest {
                     return userId.equals(NIRIKSHAK_USER) ? Set.of(SABHA_ID) : Set.of();
                 }
             };
-            return new OccurrenceWriter(callerResolver,
+            return new OccurrenceWriter(
                     new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
         }
     }
 
     /**
-     * A writer wired for the cron path alone: the caller resolver and the
-     * authorization engine's lookups reject everyone, so a write that lands
-     * through this writer proves the SYSTEM actor consults neither. Shared with
+     * A writer wired for the cron path alone: the authorization engine's lookups
+     * reject everyone, so a write that lands through this writer proves the
+     * SYSTEM actor consults it not at all. Shared with
      * the scanner tests, which drive the cron end of the same write path.
      */
     static OccurrenceWriter cronWriter(OccurrenceRepository occurrences,
                                        OccurrenceStateTransitionRepository transitions,
                                        DomainEventPublisher events,
                                        Clock clock) {
-        return unauthorizedWriter(subject -> Optional.empty(),
-                occurrences, transitions, events, clock);
+        return unauthorizedWriter(occurrences, transitions, events, clock);
     }
 
     /**
@@ -380,8 +339,7 @@ class OccurrenceWriterTest {
      * paths that never consult it: the SYSTEM cron actor and the unaudited marking
      * path. Shared with {@link MarkAttendanceApplicationServiceTest}.
      */
-    static OccurrenceWriter unauthorizedWriter(CallerResolver callerResolver,
-                                               OccurrenceRepository occurrences,
+    static OccurrenceWriter unauthorizedWriter(OccurrenceRepository occurrences,
                                                OccurrenceStateTransitionRepository transitions,
                                                DomainEventPublisher events,
                                                Clock clock) {
@@ -423,7 +381,7 @@ class OccurrenceWriterTest {
                 return Set.of();
             }
         };
-        return new OccurrenceWriter(callerResolver,
+        return new OccurrenceWriter(
                 new AuthorizationEngine(noRoles, noHierarchy, noProxy),
                 occurrences, transitions, events, clock);
     }
