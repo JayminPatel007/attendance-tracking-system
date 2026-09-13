@@ -17,6 +17,7 @@ import java.util.TreeSet;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
@@ -40,6 +41,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * Executable encoding of the intra-module architecture rules that the Maven
@@ -92,18 +94,18 @@ class IntraModuleArchitectureRulesTest {
                 }
             };
 
-    /**
-     * The HTTP verbs a handler can be mapped with. No controller in the repo
-     * carries a class-level {@code @RequestMapping}, so a method's own annotation
-     * is its whole route — verified by grep, and the {@link #routeOf} contract
-     * depends on it.
-     */
-    private static final Map<Class<? extends Annotation>, String> HTTP_MAPPINGS = Map.of(
-            GetMapping.class, "GET",
-            PostMapping.class, "POST",
-            PutMapping.class, "PUT",
-            PatchMapping.class, "PATCH",
-            DeleteMapping.class, "DELETE");
+    /** The {@code @RequestMapping} shortcuts, in the order {@link #routeOf} tries them. */
+    private static final Map<Class<? extends Annotation>, String> MAPPING_SHORTCUTS = mappingShortcuts();
+
+    private static Map<Class<? extends Annotation>, String> mappingShortcuts() {
+        Map<Class<? extends Annotation>, String> shortcuts = new LinkedHashMap<>();
+        shortcuts.put(GetMapping.class, "GET");
+        shortcuts.put(PostMapping.class, "POST");
+        shortcuts.put(PutMapping.class, "PUT");
+        shortcuts.put(PatchMapping.class, "PATCH");
+        shortcuts.put(DeleteMapping.class, "DELETE");
+        return Map.copyOf(shortcuts);
+    }
 
     /**
      * The handlers allowed to resolve no caller, each with the reason it is
@@ -198,21 +200,58 @@ class IntraModuleArchitectureRulesTest {
                 }
             };
 
-    /** {@code "GET /api/sanchalak/current-roster"}, or null if the method is not HTTP-mapped. */
+    /**
+     * Spring's own definition: every mapping shortcut is meta-annotated
+     * {@code @RequestMapping}, and so is any composed annotation a future
+     * controller might introduce. Asking the meta-annotation — rather than
+     * listing the five shortcuts — is what keeps the gate from having the same
+     * shape of blind spot it exists to close. A handler it cannot name still
+     * gets checked; only its key degrades, and since a degraded key is in no
+     * exemption list, the failure is loud.
+     */
+    private static final DescribedPredicate<JavaMethod> ARE_HTTP_MAPPED =
+            DescribedPredicate.describe("are HTTP-mapped",
+                    method -> method.isAnnotatedWith(RequestMapping.class)
+                            || method.isMetaAnnotatedWith(RequestMapping.class));
+
+    /**
+     * The exemption key for a handler: {@code "GET /api/sanchalak/current-roster"}.
+     * Falls back to the method's full name for a mapping this cannot read —
+     * a composed annotation, or one that names its path some third way. That
+     * fallback matches no exemption, so an unreadable mapping fails rather than
+     * slips through.
+     */
     private static String routeOf(JavaMethod method) {
-        for (Map.Entry<Class<? extends Annotation>, String> mapping : HTTP_MAPPINGS.entrySet()) {
-            if (!method.isAnnotatedWith(mapping.getKey())) {
-                continue;
+        for (Map.Entry<Class<? extends Annotation>, String> shortcut : MAPPING_SHORTCUTS.entrySet()) {
+            if (method.isAnnotatedWith(shortcut.getKey())) {
+                return shortcut.getValue() + " " + pathOf(method.getAnnotationOfType(shortcut.getKey().getName()));
             }
-            JavaAnnotation<?> annotation = method.getAnnotationOfType(mapping.getKey().getName());
-            Object[] paths = (Object[]) annotation.get("value").orElse(new Object[0]);
-            return mapping.getValue() + " " + (paths.length == 0 ? "(no path)" : paths[0]);
         }
-        return null;
+        if (method.isAnnotatedWith(RequestMapping.class)) {
+            JavaAnnotation<?> mapping = method.getAnnotationOfType(RequestMapping.class.getName());
+            Object[] verbs = (Object[]) mapping.get("method").orElse(new Object[0]);
+            // A JavaEnumConstant prints as "RequestMethod.GET"; the key reads as the
+            // route a person would type, so take the constant's bare name.
+            String verb = verbs.length == 0 ? "ANY" : ((JavaEnumConstant) verbs[0]).name();
+            return verb + " " + pathOf(mapping);
+        }
+        return method.getFullName();
     }
 
-    private static final DescribedPredicate<JavaMethod> ARE_HTTP_MAPPED =
-            DescribedPredicate.describe("are HTTP-mapped", method -> routeOf(method) != null);
+    /**
+     * {@code value} and {@code path} are {@code @AliasFor} each other, and ArchUnit
+     * reads bytecode, where an alias is just the other member left at its default —
+     * so both have to be asked.
+     */
+    private static String pathOf(JavaAnnotation<?> mapping) {
+        for (String member : List.of("value", "path")) {
+            Object[] paths = (Object[]) mapping.get(member).orElse(new Object[0]);
+            if (paths.length > 0) {
+                return String.valueOf(paths[0]);
+            }
+        }
+        return "(no path)";
+    }
 
     private static final ArchCondition<JavaClass> WRAP_ONE_QUERY_PORT =
             new ArchCondition<>("wrap a single query port") {
@@ -413,6 +452,15 @@ class IntraModuleArchitectureRulesTest {
      * parameter compiles. Nothing else in the build notices — not the type
      * system, and not the OpenAPI drift gate, which documents a callerless
      * handler as happily as any other.
+     *
+     * <p><b>What it checks is that the parameter is declared, not that it is
+     * used.</b> A handler could take {@code @CurrentUser UserId caller} and
+     * ignore it, reproducing issue #209's hole while passing. That gap is
+     * accepted: a parameter's use lives in local-variable bytecode that ArchUnit
+     * does not model, and the alternative — matching against method calls that
+     * happen to pass a {@code UserId} — would argue with every handler that
+     * legitimately forwards the caller through a DTO. The regression this
+     * catches is the one that actually happened: an omission nobody wrote down.
      */
     @ArchTest
     static final ArchRule every_handler_resolves_its_caller =
