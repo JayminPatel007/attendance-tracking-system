@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.sabha.attendance.applicationservice.OccurrenceReopenQueries;
 import org.sabha.attendance.applicationservice.OccurrenceReopenService;
 import org.sabha.attendance.applicationservice.ReopenListItem;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.UserId;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +52,7 @@ public class OccurrenceReopenBffController {
             @PathVariable UUID occurrenceId,
             @RequestBody ReopenRequest req,
             @CurrentUser UserId caller) {
-        reopenService.reopen(caller, occurrenceId, req.reason());
+        reopenService.reopen(caller, occurrenceId, new Reason(req.reason()));
         return ResponseEntity.noContent().build();
     }
 

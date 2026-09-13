@@ -3,6 +3,7 @@ package org.sabha.attendance.applicationservice;
 import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
  * shaping, and never the oversight tiers (Sanyojak, Sant, MK). That authority
  * difference is fully encapsulated in the {@link AuthorizationEngine}'s handling
  * of {@link AuthorizedAction#REOPEN}, so this service only owns the reopen
- * vocabulary and its reason requirement; the shared transition orchestration —
+ * vocabulary; the reason requirement is the {@link Reason} type's, enforced when
+ * it is constructed at the HTTP edge. The shared transition orchestration —
  * authorize, mutate, persist, append the reason-bearing audit row the "reopened"
  * badge is derived from, and publish events — lives in {@link
  * OccurrenceWriter}.</p>
@@ -34,10 +36,7 @@ public class OccurrenceReopenService {
     }
 
     @Transactional
-    public void reopen(UserId caller, UUID occurrenceId, String reason) {
-        if (reason == null || reason.isBlank()) {
-            throw new ReopenReasonRequiredException(occurrenceId);
-        }
+    public void reopen(UserId caller, UUID occurrenceId, Reason reason) {
         writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.REOPEN),
                 OccurrenceAction.REOPEN, reason, Occurrence::reopen);
     }

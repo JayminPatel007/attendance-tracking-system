@@ -26,6 +26,8 @@ sources:
   - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
   - { id: context, title: "CONTEXT.md — Sabha Occurrence, Occurrence States, Effective Slot, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
+status: disputed
+disputed_reason: "Reasons are now a Reason value type in domain-core (stripped, capped at 500), constructed at the HTTP edge — the page still places the reason requirement in the application services."
 ---
 
 # Occurrence Lifecycle

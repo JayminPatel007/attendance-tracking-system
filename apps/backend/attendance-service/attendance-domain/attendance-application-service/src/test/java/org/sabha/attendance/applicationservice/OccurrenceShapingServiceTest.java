@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
@@ -49,7 +50,7 @@ class OccurrenceShapingServiceTest {
     void sanchalakCancelsAScheduledOccurrenceWithReasonAndAnAuditRowIsAppended() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        f.service().cancel(SANCHALAK_CALLER, OCCURRENCE_ID, "Festival clash");
+        f.service().cancel(SANCHALAK_CALLER, OCCURRENCE_ID, new Reason("Festival clash"));
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
@@ -69,7 +70,7 @@ class OccurrenceShapingServiceTest {
     void anAssignedNirikshakProxyingACancelIsAuditedActingForTheAbsentSanchalak() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        f.service().cancel(NIRIKSHAK_CALLER, OCCURRENCE_ID, "Sanchalak unreachable");
+        f.service().cancel(NIRIKSHAK_CALLER, OCCURRENCE_ID, new Reason("Sanchalak unreachable"));
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
@@ -83,23 +84,12 @@ class OccurrenceShapingServiceTest {
     void sahSanchalakCancelIsRejectedWithNoSideEffects() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
-        assertThatThrownBy(() -> f.service().cancel(SAH_SANCHALAK_CALLER, OCCURRENCE_ID, "trying"))
+        assertThatThrownBy(() -> f.service().cancel(SAH_SANCHALAK_CALLER, OCCURRENCE_ID, new Reason("trying")))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
         assertThat(f.transitions.appended).isEmpty();
         assertThat(f.publisher.published).isEmpty();
-    }
-
-    @Test
-    void cancelWithoutAReasonIsRejected() {
-        Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
-
-        assertThatThrownBy(() -> f.service().cancel(SANCHALAK_CALLER, OCCURRENCE_ID, "  "))
-                .isInstanceOf(CancellationReasonRequiredException.class);
-
-        assertThat(f.occurrences.saved).isEmpty();
-        assertThat(f.transitions.appended).isEmpty();
     }
 
     @Test

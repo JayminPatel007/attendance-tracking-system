@@ -41,7 +41,7 @@ public class AutoOpenScanner {
             slotResolver.resolve(ref)
                     .filter(slot -> !slot.startsAt().isAfter(now))
                     .ifPresent(slot -> writer.transition(ref.occurrenceId(), TransitionActor.system(),
-                            OccurrenceAction.OPEN, null, Occurrence::open));
+                            OccurrenceAction.OPEN, Occurrence::open));
         }
     }
 }

@@ -31,6 +31,10 @@ _Avoid_: Scheduled time, window, occurrence time
 - **Open for Marking** — attendance is being recorded by the Sanchalak.
 - **Finalized** — attendance is frozen. Edits require a higher-tier Karyakar to reopen.
 
+**Reason**:
+The justification a User must give when **cancelling** or **reopening** a Sabha Occurrence. Never optional for those two acts: an Occurrence cannot be cancelled or reopened anonymously or silently. It is preserved in the Occurrence's history alongside who acted and when, and is shown to anyone reading that history — a reopened Occurrence carries its latest Reason next to its badge. The other shaping acts (revert, reschedule, venue change) record no Reason.
+_Avoid_: Note, comment, remark (those suggest optional colour; a Reason is required and is part of the record)
+
 **Sabha Type** (aka **Sabha Kind**):
 A categorization of a Sabha along two dimensions: (a) **demographic** (one of the named types below) and (b) **track** (Regular or BSS — see Bal Sevak Sabha below). The combination uniquely identifies a Sabha Type, e.g., "BSS Baal Sabha" and "Regular Baal Sabha" are distinct. **The list of Sabha Types is extensible** — new ones are registered by the Madhyastha Karyalaya — not a hardcoded enum. The five demographic types below are the ones currently known.
 _Avoid_: Category, group
