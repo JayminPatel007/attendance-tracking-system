@@ -20,8 +20,9 @@
         Multi-module modular monolith. Per ADR-0019, each bounded context is split
         into five Maven modules (domain-core / application-service / data-access /
         messaging / application) under a *-service / *-domain aggregator. The
-        common-domain module is shared across contexts; application-container is
-        the single Spring Boot deployable.
+        common-domain and common-application modules are shared across contexts
+        (ADR-0030 added the latter); application-container is the single Spring
+        Boot deployable.
     </description>
 
     <properties>
@@ -38,6 +39,7 @@
 
     <modules>
         <module>common-domain</module>
+        <module>common-application</module>
 
         <module>identity-service</module>
         <module>sabha-service</module>
@@ -56,6 +58,11 @@
             <dependency>
                 <groupId>org.sabha</groupId>
                 <artifactId>common-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.sabha</groupId>
+                <artifactId>common-application</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

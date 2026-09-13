@@ -1,9 +1,8 @@
 package org.sabha.analytics.dataaccess;
 
-import java.util.UUID;
-
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.domain.Thresholds;
+import org.sabha.common.UserId;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -21,13 +20,13 @@ public class JdbcThresholdAdmin implements ThresholdAdmin {
     }
 
     @Override
-    public void update(Thresholds thresholds, UUID updatedBy) {
+    public void update(Thresholds thresholds, UserId updatedBy) {
         jdbc.sql("""
                 UPDATE analytics_thresholds
                    SET candidate_threshold = ?, priority_threshold = ?, updated_by = ?, updated_at = now()
                  WHERE id = 1
                 """)
-                .params(thresholds.candidate(), thresholds.priority(), updatedBy)
+                .params(thresholds.candidate(), thresholds.priority(), updatedBy.value())
                 .update();
     }
 }

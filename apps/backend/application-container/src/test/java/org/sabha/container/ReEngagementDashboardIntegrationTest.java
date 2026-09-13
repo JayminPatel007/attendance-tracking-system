@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.sabha.common.UserId;
 
 /**
  * End-to-end for the re-engagement read-model (Slice 15, ADR-0010): the projection
@@ -94,16 +95,16 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         scanner.refresh();
 
         // Picking the City persists it as the default and scopes the view to it.
-        assertThat(access.selectCity(SANT_USER, CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(access.selectCity(UserId.of(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
 
         // Universal read: the Sant holds no role over either Kshetra, yet sees both
         // candidates — the rejection that limited the Nirdeshak to PERSON_1 does not
         // apply (ADR-0011 Sant exception).
-        assertThat(dashboard.people(access.viewFor(SANT_USER))).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(access.viewFor(UserId.of(SANT_USER)))).extracting(CandidateRow::personId)
                 .contains(PERSON_1, PERSON_2);
 
         // The default survives a fresh resolution (across logins).
-        assertThat(access.viewFor(SANT_USER)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(access.viewFor(UserId.of(SANT_USER))).isEqualTo(new DashboardScope.CityScoped(CITY));
     }
 
     @Test
@@ -131,7 +132,7 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         user(MK_USER, "mk-user"); // updated_by stamps a real User
         assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(3, 6));
 
-        thresholdAdmin.update(new Thresholds(2, 5), MK_USER);
+        thresholdAdmin.update(new Thresholds(2, 5), UserId.of(MK_USER));
 
         assertThat(thresholdConfig.current()).isEqualTo(new Thresholds(2, 5));
     }

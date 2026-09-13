@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.UserId;
 import org.sabha.sabha.domain.City;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.Kshetra;
@@ -42,7 +43,7 @@ class StructuralCreationServiceTest {
 
     @Test
     void mkMemberCreatesACityAttributedToThemselves() {
-        UUID id = service.createCity(MK, "Surat");
+        UUID id = service.createCity(UserId.of(MK), "Surat");
 
         City saved = cities.saved.get(0);
         assertThat(saved.id()).isEqualTo(id);
@@ -52,17 +53,17 @@ class StructuralCreationServiceTest {
 
     @Test
     void nonMkCreatingACityIsDeniedAndNothingIsPersisted() {
-        assertThatThrownBy(() -> service.createCity(SANYOJAK, "Surat"))
+        assertThatThrownBy(() -> service.createCity(UserId.of(SANYOJAK), "Surat"))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(cities.saved).isEmpty();
     }
 
     @Test
     void regionalTeamMemberCreatesAZoneWithinTheirCityAttributedToThemselves() {
-        UUID cityId = service.createCity(MK, "Mumbai");
+        UUID cityId = service.createCity(UserId.of(MK), "Mumbai");
         regionalTeamCities.add(cityId);
 
-        UUID zoneId = service.createZone(REGIONAL_TEAM, cityId, "Mumbai South");
+        UUID zoneId = service.createZone(UserId.of(REGIONAL_TEAM), cityId, "Mumbai South");
 
         Zone saved = zones.saved.get(0);
         assertThat(saved.id()).isEqualTo(zoneId);
@@ -73,26 +74,26 @@ class StructuralCreationServiceTest {
     @Test
     void mkCreatingAZoneIsDeniedAndNothingIsPersisted() {
         // Zone creation moved MK -> Regional Team (ADR-0024); MK has no path at all.
-        UUID cityId = service.createCity(MK, "Mumbai");
+        UUID cityId = service.createCity(UserId.of(MK), "Mumbai");
 
-        assertThatThrownBy(() -> service.createZone(MK, cityId, "Mumbai South"))
+        assertThatThrownBy(() -> service.createZone(UserId.of(MK), cityId, "Mumbai South"))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(zones.saved).isEmpty();
     }
 
     @Test
     void regionalTeamMemberOfAnotherCityCannotCreateAZoneHere() {
-        UUID cityId = service.createCity(MK, "Mumbai");
+        UUID cityId = service.createCity(UserId.of(MK), "Mumbai");
         // REGIONAL_TEAM is a member of some *other* City, not this one.
 
-        assertThatThrownBy(() -> service.createZone(REGIONAL_TEAM, cityId, "Mumbai South"))
+        assertThatThrownBy(() -> service.createZone(UserId.of(REGIONAL_TEAM), cityId, "Mumbai South"))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(zones.saved).isEmpty();
     }
 
     @Test
     void mkMemberRegistersASabhaKind() {
-        UUID id = service.createSabhaKind(MK, Demographic.YUVAK, Track.BSS);
+        UUID id = service.createSabhaKind(UserId.of(MK), Demographic.YUVAK, Track.BSS);
 
         SabhaKind saved = sabhaKinds.saved.get(0);
         assertThat(saved.id()).isEqualTo(id);
@@ -103,14 +104,14 @@ class StructuralCreationServiceTest {
 
     @Test
     void registeringASanyuktaSelectiveKindIsRejected() {
-        assertThatThrownBy(() -> service.createSabhaKind(MK, Demographic.SANYUKTA, Track.YSS))
+        assertThatThrownBy(() -> service.createSabhaKind(UserId.of(MK), Demographic.SANYUKTA, Track.YSS))
                 .isInstanceOf(SanyuktaMustBeRegularTrackException.class);
         assertThat(sabhaKinds.saved).isEmpty();
     }
 
     @Test
     void sanyojakCreatesAKshetraWithinTheirZone() {
-        UUID id = service.createKshetra(SANYOJAK, ZONE, "Goregaon-2");
+        UUID id = service.createKshetra(UserId.of(SANYOJAK), ZONE, "Goregaon-2");
 
         Kshetra saved = kshetras.saved.get(0);
         assertThat(saved.id()).isEqualTo(id);
@@ -120,7 +121,7 @@ class StructuralCreationServiceTest {
 
     @Test
     void nonSanyojakCreatingAKshetraIsDeniedAndNothingIsPersisted() {
-        assertThatThrownBy(() -> service.createKshetra(MK, ZONE, "Goregaon-2"))
+        assertThatThrownBy(() -> service.createKshetra(UserId.of(MK), ZONE, "Goregaon-2"))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(kshetras.saved).isEmpty();
     }

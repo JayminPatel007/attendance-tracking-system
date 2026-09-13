@@ -6,6 +6,7 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.UserId;
 import org.sabha.sabha.domain.CityNotFoundException;
 import org.sabha.sabha.domain.KshetraNotFoundException;
 import org.sabha.sabha.domain.SabhaNotFoundException;
@@ -47,12 +48,12 @@ public class StructuralDeletionService {
     }
 
     @Transactional
-    public void deleteCity(UUID caller, UUID cityId) {
+    public void deleteCity(UserId caller, UUID cityId) {
         if (!cities.existsById(cityId)) {
             throw new CityNotFoundException(cityId);
         }
-        if (!authz.holdsStateScope(caller)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.DELETE_CITY);
+        if (!authz.holdsStateScope(caller.value())) {
+            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.DELETE_CITY);
         }
         int childZones = cities.zoneCount(cityId);
         if (childZones > 0) {
@@ -62,10 +63,10 @@ public class StructuralDeletionService {
     }
 
     @Transactional
-    public void deleteZone(UUID caller, UUID zoneId) {
+    public void deleteZone(UserId caller, UUID zoneId) {
         UUID cityId = zones.cityIdOf(zoneId).orElseThrow(() -> new ZoneNotFoundException(zoneId));
-        if (!authz.holdsCityScope(caller, cityId)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.DELETE_ZONE);
+        if (!authz.holdsCityScope(caller.value(), cityId)) {
+            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.DELETE_ZONE);
         }
         int childKshetras = zones.kshetraCount(zoneId);
         if (childKshetras > 0) {
@@ -75,10 +76,10 @@ public class StructuralDeletionService {
     }
 
     @Transactional
-    public void deleteKshetra(UUID caller, UUID kshetraId) {
+    public void deleteKshetra(UserId caller, UUID kshetraId) {
         UUID zoneId = kshetras.zoneIdOf(kshetraId).orElseThrow(() -> new KshetraNotFoundException(kshetraId));
-        if (!authz.holdsZoneScope(caller, zoneId)) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.DELETE_KSHETRA);
+        if (!authz.holdsZoneScope(caller.value(), zoneId)) {
+            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.DELETE_KSHETRA);
         }
         int childSabhas = kshetras.sabhaCount(kshetraId);
         if (childSabhas > 0) {
@@ -88,11 +89,11 @@ public class StructuralDeletionService {
     }
 
     @Transactional
-    public void deleteSabha(UUID caller, UUID sabhaId) {
+    public void deleteSabha(UserId caller, UUID sabhaId) {
         SabhaScope scope = hierarchy.sabhaScope(sabhaId)
                 .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
-        if (!authz.holdsKshetraScope(caller, scope.kshetraId(), scope.demographic())) {
-            throw new AuthorizationDeniedException(caller, AuthorizedAction.DELETE_SABHA);
+        if (!authz.holdsKshetraScope(caller.value(), scope.kshetraId(), scope.demographic())) {
+            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.DELETE_SABHA);
         }
         int occurrences = sabhas.occurrenceCount(sabhaId);
         if (occurrences > 0) {

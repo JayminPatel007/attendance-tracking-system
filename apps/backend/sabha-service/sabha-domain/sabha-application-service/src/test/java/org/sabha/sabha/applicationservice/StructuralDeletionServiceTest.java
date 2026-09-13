@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
+import org.sabha.common.UserId;
 import org.sabha.common.Role;
 import org.sabha.common.SabhaScope;
 import org.sabha.sabha.domain.City;
@@ -53,7 +54,7 @@ class StructuralDeletionServiceTest {
     void mkDeletesAnEmptyCity() {
         UUID cityId = cities.seed("Surat");
 
-        service.deleteCity(MK, cityId);
+        service.deleteCity(UserId.of(MK), cityId);
 
         assertThat(cities.existsById(cityId)).isFalse();
     }
@@ -63,7 +64,7 @@ class StructuralDeletionServiceTest {
         UUID cityId = cities.seed("Mumbai");
         cities.setZoneCount(cityId, 6);
 
-        assertThatThrownBy(() -> service.deleteCity(MK, cityId))
+        assertThatThrownBy(() -> service.deleteCity(UserId.of(MK), cityId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 6 Zones");
         assertThat(cities.existsById(cityId)).isTrue();
@@ -73,14 +74,14 @@ class StructuralDeletionServiceTest {
     void aNonMkUserCannotDeleteACityAndNothingIsRemoved() {
         UUID cityId = cities.seed("Surat");
 
-        assertThatThrownBy(() -> service.deleteCity(SOMEONE_ELSE, cityId))
+        assertThatThrownBy(() -> service.deleteCity(UserId.of(SOMEONE_ELSE), cityId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(cities.existsById(cityId)).isTrue();
     }
 
     @Test
     void deletingAnUnknownCityIs404() {
-        assertThatThrownBy(() -> service.deleteCity(MK, UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteCity(UserId.of(MK), UUID.randomUUID()))
                 .isInstanceOf(CityNotFoundException.class);
     }
 
@@ -90,7 +91,7 @@ class StructuralDeletionServiceTest {
         UUID zoneId = zones.seed(cityId);
         regionalTeamCities.put(REGIONAL_TEAM, List.of(cityId));
 
-        service.deleteZone(REGIONAL_TEAM, zoneId);
+        service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId);
 
         assertThat(zones.existsById(zoneId)).isFalse();
     }
@@ -101,7 +102,7 @@ class StructuralDeletionServiceTest {
         UUID zoneId = zones.seed(cityId);
         regionalTeamCities.put(REGIONAL_TEAM, List.of(UUID.randomUUID()));
 
-        assertThatThrownBy(() -> service.deleteZone(REGIONAL_TEAM, zoneId))
+        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(zones.existsById(zoneId)).isTrue();
     }
@@ -113,7 +114,7 @@ class StructuralDeletionServiceTest {
         zones.setKshetraCount(zoneId, 3);
         regionalTeamCities.put(REGIONAL_TEAM, List.of(cityId));
 
-        assertThatThrownBy(() -> service.deleteZone(REGIONAL_TEAM, zoneId))
+        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 3 Kshetras");
         assertThat(zones.existsById(zoneId)).isTrue();
@@ -121,7 +122,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownZoneIs404() {
-        assertThatThrownBy(() -> service.deleteZone(REGIONAL_TEAM, UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), UUID.randomUUID()))
                 .isInstanceOf(ZoneNotFoundException.class);
     }
 
@@ -131,7 +132,7 @@ class StructuralDeletionServiceTest {
         UUID kshetraId = kshetras.seed(zoneId);
         sanyojakZones.put(SANYOJAK, List.of(zoneId));
 
-        service.deleteKshetra(SANYOJAK, kshetraId);
+        service.deleteKshetra(UserId.of(SANYOJAK), kshetraId);
 
         assertThat(kshetras.existsById(kshetraId)).isFalse();
     }
@@ -142,7 +143,7 @@ class StructuralDeletionServiceTest {
         UUID kshetraId = kshetras.seed(zoneId);
         sanyojakZones.put(SANYOJAK, List.of(UUID.randomUUID()));
 
-        assertThatThrownBy(() -> service.deleteKshetra(SANYOJAK, kshetraId))
+        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), kshetraId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(kshetras.existsById(kshetraId)).isTrue();
     }
@@ -154,7 +155,7 @@ class StructuralDeletionServiceTest {
         kshetras.setSabhaCount(kshetraId, 1);
         sanyojakZones.put(SANYOJAK, List.of(zoneId));
 
-        assertThatThrownBy(() -> service.deleteKshetra(SANYOJAK, kshetraId))
+        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), kshetraId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 1 Sabha");
         assertThat(kshetras.existsById(kshetraId)).isTrue();
@@ -162,7 +163,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownKshetraIs404() {
-        assertThatThrownBy(() -> service.deleteKshetra(SANYOJAK, UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), UUID.randomUUID()))
                 .isInstanceOf(KshetraNotFoundException.class);
     }
 
@@ -172,7 +173,7 @@ class StructuralDeletionServiceTest {
         UUID sabhaId = hierarchy.seedSabha(kshetraId, YUVAK);
         roleAssignments.grant(NIRDESHAK, kshetraId, YUVAK, Role.NIRDESHAK);
 
-        service.deleteSabha(NIRDESHAK, sabhaId);
+        service.deleteSabha(UserId.of(NIRDESHAK), sabhaId);
 
         assertThat(sabhas.deleted).contains(sabhaId);
     }
@@ -184,7 +185,7 @@ class StructuralDeletionServiceTest {
         // Holds Nirdeshak over a different demographic in the same Kshetra.
         roleAssignments.grant(NIRDESHAK, kshetraId, "BAAL", Role.NIRDESHAK);
 
-        assertThatThrownBy(() -> service.deleteSabha(NIRDESHAK, sabhaId))
+        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), sabhaId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhas.deleted).isEmpty();
     }
@@ -196,7 +197,7 @@ class StructuralDeletionServiceTest {
         sabhas.setOccurrenceCount(sabhaId, 12);
         roleAssignments.grant(NIRDESHAK, kshetraId, YUVAK, Role.NIRDESHAK);
 
-        assertThatThrownBy(() -> service.deleteSabha(NIRDESHAK, sabhaId))
+        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), sabhaId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 12 Occurrences");
         assertThat(sabhas.deleted).isEmpty();
@@ -204,7 +205,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownSabhaIs404() {
-        assertThatThrownBy(() -> service.deleteSabha(NIRDESHAK, UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), UUID.randomUUID()))
                 .isInstanceOf(SabhaNotFoundException.class);
     }
 

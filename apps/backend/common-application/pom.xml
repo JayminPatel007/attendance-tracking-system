@@ -8,42 +8,30 @@
         <groupId>org.sabha</groupId>
         <artifactId>backend-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>sabha-application</artifactId>
-    <name>Sabha Application (presentation)</name>
+    <artifactId>common-application</artifactId>
+    <name>Common Application (shared presentation)</name>
     <description>
-        Interface-adapters ring (Clean Architecture) for the Sabha context —
-        presentation only: REST controllers and DTOs. Empty scaffold. ADR-0019.
+        The one module that knows what a credential is. Holds @CurrentUser and
+        the argument resolver that turns an authenticated request into a UserId,
+        for every *-application module. Per ADR-0030, which amends ADR-0019 by
+        adding this sixth shared module (ADR-0019's Q11.3 had dropped it).
     </description>
 
     <dependencies>
         <dependency>
             <groupId>org.sabha</groupId>
-            <artifactId>sabha-application-service</artifactId>
-        </dependency>
-
-        <!-- @CurrentUser + the one resolver that knows what a credential is (ADR-0030). -->
-        <dependency>
-            <groupId>org.sabha</groupId>
-            <artifactId>common-application</artifactId>
-        </dependency>
-
-        <!--
-            Annotations only (no framework): the presentation ring describes the
-            wire contract — which response fields are always present, what the
-            typed outcomes of an endpoint are — so springdoc renders a document
-            the generated clients can be strict about (issue #104).
-        -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations-jakarta</artifactId>
+            <artifactId>common-domain</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -53,9 +41,16 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-oauth2-jose</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
