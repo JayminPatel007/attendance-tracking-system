@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.sabha.identity.domain.User;
 
 public interface UserRepository {
-    Optional<User> findByKeycloakUserId(UUID keycloakUserId);
 
     /** The User backing a Person, if that Person already holds a login. */
     Optional<User> findByPersonId(UUID personId);
@@ -14,7 +13,8 @@ public interface UserRepository {
     /** The User with the given login name — drives the password-reset lookups. */
     Optional<User> findByUsername(String username);
 
-    /** The User by local id — drives the assigner-reissue's identity-provider call. */
+    /** The User by local id — the caller resolved at the edge (ADR-0030), and the
+     *  assigner-reissue's identity-provider call. */
     Optional<User> findById(UUID userId);
 
     /** Whether a username is already taken — enforced before appointment commit. */

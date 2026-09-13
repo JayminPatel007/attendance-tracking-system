@@ -425,10 +425,6 @@ class RoleAppointmentServiceTest {
             return saved.subList(startMark, saved.size());
         }
 
-        @Override
-        public Optional<User> findByKeycloakUserId(UUID keycloakUserId) {
-            return saved.stream().filter(u -> u.keycloakUserId().equals(keycloakUserId)).findFirst();
-        }
 
         @Override
         public Optional<User> findByPersonId(UUID personId) {

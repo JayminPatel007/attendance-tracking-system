@@ -1,6 +1,5 @@
 package org.sabha.attendance.applicationservice;
 
-
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.UserId;
 

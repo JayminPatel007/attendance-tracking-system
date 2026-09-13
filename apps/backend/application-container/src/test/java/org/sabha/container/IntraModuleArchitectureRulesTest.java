@@ -184,7 +184,7 @@ class IntraModuleArchitectureRulesTest {
     @ArchTest
     static final ArchRule only_the_edge_knows_what_a_credential_is =
             noClasses()
-                    .that().resideOutsideOfPackages("org.sabha.common.web", "org.sabha.container")
+                    .that().resideOutsideOfPackages("org.sabha.common.web..", "org.sabha.container..")
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "org.springframework.security.core..",
                             "org.springframework.security.oauth2..")

@@ -256,10 +256,6 @@ class RoleRevocationServiceTest {
     private static final class FakeUserRepository implements UserRepository {
         final Map<UUID, User> byId = new HashMap<>();
 
-        @Override
-        public Optional<User> findByKeycloakUserId(UUID keycloakUserId) {
-            return byId.values().stream().filter(u -> u.keycloakUserId().equals(keycloakUserId)).findFirst();
-        }
 
         @Override
         public Optional<User> findByPersonId(UUID personId) {

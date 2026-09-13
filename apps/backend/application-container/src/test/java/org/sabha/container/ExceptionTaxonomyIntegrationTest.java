@@ -113,6 +113,20 @@ class ExceptionTaxonomyIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
+    /**
+     * The load-bearing 404. {@code occurrence_control_api.dart} reads a 404 here as
+     * "no Occurrence right now" and renders an empty state, so this code must keep
+     * meaning that — for a <em>known</em> caller — even though an unknown one has
+     * moved to 403. The Slice 13 reopen-tier Nirikshak is a real User who presides
+     * over no Sabha as Sanchalak.
+     */
+    @Test
+    void aKnownCallerWithNoCurrentOccurrenceStillGetsNotFound() throws Exception {
+        mockMvc.perform(get("/api/sanchalak/current-occurrence")
+                        .with(jwt().jwt(j -> j.subject("00000000-0000-0000-0000-000000000052"))))
+                .andExpect(status().isNotFound());
+    }
+
     @Test
     void callerUnknownOnAWebBffEndpointReturnsAProblemDetailNotABodylessForbidden() throws Exception {
         mockMvc.perform(get("/bff/selection/nominations")

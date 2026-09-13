@@ -9,10 +9,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.SantLookup;
+import org.sabha.common.UserId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.sabha.common.UserId;
 
 /**
  * Unit behaviours of the dashboard Authorization Engine (Slice 17): a Sant reads
