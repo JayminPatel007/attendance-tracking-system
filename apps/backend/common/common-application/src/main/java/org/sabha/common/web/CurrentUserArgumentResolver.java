@@ -54,6 +54,19 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     /** Package-visible so the resolution rules can be tested without a servlet stack. */
     UserId resolve(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
+            // Defensive, and unreachable by design: both filter chains end in
+            // anyRequest().authenticated(), so an unauthenticated request to a route
+            // that resolves a caller is already a 401 (the BFF's HttpStatusEntryPoint,
+            // or the resource server's WWW-Authenticate) and never reaches a handler.
+            // The public routes that skip that are exempt from resolving a caller at
+            // all, and `every_handler_resolves_its_caller` fails the build if one of
+            // them gains a @CurrentUser. If this ever throws, the security config is
+            // wrong, not the client — which is why it stays a 403 rather than growing
+            // a 401 path of its own.
+            //
+            // Note anonymity does not arrive here: AnonymousAuthenticationToken is
+            // isAuthenticated(), so it falls through to the getName() branch below.
+            //
             // Never the Authentication itself: the global handler puts this message
             // straight into the RFC 9457 `detail`, and a token's toString carries
             // its principal and authorities.
