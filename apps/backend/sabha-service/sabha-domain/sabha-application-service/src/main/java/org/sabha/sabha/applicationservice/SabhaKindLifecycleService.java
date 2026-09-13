@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.UserId;
 import org.sabha.sabha.domain.SabhaKind;
-import org.sabha.sabha.domain.SabhaKindNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

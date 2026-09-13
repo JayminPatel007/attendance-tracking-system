@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.SabhaNotFoundException;
 import org.sabha.common.SabhaShapeLookup;
 import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;

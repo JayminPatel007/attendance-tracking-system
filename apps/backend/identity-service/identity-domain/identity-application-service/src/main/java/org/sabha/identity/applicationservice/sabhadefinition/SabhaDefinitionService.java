@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaProvisioning;
 import org.sabha.common.UserId;

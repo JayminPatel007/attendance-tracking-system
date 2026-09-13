@@ -471,6 +471,69 @@ class IntraModuleArchitectureRulesTest {
                     .as("every HTTP handler must take a @CurrentUser parameter or be listed as exempt (ADR-0030, issue #210)")
                     .because("a handler that never learns who is calling cannot authorize anything below it");
 
+    /**
+     * No two top-level types may share a simple name (issue #218). The name a
+     * reader sees at an import is the only thing they have to go on: two types
+     * called {@code SabhaKind} meant an auto-import landed on the aggregate when
+     * the caller wanted the column encoding, and four {@code *NotFoundException}
+     * classes meant the same 404 was written four times.
+     *
+     * <p>Scoped to <em>top-level</em> types — one per file, which is what a
+     * reader actually browses and what an import names without qualification.
+     * Nested types are excluded deliberately: a controller's private
+     * {@code CancelRequest} record is read through its enclosing class and
+     * collides with nothing.</p>
+     */
+    private static final ArchCondition<JavaClass> HAVE_A_UNIQUE_SIMPLE_NAME =
+            new ArchCondition<>("have a simple name no other top-level type uses") {
+                private Map<String, Set<String>> bySimpleName;
+
+                @Override
+                public void init(Collection<JavaClass> types) {
+                    bySimpleName = new LinkedHashMap<>();
+                    for (JavaClass type : types) {
+                        bySimpleName
+                                .computeIfAbsent(type.getSimpleName(), name -> new TreeSet<>())
+                                .add(type.getName());
+                    }
+                }
+
+                @Override
+                public void check(JavaClass type, ConditionEvents events) {
+                    // The verdict is collective, so it is reported once in finish().
+                }
+
+                @Override
+                public void finish(ConditionEvents events) {
+                    bySimpleName.forEach((simpleName, fullNames) -> {
+                        if (fullNames.size() > 1) {
+                            events.add(SimpleConditionEvent.violated(simpleName,
+                                    simpleName + " is the simple name of " + fullNames.size()
+                                            + " top-level types: " + String.join(", ", fullNames)));
+                        }
+                    });
+                }
+            };
+
+    /**
+     * Excludes nested types (a nested type has an enclosing class) and
+     * {@code package-info}, which is one per package by construction and names
+     * no type a reader can import.
+     */
+    private static final DescribedPredicate<JavaClass> ARE_TOP_LEVEL_TYPES =
+            DescribedPredicate.describe("are top-level types",
+                    type -> !type.getEnclosingClass().isPresent()
+                            && !type.getSimpleName().equals("package-info"));
+
+    @ArchTest
+    static final ArchRule no_two_types_share_a_simple_name =
+            classes()
+                    .that().resideInAPackage("org.sabha..")
+                    .and(ARE_TOP_LEVEL_TYPES)
+                    .should(HAVE_A_UNIQUE_SIMPLE_NAME)
+                    .as("no two top-level types under org.sabha may share a simple name (issue #218)")
+                    .because("a reader seeing the bare name cannot tell which type they have, and no file can import both");
+
     @ArchTest
     static final ArchRule domain_events_live_in_domain_core =
             classes()

@@ -25,7 +25,7 @@ sources:
   - { id: context, title: "CONTEXT.md — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team", resource: ../../../CONTEXT.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 status: disputed
-disputed_reason: "The `SabhaKind` name collision the page warns about is gone — the common-domain copy is now `SabhaKindCode` (#217)."
+disputed_reason: "The `SabhaKind` name collision the page warns about is gone — the common-domain copy is now `SabhaKindCode` (#217) — and this unit's three `*NotFoundException`s have moved to common-domain (#218)."
 ---
 
 # Sabha Service

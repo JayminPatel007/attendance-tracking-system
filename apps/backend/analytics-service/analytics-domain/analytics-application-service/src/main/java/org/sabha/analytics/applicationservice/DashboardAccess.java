@@ -3,6 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.List;
 import java.util.UUID;
 
+import org.sabha.common.CityNotFoundException;
 import org.sabha.common.SantLookup;
 import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
