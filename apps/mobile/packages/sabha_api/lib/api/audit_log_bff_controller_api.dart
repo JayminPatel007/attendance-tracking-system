@@ -16,7 +16,10 @@ class AuditLogBffControllerApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'GET /bff/audit-log' operation and returns the [Response].
+  /// Read the caller's scoped audit feed
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] targetType:
@@ -32,7 +35,7 @@ class AuditLogBffControllerApi {
   /// * [DateTime] to:
   ///
   /// * [bool] proxyOnly:
-  Future<Response> list1WithHttpInfo({ String? targetType, String? targetId, String? actorUserId, String? action, DateTime? from, DateTime? to, bool? proxyOnly, Future<void>? abortTrigger, }) async {
+  Future<Response> listAuditEntriesWithHttpInfo({ String? targetType, String? targetId, String? actorUserId, String? action, DateTime? from, DateTime? to, bool? proxyOnly, Future<void>? abortTrigger, }) async {
     // ignore: prefer_const_declarations
     final path = r'/bff/audit-log';
 
@@ -80,6 +83,8 @@ class AuditLogBffControllerApi {
     );
   }
 
+  /// Read the caller's scoped audit feed
+  ///
   /// Parameters:
   ///
   /// * [String] targetType:
@@ -95,8 +100,8 @@ class AuditLogBffControllerApi {
   /// * [DateTime] to:
   ///
   /// * [bool] proxyOnly:
-  Future<List<AuditEntry>?> list1({ String? targetType, String? targetId, String? actorUserId, String? action, DateTime? from, DateTime? to, bool? proxyOnly, Future<void>? abortTrigger, }) async {
-    final response = await list1WithHttpInfo(targetType: targetType, targetId: targetId, actorUserId: actorUserId, action: action, from: from, to: to, proxyOnly: proxyOnly, abortTrigger: abortTrigger,);
+  Future<List<AuditEntry>?> listAuditEntries({ String? targetType, String? targetId, String? actorUserId, String? action, DateTime? from, DateTime? to, bool? proxyOnly, Future<void>? abortTrigger, }) async {
+    final response = await listAuditEntriesWithHttpInfo(targetType: targetType, targetId: targetId, actorUserId: actorUserId, action: action, from: from, to: to, proxyOnly: proxyOnly, abortTrigger: abortTrigger,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }

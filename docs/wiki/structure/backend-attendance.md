@@ -130,6 +130,9 @@ retries on.
 - The aggregate exposes both `markings()` and a separate drained set of *pending* markings.
   Repositories iterate the pending set so a save writes only mutated rows; iterating `markings()`
   instead would rewrite the whole roster on every marking.
+- Every handler in `AttendanceRestController` takes a `@CurrentUser` — the one that didn't was
+  deleted in issue #209, unused and unauthorized since Slice 12. See
+  [http-edge-traps](../notes/http-edge-traps.md).
 
 ## Covered by
 

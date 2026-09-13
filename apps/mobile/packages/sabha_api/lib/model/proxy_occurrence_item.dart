@@ -13,43 +13,19 @@ part of openapi.api;
 class ProxyOccurrenceItem {
   /// Returns a new [ProxyOccurrenceItem] instance.
   ProxyOccurrenceItem({
-    this.effectiveDate,
-    this.id,
-    this.state,
-    this.venue,
+    required this.effectiveDate,
+    required this.id,
+    required this.state,
+    required this.venue,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  DateTime? effectiveDate;
+  DateTime effectiveDate;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? state;
+  String state;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? venue;
+  String venue;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is ProxyOccurrenceItem &&
@@ -61,36 +37,20 @@ class ProxyOccurrenceItem {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (effectiveDate == null ? 0 : effectiveDate!.hashCode) +
-    (id == null ? 0 : id!.hashCode) +
-    (state == null ? 0 : state!.hashCode) +
-    (venue == null ? 0 : venue!.hashCode);
+    (effectiveDate.hashCode) +
+    (id.hashCode) +
+    (state.hashCode) +
+    (venue.hashCode);
 
   @override
   String toString() => 'ProxyOccurrenceItem[effectiveDate=$effectiveDate, id=$id, state=$state, venue=$venue]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.effectiveDate != null) {
-      json[r'effectiveDate'] = _dateFormatter.format(this.effectiveDate!.toUtc());
-    } else {
-      json[r'effectiveDate'] = null;
-    }
-    if (this.id != null) {
+      json[r'effectiveDate'] = _dateFormatter.format(this.effectiveDate.toUtc());
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
-    if (this.state != null) {
       json[r'state'] = this.state;
-    } else {
-      json[r'state'] = null;
-    }
-    if (this.venue != null) {
       json[r'venue'] = this.venue;
-    } else {
-      json[r'venue'] = null;
-    }
     return json;
   }
 
@@ -105,14 +65,22 @@ class ProxyOccurrenceItem {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'effectiveDate'), 'Required key "ProxyOccurrenceItem[effectiveDate]" is missing from JSON.');
+        assert(json[r'effectiveDate'] != null, 'Required key "ProxyOccurrenceItem[effectiveDate]" has a null value in JSON.');
+        assert(json.containsKey(r'id'), 'Required key "ProxyOccurrenceItem[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "ProxyOccurrenceItem[id]" has a null value in JSON.');
+        assert(json.containsKey(r'state'), 'Required key "ProxyOccurrenceItem[state]" is missing from JSON.');
+        assert(json[r'state'] != null, 'Required key "ProxyOccurrenceItem[state]" has a null value in JSON.');
+        assert(json.containsKey(r'venue'), 'Required key "ProxyOccurrenceItem[venue]" is missing from JSON.');
+        assert(json[r'venue'] != null, 'Required key "ProxyOccurrenceItem[venue]" has a null value in JSON.');
         return true;
       }());
 
       return ProxyOccurrenceItem(
-        effectiveDate: mapDateTime(json, r'effectiveDate', r''),
-        id: mapValueOfType<String>(json, r'id'),
-        state: mapValueOfType<String>(json, r'state'),
-        venue: mapValueOfType<String>(json, r'venue'),
+        effectiveDate: mapDateTime(json, r'effectiveDate', r'')!,
+        id: mapValueOfType<String>(json, r'id')!,
+        state: mapValueOfType<String>(json, r'state')!,
+        venue: mapValueOfType<String>(json, r'venue')!,
       );
     }
     return null;
@@ -160,6 +128,10 @@ class ProxyOccurrenceItem {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'effectiveDate',
+    'id',
+    'state',
+    'venue',
   };
 }
 

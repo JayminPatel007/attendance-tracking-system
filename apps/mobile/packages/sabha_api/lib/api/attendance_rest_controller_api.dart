@@ -291,55 +291,6 @@ class AttendanceRestControllerApi {
     }
   }
 
-  /// Performs an HTTP 'GET /api/sabhas/{sabhaId}/monthly-compliance' operation and returns the [Response].
-  /// Parameters:
-  ///
-  /// * [String] sabhaId (required):
-  Future<Response> monthlyComplianceWithHttpInfo(String sabhaId, { Future<void>? abortTrigger, }) async {
-    // ignore: prefer_const_declarations
-    final path = r'/api/sabhas/{sabhaId}/monthly-compliance'
-      .replaceAll('{sabhaId}', sabhaId);
-
-    // ignore: prefer_final_locals
-    Object? postBody;
-
-    final queryParams = <QueryParam>[];
-    final headerParams = <String, String>{};
-    final formParams = <String, String>{};
-
-    const contentTypes = <String>[];
-
-
-    return apiClient.invokeAPI(
-      path,
-      'GET',
-      queryParams,
-      postBody,
-      headerParams,
-      formParams,
-      contentTypes.isEmpty ? null : contentTypes.first,
-      abortTrigger: abortTrigger,
-    );
-  }
-
-  /// Parameters:
-  ///
-  /// * [String] sabhaId (required):
-  Future<MonthlyComplianceResponse?> monthlyCompliance(String sabhaId, { Future<void>? abortTrigger, }) async {
-    final response = await monthlyComplianceWithHttpInfo(sabhaId, abortTrigger: abortTrigger,);
-    if (response.statusCode >= HttpStatus.badRequest) {
-      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
-    }
-    // When a remote server returns no body with a status of 204, we shall not decode it.
-    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
-    // FormatException when trying to decode an empty string.
-    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'MonthlyComplianceResponse',) as MonthlyComplianceResponse;
-    
-    }
-    return null;
-  }
-
   /// Performs an HTTP 'GET /api/sanchalak/monthly-sabhas' operation and returns the [Response].
   Future<Response> monthlySabhasWithHttpInfo({ Future<void>? abortTrigger, }) async {
     // ignore: prefer_const_declarations

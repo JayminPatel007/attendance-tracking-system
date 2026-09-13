@@ -626,14 +626,6 @@
         },
         "type" : "object"
       },
-      "MonthlyComplianceResponse" : {
-        "properties" : {
-          "needsOccurrence" : {
-            "type" : "boolean"
-          }
-        },
-        "type" : "object"
-      },
       "MonthlySabha" : {
         "properties" : {
           "needsOccurrence" : {
@@ -1810,33 +1802,6 @@
           }
         },
         "tags" : [ "password-reset-rest-controller" ]
-      }
-    },
-    "/api/sabhas/{sabhaId}/monthly-compliance" : {
-      "get" : {
-        "operationId" : "monthlyCompliance",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "sabhaId",
-          "required" : true,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MonthlyComplianceResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "attendance-rest-controller" ]
       }
     },
     "/api/sabhas/{sabhaId}/occurrences" : {

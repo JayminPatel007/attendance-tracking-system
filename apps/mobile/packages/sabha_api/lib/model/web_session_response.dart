@@ -13,37 +13,19 @@ part of openapi.api;
 class WebSessionResponse {
   /// Returns a new [WebSessionResponse] instance.
   WebSessionResponse({
-    this.madhyasthaKaryalaya,
-    this.regionalTeam,
-    this.sections = const {},
-    this.username,
+    required this.madhyasthaKaryalaya,
+    required this.regionalTeam,
+    this.sections = const [],
+    required this.username,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? madhyasthaKaryalaya;
+  bool madhyasthaKaryalaya;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? regionalTeam;
+  bool regionalTeam;
 
-  Set<WebSessionResponseSectionsEnum> sections;
+  List<WebSessionResponseSectionsEnum> sections;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? username;
+  String username;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is WebSessionResponse &&
@@ -55,32 +37,20 @@ class WebSessionResponse {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (madhyasthaKaryalaya == null ? 0 : madhyasthaKaryalaya!.hashCode) +
-    (regionalTeam == null ? 0 : regionalTeam!.hashCode) +
+    (madhyasthaKaryalaya.hashCode) +
+    (regionalTeam.hashCode) +
     (sections.hashCode) +
-    (username == null ? 0 : username!.hashCode);
+    (username.hashCode);
 
   @override
   String toString() => 'WebSessionResponse[madhyasthaKaryalaya=$madhyasthaKaryalaya, regionalTeam=$regionalTeam, sections=$sections, username=$username]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.madhyasthaKaryalaya != null) {
       json[r'madhyasthaKaryalaya'] = this.madhyasthaKaryalaya;
-    } else {
-      json[r'madhyasthaKaryalaya'] = null;
-    }
-    if (this.regionalTeam != null) {
       json[r'regionalTeam'] = this.regionalTeam;
-    } else {
-      json[r'regionalTeam'] = null;
-    }
-      json[r'sections'] = this.sections.toList(growable: false);
-    if (this.username != null) {
+      json[r'sections'] = this.sections;
       json[r'username'] = this.username;
-    } else {
-      json[r'username'] = null;
-    }
     return json;
   }
 
@@ -95,14 +65,22 @@ class WebSessionResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'madhyasthaKaryalaya'), 'Required key "WebSessionResponse[madhyasthaKaryalaya]" is missing from JSON.');
+        assert(json[r'madhyasthaKaryalaya'] != null, 'Required key "WebSessionResponse[madhyasthaKaryalaya]" has a null value in JSON.');
+        assert(json.containsKey(r'regionalTeam'), 'Required key "WebSessionResponse[regionalTeam]" is missing from JSON.');
+        assert(json[r'regionalTeam'] != null, 'Required key "WebSessionResponse[regionalTeam]" has a null value in JSON.');
+        assert(json.containsKey(r'sections'), 'Required key "WebSessionResponse[sections]" is missing from JSON.');
+        assert(json[r'sections'] != null, 'Required key "WebSessionResponse[sections]" has a null value in JSON.');
+        assert(json.containsKey(r'username'), 'Required key "WebSessionResponse[username]" is missing from JSON.');
+        assert(json[r'username'] != null, 'Required key "WebSessionResponse[username]" has a null value in JSON.');
         return true;
       }());
 
       return WebSessionResponse(
-        madhyasthaKaryalaya: mapValueOfType<bool>(json, r'madhyasthaKaryalaya'),
-        regionalTeam: mapValueOfType<bool>(json, r'regionalTeam'),
-        sections: WebSessionResponseSectionsEnum.listFromJson(json[r'sections']).toSet(),
-        username: mapValueOfType<String>(json, r'username'),
+        madhyasthaKaryalaya: mapValueOfType<bool>(json, r'madhyasthaKaryalaya')!,
+        regionalTeam: mapValueOfType<bool>(json, r'regionalTeam')!,
+        sections: WebSessionResponseSectionsEnum.listFromJson(json[r'sections']),
+        username: mapValueOfType<String>(json, r'username')!,
       );
     }
     return null;
@@ -150,6 +128,10 @@ class WebSessionResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'madhyasthaKaryalaya',
+    'regionalTeam',
+    'sections',
+    'username',
   };
 }
 

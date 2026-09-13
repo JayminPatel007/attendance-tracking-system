@@ -16,17 +16,15 @@ class DirectoryBffControllerApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'GET /bff/directory/search' operation and returns the [Response].
+  /// Performs an HTTP 'GET /bff/directory/name-search' operation and returns the [Response].
   /// Parameters:
   ///
-  /// * [String] mobile:
+  /// * [String] kshetraId (required):
   ///
-  /// * [String] name:
-  ///
-  /// * [String] kshetraId:
-  Future<Response> searchWithHttpInfo({ String? mobile, String? name, String? kshetraId, Future<void>? abortTrigger, }) async {
+  /// * [String] name (required):
+  Future<Response> nameSearchWithHttpInfo(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
     // ignore: prefer_const_declarations
-    final path = r'/bff/directory/search';
+    final path = r'/bff/directory/name-search';
 
     // ignore: prefer_final_locals
     Object? postBody;
@@ -35,15 +33,8 @@ class DirectoryBffControllerApi {
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
 
-    if (mobile != null) {
-      queryParams.addAll(_queryParams('', 'mobile', mobile));
-    }
-    if (name != null) {
-      queryParams.addAll(_queryParams('', 'name', name));
-    }
-    if (kshetraId != null) {
       queryParams.addAll(_queryParams('', 'kshetraId', kshetraId));
-    }
+      queryParams.addAll(_queryParams('', 'name', name));
 
     const contentTypes = <String>[];
 
@@ -62,13 +53,11 @@ class DirectoryBffControllerApi {
 
   /// Parameters:
   ///
-  /// * [String] mobile:
+  /// * [String] kshetraId (required):
   ///
-  /// * [String] name:
-  ///
-  /// * [String] kshetraId:
-  Future<Object?> search({ String? mobile, String? name, String? kshetraId, Future<void>? abortTrigger, }) async {
-    final response = await searchWithHttpInfo(mobile: mobile, name: name, kshetraId: kshetraId, abortTrigger: abortTrigger,);
+  /// * [String] name (required):
+  Future<List<NameCandidate>?> nameSearch(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
+    final response = await nameSearchWithHttpInfo(kshetraId, name, abortTrigger: abortTrigger,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -76,7 +65,65 @@ class DirectoryBffControllerApi {
     // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Object',) as Object;
+      final responseBody = await _decodeBodyBytes(response);
+      return (await apiClient.deserializeAsync(responseBody, 'List<NameCandidate>') as List)
+        .cast<NameCandidate>()
+        .toList(growable: false);
+
+    }
+    return null;
+  }
+
+  /// Look a Person up by their exact mobile number
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] mobile (required):
+  Future<Response> searchWithHttpInfo(String mobile, { Future<void>? abortTrigger, }) async {
+    // ignore: prefer_const_declarations
+    final path = r'/bff/directory/search';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+      queryParams.addAll(_queryParams('', 'mobile', mobile));
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+      abortTrigger: abortTrigger,
+    );
+  }
+
+  /// Look a Person up by their exact mobile number
+  ///
+  /// Parameters:
+  ///
+  /// * [String] mobile (required):
+  Future<PersonResponse?> search(String mobile, { Future<void>? abortTrigger, }) async {
+    final response = await searchWithHttpInfo(mobile, abortTrigger: abortTrigger,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PersonResponse',) as PersonResponse;
     
     }
     return null;

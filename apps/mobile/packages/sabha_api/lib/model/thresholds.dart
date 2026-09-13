@@ -13,25 +13,13 @@ part of openapi.api;
 class Thresholds {
   /// Returns a new [Thresholds] instance.
   Thresholds({
-    this.candidate,
-    this.priority,
+    required this.candidate,
+    required this.priority,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? candidate;
+  int candidate;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? priority;
+  int priority;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is Thresholds &&
@@ -41,24 +29,16 @@ class Thresholds {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (candidate == null ? 0 : candidate!.hashCode) +
-    (priority == null ? 0 : priority!.hashCode);
+    (candidate.hashCode) +
+    (priority.hashCode);
 
   @override
   String toString() => 'Thresholds[candidate=$candidate, priority=$priority]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.candidate != null) {
       json[r'candidate'] = this.candidate;
-    } else {
-      json[r'candidate'] = null;
-    }
-    if (this.priority != null) {
       json[r'priority'] = this.priority;
-    } else {
-      json[r'priority'] = null;
-    }
     return json;
   }
 
@@ -73,12 +53,16 @@ class Thresholds {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidate'), 'Required key "Thresholds[candidate]" is missing from JSON.');
+        assert(json[r'candidate'] != null, 'Required key "Thresholds[candidate]" has a null value in JSON.');
+        assert(json.containsKey(r'priority'), 'Required key "Thresholds[priority]" is missing from JSON.');
+        assert(json[r'priority'] != null, 'Required key "Thresholds[priority]" has a null value in JSON.');
         return true;
       }());
 
       return Thresholds(
-        candidate: mapValueOfType<int>(json, r'candidate'),
-        priority: mapValueOfType<int>(json, r'priority'),
+        candidate: mapValueOfType<int>(json, r'candidate')!,
+        priority: mapValueOfType<int>(json, r'priority')!,
       );
     }
     return null;
@@ -126,6 +110,8 @@ class Thresholds {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidate',
+    'priority',
   };
 }
 

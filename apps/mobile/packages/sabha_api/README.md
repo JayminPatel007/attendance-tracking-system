@@ -65,13 +65,12 @@ Class | Method | HTTP request | Description
 *AttendanceRestControllerApi* | [**currentOccurrence**](doc//AttendanceRestControllerApi.md#currentoccurrence) | **GET** /api/sanchalak/current-occurrence | 
 *AttendanceRestControllerApi* | [**currentRoster**](doc//AttendanceRestControllerApi.md#currentroster) | **GET** /api/sanchalak/current-roster | 
 *AttendanceRestControllerApi* | [**mark**](doc//AttendanceRestControllerApi.md#mark) | **POST** /api/occurrences/{occurrenceId}/markings | 
-*AttendanceRestControllerApi* | [**monthlyCompliance**](doc//AttendanceRestControllerApi.md#monthlycompliance) | **GET** /api/sabhas/{sabhaId}/monthly-compliance | 
 *AttendanceRestControllerApi* | [**monthlySabhas**](doc//AttendanceRestControllerApi.md#monthlysabhas) | **GET** /api/sanchalak/monthly-sabhas | 
 *AttendanceRestControllerApi* | [**reschedule1**](doc//AttendanceRestControllerApi.md#reschedule1) | **POST** /api/occurrences/{occurrenceId}/reschedule | 
 *AttendanceRestControllerApi* | [**revert**](doc//AttendanceRestControllerApi.md#revert) | **POST** /api/occurrences/{occurrenceId}/revert | 
 *AttendanceRestControllerApi* | [**venueOverride1**](doc//AttendanceRestControllerApi.md#venueoverride1) | **POST** /api/occurrences/{occurrenceId}/venue-override | 
 *AttendanceRestControllerApi* | [**walkIn**](doc//AttendanceRestControllerApi.md#walkin) | **POST** /api/occurrences/{occurrenceId}/walk-ins | 
-*AuditLogBffControllerApi* | [**list1**](doc//AuditLogBffControllerApi.md#list1) | **GET** /bff/audit-log | 
+*AuditLogBffControllerApi* | [**listAuditEntries**](doc//AuditLogBffControllerApi.md#listauditentries) | **GET** /bff/audit-log | Read the caller's scoped audit feed
 *BffSessionControllerApi* | [**me**](doc//BffSessionControllerApi.md#me) | **GET** /bff/me | 
 *DashboardBffControllerApi* | [**chooseCity**](doc//DashboardBffControllerApi.md#choosecity) | **POST** /bff/dashboard/city | 
 *DashboardBffControllerApi* | [**overview**](doc//DashboardBffControllerApi.md#overview) | **GET** /bff/dashboard/overview | 
@@ -80,7 +79,8 @@ Class | Method | HTTP request | Description
 *DashboardBffControllerApi* | [**scope**](doc//DashboardBffControllerApi.md#scope) | **GET** /bff/dashboard/scope | 
 *DashboardBffControllerApi* | [**thresholds**](doc//DashboardBffControllerApi.md#thresholds) | **GET** /bff/dashboard/thresholds | 
 *DashboardBffControllerApi* | [**updateThresholds**](doc//DashboardBffControllerApi.md#updatethresholds) | **PUT** /bff/dashboard/thresholds | 
-*DirectoryBffControllerApi* | [**search**](doc//DirectoryBffControllerApi.md#search) | **GET** /bff/directory/search | 
+*DirectoryBffControllerApi* | [**nameSearch**](doc//DirectoryBffControllerApi.md#namesearch) | **GET** /bff/directory/name-search | 
+*DirectoryBffControllerApi* | [**search**](doc//DirectoryBffControllerApi.md#search) | **GET** /bff/directory/search | Look a Person up by their exact mobile number
 *HomeSabhaTransferRestControllerApi* | [**confirm**](doc//HomeSabhaTransferRestControllerApi.md#confirm) | **POST** /api/home-sabha-transfers/{id}/confirm | 
 *HomeSabhaTransferRestControllerApi* | [**initiate**](doc//HomeSabhaTransferRestControllerApi.md#initiate) | **POST** /api/home-sabha-transfers | 
 *IdentityRestControllerApi* | [**whoami**](doc//IdentityRestControllerApi.md#whoami) | **GET** /api/whoami | 
@@ -93,7 +93,7 @@ Class | Method | HTTP request | Description
 *PersonDirectoryRestControllerApi* | [**add**](doc//PersonDirectoryRestControllerApi.md#add) | **POST** /api/directory/persons | 
 *PersonDirectoryRestControllerApi* | [**byMobile**](doc//PersonDirectoryRestControllerApi.md#bymobile) | **GET** /api/directory/persons | Look a Person up by their exact mobile number
 *PersonDirectoryRestControllerApi* | [**detail**](doc//PersonDirectoryRestControllerApi.md#detail) | **GET** /api/directory/persons/{id} | 
-*PersonDirectoryRestControllerApi* | [**nameSearch**](doc//PersonDirectoryRestControllerApi.md#namesearch) | **GET** /api/directory/name-search | 
+*PersonDirectoryRestControllerApi* | [**nameSearch1**](doc//PersonDirectoryRestControllerApi.md#namesearch1) | **GET** /api/directory/name-search | 
 *PersonDirectoryRestControllerApi* | [**walkInSearch**](doc//PersonDirectoryRestControllerApi.md#walkinsearch) | **GET** /api/directory/walk-in-search | 
 *RoleAppointmentControllerApi* | [**appoint**](doc//RoleAppointmentControllerApi.md#appoint) | **POST** /bff/appointments | 
 *RoleAppointmentControllerApi* | [**revoke**](doc//RoleAppointmentControllerApi.md#revoke) | **POST** /bff/appointments/{id}/revoke | 
@@ -166,7 +166,6 @@ Class | Method | HTTP request | Description
  - [KshetraView](doc//KshetraView.md)
  - [MarkRequest](doc//MarkRequest.md)
  - [MarkingItem](doc//MarkingItem.md)
- - [MonthlyComplianceResponse](doc//MonthlyComplianceResponse.md)
  - [MonthlySabha](doc//MonthlySabha.md)
  - [NameCandidate](doc//NameCandidate.md)
  - [NewPersonPayload](doc//NewPersonPayload.md)

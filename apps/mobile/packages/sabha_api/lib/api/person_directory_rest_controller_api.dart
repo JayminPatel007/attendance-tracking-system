@@ -174,7 +174,7 @@ class PersonDirectoryRestControllerApi {
   /// * [String] kshetraId (required):
   ///
   /// * [String] name (required):
-  Future<Response> nameSearchWithHttpInfo(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
+  Future<Response> nameSearch1WithHttpInfo(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
     // ignore: prefer_const_declarations
     final path = r'/api/directory/name-search';
 
@@ -208,8 +208,8 @@ class PersonDirectoryRestControllerApi {
   /// * [String] kshetraId (required):
   ///
   /// * [String] name (required):
-  Future<List<NameCandidate>?> nameSearch(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
-    final response = await nameSearchWithHttpInfo(kshetraId, name, abortTrigger: abortTrigger,);
+  Future<List<NameCandidate>?> nameSearch1(String kshetraId, String name, { Future<void>? abortTrigger, }) async {
+    final response = await nameSearch1WithHttpInfo(kshetraId, name, abortTrigger: abortTrigger,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }

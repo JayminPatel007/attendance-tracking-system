@@ -14,44 +14,20 @@ class SabhaDefinitionResponse {
   /// Returns a new [SabhaDefinitionResponse] instance.
   SabhaDefinitionResponse({
     this.candidates = const [],
-    this.requiresOverride,
-    this.sabhaId,
-    this.sahSanchalakAssignmentId,
-    this.sanchalakAssignmentId,
+    required this.requiresOverride,
+    required this.sabhaId,
+    required this.sahSanchalakAssignmentId,
+    required this.sanchalakAssignmentId,
   });
 
   List<NameCandidate> candidates;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? requiresOverride;
+  bool requiresOverride;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? sabhaId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? sahSanchalakAssignmentId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? sanchalakAssignmentId;
 
   @override
@@ -66,7 +42,7 @@ class SabhaDefinitionResponse {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (candidates.hashCode) +
-    (requiresOverride == null ? 0 : requiresOverride!.hashCode) +
+    (requiresOverride.hashCode) +
     (sabhaId == null ? 0 : sabhaId!.hashCode) +
     (sahSanchalakAssignmentId == null ? 0 : sahSanchalakAssignmentId!.hashCode) +
     (sanchalakAssignmentId == null ? 0 : sanchalakAssignmentId!.hashCode);
@@ -77,11 +53,7 @@ class SabhaDefinitionResponse {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'candidates'] = this.candidates;
-    if (this.requiresOverride != null) {
       json[r'requiresOverride'] = this.requiresOverride;
-    } else {
-      json[r'requiresOverride'] = null;
-    }
     if (this.sabhaId != null) {
       json[r'sabhaId'] = this.sabhaId;
     } else {
@@ -111,12 +83,19 @@ class SabhaDefinitionResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidates'), 'Required key "SabhaDefinitionResponse[candidates]" is missing from JSON.');
+        assert(json[r'candidates'] != null, 'Required key "SabhaDefinitionResponse[candidates]" has a null value in JSON.');
+        assert(json.containsKey(r'requiresOverride'), 'Required key "SabhaDefinitionResponse[requiresOverride]" is missing from JSON.');
+        assert(json[r'requiresOverride'] != null, 'Required key "SabhaDefinitionResponse[requiresOverride]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaId'), 'Required key "SabhaDefinitionResponse[sabhaId]" is missing from JSON.');
+        assert(json.containsKey(r'sahSanchalakAssignmentId'), 'Required key "SabhaDefinitionResponse[sahSanchalakAssignmentId]" is missing from JSON.');
+        assert(json.containsKey(r'sanchalakAssignmentId'), 'Required key "SabhaDefinitionResponse[sanchalakAssignmentId]" is missing from JSON.');
         return true;
       }());
 
       return SabhaDefinitionResponse(
         candidates: NameCandidate.listFromJson(json[r'candidates']),
-        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride'),
+        requiresOverride: mapValueOfType<bool>(json, r'requiresOverride')!,
         sabhaId: mapValueOfType<String>(json, r'sabhaId'),
         sahSanchalakAssignmentId: mapValueOfType<String>(json, r'sahSanchalakAssignmentId'),
         sanchalakAssignmentId: mapValueOfType<String>(json, r'sanchalakAssignmentId'),
@@ -167,6 +146,11 @@ class SabhaDefinitionResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidates',
+    'requiresOverride',
+    'sabhaId',
+    'sahSanchalakAssignmentId',
+    'sanchalakAssignmentId',
   };
 }
 

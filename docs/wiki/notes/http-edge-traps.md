@@ -7,9 +7,10 @@ source_paths: [
   apps/backend/common-application/src/main/**,
   apps/backend/common-application/pom.xml,
   apps/backend/application-container/src/main/java/org/sabha/container/OpenApiConfig.java,
-  apps/backend/application-container/src/main/java/org/sabha/container/SecurityConfig.java
+  apps/backend/application-container/src/main/java/org/sabha/container/SecurityConfig.java,
+  apps/backend/application-container/src/test/java/org/sabha/container/IntraModuleArchitectureRulesTest.java
 ]
-last_verified: a6fc042a1eb09ad76e014c33fcf2a4aa09ee9f99
+last_verified: 0bbc9ab1874f015c13decf8b7785261de4efb123
 ---
 
 # HTTP Edge Traps
@@ -46,3 +47,39 @@ handler is on the wire.
 string, not the `Authentication`.
 
 **Discovered** · 2026-09-13, issue #203 review.
+
+## A handler that omits `@CurrentUser` is invisible to every gate in the build
+
+**Symptom** · `GET /api/sabhas/{sabhaId}/monthly-compliance` shipped in Slice 12 taking no principal
+at all, and stayed that way for four months. `SecurityConfig` is `anyRequest().authenticated()` on
+both chains and there is no `@PreAuthorize` in the codebase, so any authenticated user could ask
+about any Sabha id.
+
+**Cause** · Nothing fails when a parameter is *absent*. The compiler is happy, springdoc documents
+the endpoint like any other, and the drift gate (issue #73) compares the document to the controllers
+— it has no opinion about what the controllers should say. ADR-0030's sweep converted the endpoints
+that parsed a subject; this one had nothing to convert, so it was never visited. An omission is not a
+diff.
+
+**Fix** · `every_handler_resolves_its_caller` in `IntraModuleArchitectureRulesTest` requires a
+`@CurrentUser` parameter on every HTTP-mapped method in a `*-application` module, against a named
+exemption list. The list fails three ways, not one: an unexempt handler without a caller, an exempt
+handler that has *since gained* one, and an entry matching no handler. The second and third are what
+stop it becoming a list that only grows.
+
+**Also worth knowing** · Reaching a query port straight from a handler is *not* the smell here —
+nine controllers do it and that is the accepted shape (see issue #203's wrapper rule, which pushes
+in the same direction). The invariant is narrower: the handler resolves a caller and passes it down.
+
+**Discovered** · 2026-09-13, issue #209.
+
+## ADR-0012's Nirdeshak-side view of the Compliance Nudge was never built
+
+Not a trap — a fact that reads like one. ADR-0012 says the nudge is surfaced "to the Sanchalak (and
+visibility for the Nirdeshak)". Only the Sanchalak half exists, via `GET /api/sanchalak/monthly-sabhas`.
+The per-Sabha `monthly-compliance` endpoint deleted in issue #209 *looked* like the Nirdeshak half
+and was not — nothing ever called it, and it resolved no caller, so it could not have scoped a read
+to a Nirdeshak anyway. If you are building that view, you are starting from zero, not restoring
+something.
+
+**Discovered** · 2026-09-13, issue #209.

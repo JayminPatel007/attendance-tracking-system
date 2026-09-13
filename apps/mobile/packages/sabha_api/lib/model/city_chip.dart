@@ -14,26 +14,14 @@ class CityChip {
   /// Returns a new [CityChip] instance.
   CityChip({
     this.cities = const [],
-    this.sant,
-    this.selectedCityId,
+    required this.sant,
+    required this.selectedCityId,
   });
 
   List<CityOption> cities;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? sant;
+  bool sant;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? selectedCityId;
 
   @override
@@ -46,7 +34,7 @@ class CityChip {
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (cities.hashCode) +
-    (sant == null ? 0 : sant!.hashCode) +
+    (sant.hashCode) +
     (selectedCityId == null ? 0 : selectedCityId!.hashCode);
 
   @override
@@ -55,11 +43,7 @@ class CityChip {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'cities'] = this.cities;
-    if (this.sant != null) {
       json[r'sant'] = this.sant;
-    } else {
-      json[r'sant'] = null;
-    }
     if (this.selectedCityId != null) {
       json[r'selectedCityId'] = this.selectedCityId;
     } else {
@@ -79,12 +63,17 @@ class CityChip {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'cities'), 'Required key "CityChip[cities]" is missing from JSON.');
+        assert(json[r'cities'] != null, 'Required key "CityChip[cities]" has a null value in JSON.');
+        assert(json.containsKey(r'sant'), 'Required key "CityChip[sant]" is missing from JSON.');
+        assert(json[r'sant'] != null, 'Required key "CityChip[sant]" has a null value in JSON.');
+        assert(json.containsKey(r'selectedCityId'), 'Required key "CityChip[selectedCityId]" is missing from JSON.');
         return true;
       }());
 
       return CityChip(
         cities: CityOption.listFromJson(json[r'cities']),
-        sant: mapValueOfType<bool>(json, r'sant'),
+        sant: mapValueOfType<bool>(json, r'sant')!,
         selectedCityId: mapValueOfType<String>(json, r'selectedCityId'),
       );
     }
@@ -133,6 +122,9 @@ class CityChip {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'cities',
+    'sant',
+    'selectedCityId',
   };
 }
 

@@ -13,58 +13,28 @@ part of openapi.api;
 class SabhaView {
   /// Returns a new [SabhaView] instance.
   SabhaView({
-    this.demographic,
-    this.id,
-    this.kshetraId,
-    this.kshetraName,
-    this.occurrenceCount,
-    this.standingVenue,
-    this.track,
+    required this.demographic,
+    required this.id,
+    required this.kshetraId,
+    required this.kshetraName,
+    required this.occurrenceCount,
+    required this.standingVenue,
+    required this.track,
   });
 
-  SabhaViewDemographicEnum? demographic;
+  SabhaViewDemographicEnum demographic;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? kshetraId;
+  String kshetraId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? kshetraName;
+  String kshetraName;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? occurrenceCount;
+  int occurrenceCount;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? standingVenue;
+  String standingVenue;
 
-  SabhaViewTrackEnum? track;
+  SabhaViewTrackEnum track;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SabhaView &&
@@ -79,54 +49,26 @@ class SabhaView {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (demographic == null ? 0 : demographic!.hashCode) +
-    (id == null ? 0 : id!.hashCode) +
-    (kshetraId == null ? 0 : kshetraId!.hashCode) +
-    (kshetraName == null ? 0 : kshetraName!.hashCode) +
-    (occurrenceCount == null ? 0 : occurrenceCount!.hashCode) +
-    (standingVenue == null ? 0 : standingVenue!.hashCode) +
-    (track == null ? 0 : track!.hashCode);
+    (demographic.hashCode) +
+    (id.hashCode) +
+    (kshetraId.hashCode) +
+    (kshetraName.hashCode) +
+    (occurrenceCount.hashCode) +
+    (standingVenue.hashCode) +
+    (track.hashCode);
 
   @override
   String toString() => 'SabhaView[demographic=$demographic, id=$id, kshetraId=$kshetraId, kshetraName=$kshetraName, occurrenceCount=$occurrenceCount, standingVenue=$standingVenue, track=$track]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.demographic != null) {
       json[r'demographic'] = this.demographic;
-    } else {
-      json[r'demographic'] = null;
-    }
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
-    if (this.kshetraId != null) {
       json[r'kshetraId'] = this.kshetraId;
-    } else {
-      json[r'kshetraId'] = null;
-    }
-    if (this.kshetraName != null) {
       json[r'kshetraName'] = this.kshetraName;
-    } else {
-      json[r'kshetraName'] = null;
-    }
-    if (this.occurrenceCount != null) {
       json[r'occurrenceCount'] = this.occurrenceCount;
-    } else {
-      json[r'occurrenceCount'] = null;
-    }
-    if (this.standingVenue != null) {
       json[r'standingVenue'] = this.standingVenue;
-    } else {
-      json[r'standingVenue'] = null;
-    }
-    if (this.track != null) {
       json[r'track'] = this.track;
-    } else {
-      json[r'track'] = null;
-    }
     return json;
   }
 
@@ -141,17 +83,31 @@ class SabhaView {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'demographic'), 'Required key "SabhaView[demographic]" is missing from JSON.');
+        assert(json[r'demographic'] != null, 'Required key "SabhaView[demographic]" has a null value in JSON.');
+        assert(json.containsKey(r'id'), 'Required key "SabhaView[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "SabhaView[id]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetraId'), 'Required key "SabhaView[kshetraId]" is missing from JSON.');
+        assert(json[r'kshetraId'] != null, 'Required key "SabhaView[kshetraId]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetraName'), 'Required key "SabhaView[kshetraName]" is missing from JSON.');
+        assert(json[r'kshetraName'] != null, 'Required key "SabhaView[kshetraName]" has a null value in JSON.');
+        assert(json.containsKey(r'occurrenceCount'), 'Required key "SabhaView[occurrenceCount]" is missing from JSON.');
+        assert(json[r'occurrenceCount'] != null, 'Required key "SabhaView[occurrenceCount]" has a null value in JSON.');
+        assert(json.containsKey(r'standingVenue'), 'Required key "SabhaView[standingVenue]" is missing from JSON.');
+        assert(json[r'standingVenue'] != null, 'Required key "SabhaView[standingVenue]" has a null value in JSON.');
+        assert(json.containsKey(r'track'), 'Required key "SabhaView[track]" is missing from JSON.');
+        assert(json[r'track'] != null, 'Required key "SabhaView[track]" has a null value in JSON.');
         return true;
       }());
 
       return SabhaView(
-        demographic: SabhaViewDemographicEnum.fromJson(json[r'demographic']),
-        id: mapValueOfType<String>(json, r'id'),
-        kshetraId: mapValueOfType<String>(json, r'kshetraId'),
-        kshetraName: mapValueOfType<String>(json, r'kshetraName'),
-        occurrenceCount: mapValueOfType<int>(json, r'occurrenceCount'),
-        standingVenue: mapValueOfType<String>(json, r'standingVenue'),
-        track: SabhaViewTrackEnum.fromJson(json[r'track']),
+        demographic: SabhaViewDemographicEnum.fromJson(json[r'demographic'])!,
+        id: mapValueOfType<String>(json, r'id')!,
+        kshetraId: mapValueOfType<String>(json, r'kshetraId')!,
+        kshetraName: mapValueOfType<String>(json, r'kshetraName')!,
+        occurrenceCount: mapValueOfType<int>(json, r'occurrenceCount')!,
+        standingVenue: mapValueOfType<String>(json, r'standingVenue')!,
+        track: SabhaViewTrackEnum.fromJson(json[r'track'])!,
       );
     }
     return null;
@@ -199,6 +155,13 @@ class SabhaView {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'demographic',
+    'id',
+    'kshetraId',
+    'kshetraName',
+    'occurrenceCount',
+    'standingVenue',
+    'track',
   };
 }
 

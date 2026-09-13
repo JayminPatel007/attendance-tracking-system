@@ -13,37 +13,19 @@ part of openapi.api;
 class Zone {
   /// Returns a new [Zone] instance.
   Zone({
-    this.candidateCount,
+    required this.candidateCount,
     this.kshetras = const [],
-    this.zoneId,
-    this.zoneName,
+    required this.zoneId,
+    required this.zoneName,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? candidateCount;
+  int candidateCount;
 
   List<Kshetra> kshetras;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? zoneId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? zoneName;
+  String zoneName;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is Zone &&
@@ -55,32 +37,24 @@ class Zone {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (candidateCount == null ? 0 : candidateCount!.hashCode) +
+    (candidateCount.hashCode) +
     (kshetras.hashCode) +
     (zoneId == null ? 0 : zoneId!.hashCode) +
-    (zoneName == null ? 0 : zoneName!.hashCode);
+    (zoneName.hashCode);
 
   @override
   String toString() => 'Zone[candidateCount=$candidateCount, kshetras=$kshetras, zoneId=$zoneId, zoneName=$zoneName]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.candidateCount != null) {
       json[r'candidateCount'] = this.candidateCount;
-    } else {
-      json[r'candidateCount'] = null;
-    }
       json[r'kshetras'] = this.kshetras;
     if (this.zoneId != null) {
       json[r'zoneId'] = this.zoneId;
     } else {
       json[r'zoneId'] = null;
     }
-    if (this.zoneName != null) {
       json[r'zoneName'] = this.zoneName;
-    } else {
-      json[r'zoneName'] = null;
-    }
     return json;
   }
 
@@ -95,14 +69,21 @@ class Zone {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'candidateCount'), 'Required key "Zone[candidateCount]" is missing from JSON.');
+        assert(json[r'candidateCount'] != null, 'Required key "Zone[candidateCount]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetras'), 'Required key "Zone[kshetras]" is missing from JSON.');
+        assert(json[r'kshetras'] != null, 'Required key "Zone[kshetras]" has a null value in JSON.');
+        assert(json.containsKey(r'zoneId'), 'Required key "Zone[zoneId]" is missing from JSON.');
+        assert(json.containsKey(r'zoneName'), 'Required key "Zone[zoneName]" is missing from JSON.');
+        assert(json[r'zoneName'] != null, 'Required key "Zone[zoneName]" has a null value in JSON.');
         return true;
       }());
 
       return Zone(
-        candidateCount: mapValueOfType<int>(json, r'candidateCount'),
+        candidateCount: mapValueOfType<int>(json, r'candidateCount')!,
         kshetras: Kshetra.listFromJson(json[r'kshetras']),
         zoneId: mapValueOfType<String>(json, r'zoneId'),
-        zoneName: mapValueOfType<String>(json, r'zoneName'),
+        zoneName: mapValueOfType<String>(json, r'zoneName')!,
       );
     }
     return null;
@@ -150,6 +131,10 @@ class Zone {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'candidateCount',
+    'kshetras',
+    'zoneId',
+    'zoneName',
   };
 }
 

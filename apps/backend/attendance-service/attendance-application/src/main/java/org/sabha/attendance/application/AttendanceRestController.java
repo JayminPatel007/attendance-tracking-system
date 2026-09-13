@@ -1,6 +1,5 @@
 package org.sabha.attendance.application;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,7 +14,6 @@ import org.sabha.attendance.applicationservice.CurrentRosterQuery;
 import org.sabha.attendance.applicationservice.ListSanchalakMonthlySabhasUseCase;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
-import org.sabha.attendance.applicationservice.MonthlyComplianceQuery;
 import org.sabha.attendance.applicationservice.MonthlySabha;
 import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
@@ -39,9 +37,7 @@ public class AttendanceRestController {
     private final SyncAttendanceApplicationService syncAttendance;
     private final OccurrenceShapingService shapeOccurrence;
     private final CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence;
-    private final MonthlyComplianceQuery monthlyCompliance;
     private final ListSanchalakMonthlySabhasUseCase listMonthlySabhas;
-    private final Clock clock;
 
     public AttendanceRestController(
             CurrentRosterQuery currentRoster,
@@ -50,18 +46,14 @@ public class AttendanceRestController {
             SyncAttendanceApplicationService syncAttendance,
             OccurrenceShapingService shapeOccurrence,
             CreateMonthlyOccurrenceApplicationService createMonthlyOccurrence,
-            MonthlyComplianceQuery monthlyCompliance,
-            ListSanchalakMonthlySabhasUseCase listMonthlySabhas,
-            Clock clock) {
+            ListSanchalakMonthlySabhasUseCase listMonthlySabhas) {
         this.currentRoster = currentRoster;
         this.currentOccurrence = currentOccurrence;
         this.markAttendance = markAttendance;
         this.syncAttendance = syncAttendance;
         this.shapeOccurrence = shapeOccurrence;
         this.createMonthlyOccurrence = createMonthlyOccurrence;
-        this.monthlyCompliance = monthlyCompliance;
         this.listMonthlySabhas = listMonthlySabhas;
-        this.clock = clock;
     }
 
     @GetMapping("/api/sanchalak/current-roster")
@@ -161,19 +153,10 @@ public class AttendanceRestController {
         return listMonthlySabhas.execute(caller);
     }
 
-    @GetMapping("/api/sabhas/{sabhaId}/monthly-compliance")
-    public ResponseEntity<MonthlyComplianceResponse> monthlyCompliance(@PathVariable UUID sabhaId) {
-        boolean needsOccurrence = monthlyCompliance.needsOccurrence(sabhaId, LocalDate.now(clock));
-        return ResponseEntity.ok(new MonthlyComplianceResponse(needsOccurrence));
-    }
-
     public record CreateOccurrenceRequest(LocalDate date, LocalTime startTime, LocalTime endTime, String venue) {
     }
 
     public record CreatedOccurrenceResponse(UUID occurrenceId) {
-    }
-
-    public record MonthlyComplianceResponse(boolean needsOccurrence) {
     }
 
     public record CancelRequest(String reason) {

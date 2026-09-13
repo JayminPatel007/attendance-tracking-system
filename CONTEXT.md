@@ -55,6 +55,11 @@ The selective program for the youth tier, structurally identical to BSS — para
 **Selection (BSS / YSS)**:
 A child or youth joins the selective program via a two-step flow: their **Regular Sanchalak nominates**, and the **demographic Nirdeshak approves** (the same Nirdeshak who oversees both Regular and the selective track for that demographic). Approval adds the Person to the selective Sabha's Roster — a new Home Sabha in the `(demographic, BSS)` or `(demographic, YSS)` kind. Deselection is the inverse and removes that additional Home Sabha; the Regular Home Sabha is unaffected. **Criteria are not system-enforced** — the Sanchalak and Nirdeshak apply their own judgment about spiritual readiness and engagement; the system facilitates the workflow and audits who nominated and approved, but doesn't constrain who is eligible.
 
+**Compliance Nudge**:
+A soft warning that a monthly-ad-hoc Sabha has held no Occurrence this calendar month, raised once the month is past its midpoint. The "one Occurrence per calendar month" rule is an organisational expectation, not a system constraint, so the nudge **never blocks** anything: the Sanchalak can ignore it, and a month can end with no Occurrence at all. It is addressed to the Sanchalak, who is the only one who can act on it by creating the Occurrence. A weekly-recurring Sabha is never nudged — its Occurrences are materialized for it, so there is nothing for a person to forget.
+_Avoid_: Violation, breach, overdue, missed Sabha (all imply enforcement or fault)
+
+
 ### Geographic hierarchy (top-down)
 
 **State** → **City** → **Zone** → **Kshetra** → **Sabha**

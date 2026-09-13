@@ -13,16 +13,10 @@ part of openapi.api;
 class VerifyResponse {
   /// Returns a new [VerifyResponse] instance.
   VerifyResponse({
-    this.resetToken,
+    required this.resetToken,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? resetToken;
+  String resetToken;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is VerifyResponse &&
@@ -31,18 +25,14 @@ class VerifyResponse {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (resetToken == null ? 0 : resetToken!.hashCode);
+    (resetToken.hashCode);
 
   @override
   String toString() => 'VerifyResponse[resetToken=$resetToken]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.resetToken != null) {
       json[r'resetToken'] = this.resetToken;
-    } else {
-      json[r'resetToken'] = null;
-    }
     return json;
   }
 
@@ -57,11 +47,13 @@ class VerifyResponse {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'resetToken'), 'Required key "VerifyResponse[resetToken]" is missing from JSON.');
+        assert(json[r'resetToken'] != null, 'Required key "VerifyResponse[resetToken]" has a null value in JSON.');
         return true;
       }());
 
       return VerifyResponse(
-        resetToken: mapValueOfType<String>(json, r'resetToken'),
+        resetToken: mapValueOfType<String>(json, r'resetToken')!,
       );
     }
     return null;
@@ -109,6 +101,7 @@ class VerifyResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'resetToken',
   };
 }
 

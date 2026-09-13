@@ -62,7 +62,6 @@ model/kshetra.ts
 model/mark-request.ts
 model/marking-item.ts
 model/models.ts
-model/monthly-compliance-response.ts
 model/monthly-sabha.ts
 model/name-candidate.ts
 model/new-person-payload.ts

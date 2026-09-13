@@ -13,79 +13,31 @@ part of openapi.api;
 class ReopenListItem {
   /// Returns a new [ReopenListItem] instance.
   ReopenListItem({
-    this.date,
-    this.kshetraName,
-    this.lastReopenReason,
-    this.occurrenceId,
-    this.reopened,
-    this.sabhaKind,
-    this.state,
-    this.venue,
+    required this.date,
+    required this.kshetraName,
+    required this.lastReopenReason,
+    required this.occurrenceId,
+    required this.reopened,
+    required this.sabhaKind,
+    required this.state,
+    required this.venue,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  DateTime? date;
+  DateTime date;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? kshetraName;
+  String kshetraName;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
   String? lastReopenReason;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? occurrenceId;
+  String occurrenceId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? reopened;
+  bool reopened;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? sabhaKind;
+  String sabhaKind;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? state;
+  String state;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? venue;
+  String venue;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is ReopenListItem &&
@@ -101,60 +53,32 @@ class ReopenListItem {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (date == null ? 0 : date!.hashCode) +
-    (kshetraName == null ? 0 : kshetraName!.hashCode) +
+    (date.hashCode) +
+    (kshetraName.hashCode) +
     (lastReopenReason == null ? 0 : lastReopenReason!.hashCode) +
-    (occurrenceId == null ? 0 : occurrenceId!.hashCode) +
-    (reopened == null ? 0 : reopened!.hashCode) +
-    (sabhaKind == null ? 0 : sabhaKind!.hashCode) +
-    (state == null ? 0 : state!.hashCode) +
-    (venue == null ? 0 : venue!.hashCode);
+    (occurrenceId.hashCode) +
+    (reopened.hashCode) +
+    (sabhaKind.hashCode) +
+    (state.hashCode) +
+    (venue.hashCode);
 
   @override
   String toString() => 'ReopenListItem[date=$date, kshetraName=$kshetraName, lastReopenReason=$lastReopenReason, occurrenceId=$occurrenceId, reopened=$reopened, sabhaKind=$sabhaKind, state=$state, venue=$venue]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.date != null) {
-      json[r'date'] = _dateFormatter.format(this.date!.toUtc());
-    } else {
-      json[r'date'] = null;
-    }
-    if (this.kshetraName != null) {
+      json[r'date'] = _dateFormatter.format(this.date.toUtc());
       json[r'kshetraName'] = this.kshetraName;
-    } else {
-      json[r'kshetraName'] = null;
-    }
     if (this.lastReopenReason != null) {
       json[r'lastReopenReason'] = this.lastReopenReason;
     } else {
       json[r'lastReopenReason'] = null;
     }
-    if (this.occurrenceId != null) {
       json[r'occurrenceId'] = this.occurrenceId;
-    } else {
-      json[r'occurrenceId'] = null;
-    }
-    if (this.reopened != null) {
       json[r'reopened'] = this.reopened;
-    } else {
-      json[r'reopened'] = null;
-    }
-    if (this.sabhaKind != null) {
       json[r'sabhaKind'] = this.sabhaKind;
-    } else {
-      json[r'sabhaKind'] = null;
-    }
-    if (this.state != null) {
       json[r'state'] = this.state;
-    } else {
-      json[r'state'] = null;
-    }
-    if (this.venue != null) {
       json[r'venue'] = this.venue;
-    } else {
-      json[r'venue'] = null;
-    }
     return json;
   }
 
@@ -169,18 +93,33 @@ class ReopenListItem {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'date'), 'Required key "ReopenListItem[date]" is missing from JSON.');
+        assert(json[r'date'] != null, 'Required key "ReopenListItem[date]" has a null value in JSON.');
+        assert(json.containsKey(r'kshetraName'), 'Required key "ReopenListItem[kshetraName]" is missing from JSON.');
+        assert(json[r'kshetraName'] != null, 'Required key "ReopenListItem[kshetraName]" has a null value in JSON.');
+        assert(json.containsKey(r'lastReopenReason'), 'Required key "ReopenListItem[lastReopenReason]" is missing from JSON.');
+        assert(json.containsKey(r'occurrenceId'), 'Required key "ReopenListItem[occurrenceId]" is missing from JSON.');
+        assert(json[r'occurrenceId'] != null, 'Required key "ReopenListItem[occurrenceId]" has a null value in JSON.');
+        assert(json.containsKey(r'reopened'), 'Required key "ReopenListItem[reopened]" is missing from JSON.');
+        assert(json[r'reopened'] != null, 'Required key "ReopenListItem[reopened]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaKind'), 'Required key "ReopenListItem[sabhaKind]" is missing from JSON.');
+        assert(json[r'sabhaKind'] != null, 'Required key "ReopenListItem[sabhaKind]" has a null value in JSON.');
+        assert(json.containsKey(r'state'), 'Required key "ReopenListItem[state]" is missing from JSON.');
+        assert(json[r'state'] != null, 'Required key "ReopenListItem[state]" has a null value in JSON.');
+        assert(json.containsKey(r'venue'), 'Required key "ReopenListItem[venue]" is missing from JSON.');
+        assert(json[r'venue'] != null, 'Required key "ReopenListItem[venue]" has a null value in JSON.');
         return true;
       }());
 
       return ReopenListItem(
-        date: mapDateTime(json, r'date', r''),
-        kshetraName: mapValueOfType<String>(json, r'kshetraName'),
+        date: mapDateTime(json, r'date', r'')!,
+        kshetraName: mapValueOfType<String>(json, r'kshetraName')!,
         lastReopenReason: mapValueOfType<String>(json, r'lastReopenReason'),
-        occurrenceId: mapValueOfType<String>(json, r'occurrenceId'),
-        reopened: mapValueOfType<bool>(json, r'reopened'),
-        sabhaKind: mapValueOfType<String>(json, r'sabhaKind'),
-        state: mapValueOfType<String>(json, r'state'),
-        venue: mapValueOfType<String>(json, r'venue'),
+        occurrenceId: mapValueOfType<String>(json, r'occurrenceId')!,
+        reopened: mapValueOfType<bool>(json, r'reopened')!,
+        sabhaKind: mapValueOfType<String>(json, r'sabhaKind')!,
+        state: mapValueOfType<String>(json, r'state')!,
+        venue: mapValueOfType<String>(json, r'venue')!,
       );
     }
     return null;
@@ -228,6 +167,14 @@ class ReopenListItem {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'date',
+    'kshetraName',
+    'lastReopenReason',
+    'occurrenceId',
+    'reopened',
+    'sabhaKind',
+    'state',
+    'venue',
   };
 }
 

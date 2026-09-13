@@ -171,7 +171,7 @@ so a fresh checkout builds and tests without running the generator. Regenerate a
 the spec changes:
 
 ```sh
-# Web (Angular) — outputs apps/web/src/app/generated
+# Web (Angular) — outputs apps/web/projects/shared-data-access/src/lib/generated
 cd apps/web && npm run generate:api
 ```
 

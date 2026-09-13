@@ -13,43 +13,19 @@ part of openapi.api;
 class KshetraView {
   /// Returns a new [KshetraView] instance.
   KshetraView({
-    this.id,
-    this.name,
-    this.sabhaCount,
-    this.zoneId,
+    required this.id,
+    required this.name,
+    required this.sabhaCount,
+    required this.zoneId,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? id;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? name;
+  String name;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? sabhaCount;
+  int sabhaCount;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? zoneId;
+  String zoneId;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is KshetraView &&
@@ -61,36 +37,20 @@ class KshetraView {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (id == null ? 0 : id!.hashCode) +
-    (name == null ? 0 : name!.hashCode) +
-    (sabhaCount == null ? 0 : sabhaCount!.hashCode) +
-    (zoneId == null ? 0 : zoneId!.hashCode);
+    (id.hashCode) +
+    (name.hashCode) +
+    (sabhaCount.hashCode) +
+    (zoneId.hashCode);
 
   @override
   String toString() => 'KshetraView[id=$id, name=$name, sabhaCount=$sabhaCount, zoneId=$zoneId]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.id != null) {
       json[r'id'] = this.id;
-    } else {
-      json[r'id'] = null;
-    }
-    if (this.name != null) {
       json[r'name'] = this.name;
-    } else {
-      json[r'name'] = null;
-    }
-    if (this.sabhaCount != null) {
       json[r'sabhaCount'] = this.sabhaCount;
-    } else {
-      json[r'sabhaCount'] = null;
-    }
-    if (this.zoneId != null) {
       json[r'zoneId'] = this.zoneId;
-    } else {
-      json[r'zoneId'] = null;
-    }
     return json;
   }
 
@@ -105,14 +65,22 @@ class KshetraView {
       // Note 1: the values aren't checked for validity beyond being non-null.
       // Note 2: this code is stripped in release mode!
       assert(() {
+        assert(json.containsKey(r'id'), 'Required key "KshetraView[id]" is missing from JSON.');
+        assert(json[r'id'] != null, 'Required key "KshetraView[id]" has a null value in JSON.');
+        assert(json.containsKey(r'name'), 'Required key "KshetraView[name]" is missing from JSON.');
+        assert(json[r'name'] != null, 'Required key "KshetraView[name]" has a null value in JSON.');
+        assert(json.containsKey(r'sabhaCount'), 'Required key "KshetraView[sabhaCount]" is missing from JSON.');
+        assert(json[r'sabhaCount'] != null, 'Required key "KshetraView[sabhaCount]" has a null value in JSON.');
+        assert(json.containsKey(r'zoneId'), 'Required key "KshetraView[zoneId]" is missing from JSON.');
+        assert(json[r'zoneId'] != null, 'Required key "KshetraView[zoneId]" has a null value in JSON.');
         return true;
       }());
 
       return KshetraView(
-        id: mapValueOfType<String>(json, r'id'),
-        name: mapValueOfType<String>(json, r'name'),
-        sabhaCount: mapValueOfType<int>(json, r'sabhaCount'),
-        zoneId: mapValueOfType<String>(json, r'zoneId'),
+        id: mapValueOfType<String>(json, r'id')!,
+        name: mapValueOfType<String>(json, r'name')!,
+        sabhaCount: mapValueOfType<int>(json, r'sabhaCount')!,
+        zoneId: mapValueOfType<String>(json, r'zoneId')!,
       );
     }
     return null;
@@ -160,6 +128,10 @@ class KshetraView {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'id',
+    'name',
+    'sabhaCount',
+    'zoneId',
   };
 }
 
