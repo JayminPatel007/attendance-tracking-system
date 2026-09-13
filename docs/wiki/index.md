@@ -36,7 +36,7 @@ One page per build unit — 6 backend (4 bounded contexts, `common-domain`, `app
 |---|---|---|
 | [backend-analytics](structure/backend-analytics.md) | `apps/backend/analytics-service` | dashboards, audit log, re-engagement, Nirdeshak/Sant reporting |
 | [backend-attendance](structure/backend-attendance.md) | `apps/backend/attendance-service` | Occurrences and markings, Sabha Occurrence, Roster, Walk-in |
-| [backend-common-domain](structure/backend-common-domain.md) | `apps/backend/common-domain` | the shared kernel, the ports module |
+| [backend-common-domain](structure/backend-common-domain.md) | `apps/backend/common/common-domain` | the shared kernel, the ports module |
 | [backend-container](structure/backend-container.md) | `apps/backend/application-container` | the Spring Boot app, the composition root, the schema |
 | [backend-identity](structure/backend-identity.md) | `apps/backend/identity-service` | People, Users, roles, Karyakar, Person, Directory |
 | [backend-sabha](structure/backend-sabha.md) | `apps/backend/sabha-service` | the structural hierarchy, Kshetra, Zone, City, Sabha Kind |

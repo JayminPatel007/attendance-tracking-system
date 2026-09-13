@@ -6,11 +6,13 @@ aliases: [ring, the hexagon, five modules, Clean Architecture, domain-core, appl
 source_paths: [
   apps/backend/pom.xml,
   apps/backend/*/pom.xml,
+  apps/backend/common/*/pom.xml,
   docs/adr/0014-*.md,
   docs/adr/0015-*.md,
   docs/adr/0017-*.md,
   docs/adr/0018-*.md,
   docs/adr/0019-*.md,
+  docs/adr/0031-*.md,
   CONTEXT.md
 ]
 sources:
@@ -19,8 +21,9 @@ sources:
   - { id: adr-0017, title: "REST adapters live in `*-application` modules", resource: ../../adr/0017-rest-adapters-live-in-application-modules.md }
   - { id: adr-0018, title: "Application services split: `*-application` vs `*-application-service`", resource: ../../adr/0018-application-service-split.md }
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
+  - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
 appears_in: [backend-identity, backend-sabha, backend-attendance, backend-analytics, backend-common-domain, backend-container]
-last_compiled: 18c0993c1c22d3217d62a879beed639914f74aee
+last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
 ---
 
 # Module Ring
@@ -50,6 +53,11 @@ Three properties follow, and they are what makes the shape worth naming once:
   context's `-data-access`. That is the same seam [authorization](authorization.md) travels on.
 - **All five ship even when empty.** `<ctx>-messaging` is often a lone `package-info.java`, and
   that is the policy working rather than a unit half-built.
+- **Aggregator poms group, they never parent.** Every module here — leaf and aggregator alike —
+  declares `backend-parent` as its `<parent>` and repeats the `spring-boot-maven-plugin` `<skip>`
+  block; an aggregator owns a `<modules>` list and nothing else. `<relativePath>` appears only
+  where Maven's `../pom.xml` default would be wrong, which is every nested module and no top-level
+  one (ADR-0031).
 
 Because the ring is identical everywhere, each unit's page carries the same five rows and only its
 `Holds` column says anything unit-specific.
@@ -65,7 +73,9 @@ is a real distinction but not a ring, so the module names stopped naming layers.
 the module list reads as a ring today and why the older ADRs are worth reaching for only to date a
 comment. The two renames landed in the same pass: `bootstrap` → `application-container`,
 `shared-kernel` → `common-domain`. An older name in a comment is stale, not a module you have not
-found. Shipping all five modules empty is ADR-0014's pay-the-scaffolding-cost-up-front principle,
+found. ADR-0031 later moved `common-domain` and `common-application` under an
+`apps/backend/common/` aggregator — a path change only, with every artifactId and package left
+alone. Shipping all five modules empty is ADR-0014's pay-the-scaffolding-cost-up-front principle,
 not a per-context decision.
 
 ## Where it appears
@@ -78,7 +88,7 @@ not a per-context decision.
 | [backend-sabha](../structure/backend-sabha.md) | the full five; one flat application-service package, so the ring *is* the navigation axis |
 | [backend-attendance](../structure/backend-attendance.md) | the full five, unusually top-heavy — most of the unit sits in the use-case ring |
 | [backend-analytics](../structure/backend-analytics.md) | the full five, with `analytics-messaging` an empty scaffold |
-| [backend-common-domain](../structure/backend-common-domain.md) | **the innermost ring itself** — one flat module every context's ring depends on |
+| [backend-common-domain](../structure/backend-common-domain.md) | **the innermost ring itself** — one flat module, under the `common/` aggregator, that every context's ring depends on |
 | [backend-container](../structure/backend-container.md) | **the outermost ring** — frameworks and drivers, depending on every leaf module |
 
 ## Deviations
@@ -87,7 +97,9 @@ not a per-context decision.
 
 - **Two backend units have no ring at all**, and correctly so: `common-domain` is the entities ring
   as a single flat module, and `application-container` is the frameworks ring as a single flat
-  module. Both are ring *positions*, not contexts, so there is nothing inside them to layer.
+  module. Both are ring *positions*, not contexts, so there is nothing inside them to layer. The
+  `common/` aggregator that groups `common-domain` with `common-application` (ADR-0031) is **not** a
+  third ring — the two sit at opposite ends of the stack and share only a directory.
 - **`application-container` holds one declared piece of feature code** — the global
   `@RestControllerAdvice` and the error DTO — because the HTTP error shape is a deployment-tier
   concern. ADR-0019 states the exception rather than leaving it as drift.

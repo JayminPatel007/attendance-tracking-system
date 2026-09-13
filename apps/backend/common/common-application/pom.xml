@@ -8,6 +8,7 @@
         <groupId>org.sabha</groupId>
         <artifactId>backend-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>common-application</artifactId>

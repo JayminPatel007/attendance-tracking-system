@@ -6,7 +6,7 @@ aliases: [proxy mode, acting as Sanchalak, Nirikshak, on behalf of, last seen, a
 tags: [audit, bff]
 source_paths: [
   apps/backend/attendance-service/*/src/main/**,
-  apps/backend/common-domain/src/main/java/org/sabha/common/AuthorizedAction.java,
+  apps/backend/common/common-domain/src/main/java/org/sabha/common/AuthorizedAction.java,
   apps/web/src/app/sections/sanchalak-proxy/**,
   apps/backend/application-container/src/main/resources/db/changelog/slice-14/**,
   docs/adr/0001-*.md,
