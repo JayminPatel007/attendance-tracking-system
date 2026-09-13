@@ -2,6 +2,7 @@ package org.sabha.attendance.applicationservice;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -9,6 +10,7 @@ import java.util.function.Function;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.ConcurrentModificationException;
 import org.sabha.common.DomainEventPublisher;
@@ -28,10 +30,12 @@ import org.springframework.transaction.annotation.Transactional;
  * Exhausting the retries surfaces {@link ConcurrentModificationException}.
  *
  * <p>Callers supply only what makes their write different: the {@link
- * TransitionActor} driving it and the mutation to apply. Their own vocabulary and
- * preconditions (reason-required, grace windows, roster freshness) stay in the
- * calling application service; the retry/authorize/audit/publish orchestration
- * never diverges between them because there is only one copy of it.</p>
+ * TransitionActor} driving it, the mutation to apply, and — for the two transitions
+ * that must say why (cancel, reopen) — a {@link Reason}. Their own vocabulary and
+ * preconditions (grace windows, roster freshness) stay in the calling application
+ * service; reason-required is no longer among them, it is the {@link Reason} type's
+ * and fires wherever a Reason is constructed. The retry/authorize/audit/publish
+ * orchestration never diverges between callers because there is only one copy.</p>
  *
  * <p>Nothing is written until the save succeeds: a mutation that throws — an
  * invalid transition, a denied authority — leaves no audit row and publishes no
@@ -68,27 +72,59 @@ public class OccurrenceWriter {
     }
 
     /**
-     * Applies an audited lifecycle transition. The audit row records the state
-     * either side of {@code mutation}, so it captures what actually happened
-     * rather than what was asked for.
+     * Applies an audited lifecycle transition that carries no reason — revert,
+     * reschedule, venue-override, and the cron's auto-Open / auto-Finalize. The
+     * audit row's reason is left empty.
      *
      * @param actor     who is driving the write; a signed-in actor is authorized
      *                  against the Occurrence's Sabha first
      * @param auditedAs the action recorded on the audit row — may differ from the
      *                  actor's authority (e.g. REVERT audited under CANCEL authority)
-     * @param reason    free-text reason for the audit row, or {@code null}
      * @param mutation  the aggregate transition to apply
      */
     @Transactional
     public void transition(UUID occurrenceId, TransitionActor actor, OccurrenceAction auditedAs,
-                           String reason, Consumer<Occurrence> mutation) {
+                           Consumer<Occurrence> mutation) {
+        audited(occurrenceId, actor, auditedAs, null, mutation);
+    }
+
+    /**
+     * Applies an audited lifecycle transition that must record why it happened —
+     * cancel and reopen (ADR-0001). The {@link Reason} is already valid by the time
+     * it arrives, so no check belongs here.
+     *
+     * <p>The audit row records the state either side of {@code mutation}, so it
+     * captures what actually happened rather than what was asked for.</p>
+     *
+     * @param actor     who is driving the write; a signed-in actor is authorized
+     *                  against the Occurrence's Sabha first
+     * @param auditedAs the action recorded on the audit row — may differ from the
+     *                  actor's authority
+     * @param reason    why the transition was made; stamped on the audit row
+     * @param mutation  the aggregate transition to apply
+     */
+    @Transactional
+    public void transition(UUID occurrenceId, TransitionActor actor, OccurrenceAction auditedAs,
+                           Reason reason, Consumer<Occurrence> mutation) {
+        Objects.requireNonNull(reason, "this transition must record a reason; "
+                + "use the overload without one if it genuinely has none");
+        audited(occurrenceId, actor, auditedAs, reason.text(), mutation);
+    }
+
+    /**
+     * The one audited-transition body. Only the two public overloads decide whether
+     * a reason is recorded, so {@code null} appears in exactly one place instead of
+     * at every reason-less call site.
+     */
+    private void audited(UUID occurrenceId, TransitionActor actor, OccurrenceAction auditedAs,
+                         String reasonText, Consumer<Occurrence> mutation) {
         UUID actorUserId = actorUserId(actor);
         write(occurrenceId, occurrence -> {
             UUID onBehalfOf = authorize(actor, actorUserId, occurrence);
             OccurrenceState from = occurrence.state();
             mutation.accept(occurrence);
             return new AuditIntent(from, occurrence.state(), auditedAs,
-                    actor.kind(), actorUserId, onBehalfOf, reason);
+                    actor.kind(), actorUserId, onBehalfOf, reasonText);
         });
     }
 

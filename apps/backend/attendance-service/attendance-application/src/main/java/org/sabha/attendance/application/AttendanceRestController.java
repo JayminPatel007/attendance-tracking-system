@@ -19,6 +19,7 @@ import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
 import org.sabha.attendance.applicationservice.SyncResult;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.UserId;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
@@ -107,7 +108,7 @@ public class AttendanceRestController {
             @PathVariable UUID occurrenceId,
             @RequestBody CancelRequest req,
             @CurrentUser UserId caller) {
-        shapeOccurrence.cancel(caller, occurrenceId, req.reason());
+        shapeOccurrence.cancel(caller, occurrenceId, new Reason(req.reason()));
         return ResponseEntity.ok().build();
     }
 

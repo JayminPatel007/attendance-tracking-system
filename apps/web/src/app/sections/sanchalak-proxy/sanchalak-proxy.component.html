@@ -34,7 +34,8 @@
             <div class="proxy__actions">
               <label class="proxy__action">
                 <span>Cancel — reason</span>
-                <input #cancelReason type="text" placeholder="e.g. Sanchalak unreachable" />
+                <input #cancelReason type="text" maxlength="500"
+                       placeholder="e.g. Sanchalak unreachable" />
                 <button type="button" [disabled]="submitting()"
                         (click)="cancel(occurrence.id, cancelReason.value)">Cancel</button>
               </label>

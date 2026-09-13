@@ -130,6 +130,30 @@ to the same value.)
 Without it, the test Docker client is too old for modern Docker Desktop and
 fails with "client version too old." Leave it as-is.
 
+### 3. Run one test through the reactor, not through the module's own pom
+
+`mvn -f application-container/pom.xml test -Dtest=SomeIntegrationTest` resolves
+every sibling module (`attendance-application-service`, `common-domain`, …) from
+your **local Maven repository**, not from your working copy. If you have edited
+one of those modules and not reinstalled it, the test runs against the last
+installed jar and reports a result for code you are not looking at — a false red,
+or worse a false green.
+
+Run it from `apps/backend` and let the reactor rebuild what changed:
+
+```sh
+mvn -o -pl application-container -am \
+    -Dtest=OccurrenceReopenIntegrationTest \
+    -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
+`-am` ("also make") pulls the changed upstream modules into the build.
+`-Dsurefire.failIfNoSpecifiedTests=false` is required because `-Dtest=` is applied
+to *every* module in the reactor, and the upstream ones contain no test by that
+name — note that the `-DfailIfNoSpecifiedTests` spelling is silently ignored by
+this surefire version. The same trap applies to the OpenAPI regeneration command
+below.
+
 ---
 
 ## The API contract (OpenAPI)

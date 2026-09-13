@@ -112,8 +112,15 @@ class OccurrenceReopenIntegrationTest extends KeycloakIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    /**
+     * The reason invariant is enforced by the {@code Reason} value type, constructed
+     * at the controller edge. This asserts the whole path the type refactor could
+     * silently break: the constructor's refusal still reaches the global handler as a
+     * 422 (not a 500), still carries user-facing copy — mobile renders {@code detail}
+     * verbatim — and still leaves no audit row behind.
+     */
     @Test
-    void reopenWithoutAReasonIsUnprocessable() throws Exception {
+    void reopenWithoutAReasonIsUnprocessableAndWritesNothing() throws Exception {
         Cookie xsrf = mockMvc.perform(get("/bff/occurrences").with(oidcLogin().idToken(t -> t.subject(NIRIKSHAK_SUBJECT))))
                 .andReturn().getResponse().getCookie("XSRF-TOKEN");
 
@@ -123,6 +130,28 @@ class OccurrenceReopenIntegrationTest extends KeycloakIntegrationTest {
                         .header("X-XSRF-TOKEN", xsrf.getValue())
                         .contentType("application/json")
                         .content("{\"reason\":\"   \"}"))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail").value("A reason is required."));
+
+        Integer reopenRows = jdbc.sql(
+                        "SELECT count(*) FROM occurrence_state_transitions WHERE occurrence_id = ? AND action = 'REOPEN'")
+                .param(java.util.UUID.fromString(FINALIZED_OCCURRENCE))
+                .query(Integer.class).single();
+        org.assertj.core.api.Assertions.assertThat(reopenRows).isZero();
+    }
+
+    @Test
+    void reopenWithAnOverlongReasonIsUnprocessable() throws Exception {
+        Cookie xsrf = mockMvc.perform(get("/bff/occurrences").with(oidcLogin().idToken(t -> t.subject(NIRIKSHAK_SUBJECT))))
+                .andReturn().getResponse().getCookie("XSRF-TOKEN");
+
+        mockMvc.perform(post("/bff/occurrences/" + FINALIZED_OCCURRENCE + "/reopen")
+                        .with(oidcLogin().idToken(t -> t.subject(NIRIKSHAK_SUBJECT)))
+                        .cookie(xsrf)
+                        .header("X-XSRF-TOKEN", xsrf.getValue())
+                        .contentType("application/json")
+                        .content("{\"reason\":\"" + "x".repeat(501) + "\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail").value("A reason must be at most 500 characters."));
     }
 }

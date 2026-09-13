@@ -45,7 +45,7 @@ public class AutoFinalizeScanner {
             slotResolver.resolve(ref)
                     .filter(slot -> !slot.endsAt().plus(gracePeriod).isAfter(now))
                     .ifPresent(slot -> writer.transition(ref.occurrenceId(), TransitionActor.system(),
-                            OccurrenceAction.FINALIZE, null, Occurrence::markFinalized));
+                            OccurrenceAction.FINALIZE, Occurrence::markFinalized));
         }
     }
 }

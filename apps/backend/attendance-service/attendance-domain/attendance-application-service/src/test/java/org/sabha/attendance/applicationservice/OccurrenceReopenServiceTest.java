@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceReopened;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
@@ -45,7 +46,7 @@ class OccurrenceReopenServiceTest {
     void aNirikshakReopensAFinalizedOccurrenceWithReasonAndAnAuditRowIsAppended() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
-        f.service().reopen(NIRIKSHAK_CALLER, OCCURRENCE_ID, "Forgot to mark Ravi");
+        f.service().reopen(NIRIKSHAK_CALLER, OCCURRENCE_ID, new Reason("Forgot to mark Ravi"));
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
@@ -61,22 +62,10 @@ class OccurrenceReopenServiceTest {
     }
 
     @Test
-    void reopenWithoutAReasonIsRejectedWithNoSideEffects() {
-        Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
-
-        assertThatThrownBy(() -> f.service().reopen(NIRIKSHAK_CALLER, OCCURRENCE_ID, "  "))
-                .isInstanceOf(ReopenReasonRequiredException.class);
-
-        assertThat(f.occurrences.saved).isEmpty();
-        assertThat(f.transitions.appended).isEmpty();
-        assertThat(f.publisher.published).isEmpty();
-    }
-
-    @Test
     void aSanchalakReopenIsRejectedWithNoSideEffects() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
-        assertThatThrownBy(() -> f.service().reopen(SANCHALAK_CALLER, OCCURRENCE_ID, "let me in"))
+        assertThatThrownBy(() -> f.service().reopen(SANCHALAK_CALLER, OCCURRENCE_ID, new Reason("let me in")))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();

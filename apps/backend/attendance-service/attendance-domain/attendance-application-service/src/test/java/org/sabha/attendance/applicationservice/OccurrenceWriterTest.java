@@ -19,6 +19,7 @@ import org.sabha.attendance.domain.InvalidOccurrenceTransitionException;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceOpened;
 import org.sabha.attendance.domain.OccurrenceState;
+import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.CallerUnknownException;
@@ -64,7 +65,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.SCHEDULED);
 
         f.writer().transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open);
+                OccurrenceAction.OPEN, Occurrence::open);
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
@@ -90,7 +91,7 @@ class OccurrenceWriterTest {
 
         f.writer().transition(OCCURRENCE_ID,
                 TransitionActor.user(SANCHALAK_CALLER, AuthorizedAction.CANCEL),
-                OccurrenceAction.CANCEL, "Hall flooded", Occurrence::cancel);
+                OccurrenceAction.CANCEL, new Reason("Hall flooded"), Occurrence::cancel);
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.CANCELLED);
@@ -108,7 +109,7 @@ class OccurrenceWriterTest {
 
         f.writer().transition(OCCURRENCE_ID,
                 TransitionActor.user(NIRIKSHAK_CALLER, AuthorizedAction.CANCEL),
-                OccurrenceAction.CANCEL, "Sanchalak unreachable", Occurrence::cancel);
+                OccurrenceAction.CANCEL, new Reason("Sanchalak unreachable"), Occurrence::cancel);
 
         OccurrenceStateTransition row = f.transitions.appended.get(0);
         assertThat(row.actorUserId()).isEqualTo(NIRIKSHAK_USER);
@@ -121,7 +122,7 @@ class OccurrenceWriterTest {
 
         assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID,
                 TransitionActor.user(STRANGER_CALLER, AuthorizedAction.CANCEL),
-                OccurrenceAction.CANCEL, "let me in", Occurrence::cancel))
+                OccurrenceAction.CANCEL, new Reason("let me in"), Occurrence::cancel))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -136,7 +137,7 @@ class OccurrenceWriterTest {
         Fixture f = new Fixture();
 
         assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open))
+                OccurrenceAction.OPEN, Occurrence::open))
                 .isInstanceOf(OccurrenceNotFoundException.class);
 
         assertThat(f.transitions.appended).isEmpty();
@@ -148,7 +149,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
         assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open))
+                OccurrenceAction.OPEN, Occurrence::open))
                 .isInstanceOf(InvalidOccurrenceTransitionException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -163,7 +164,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.SCHEDULED, 1);
 
         f.writer().transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open);
+                OccurrenceAction.OPEN, Occurrence::open);
 
         assertThat(f.occurrences.saveAttempts).isEqualTo(2);
         assertThat(f.transitions.appended).hasSize(1);
@@ -175,7 +176,7 @@ class OccurrenceWriterTest {
         Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.SCHEDULED, 99);
 
         assertThatThrownBy(() -> f.writer().transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open))
+                OccurrenceAction.OPEN, Occurrence::open))
                 .isInstanceOf(ConcurrentModificationException.class);
 
         assertThat(f.occurrences.saveAttempts).isEqualTo(3);
@@ -205,7 +206,7 @@ class OccurrenceWriterTest {
         f.occurrences.beforeSave = () -> clock.advance(Duration.ofMinutes(1));
 
         f.writer(clock).transition(OCCURRENCE_ID, TransitionActor.system(),
-                OccurrenceAction.OPEN, null, Occurrence::open);
+                OccurrenceAction.OPEN, Occurrence::open);
 
         assertThat(f.occurrences.saveAttempts).isEqualTo(2);
         assertThat(f.transitions.appended.get(0).at())
