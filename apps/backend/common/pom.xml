@@ -8,26 +8,18 @@
         <groupId>org.sabha</groupId>
         <artifactId>backend-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>common</artifactId>
     <name>Common (aggregator)</name>
     <packaging>pom</packaging>
     <description>
-        Aggregator for the shared modules every bounded context may depend on:
-        common-domain (the entities ring — ADR-0019) and common-application (the
-        shared presentation ring — ADR-0030). Build both with
-        mvn -f common/pom.xml verify.
-
-        `common` is deliberately NOT named `common-service`: unlike identity,
-        sabha, attendance and analytics it is not a bounded context, and ADR-0019
-        gives it no ring of its own — it depends on nothing else in the project.
-
-        Note the one naming collision, accepted in ADR-0031: `common-domain` here
-        is a LEAF module (the entities ring), whereas a context's -domain module is
-        an aggregator over a `-domain-core` / `-application-service` pair. There
-        is no `common-domain-core`; `common-domain` is the whole thing.
+        Aggregator for the two modules shared across every bounded context:
+        common-domain (the entities ring, ADR-0019) and common-application (the
+        shared presentation ring, ADR-0030). ADR-0031 groups them here and records
+        why this is `common` rather than `common-service`, and why common-domain is
+        a leaf where a context's -domain module is an aggregator.
+        Build both with mvn -f common/pom.xml verify.
     </description>
 
     <modules>
