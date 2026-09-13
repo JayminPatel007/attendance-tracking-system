@@ -26,6 +26,8 @@ sources:
   - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
   - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
 last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
+status: disputed
+disputed_reason: "`org.sabha.common.SabhaKind` is now `SabhaKindCode` (#217) — the page still records the two-types-one-name collision as a live hazard."
 ---
 
 # Common Domain

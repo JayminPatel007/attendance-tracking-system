@@ -13,7 +13,7 @@ import org.sabha.analytics.applicationservice.DashboardQueries;
 import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.SabhaTree;
 import org.sabha.common.CallerVisibility;
-import org.sabha.common.SabhaKind;
+import org.sabha.common.SabhaKindCode;
 import org.sabha.analytics.domain.Tier;
 import org.sabha.common.VisibilityTier;
 import org.sabha.common.WhereClause;
@@ -107,7 +107,7 @@ public class JdbcDashboardQueries implements DashboardQueries {
             SELECT rc.person_id, p.full_name, rc.home_sabha_id, s.sabha_kind,
                    k.name AS kshetra_name, %s AS demographic,
                    rc.missed_streak, rc.tier
-            """.formatted(SabhaKind.demographicSql("s")) + FROM_SCOPED + """
+            """.formatted(SabhaKindCode.demographicSql("s")) + FROM_SCOPED + """
             JOIN persons p ON p.id = rc.person_id
             %s
             ORDER BY rc.missed_streak DESC, p.full_name

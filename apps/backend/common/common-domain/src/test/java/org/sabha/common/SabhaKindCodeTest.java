@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class SabhaKindTest {
+class SabhaKindCodeTest {
 
     @Test
     void parses_the_track_and_demographic_around_the_first_underscore() {
-        SabhaKind kind = SabhaKind.parse("REGULAR_YUVAK");
+        SabhaKindCode kind = SabhaKindCode.parse("REGULAR_YUVAK");
 
         assertThat(kind.track()).isEqualTo("REGULAR");
         assertThat(kind.demographic()).isEqualTo("YUVAK");
@@ -18,7 +18,7 @@ class SabhaKindTest {
     void demographic_is_everything_after_the_first_underscore_even_when_multi_token() {
         // The encoding is TRACK_DEMOGRAPHIC; only the first underscore is the
         // track/demographic boundary, so a future multi-token demographic stays whole.
-        SabhaKind kind = SabhaKind.parse("REGULAR_BAL_MANDAL");
+        SabhaKindCode kind = SabhaKindCode.parse("REGULAR_BAL_MANDAL");
 
         assertThat(kind.track()).isEqualTo("REGULAR");
         assertThat(kind.demographic()).isEqualTo("BAL_MANDAL");
@@ -26,11 +26,11 @@ class SabhaKindTest {
 
     @Test
     void encode_round_trips_with_parse() {
-        assertThat(SabhaKind.encode("YSS", "YUVAK")).isEqualTo("YSS_YUVAK");
+        assertThat(SabhaKindCode.encode("YSS", "YUVAK")).isEqualTo("YSS_YUVAK");
     }
 
     @Test
     void demographicSql_derives_the_demographic_from_a_qualified_sabha_kind_column() {
-        assertThat(SabhaKind.demographicSql("s")).isEqualTo("split_part(s.sabha_kind, '_', 2)");
+        assertThat(SabhaKindCode.demographicSql("s")).isEqualTo("split_part(s.sabha_kind, '_', 2)");
     }
 }
