@@ -37,7 +37,9 @@ _Avoid_: Note, comment, remark (those suggest optional colour; a Reason is requi
 
 **Sabha Type** (aka **Sabha Kind**):
 A categorization of a Sabha along two dimensions: (a) **demographic** (one of the named types below) and (b) **track** (Regular or BSS — see Bal Sevak Sabha below). The combination uniquely identifies a Sabha Type, e.g., "BSS Baal Sabha" and "Regular Baal Sabha" are distinct. **The list of Sabha Types is extensible** — new ones are registered by the Madhyastha Karyalaya — not a hardcoded enum. The five demographic types below are the ones currently known.
-_Avoid_: Category, group
+
+The **Sabha Kind code** is how a Sabha Type is written down where it is carried denormalized against a Sabha: the string `TRACK_DEMOGRAPHIC`, e.g. `REGULAR_YUVAK`. It is a representation of the Sabha Type, not a second concept — a Sabha Type has an identity, a registrar and a retirement state; its code has none of those and is only ever parsed or encoded.
+_Avoid_: Category, group; and do not call the code a "Sabha Kind" unqualified
 
 **Named demographic types:**
 

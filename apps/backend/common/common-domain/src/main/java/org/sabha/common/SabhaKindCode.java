@@ -14,12 +14,18 @@ package org.sabha.common;
  * demographic is a single token. If a multi-token demographic is ever introduced,
  * both derivations change here together — this is the single point of change the
  * two former call sites used to warn each other to "keep in step".</p>
+ *
+ * <p>This is the <em>code</em>, not the kind: the registered Sabha Kind itself —
+ * with its id, retirement state and audit fields — is
+ * {@code org.sabha.sabha.domain.SabhaKind}, which sabha-service owns (ADR-0009,
+ * ADR-0026). Both types were called {@code SabhaKind} until #217; a reader seeing
+ * the bare name could not tell the encoding from the aggregate.</p>
  */
-public record SabhaKind(String track, String demographic) {
+public record SabhaKindCode(String track, String demographic) {
 
-    public static SabhaKind parse(String sabhaKind) {
+    public static SabhaKindCode parse(String sabhaKind) {
         int boundary = sabhaKind.indexOf('_');
-        return new SabhaKind(sabhaKind.substring(0, boundary), sabhaKind.substring(boundary + 1));
+        return new SabhaKindCode(sabhaKind.substring(0, boundary), sabhaKind.substring(boundary + 1));
     }
 
     /** The {@code sabha_kind} column value for a {@code (track, demographic)} pair. */

@@ -86,7 +86,7 @@ public final class CallerVisibility {
     }
 
     private static String roleAssignmentClause(VisibilityTier tier, Aliases a) {
-        String demographic = SabhaKind.demographicSql(a.sabha());
+        String demographic = SabhaKindCode.demographicSql(a.sabha());
         return switch (tier) {
             case SANCHALAK, SAH_SANCHALAK ->
                     "(ra.role = '%s' AND ra.sabha_id = %s.id)".formatted(tier, a.sabha());
