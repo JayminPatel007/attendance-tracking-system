@@ -18,15 +18,12 @@ import java.util.UUID;
  */
 public class CallerUnknownException extends AuthorizationDeniedException {
 
-    private final String subject;
-
     public CallerUnknownException(UUID keycloakSubject) {
-        this(String.valueOf(keycloakSubject), "No local user mapped to Keycloak subject " + keycloakSubject);
+        super("No local user mapped to Keycloak subject " + keycloakSubject);
     }
 
-    private CallerUnknownException(String subject, String message) {
+    private CallerUnknownException(String message) {
         super(message);
-        this.subject = subject;
     }
 
     /**
@@ -36,11 +33,6 @@ public class CallerUnknownException extends AuthorizationDeniedException {
      * surfaced as a 500; it is a 403 like every other unidentifiable caller.
      */
     public static CallerUnknownException unusableSubject(String rawSubject) {
-        return new CallerUnknownException(rawSubject, "Authenticated request carried no usable subject: " + rawSubject);
-    }
-
-    /** The subject as it arrived, for logging. Never parsed — it may not be a UUID. */
-    public String subject() {
-        return subject;
+        return new CallerUnknownException("Authenticated request carried no usable subject: " + rawSubject);
     }
 }
