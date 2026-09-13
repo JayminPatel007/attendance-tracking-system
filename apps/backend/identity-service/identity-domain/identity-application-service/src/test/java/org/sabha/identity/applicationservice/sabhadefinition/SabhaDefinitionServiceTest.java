@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.SabhaKindRetiredException;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.Appointee;
@@ -22,8 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SabhaDefinitionServiceTest {
 
-    private static final UUID SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f0");
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000d0");
+    private static final UserId CALLER = UserId.of(NIRDESHAK);
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
     private static final UUID RETIRED_KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a3");
@@ -33,14 +34,13 @@ class SabhaDefinitionServiceTest {
     private final FakeProvisioning provisioning = new FakeProvisioning();
     private final FakeAppointRole appointments = new FakeAppointRole();
     private final SabhaDefinitionService service = new SabhaDefinitionService(
-            subject -> subject.equals(SUBJECT) ? Optional.of(NIRDESHAK) : Optional.empty(),
             provisioning,
             new SabhaDefinitionAuthorization(new FakeNirdeshakAuthority()),
             appointments);
 
     @Test
     void nirdeshakDefinesAWeeklySabhaAndItsSanchalakIsAppointedOnTheNewSabha() {
-        SabhaDefinitionResult result = service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+        SabhaDefinitionResult result = service.define(CALLER, SabhaDefinitionCommand.weekly(
                 KSHETRA, KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null));
 
@@ -56,7 +56,7 @@ class SabhaDefinitionServiceTest {
         assertThat(provisioning.weeklyCreatedBy).isEqualTo(NIRDESHAK);
 
         RoleAppointmentCommand appointed = appointments.commandFor(AppointableRole.SANCHALAK);
-        assertThat(appointments.lastSubject).isEqualTo(SUBJECT);
+        assertThat(appointments.lastCaller).isEqualTo(CALLER);
         assertThat(appointed.scope().role()).isEqualTo(AppointableRole.SANCHALAK);
         assertThat(appointed.scope().sabhaId()).isEqualTo(NEW_SABHA);
         assertThat(appointed.existingPersonId()).isEqualTo(SANCHALAK_PERSON);
@@ -65,14 +65,9 @@ class SabhaDefinitionServiceTest {
 
     @Test
     void aCallerOutsideTheirNirdeshakScopeIsDeniedAndNoSabhaIsProvisioned() {
-        UUID otherSubject = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
-        SabhaDefinitionService denying = new SabhaDefinitionService(
-                subject -> Optional.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9")),
-                provisioning,
-                new SabhaDefinitionAuthorization(new FakeNirdeshakAuthority()),
-                appointments);
+        UserId outsider = UserId.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9"));
 
-        assertThatThrownBy(() -> denying.define(otherSubject, SabhaDefinitionCommand.weekly(
+        assertThatThrownBy(() -> service.define(outsider, SabhaDefinitionCommand.weekly(
                 KSHETRA, KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null)))
                 .isInstanceOf(AuthorizationDeniedException.class);
@@ -83,7 +78,7 @@ class SabhaDefinitionServiceTest {
 
     @Test
     void aMonthlyAdHocSabhaIsProvisionedWithNoStandingSlot() {
-        SabhaDefinitionResult result = service.define(SUBJECT, SabhaDefinitionCommand.monthlyAdHoc(
+        SabhaDefinitionResult result = service.define(CALLER, SabhaDefinitionCommand.monthlyAdHoc(
                 KSHETRA, KIND, "Andheri Hall",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null));
 
@@ -96,7 +91,7 @@ class SabhaDefinitionServiceTest {
     @Test
     void anOptionalSahSanchalakIsAppointedOnTheSameSabha() {
         UUID sahPerson = UUID.fromString("00000000-0000-0000-0000-0000000000c2");
-        SabhaDefinitionResult result = service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+        SabhaDefinitionResult result = service.define(CALLER, SabhaDefinitionCommand.weekly(
                 KSHETRA, KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"),
                 Appointee.existing(sahPerson, "sah.user", "Temp#5678")));
@@ -112,7 +107,7 @@ class SabhaDefinitionServiceTest {
     void aSanchalakNameSoftWarnRollsBackTheActAndSurfacesCandidates() {
         appointments.softWarnSanchalak = true;
 
-        SabhaDefinitionResult result = service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+        SabhaDefinitionResult result = service.define(CALLER, SabhaDefinitionCommand.weekly(
                 KSHETRA, KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.newPerson(new AddPersonCommand("Rakesh Patel",
                         org.sabha.identity.domain.Gender.MALE, null, "9876543210", null, null, false),
@@ -129,7 +124,7 @@ class SabhaDefinitionServiceTest {
     void definingAgainstAnUnknownSabhaKindIsRejected() {
         UUID unknownKind = UUID.fromString("00000000-0000-0000-0000-0000000000ee");
 
-        assertThatThrownBy(() -> service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+        assertThatThrownBy(() -> service.define(CALLER, SabhaDefinitionCommand.weekly(
                 KSHETRA, unknownKind, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null)))
                 .isInstanceOf(SabhaKindNotFoundException.class);
@@ -138,7 +133,7 @@ class SabhaDefinitionServiceTest {
 
     @Test
     void definingAgainstARetiredSabhaKindIsRejectedAndNoSabhaIsProvisioned() {
-        assertThatThrownBy(() -> service.define(SUBJECT, SabhaDefinitionCommand.weekly(
+        assertThatThrownBy(() -> service.define(CALLER, SabhaDefinitionCommand.weekly(
                 KSHETRA, RETIRED_KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
                 Appointee.existing(SANCHALAK_PERSON, "sanchalak.user", "Temp#1234"), null)))
                 .isInstanceOf(SabhaKindRetiredException.class);
@@ -209,7 +204,7 @@ class SabhaDefinitionServiceTest {
 
     private static final class FakeAppointRole implements AppointRole {
         final java.util.List<RoleAppointmentCommand> commands = new java.util.ArrayList<>();
-        UUID lastSubject;
+        UserId lastCaller;
         boolean softWarnSanchalak;
 
         RoleAppointmentCommand commandFor(AppointableRole role) {
@@ -217,8 +212,8 @@ class SabhaDefinitionServiceTest {
         }
 
         @Override
-        public AppointmentResult appoint(UUID keycloakSubject, RoleAppointmentCommand command) {
-            this.lastSubject = keycloakSubject;
+        public AppointmentResult appoint(UserId caller, RoleAppointmentCommand command) {
+            this.lastCaller = caller;
             this.commands.add(command);
             if (softWarnSanchalak && command.scope().role() == AppointableRole.SANCHALAK) {
                 return AppointmentResult.softWarn(java.util.List.of(

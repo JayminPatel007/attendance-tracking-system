@@ -16,26 +16,26 @@ import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaShapeLookup;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CreateMonthlyOccurrenceServiceTest {
 
-    private static final UUID SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f0");
     private static final UUID SANCHALAK = UUID.fromString("00000000-0000-0000-0000-0000000000d0");
+    private static final UserId CALLER = UserId.of(SANCHALAK);
     private static final UUID MONTHLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID WEEKLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
 
     private final RecordingInsert occurrences = new RecordingInsert();
     private final CreateMonthlyOccurrenceApplicationService service = new CreateMonthlyOccurrenceApplicationService(
-            subject -> subject.equals(SUBJECT) ? Optional.of(SANCHALAK) : Optional.empty(),
             new AuthorizationEngine(new FakeRoles(), new FakeHierarchy(), new NoNirikshakAssignments()),
             new FakeShapes(),
             occurrences);
 
     @Test
     void sanchalakCreatesThisMonthsOccurrenceInScheduledState() {
-        UUID id = service.create(SUBJECT, MONTHLY_SABHA,
+        UUID id = service.create(CALLER, MONTHLY_SABHA,
                 LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30), "Andheri Hall");
 
         Occurrence created = occurrences.added.get(0);
@@ -50,14 +50,9 @@ class CreateMonthlyOccurrenceServiceTest {
 
     @Test
     void aNonSanchalakIsDeniedAndNoOccurrenceIsCreated() {
-        UUID otherSubject = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
-        CreateMonthlyOccurrenceApplicationService denying = new CreateMonthlyOccurrenceApplicationService(
-                subject -> Optional.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9")),
-                new AuthorizationEngine(new FakeRoles(), new FakeHierarchy(), new NoNirikshakAssignments()),
-                new FakeShapes(),
-                occurrences);
+        UserId outsider = UserId.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9"));
 
-        assertThatThrownBy(() -> denying.create(otherSubject, MONTHLY_SABHA,
+        assertThatThrownBy(() -> service.create(outsider, MONTHLY_SABHA,
                 LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30), "Andheri Hall"))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(occurrences.added).isEmpty();
@@ -65,7 +60,7 @@ class CreateMonthlyOccurrenceServiceTest {
 
     @Test
     void creatingAnOccurrenceOnAWeeklySabhaIsRejected() {
-        assertThatThrownBy(() -> service.create(SUBJECT, WEEKLY_SABHA,
+        assertThatThrownBy(() -> service.create(CALLER, WEEKLY_SABHA,
                 LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30), "Andheri Hall"))
                 .isInstanceOf(NotMonthlyAdHocException.class);
         assertThat(occurrences.added).isEmpty();

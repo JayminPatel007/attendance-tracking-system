@@ -9,9 +9,9 @@ import org.sabha.attendance.applicationservice.OccurrenceShapingService;
 import org.sabha.attendance.applicationservice.ProxyOccurrenceItem;
 import org.sabha.attendance.applicationservice.ProxySabhaListItem;
 import org.sabha.attendance.applicationservice.ProxySabhaQueries;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Nirikshak Sanchalak-proxy BFF surface for the Angular web shell (Slice 14,
- * ADR-0022). Cookie/session authenticated, so the caller is the Keycloak subject
- * in {@link Authentication#getName()}; an authenticated subject with no local User
- * is unauthorized (403).
+ * ADR-0022). Cookie/session authenticated; the caller arrives already resolved
+ * to the local User by the edge, which rejects an authenticated subject with no
+ * local User (403, ADR-0030).
  *
  * <ul>
  *   <li>{@code GET /bff/proxy/sabhas} — the picker: Sabhas assigned to the caller
@@ -41,37 +41,29 @@ public class SanchalakProxyBffController {
 
     private final ProxySabhaQueries queries;
     private final OccurrenceShapingService shapeOccurrence;
-    private final CallerResolver callers;
 
-    public SanchalakProxyBffController(
-            ProxySabhaQueries queries,
-            OccurrenceShapingService shapeOccurrence,
-            CallerResolver callers) {
+    public SanchalakProxyBffController(ProxySabhaQueries queries, OccurrenceShapingService shapeOccurrence) {
         this.queries = queries;
         this.shapeOccurrence = shapeOccurrence;
-        this.callers = callers;
     }
 
     @GetMapping("/bff/proxy/sabhas")
-    public ResponseEntity<List<ProxySabhaListItem>> sabhas(Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(queries.assignedSabhas(callers.requireUserId(subject)));
+    public ResponseEntity<List<ProxySabhaListItem>> sabhas(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(queries.assignedSabhas(caller.value()));
     }
 
     @GetMapping("/bff/proxy/sabhas/{sabhaId}/occurrences")
     public ResponseEntity<List<ProxyOccurrenceItem>> occurrences(
-            @PathVariable UUID sabhaId, Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(queries.proxyOccurrences(callers.requireUserId(subject), sabhaId));
+            @PathVariable UUID sabhaId, @CurrentUser UserId caller) {
+        return ResponseEntity.ok(queries.proxyOccurrences(caller.value(), sabhaId));
     }
 
     @PostMapping("/bff/proxy/occurrences/{occurrenceId}/cancel")
     public ResponseEntity<Void> cancel(
             @PathVariable UUID occurrenceId,
             @RequestBody CancelRequest req,
-            Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        shapeOccurrence.cancel(subject, occurrenceId, req.reason());
+            @CurrentUser UserId caller) {
+        shapeOccurrence.cancel(caller, occurrenceId, req.reason());
         return ResponseEntity.noContent().build();
     }
 
@@ -79,9 +71,8 @@ public class SanchalakProxyBffController {
     public ResponseEntity<Void> reschedule(
             @PathVariable UUID occurrenceId,
             @RequestBody RescheduleRequest req,
-            Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        shapeOccurrence.reschedule(subject, occurrenceId, req.date(), req.startTime(), req.endTime());
+            @CurrentUser UserId caller) {
+        shapeOccurrence.reschedule(caller, occurrenceId, req.date(), req.startTime(), req.endTime());
         return ResponseEntity.noContent().build();
     }
 
@@ -89,9 +80,8 @@ public class SanchalakProxyBffController {
     public ResponseEntity<Void> venueOverride(
             @PathVariable UUID occurrenceId,
             @RequestBody VenueOverrideRequest req,
-            Authentication authentication) {
-        UUID subject = UUID.fromString(authentication.getName());
-        shapeOccurrence.overrideVenue(subject, occurrenceId, req.venue());
+            @CurrentUser UserId caller) {
+        shapeOccurrence.overrideVenue(caller, occurrenceId, req.venue());
         return ResponseEntity.noContent().build();
     }
 

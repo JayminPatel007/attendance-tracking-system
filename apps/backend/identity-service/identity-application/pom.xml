@@ -26,6 +26,12 @@
             <artifactId>identity-application-service</artifactId>
         </dependency>
 
+        <!-- @CurrentUser + the one resolver that knows what a credential is (ADR-0030). -->
+        <dependency>
+            <groupId>org.sabha</groupId>
+            <artifactId>common-application</artifactId>
+        </dependency>
+
         <!--
             Annotations only (no framework): the presentation ring describes the
             wire contract — which response fields are always present, what the

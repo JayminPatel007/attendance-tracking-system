@@ -63,6 +63,8 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         } catch (IllegalArgumentException | NullPointerException e) {
             throw CallerUnknownException.unusableSubject(name);
         }
-        return UserId.of(callers.requireUserId(subject));
+        return callers.resolveUserId(subject)
+                .map(UserId::of)
+                .orElseThrow(() -> new CallerUnknownException(subject));
     }
 }

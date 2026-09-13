@@ -165,6 +165,32 @@ class IntraModuleArchitectureRulesTest {
                     .as("AggregateRoot subclasses must live in *-domain-core (ADR-0020)")
                     .because("aggregates are entities and belong in the innermost ring, not in a use case or adapter");
 
+    /**
+     * ADR-0030: caller identity is resolved once, at the HTTP edge. Exactly two
+     * packages may know what a credential looks like — {@code common-application}
+     * (the {@code @CurrentUser} resolver) and {@code application-container} (the
+     * filter chains). Everything else takes a resolved {@code UserId}.
+     *
+     * <p>This rule has teeth: {@code spring-security-core} and
+     * {@code -oauth2-jose} are on every {@code *-application} module's classpath
+     * (ADR-0019), so re-introducing {@code UUID.fromString(jwt.getSubject())} in a
+     * controller compiles perfectly well. Before this rule, four controllers
+     * resolved at the edge and thirteen did not.
+     *
+     * <p>It also forecloses reading any other claim in a controller. No endpoint
+     * needs one today; if one ever does, the honest move is to widen what the edge
+     * resolves, not to reach for the token in presentation.
+     */
+    @ArchTest
+    static final ArchRule only_the_edge_knows_what_a_credential_is =
+            noClasses()
+                    .that().resideOutsideOfPackages("org.sabha.common.web", "org.sabha.container")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "org.springframework.security.core..",
+                            "org.springframework.security.oauth2..")
+                    .as("only common-application and application-container may touch a credential (ADR-0030)")
+                    .because("the caller is resolved once at the edge; everything below takes a UserId");
+
     @ArchTest
     static final ArchRule domain_events_live_in_domain_core =
             classes()

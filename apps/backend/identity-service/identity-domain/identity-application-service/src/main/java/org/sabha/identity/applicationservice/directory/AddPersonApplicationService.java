@@ -4,10 +4,10 @@ import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
 import org.sabha.identity.domain.Person;
 import org.sabha.identity.domain.PersonAddedOverDuplicateWarning;
@@ -37,19 +37,16 @@ public class AddPersonApplicationService {
 
     private static final int MAX_CANDIDATES = 5;
 
-    private final CallerResolver callerResolver;
     private final PersonDirectory directory;
     private final StructuralHierarchyLookup hierarchy;
     private final DomainEventPublisher events;
     private final Clock clock;
 
     public AddPersonApplicationService(
-            CallerResolver callerResolver,
             PersonDirectory directory,
             StructuralHierarchyLookup hierarchy,
             DomainEventPublisher events,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.directory = directory;
         this.hierarchy = hierarchy;
         this.events = events;
@@ -57,8 +54,8 @@ public class AddPersonApplicationService {
     }
 
     @Transactional
-    public AddResult add(UUID keycloakSubject, AddPersonCommand command) {
-        UUID adder = callerResolver.requireUserId(keycloakSubject);
+    public AddResult add(UserId caller, AddPersonCommand command) {
+        UUID adder = caller.value();
 
         if (hasMobile(command)) {
             directory.findByMobile(command.mobile()).ifPresent(existing -> {

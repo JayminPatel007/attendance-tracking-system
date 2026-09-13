@@ -9,8 +9,8 @@ import java.util.UUID;
  * mapping.
  *
  * <p>Raised at the HTTP edge by the {@code @CurrentUser} argument resolver
- * (ADR-0030), and by {@link CallerResolver#requireUserId(UUID)} for the two
- * callers that are not request-bound.</p>
+ * (ADR-0030), which is where every way of failing to identify a caller now
+ * lands.</p>
  *
  * <p>Extends {@link AuthorizationDeniedException} — a caller the system cannot
  * identify is forbidden (403), not a server error — so the global handler maps

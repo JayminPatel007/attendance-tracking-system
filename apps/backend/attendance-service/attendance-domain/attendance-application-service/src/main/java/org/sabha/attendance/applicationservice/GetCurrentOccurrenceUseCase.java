@@ -1,24 +1,25 @@
 package org.sabha.attendance.applicationservice;
 
 import java.util.Optional;
-import java.util.UUID;
 
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 
+/**
+ * The Occurrence the calling Sanchalak can currently shape. An empty result means
+ * "nothing in the window right now" and nothing else — an unidentifiable caller
+ * was already rejected at the edge (ADR-0030).
+ */
 @Service
 public class GetCurrentOccurrenceUseCase {
 
-    private final CallerResolver callerResolver;
     private final CurrentOccurrenceQuery query;
 
-    public GetCurrentOccurrenceUseCase(CallerResolver callerResolver, CurrentOccurrenceQuery query) {
-        this.callerResolver = callerResolver;
+    public GetCurrentOccurrenceUseCase(CurrentOccurrenceQuery query) {
         this.query = query;
     }
 
-    public Optional<CurrentOccurrence> execute(UUID keycloakSubject) {
-        return callerResolver.resolveUserId(keycloakSubject)
-                .flatMap(query::findShapeableForSanchalak);
+    public Optional<CurrentOccurrence> execute(UserId caller) {
+        return query.findShapeableForSanchalak(caller.value());
     }
 }

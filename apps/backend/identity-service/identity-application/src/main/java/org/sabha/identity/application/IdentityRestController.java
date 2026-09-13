@@ -2,11 +2,11 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
+import org.sabha.common.UserId;
+import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,9 +20,8 @@ public class IdentityRestController {
     }
 
     @GetMapping("/api/whoami")
-    public ResponseEntity<WhoAmIResponse> whoami(@AuthenticationPrincipal Jwt jwt) {
-        UUID keycloakUserId = UUID.fromString(jwt.getSubject());
-        return users.findByKeycloakUserId(keycloakUserId)
+    public ResponseEntity<WhoAmIResponse> whoami(@CurrentUser UserId caller) {
+        return users.findById(caller.value())
                 .map(IdentityRestController::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(403).build());

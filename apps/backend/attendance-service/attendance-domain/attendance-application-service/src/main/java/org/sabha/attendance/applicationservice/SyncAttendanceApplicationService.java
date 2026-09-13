@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.sabha.attendance.applicationservice.MarkAttendanceApplicationService.MarkItem;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.UserActivityRecorder;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,25 +24,20 @@ public class SyncAttendanceApplicationService {
 
     public static final Duration MAX_ROSTER_AGE = Duration.ofDays(7);
 
-    private final CallerResolver callerResolver;
     private final MarkAttendanceApplicationService markAttendance;
     private final UserActivityRecorder activity;
     private final Clock clock;
 
     public SyncAttendanceApplicationService(
-            CallerResolver callerResolver,
             MarkAttendanceApplicationService markAttendance,
             UserActivityRecorder activity,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.markAttendance = markAttendance;
         this.activity = activity;
         this.clock = clock;
     }
 
-    public SyncResult execute(UUID keycloakSubject, Instant clientRosterVersion, List<SyncRequestItem> items) {
-        UUID userId = callerResolver.requireUserId(keycloakSubject);
-
+    public SyncResult execute(UserId caller, Instant clientRosterVersion, List<SyncRequestItem> items) {
         Instant now = clock.instant();
         Duration age = Duration.between(clientRosterVersion, now);
         if (age.compareTo(MAX_ROSTER_AGE) > 0) {
@@ -51,8 +46,8 @@ public class SyncAttendanceApplicationService {
 
         Map<UUID, List<MarkItem>> byOccurrence = groupByOccurrence(items);
         byOccurrence.forEach((occurrenceId, batch) ->
-                markAttendance.executeBatch(keycloakSubject, occurrenceId, batch));
-        activity.recordSync(userId, now);
+                markAttendance.executeBatch(caller, occurrenceId, batch));
+        activity.recordSync(caller.value(), now);
         return new SyncResult(items.size());
     }
 

@@ -17,7 +17,6 @@ import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceReopened;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
@@ -25,6 +24,7 @@ import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -35,17 +35,17 @@ class OccurrenceReopenServiceTest {
     private static final UUID KSHETRA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String DEMOGRAPHIC = "YUVAK";
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 24);
-    private static final UUID NIRIKSHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000041");
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000031");
-    private static final UUID SANCHALAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000005");
+    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
+    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
     private static final Instant NOW = Instant.parse("2026-05-26T08:00:00Z");
 
     @Test
     void aNirikshakReopensAFinalizedOccurrenceWithReasonAndAnAuditRowIsAppended() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
-        f.service().reopen(NIRIKSHAK_SUBJECT, OCCURRENCE_ID, "Forgot to mark Ravi");
+        f.service().reopen(NIRIKSHAK_CALLER, OCCURRENCE_ID, "Forgot to mark Ravi");
 
         assertThat(f.occurrences.saved).singleElement()
                 .extracting(Occurrence::state).isEqualTo(OccurrenceState.OPEN_FOR_MARKING);
@@ -64,7 +64,7 @@ class OccurrenceReopenServiceTest {
     void reopenWithoutAReasonIsRejectedWithNoSideEffects() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
-        assertThatThrownBy(() -> f.service().reopen(NIRIKSHAK_SUBJECT, OCCURRENCE_ID, "  "))
+        assertThatThrownBy(() -> f.service().reopen(NIRIKSHAK_CALLER, OCCURRENCE_ID, "  "))
                 .isInstanceOf(ReopenReasonRequiredException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -76,7 +76,7 @@ class OccurrenceReopenServiceTest {
     void aSanchalakReopenIsRejectedWithNoSideEffects() {
         Fixture f = Fixture.withOccurrence(OccurrenceState.FINALIZED);
 
-        assertThatThrownBy(() -> f.service().reopen(SANCHALAK_SUBJECT, OCCURRENCE_ID, "let me in"))
+        assertThatThrownBy(() -> f.service().reopen(SANCHALAK_CALLER, OCCURRENCE_ID, "let me in"))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.occurrences.saved).isEmpty();
@@ -98,15 +98,6 @@ class OccurrenceReopenServiceTest {
         }
 
         OccurrenceReopenService service() {
-            CallerResolver callerResolver = subject -> {
-                if (subject.equals(NIRIKSHAK_SUBJECT)) {
-                    return Optional.of(NIRIKSHAK_USER);
-                }
-                if (subject.equals(SANCHALAK_SUBJECT)) {
-                    return Optional.of(SANCHALAK_USER);
-                }
-                return Optional.empty();
-            };
             RoleAssignmentLookup roles = new RoleAssignmentLookup() {
                 @Override
                 public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
@@ -152,7 +143,7 @@ class OccurrenceReopenServiceTest {
                 }
             };
             OccurrenceWriter writer = new OccurrenceWriter(
-                    callerResolver, new AuthorizationEngine(roles, hierarchy, noProxy),
+                    new AuthorizationEngine(roles, hierarchy, noProxy),
                     occurrences, transitions, publisher, clock);
             return new OccurrenceReopenService(writer);
         }

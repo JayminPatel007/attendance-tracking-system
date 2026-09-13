@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
@@ -36,21 +36,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SelectionServiceTest {
 
-    private static final UUID KEYCLOAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000c2");
+    private static final UserId SANCHALAK = UserId.of(SANCHALAK_USER);
     private static final UUID PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000c3");
     private static final UUID REGULAR_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000c4");
     private static final UUID SELECTIVE_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000c5");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000c6");
-    private static final UUID NIRDESHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000c7");
     private static final UUID NIRDESHAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000c8");
+    private static final UserId NIRDESHAK = UserId.of(NIRDESHAK_USER);
     private static final String DEMOGRAPHIC = "YUVAK";
 
     @Test
     void nominateCreatesPendingNominationForARosterPersonWithTheDerivedSelectiveSabha() {
         Fixture f = new Fixture();
 
-        UUID nominationId = f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        UUID nominationId = f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA);
 
         SelectionNomination saved = f.nominations.findById(nominationId).orElseThrow();
         assertThat(saved.status()).isEqualTo(NominationStatus.PENDING);
@@ -76,7 +76,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.roleAssignments.revoke(SANCHALAK_USER, REGULAR_SABHA);
 
-        assertThatThrownBy(() -> f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NominationNotAuthorizedException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -86,7 +86,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.roleAssignments.grant(SANCHALAK_USER, REGULAR_SABHA, Role.SAH_SANCHALAK);
 
-        UUID nominationId = f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        UUID nominationId = f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA);
 
         assertThat(f.nominations.findById(nominationId)).isPresent();
     }
@@ -96,7 +96,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.roster.clear();
 
-        assertThatThrownBy(() -> f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(PersonNotOnRosterException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -106,7 +106,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.hierarchy.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, "SANYUKTA", "REGULAR"));
 
-        assertThatThrownBy(() -> f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NoSelectiveTrackException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -116,7 +116,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.hierarchy.clearSelective();
 
-        assertThatThrownBy(() -> f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NoSelectiveSabhaException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -125,10 +125,10 @@ class SelectionServiceTest {
     void aSecondPendingNominationForTheSamePersonAndTrackIsRejected() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
         f.publisher.events.clear();
 
-        assertThatThrownBy(() -> service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> service.nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(DuplicateNominationException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -138,7 +138,7 @@ class SelectionServiceTest {
         Fixture f = new Fixture();
         f.roster.add(PERSON, SELECTIVE_SABHA);
 
-        assertThatThrownBy(() -> f.service().nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(AlreadySelectedException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -147,10 +147,10 @@ class SelectionServiceTest {
     void approveAddsTheSelectiveHomeSabhaLeavesTheRegularOneAndRecordsTheDecider() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        UUID nominationId = service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        UUID nominationId = service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
         f.publisher.events.clear();
 
-        service.approve(NIRDESHAK_SUBJECT, nominationId);
+        service.approve(NIRDESHAK, nominationId);
 
         assertThat(f.roster.isOnRoster(PERSON, SELECTIVE_SABHA)).isTrue();
         assertThat(f.roster.isOnRoster(PERSON, REGULAR_SABHA)).isTrue();
@@ -171,11 +171,11 @@ class SelectionServiceTest {
     void approveBySomeoneWhoIsNotTheDemographicNirdeshakIsDeniedAndAddsNoHomeSabha() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        UUID nominationId = service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        UUID nominationId = service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
         // The Sanchalak is a valid caller but holds no Nirdeshak authority.
         f.publisher.events.clear();
 
-        assertThatThrownBy(() -> service.approve(KEYCLOAK_SUBJECT, nominationId))
+        assertThatThrownBy(() -> service.approve(SANCHALAK, nominationId))
                 .isInstanceOf(SelectionDecisionNotAuthorizedException.class);
         assertThat(f.roster.isOnRoster(PERSON, SELECTIVE_SABHA)).isFalse();
         assertThat(f.nominations.findById(nominationId).orElseThrow().status())
@@ -187,10 +187,10 @@ class SelectionServiceTest {
     void rejectRecordsTheReasonAndDeciderAndAddsNoHomeSabha() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        UUID nominationId = service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
+        UUID nominationId = service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
         f.publisher.events.clear();
 
-        service.reject(NIRDESHAK_SUBJECT, nominationId, "Not yet ready");
+        service.reject(NIRDESHAK, nominationId, "Not yet ready");
 
         SelectionNomination saved = f.nominations.findById(nominationId).orElseThrow();
         assertThat(saved.status()).isEqualTo(NominationStatus.REJECTED);
@@ -211,11 +211,11 @@ class SelectionServiceTest {
     void deselectRemovesOnlyTheSelectiveHomeSabhaAndRecordsTheDecider() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        UUID nominationId = service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
-        service.approve(NIRDESHAK_SUBJECT, nominationId);
+        UUID nominationId = service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
+        service.approve(NIRDESHAK, nominationId);
         f.publisher.events.clear();
 
-        service.deselect(NIRDESHAK_SUBJECT, PERSON, SELECTIVE_SABHA);
+        service.deselect(NIRDESHAK, PERSON, SELECTIVE_SABHA);
 
         assertThat(f.roster.isOnRoster(PERSON, SELECTIVE_SABHA)).isFalse();
         assertThat(f.roster.isOnRoster(PERSON, REGULAR_SABHA)).isTrue();
@@ -235,11 +235,11 @@ class SelectionServiceTest {
     void deselectBySomeoneWhoIsNotTheDemographicNirdeshakIsDenied() {
         Fixture f = new Fixture();
         SelectionService service = f.service();
-        UUID nominationId = service.nominate(KEYCLOAK_SUBJECT, PERSON, REGULAR_SABHA);
-        service.approve(NIRDESHAK_SUBJECT, nominationId);
+        UUID nominationId = service.nominate(SANCHALAK, PERSON, REGULAR_SABHA);
+        service.approve(NIRDESHAK, nominationId);
         f.publisher.events.clear();
 
-        assertThatThrownBy(() -> service.deselect(KEYCLOAK_SUBJECT, PERSON, SELECTIVE_SABHA))
+        assertThatThrownBy(() -> service.deselect(SANCHALAK, PERSON, SELECTIVE_SABHA))
                 .isInstanceOf(SelectionDecisionNotAuthorizedException.class);
         assertThat(f.roster.isOnRoster(PERSON, SELECTIVE_SABHA)).isTrue();
         assertThat(f.publisher.events).isEmpty();
@@ -255,7 +255,6 @@ class SelectionServiceTest {
         final InMemoryHierarchy hierarchy = new InMemoryHierarchy();
         final InMemoryAppointerAuthority authority = new InMemoryAppointerAuthority();
         final RecordingPublisher publisher = new RecordingPublisher();
-        final Map<UUID, UUID> subjects = new HashMap<>();
         final Clock clock = Clock.fixed(Instant.parse("2026-06-06T10:00:00Z"), ZoneOffset.UTC);
 
         Fixture() {
@@ -263,8 +262,6 @@ class SelectionServiceTest {
             // that Sabha's Roster, a YSS selective Sabha exists in the Kshetra, and the
             // demographic Nirdeshak holds authority — so the happy paths pass unless a
             // test overrides one of these.
-            subjects.put(KEYCLOAK_SUBJECT, SANCHALAK_USER);
-            subjects.put(NIRDESHAK_SUBJECT, NIRDESHAK_USER);
             roleAssignments.grant(SANCHALAK_USER, REGULAR_SABHA, Role.SANCHALAK);
             roster.add(PERSON, REGULAR_SABHA);
             hierarchy.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "REGULAR"));
@@ -273,13 +270,9 @@ class SelectionServiceTest {
             authority.grantNirdeshak(NIRDESHAK_USER, KSHETRA, DEMOGRAPHIC);
         }
 
-        CallerResolver caller() {
-            return subject -> Optional.ofNullable(subjects.get(subject));
-        }
-
         SelectionService service() {
             return new SelectionService(
-                    caller(), roleAssignments, roster, hierarchy, authority, nominations,
+                    roleAssignments, roster, hierarchy, authority, nominations,
                     publisher, clock);
         }
     }

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.ConflictException;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
@@ -45,10 +45,10 @@ class RoleAppointmentServiceTest {
     private static final String YUVAK = "YUVAK";
     private static final String KISHORE = "KISHORE";
 
-    private static final UUID NIRDESHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f1");
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
-    private static final UUID OUTSIDER_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
+    private static final UserId NIRDESHAK_CALLER = UserId.of(NIRDESHAK);
     private static final UUID OUTSIDER = UUID.fromString("00000000-0000-0000-0000-0000000000a9");
+    private static final UserId OUTSIDER_CALLER = UserId.of(OUTSIDER);
     private static final UUID SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
     private static final UUID HOME_SABHA = SABHA;
@@ -60,7 +60,7 @@ class RoleAppointmentServiceTest {
         Fixture f = new Fixture();
         UUID personId = f.existingUser("Existing Karyakar");
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         personId, "anything", "anything"));
@@ -86,7 +86,7 @@ class RoleAppointmentServiceTest {
         Fixture f = new Fixture();
         UUID personId = f.existingPersonWithoutUser("Plain Person", "+919820000001");
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         personId, "new-sanchalak", "TempPass1!"));
@@ -108,7 +108,7 @@ class RoleAppointmentServiceTest {
         AddPersonCommand newPerson = new AddPersonCommand(
                 "Brand New", Gender.MALE, null, "+919820000123", null, HOME_SABHA, false);
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forNewPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         newPerson, "brand-new", "TempPass1!"));
@@ -132,7 +132,7 @@ class RoleAppointmentServiceTest {
         AddPersonCommand dupe = new AddPersonCommand(
                 "Imposter", Gender.MALE, null, "+919820000999", null, HOME_SABHA, false);
 
-        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forNewPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         dupe, "imposter", "x")))
@@ -150,7 +150,7 @@ class RoleAppointmentServiceTest {
         f.users.usernames.add("taken");
         f.users.markStart();
 
-        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         personId, "taken", "x")))
@@ -166,7 +166,7 @@ class RoleAppointmentServiceTest {
         Fixture f = new Fixture();
         UUID personId = f.existingUser("Whoever");
 
-        assertThatThrownBy(() -> f.service().appoint(OUTSIDER_SUBJECT,
+        assertThatThrownBy(() -> f.service().appoint(OUTSIDER_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         personId, "x", "x")))
@@ -181,7 +181,7 @@ class RoleAppointmentServiceTest {
         UUID personId = f.existingUser("Replacement Sanchalak");
         f.hierarchy.retiredSabhas.add(SABHA);
 
-        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         personId, "x", "x")))
@@ -197,7 +197,7 @@ class RoleAppointmentServiceTest {
         UUID personId = f.existingUser("Third Wheel");
         f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
 
-        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_SUBJECT,
+        assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, YUVAK),
                         personId, "x", "x")))
@@ -213,7 +213,7 @@ class RoleAppointmentServiceTest {
         UUID personId = f.existingUser("Second Sah-Nirdeshak");
         f.sahNirdeshakCount.set(KSHETRA, YUVAK, 1);
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, YUVAK),
                         personId, "x", "x"));
@@ -231,7 +231,7 @@ class RoleAppointmentServiceTest {
         f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
         f.authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + KISHORE);
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, KISHORE),
                         personId, "x", "x"));
@@ -246,7 +246,7 @@ class RoleAppointmentServiceTest {
         UUID personId = f.existingUser("Nirikshak");
         f.sahNirdeshakCount.set(KSHETRA, YUVAK, 2);
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
                         AppointmentScope.onKshetra(AppointableRole.NIRIKSHAK, KSHETRA, YUVAK),
                         personId, "x", "x"));
@@ -263,7 +263,7 @@ class RoleAppointmentServiceTest {
         AddPersonCommand newPerson = new AddPersonCommand(
                 "Brand New", Gender.MALE, null, "+919820000123", null, HOME_SABHA, false);
 
-        AppointmentResult result = f.service().appoint(NIRDESHAK_SUBJECT,
+        AppointmentResult result = f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forNewPerson(
                         AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA),
                         newPerson, "brand-new", "x"));
@@ -276,7 +276,6 @@ class RoleAppointmentServiceTest {
     }
 
     private static final class Fixture {
-        final FakeCallerResolver callers = new FakeCallerResolver();
         final FakeHierarchy hierarchy = new FakeHierarchy();
         final FakeAuthority authority = new FakeAuthority();
         final FakePersonDirectory directory = new FakePersonDirectory();
@@ -287,8 +286,6 @@ class RoleAppointmentServiceTest {
         final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
         Fixture() {
-            callers.map.put(NIRDESHAK_SUBJECT, NIRDESHAK);
-            callers.map.put(OUTSIDER_SUBJECT, OUTSIDER);
             hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
             authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + YUVAK);
             directory.kshetraOfSabha.put(SABHA, KSHETRA);
@@ -319,19 +316,10 @@ class RoleAppointmentServiceTest {
             AppointmentAuthorization authz = new AppointmentAuthorization(
                     hierarchy, authority, userId -> false);
             AddPersonApplicationService addPerson = new AddPersonApplicationService(
-                    callers, directory, hierarchy, events -> { }, clock);
+                    directory, hierarchy, events -> { }, clock);
             return new RoleAppointmentService(
-                    callers, authz, addPerson, users, identityProvider, appointments,
+                    authz, addPerson, users, identityProvider, appointments,
                     new SahNirdeshakCap(sahNirdeshakCount), hierarchy, clock);
-        }
-    }
-
-    private static final class FakeCallerResolver implements CallerResolver {
-        final Map<UUID, UUID> map = new HashMap<>();
-
-        @Override
-        public Optional<UUID> resolveUserId(UUID keycloakSubject) {
-            return Optional.ofNullable(map.get(keycloakSubject));
         }
     }
 

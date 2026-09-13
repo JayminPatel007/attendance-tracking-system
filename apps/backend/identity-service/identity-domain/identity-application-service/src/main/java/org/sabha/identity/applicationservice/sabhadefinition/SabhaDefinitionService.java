@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaProvisioning;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
@@ -24,7 +24,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * single atomic act.
  *
  * <ol>
- *   <li>Resolve the calling Nirdeshak via {@link CallerResolver}.</li>
  *   <li>Resolve the chosen kind's demographic and authorize the caller as
  *       Nirdeshak over (Kshetra, demographic) — a denial becomes an
  *       {@link AuthorizationDeniedException} (HTTP 403) before anything is created.</li>
@@ -39,25 +38,22 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 public class SabhaDefinitionService {
 
-    private final CallerResolver callerResolver;
     private final SabhaProvisioning provisioning;
     private final SabhaDefinitionAuthorization authz;
     private final AppointRole appointments;
 
     public SabhaDefinitionService(
-            CallerResolver callerResolver,
             SabhaProvisioning provisioning,
             SabhaDefinitionAuthorization authz,
             AppointRole appointments) {
-        this.callerResolver = callerResolver;
         this.provisioning = provisioning;
         this.authz = authz;
         this.appointments = appointments;
     }
 
     @Transactional
-    public SabhaDefinitionResult define(UUID keycloakSubject, SabhaDefinitionCommand command) {
-        UUID nirdeshak = callerResolver.requireUserId(keycloakSubject);
+    public SabhaDefinitionResult define(UserId caller, SabhaDefinitionCommand command) {
+        UUID nirdeshak = caller.value();
 
         String demographic = provisioning.demographicOfKind(command.sabhaKindId())
                 .orElseThrow(() -> new SabhaKindNotFoundException(command.sabhaKindId()));
@@ -76,7 +72,7 @@ public class SabhaDefinitionService {
                 : provisioning.createMonthlyAdHoc(command.kshetraId(), command.sabhaKindId(),
                         command.standingVenue(), nirdeshak);
 
-        AppointmentResult sanchalak = appointments.appoint(keycloakSubject,
+        AppointmentResult sanchalak = appointments.appoint(caller,
                 command.sanchalak().toCommand(AppointmentScope.onSabha(AppointableRole.SANCHALAK, sabhaId)));
         if (sanchalak.softWarned()) {
             return rolledBackSoftWarn(sanchalak.candidates());
@@ -84,7 +80,7 @@ public class SabhaDefinitionService {
 
         UUID sahSanchalakAssignmentId = null;
         if (command.hasSahSanchalak()) {
-            AppointmentResult sah = appointments.appoint(keycloakSubject,
+            AppointmentResult sah = appointments.appoint(caller,
                     command.sahSanchalak().toCommand(AppointmentScope.onSabha(AppointableRole.SAH_SANCHALAK, sabhaId)));
             if (sah.softWarned()) {
                 return rolledBackSoftWarn(sah.candidates());

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +28,9 @@ public class MarkAttendanceApplicationService {
     }
 
     @Transactional
-    public void execute(UUID keycloakSubject, UUID occurrenceId, UUID personId, boolean present,
+    public void execute(UserId caller, UUID occurrenceId, UUID personId, boolean present,
                         Instant clientMarkedAt) {
-        executeBatch(keycloakSubject, occurrenceId,
+        executeBatch(caller, occurrenceId,
                 List.of(MarkItem.roster(personId, present, clientMarkedAt)));
     }
 
@@ -42,8 +43,8 @@ public class MarkAttendanceApplicationService {
      * {@code markingType = WALK_IN} and rides the same load/retry/save/publish path.
      */
     @Transactional
-    public void executeBatch(UUID keycloakSubject, UUID occurrenceId, List<MarkItem> items) {
-        writer.mutateUnaudited(occurrenceId, keycloakSubject, (occurrence, markedBy) -> {
+    public void executeBatch(UserId caller, UUID occurrenceId, List<MarkItem> items) {
+        writer.mutateUnaudited(occurrenceId, caller, (occurrence, markedBy) -> {
             for (MarkItem item : items) {
                 apply(occurrence, item, markedBy);
             }

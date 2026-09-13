@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.common.ConflictException;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.StructuralHierarchyLookup;
@@ -36,12 +36,12 @@ class RoleRevocationServiceTest {
 
     private static final String YUVAK = "YUVAK";
 
-    private static final UUID NIRDESHAK_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f1");
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
-    private static final UUID OUTSIDER_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f9");
+    private static final UserId NIRDESHAK_CALLER = UserId.of(NIRDESHAK);
     private static final UUID OUTSIDER = UUID.fromString("00000000-0000-0000-0000-0000000000a9");
-    private static final UUID RT_PEER_SUBJECT = UUID.fromString("00000000-0000-0000-0000-0000000000f2");
+    private static final UserId OUTSIDER_CALLER = UserId.of(OUTSIDER);
     private static final UUID RT_PEER = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
+    private static final UserId RT_PEER_CALLER = UserId.of(RT_PEER);
 
     private static final UUID SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
@@ -55,7 +55,7 @@ class RoleRevocationServiceTest {
         // The Sanchalak was appointed by someone else entirely; authority is by scope.
         UUID assignment = f.activeSabhaRole(AppointableRole.SANCHALAK, SABHA, f.user("Sanchalak"));
 
-        f.service().revoke(NIRDESHAK_SUBJECT, assignment);
+        f.service().revoke(NIRDESHAK_CALLER, assignment);
 
         assertThat(f.assignments.revokedId).isEqualTo(assignment);
         assertThat(f.assignments.revokedBy).isEqualTo(NIRDESHAK);
@@ -67,7 +67,7 @@ class RoleRevocationServiceTest {
         Fixture f = new Fixture();
         UUID assignment = f.activeSabhaRole(AppointableRole.SANCHALAK, SABHA, f.user("Sanchalak"));
 
-        assertThatThrownBy(() -> f.service().revoke(OUTSIDER_SUBJECT, assignment))
+        assertThatThrownBy(() -> f.service().revoke(OUTSIDER_CALLER, assignment))
                 .isInstanceOf(AuthorizationDeniedException.class);
 
         assertThat(f.assignments.revokedId).isNull();
@@ -77,7 +77,7 @@ class RoleRevocationServiceTest {
     void revokingAnUnknownOrAlreadyRevokedAssignmentIsNotFound() {
         Fixture f = new Fixture();
 
-        assertThatThrownBy(() -> f.service().revoke(NIRDESHAK_SUBJECT, UUID.randomUUID()))
+        assertThatThrownBy(() -> f.service().revoke(NIRDESHAK_CALLER, UUID.randomUUID()))
                 .isInstanceOf(RoleAssignmentNotFoundException.class);
 
         assertThat(f.assignments.revokedId).isNull();
@@ -89,7 +89,7 @@ class RoleRevocationServiceTest {
         UUID assignment = f.activeCityRole(AppointableRole.REGIONAL_TEAM, CITY, YUVAK, f.user("Last RT"));
         f.assignments.regionalTeamCount = 1;
 
-        assertThatThrownBy(() -> f.service().revoke(RT_PEER_SUBJECT, assignment))
+        assertThatThrownBy(() -> f.service().revoke(RT_PEER_CALLER, assignment))
                 .isInstanceOf(LastRegionalTeamMemberException.class)
                 .satisfies(e -> assertThat(((ConflictException) e).code()).isEqualTo("LAST_REGIONAL_TEAM_MEMBER"));
 
@@ -102,7 +102,7 @@ class RoleRevocationServiceTest {
         UUID assignment = f.activeCityRole(AppointableRole.REGIONAL_TEAM, CITY, YUVAK, f.user("Departing RT"));
         f.assignments.regionalTeamCount = 2;
 
-        f.service().revoke(RT_PEER_SUBJECT, assignment);
+        f.service().revoke(RT_PEER_CALLER, assignment);
 
         assertThat(f.assignments.revokedId).isEqualTo(assignment);
     }
@@ -114,7 +114,7 @@ class RoleRevocationServiceTest {
         UUID assignment = f.activeSabhaRole(AppointableRole.SANCHALAK, SABHA, user);
         f.assignments.remainingActiveRolesFor.put(user, 0);
 
-        f.service().revoke(NIRDESHAK_SUBJECT, assignment);
+        f.service().revoke(NIRDESHAK_CALLER, assignment);
 
         assertThat(f.identityProvider.disabled).containsExactly(f.keycloakOf(user));
     }
@@ -126,13 +126,12 @@ class RoleRevocationServiceTest {
         UUID assignment = f.activeSabhaRole(AppointableRole.SANCHALAK, SABHA, user);
         f.assignments.remainingActiveRolesFor.put(user, 1);
 
-        f.service().revoke(NIRDESHAK_SUBJECT, assignment);
+        f.service().revoke(NIRDESHAK_CALLER, assignment);
 
         assertThat(f.identityProvider.disabled).isEmpty();
     }
 
     private static final class Fixture {
-        final FakeCallerResolver callers = new FakeCallerResolver();
         final FakeHierarchy hierarchy = new FakeHierarchy();
         final FakeAuthority authority = new FakeAuthority();
         final FakeRevokableRoleAssignments assignments = new FakeRevokableRoleAssignments();
@@ -141,9 +140,6 @@ class RoleRevocationServiceTest {
         final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
         Fixture() {
-            callers.map.put(NIRDESHAK_SUBJECT, NIRDESHAK);
-            callers.map.put(OUTSIDER_SUBJECT, OUTSIDER);
-            callers.map.put(RT_PEER_SUBJECT, RT_PEER);
             hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
             authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + YUVAK);
             authority.regionalTeamScopes.add(RT_PEER + "|" + CITY + "|" + YUVAK);
@@ -177,16 +173,7 @@ class RoleRevocationServiceTest {
             AppointmentAuthorization authz = new AppointmentAuthorization(
                     hierarchy, authority, userId -> false);
             return new RoleRevocationService(
-                    callers, authz, assignments, users, identityProvider, clock);
-        }
-    }
-
-    private static final class FakeCallerResolver implements CallerResolver {
-        final Map<UUID, UUID> map = new HashMap<>();
-
-        @Override
-        public Optional<UUID> resolveUserId(UUID keycloakSubject) {
-            return Optional.ofNullable(map.get(keycloakSubject));
+                    authz, assignments, users, identityProvider, clock);
         }
     }
 

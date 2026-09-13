@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.UserId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,17 +45,17 @@ public class OccurrenceShapingService {
     }
 
     @Transactional
-    public void cancel(UUID keycloakSubject, UUID occurrenceId, String reason) {
+    public void cancel(UserId caller, UUID occurrenceId, String reason) {
         if (reason == null || reason.isBlank()) {
             throw new CancellationReasonRequiredException(occurrenceId);
         }
-        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.CANCEL),
+        writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, reason, Occurrence::cancel);
     }
 
     @Transactional
-    public void revert(UUID keycloakSubject, UUID occurrenceId) {
-        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.CANCEL),
+    public void revert(UserId caller, UUID occurrenceId) {
+        writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.CANCEL),
                 OccurrenceAction.REVERT, null, occurrence -> {
                     requireWithinRevertWindow(occurrence);
                     occurrence.revert();
@@ -62,16 +63,16 @@ public class OccurrenceShapingService {
     }
 
     @Transactional
-    public void reschedule(UUID keycloakSubject, UUID occurrenceId,
+    public void reschedule(UserId caller, UUID occurrenceId,
                            LocalDate newDate, LocalTime newStartTime, LocalTime newEndTime) {
-        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.RESCHEDULE),
+        writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.RESCHEDULE),
                 OccurrenceAction.RESCHEDULE, null,
                 occurrence -> occurrence.reschedule(newDate, newStartTime, newEndTime));
     }
 
     @Transactional
-    public void overrideVenue(UUID keycloakSubject, UUID occurrenceId, String venue) {
-        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.VENUE_OVERRIDE),
+    public void overrideVenue(UserId caller, UUID occurrenceId, String venue) {
+        writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.VENUE_OVERRIDE),
                 OccurrenceAction.OVERRIDE_VENUE, null,
                 occurrence -> occurrence.overrideVenue(venue));
     }

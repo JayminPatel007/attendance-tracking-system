@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RoleRevocationService implements RevokeRole {
 
-    private final CallerResolver callerResolver;
     private final AppointmentAuthorization authz;
     private final RevokableRoleAssignments assignments;
     private final UserRepository users;
@@ -42,13 +41,11 @@ public class RoleRevocationService implements RevokeRole {
     private final Clock clock;
 
     public RoleRevocationService(
-            CallerResolver callerResolver,
             AppointmentAuthorization authz,
             RevokableRoleAssignments assignments,
             UserRepository users,
             IdentityProviderGateway identityProvider,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.authz = authz;
         this.assignments = assignments;
         this.users = users;
@@ -58,8 +55,8 @@ public class RoleRevocationService implements RevokeRole {
 
     @Override
     @Transactional
-    public void revoke(UUID keycloakSubject, UUID assignmentId) {
-        UUID actor = callerResolver.requireUserId(keycloakSubject);
+    public void revoke(UserId caller, UUID assignmentId) {
+        UUID actor = caller.value();
 
         RevokableAssignment assignment = assignments.findActive(assignmentId)
                 .orElseThrow(() -> new RoleAssignmentNotFoundException(assignmentId));

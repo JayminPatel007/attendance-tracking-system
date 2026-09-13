@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +34,11 @@ public class OccurrenceReopenService {
     }
 
     @Transactional
-    public void reopen(UUID keycloakSubject, UUID occurrenceId, String reason) {
+    public void reopen(UserId caller, UUID occurrenceId, String reason) {
         if (reason == null || reason.isBlank()) {
             throw new ReopenReasonRequiredException(occurrenceId);
         }
-        writer.transition(occurrenceId, TransitionActor.user(keycloakSubject, AuthorizedAction.REOPEN),
+        writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.REOPEN),
                 OccurrenceAction.REOPEN, reason, Occurrence::reopen);
     }
 }

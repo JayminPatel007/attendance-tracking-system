@@ -15,8 +15,8 @@ import org.sabha.attendance.domain.AttendanceMarking;
 import org.sabha.attendance.domain.MarkingType;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
-import org.sabha.common.CallerResolver;
 
+import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MarkAttendanceApplicationServiceTest {
 
-    private static final UUID SUBJECT = UUID.fromString("00000000-0000-0000-0000-000000000300");
     private static final UUID MARKED_BY = UUID.fromString("00000000-0000-0000-0000-000000000004");
+    private static final UserId MARKER = UserId.of(MARKED_BY);
     private static final UUID OCCURRENCE_ID = UUID.fromString("00000000-0000-0000-0000-000000000020");
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID PERSON_ID = UUID.fromString("00000000-0000-0000-0000-000000000101");
@@ -40,7 +40,7 @@ class MarkAttendanceApplicationServiceTest {
     void markingARosterMemberRecordsThePresenceAttributedToTheCaller() {
         Fixture f = new Fixture();
 
-        f.service().execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
+        f.service().execute(MARKER, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
 
         assertThat(f.occurrences.saved).hasSize(1);
         Occurrence saved = f.occurrences.saved.get(0);
@@ -57,7 +57,7 @@ class MarkAttendanceApplicationServiceTest {
     void markingAWalkInRecordsAPresentWalkInMarkingAndPublishesIt() {
         Fixture f = new Fixture();
 
-        f.service().executeBatch(SUBJECT, OCCURRENCE_ID,
+        f.service().executeBatch(MARKER, OCCURRENCE_ID,
                 List.of(MarkItem.walkIn(PERSON_ID, CLIENT_MARKED_AT)));
 
         AttendanceMarking marking = f.occurrences.saved.get(0).markings().iterator().next();
@@ -73,7 +73,7 @@ class MarkAttendanceApplicationServiceTest {
     void markingIsNotALifecycleTransitionSoNoAuditRowIsAppended() {
         Fixture f = new Fixture();
 
-        f.service().execute(SUBJECT, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
+        f.service().execute(MARKER, OCCURRENCE_ID, PERSON_ID, true, CLIENT_MARKED_AT);
 
         assertThat(f.transitions.appended).isEmpty();
     }
@@ -92,10 +92,8 @@ class MarkAttendanceApplicationServiceTest {
         }
 
         MarkAttendanceApplicationService service() {
-            CallerResolver callerResolver =
-                    subject -> subject.equals(SUBJECT) ? Optional.of(MARKED_BY) : Optional.empty();
             return new MarkAttendanceApplicationService(OccurrenceWriterTest.unauthorizedWriter(
-                    callerResolver, occurrences, transitions, publisher, FIXED_CLOCK));
+                    occurrences, transitions, publisher, FIXED_CLOCK));
         }
     }
 }

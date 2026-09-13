@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.CallerResolver;
 import org.sabha.common.MadhyasthaKaryalayaLookup;
 import org.sabha.common.SantLookup;
+import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PasswordReissueService {
 
-    private final CallerResolver callerResolver;
     private final ReissueAuthorityLookup authority;
     private final SantLookup sants;
     private final MadhyasthaKaryalayaLookup mkMembership;
@@ -38,7 +37,6 @@ public class PasswordReissueService {
     private final Clock clock;
 
     public PasswordReissueService(
-            CallerResolver callerResolver,
             ReissueAuthorityLookup authority,
             SantLookup sants,
             MadhyasthaKaryalayaLookup mkMembership,
@@ -46,7 +44,6 @@ public class PasswordReissueService {
             IdentityProviderGateway identityProvider,
             PasswordReissueAuditLog audit,
             Clock clock) {
-        this.callerResolver = callerResolver;
         this.authority = authority;
         this.sants = sants;
         this.mkMembership = mkMembership;
@@ -57,8 +54,8 @@ public class PasswordReissueService {
     }
 
     @Transactional
-    public void reissue(UUID keycloakSubject, UUID targetUserId, String newPassword) {
-        UUID actor = callerResolver.requireUserId(keycloakSubject);
+    public void reissue(UserId caller, UUID targetUserId, String newPassword) {
+        UUID actor = caller.value();
 
         if (!canReissue(actor, targetUserId)) {
             throw new AuthorizationDeniedException(actor, AuthorizedAction.REISSUE_PASSWORD);
