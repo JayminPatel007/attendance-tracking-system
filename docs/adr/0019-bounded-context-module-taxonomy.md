@@ -1,6 +1,6 @@
 # Bounded-context module taxonomy: five modules per context, presentation split from application service
 
-**Status**: accepted. **Supersedes [ADR-0015](0015-bounded-context-seams-as-build-modules.md), [ADR-0017](0017-rest-adapters-live-in-application-modules.md), and [ADR-0018](0018-application-service-split.md).**
+**Status**: accepted. **Supersedes [ADR-0015](0015-bounded-context-seams-as-build-modules.md), [ADR-0017](0017-rest-adapters-live-in-application-modules.md), and [ADR-0018](0018-application-service-split.md).** **Amended by [ADR-0030](0030-caller-identity-resolved-at-the-http-edge.md)** (adds the `common-application` module this ADR's Q11.3 dropped) and **[ADR-0031](0031-shared-modules-group-under-a-common-aggregator.md)** (both shared modules move under an `apps/backend/common/` aggregator — the layout diagram below still shows them flat).
 
 The 14-module layout from ADR-0015 (then 18 after ADR-0018) blurred two distinctions that DDD/Clean Architecture treats as separate: **presentation** (the HTTP transport surface) and **application services** (use-case orchestration). ADR-0017 made `*-application` hold both REST controllers *and* use cases; ADR-0018 then split application services by "single vs cross aggregate", which is a different cut than the one we actually want. This ADR resets the layout so the module names match the layer names from DDD and Clean Architecture, and so each module's boundary corresponds to a single Clean-Architecture ring.
 
