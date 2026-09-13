@@ -9,7 +9,7 @@ source_paths: [
   apps/backend/application-container/src/main/java/org/sabha/container/OpenApiConfig.java,
   apps/backend/application-container/src/main/java/org/sabha/container/SecurityConfig.java
 ]
-last_verified: 6eeb09c6fa8db613f003d3539bacc2d9bfb41c16
+last_verified: a6fc042a1eb09ad76e014c33fcf2a4aa09ee9f99
 ---
 
 # HTTP Edge Traps
