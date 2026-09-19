@@ -37,6 +37,8 @@ sources:
   - { id: context, title: "CONTEXT.md — Roles (each tier has its own role), Geographic hierarchy", resource: ../../../CONTEXT.md }
 appears_in: [backend-identity, backend-sabha, backend-attendance, backend-analytics, backend-common-domain, web, attendance-marking]
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
+status: disputed
+disputed_reason: "ADR-0032/ADR-0033 supersede this page's model — caller authority becomes an edge-resolved parameter, six engines become five, and the Deviations list defends a duplication that no longer exists; recompile after #235 lands."
 ---
 
 # Authorization
