@@ -16,11 +16,11 @@ import java.util.UUID;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
+import org.sabha.identity.applicationservice.Callers;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.SabhaFact;
@@ -48,7 +48,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HomeSabhaTransferServiceTest {
 
     private static final UUID INITIATOR_USER = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
-    private static final UserId INITIATOR = UserId.of(INITIATOR_USER);
     private static final UUID PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000b3");
     private static final UUID DESTINATION_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b4");
     private static final UUID OLD_YUVAK_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000b5");
@@ -56,6 +55,14 @@ class HomeSabhaTransferServiceTest {
     private static final String PERSON_MOBILE = "+919820100200";
     private static final String FIXED_OTP = "123456";
     private static final String YUVAK_KIND = "REGULAR_YUVAK";
+
+    /**
+     * The one authority this flow reads — {@code runsSabha}, the same single call
+     * the selection nomination makes. The two were byte-identical role folds
+     * through a port until ADR-0032 (issue #224).
+     */
+    private static final CallerAuthority INITIATOR =
+            Callers.of(INITIATOR_USER).sanchalakOf(DESTINATION_SABHA).build();
     private static final String SANYUKTA_KIND = "REGULAR_SANYUKTA";
 
     @Test
@@ -186,9 +193,9 @@ class HomeSabhaTransferServiceTest {
     void initiateBySomeoneWithoutDestinationAuthorityIsDenied() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        f.roleAssignments.revoke(INITIATOR_USER, DESTINATION_SABHA);
+        CallerAuthority outsider = Callers.noRoles(INITIATOR_USER);
 
-        assertThatThrownBy(() -> f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA))
+        assertThatThrownBy(() -> f.service().initiate(outsider, PERSON, DESTINATION_SABHA))
                 .isInstanceOf(TransferNotAuthorizedException.class);
         assertThat(f.gateway.sentCode).isNull();
     }
@@ -209,9 +216,10 @@ class HomeSabhaTransferServiceTest {
     void sahSanchalakOfDestinationMayInitiate() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        f.roleAssignments.grant(INITIATOR_USER, DESTINATION_SABHA, Role.SAH_SANCHALAK);
+        CallerAuthority sahSanchalak =
+                Callers.of(INITIATOR_USER).sahSanchalakOf(DESTINATION_SABHA).build();
 
-        UUID transferId = f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA);
+        UUID transferId = f.service().initiate(sahSanchalak, PERSON, DESTINATION_SABHA);
 
         assertThat(f.transfers.findById(transferId)).isPresent();
         assertThat(f.gateway.sentCode).isEqualTo(FIXED_OTP);
@@ -253,20 +261,17 @@ class HomeSabhaTransferServiceTest {
         final InMemoryTransferRepository transfers = new InMemoryTransferRepository();
         final OtpFlowFixture.RecordingOtpGateway gateway = new OtpFlowFixture.RecordingOtpGateway();
         final RecordingPublisher publisher = new RecordingPublisher();
-        final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
         final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
         final MutableClock clock = new MutableClock(Instant.parse("2026-05-31T10:00:00Z"));
 
         Fixture() {
             // Default: the initiator is the destination Sabha's Sanchalak, so the
             // authority gate passes unless a test overrides it.
-            roleAssignments.grant(INITIATOR_USER, DESTINATION_SABHA, Role.SANCHALAK);
         }
 
         HomeSabhaTransferService service() {
             OtpGuardedFlow otpFlow = OtpFlowFixture.sending(FIXED_OTP, gateway, publisher, clock);
-            return new HomeSabhaTransferService(
-                    roleAssignments, directory, transfers, otpFlow, sabhaFacts);
+            return new HomeSabhaTransferService(directory, transfers, otpFlow, sabhaFacts);
         }
     }
 
@@ -295,27 +300,6 @@ class HomeSabhaTransferServiceTest {
     /** Scope is irrelevant to the retirement check, so the fake does not model it. */
     private static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
 
-    static final class InMemoryRoleAssignments implements RoleAssignmentLookup {
-        private final Map<String, Set<Role>> roles = new HashMap<>();
-
-        void grant(UUID userId, UUID sabhaId, Role... granted) {
-            roles.put(userId + "|" + sabhaId, Set.of(granted));
-        }
-
-        void revoke(UUID userId, UUID sabhaId) {
-            roles.remove(userId + "|" + sabhaId);
-        }
-
-        @Override
-        public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-            return roles.getOrDefault(userId + "|" + sabhaId, Set.of());
-        }
-
-        @Override
-        public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-            return Set.of();
-        }
-    }
 
     static final class InMemoryHomeSabhaDirectory implements HomeSabhaDirectory {
         private final Map<UUID, Person> persons = new HashMap<>();

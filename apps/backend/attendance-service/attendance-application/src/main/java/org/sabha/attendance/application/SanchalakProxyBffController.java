@@ -10,7 +10,7 @@ import org.sabha.attendance.applicationservice.ProxyOccurrenceItem;
 import org.sabha.attendance.applicationservice.ProxySabhaListItem;
 import org.sabha.attendance.applicationservice.ProxySabhaQueries;
 import org.sabha.attendance.domain.Reason;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,21 +49,21 @@ public class SanchalakProxyBffController {
     }
 
     @GetMapping("/bff/proxy/sabhas")
-    public ResponseEntity<List<ProxySabhaListItem>> sabhas(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.assignedSabhas(caller.value()));
+    public ResponseEntity<List<ProxySabhaListItem>> sabhas(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.assignedSabhas(caller.userId().value()));
     }
 
     @GetMapping("/bff/proxy/sabhas/{sabhaId}/occurrences")
     public ResponseEntity<List<ProxyOccurrenceItem>> occurrences(
-            @PathVariable UUID sabhaId, @CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.proxyOccurrences(caller.value(), sabhaId));
+            @PathVariable UUID sabhaId, @CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.proxyOccurrences(caller.userId().value(), sabhaId));
     }
 
     @PostMapping("/bff/proxy/occurrences/{occurrenceId}/cancel")
     public ResponseEntity<Void> cancel(
             @PathVariable UUID occurrenceId,
             @RequestBody CancelRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.cancel(caller, occurrenceId, new Reason(req.reason()));
         return ResponseEntity.noContent().build();
     }
@@ -72,7 +72,7 @@ public class SanchalakProxyBffController {
     public ResponseEntity<Void> reschedule(
             @PathVariable UUID occurrenceId,
             @RequestBody RescheduleRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.reschedule(caller, occurrenceId, req.date(), req.startTime(), req.endTime());
         return ResponseEntity.noContent().build();
     }
@@ -81,7 +81,7 @@ public class SanchalakProxyBffController {
     public ResponseEntity<Void> venueOverride(
             @PathVariable UUID occurrenceId,
             @RequestBody VenueOverrideRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.overrideVenue(caller, occurrenceId, req.venue());
         return ResponseEntity.noContent().build();
     }

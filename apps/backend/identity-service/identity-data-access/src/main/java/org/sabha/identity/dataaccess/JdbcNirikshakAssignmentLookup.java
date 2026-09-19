@@ -1,7 +1,5 @@
 package org.sabha.identity.dataaccess;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.NirikshakAssignmentLookup;
@@ -34,17 +32,5 @@ public class JdbcNirikshakAssignmentLookup implements NirikshakAssignmentLookup 
                 .query(Integer.class)
                 .optional()
                 .isPresent();
-    }
-
-    @Override
-    public Set<UUID> sabhasAssignedTo(UUID userId) {
-        return new LinkedHashSet<>(jdbc.sql("""
-                SELECT sabha_id FROM nirikshak_sabha_assignments
-                WHERE nirikshak_user_id = ?
-                ORDER BY assigned_at
-                """)
-                .param(userId)
-                .query((rs, n) -> rs.getObject("sabha_id", UUID.class))
-                .list());
     }
 }

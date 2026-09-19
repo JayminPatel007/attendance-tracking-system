@@ -5,9 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.MadhyasthaKaryalayaLookup;
-import org.sabha.common.SantLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -24,29 +22,27 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Distinct from {@link PasswordResetService}: this path is authenticated, has
  * no OTP, and the new password is caller-supplied (mirroring the appointment
  * flow). Every reissue is audited with its actor and timestamp.</p>
+ *
+ * <p>The authority rule itself is no longer a private method here — ADR-0032
+ * promoted it to {@link ReissueAuthorization}. What is left is the command: the
+ * transaction, the identity-provider call and the audit row.</p>
  */
 @Service
 public class PasswordReissueService {
 
-    private final ReissueAuthorityLookup authority;
-    private final SantLookup sants;
-    private final MadhyasthaKaryalayaLookup mkMembership;
+    private final ReissueAuthorization authorization;
     private final UserRepository users;
     private final IdentityProviderGateway identityProvider;
     private final PasswordReissueAuditLog audit;
     private final Clock clock;
 
     public PasswordReissueService(
-            ReissueAuthorityLookup authority,
-            SantLookup sants,
-            MadhyasthaKaryalayaLookup mkMembership,
+            ReissueAuthorization authorization,
             UserRepository users,
             IdentityProviderGateway identityProvider,
             PasswordReissueAuditLog audit,
             Clock clock) {
-        this.authority = authority;
-        this.sants = sants;
-        this.mkMembership = mkMembership;
+        this.authorization = authorization;
         this.users = users;
         this.identityProvider = identityProvider;
         this.audit = audit;
@@ -54,22 +50,15 @@ public class PasswordReissueService {
     }
 
     @Transactional
-    public void reissue(UserId caller, UUID targetUserId, String newPassword) {
-        UUID actor = caller.value();
+    public void reissue(CallerAuthority caller, UUID targetUserId, String newPassword) {
+        UUID actor = caller.userId().value();
 
-        if (!canReissue(actor, targetUserId)) {
+        if (!authorization.canReissue(caller, targetUserId)) {
             throw new AuthorizationDeniedException(actor, AuthorizedAction.REISSUE_PASSWORD);
         }
 
         User target = users.findById(targetUserId).orElseThrow();
         identityProvider.resetPassword(target.keycloakUserId(), newPassword, true);
         audit.recordReissue(UUID.randomUUID(), targetUserId, actor, clock.instant());
-    }
-
-    private boolean canReissue(UUID actor, UUID targetUserId) {
-        if (authority.wasAppointedBy(targetUserId, actor)) {
-            return true;
-        }
-        return sants.isSant(targetUserId) && mkMembership.isMember(actor);
     }
 }

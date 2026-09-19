@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
@@ -58,8 +58,8 @@ public class PersonDirectoryRestController {
     @PostMapping("/api/directory/persons")
     public ResponseEntity<AddPersonResponse> add(
             @RequestBody AddPersonRequest req,
-            @CurrentUser UserId caller) {
-        AddResult result = addPerson.add(caller, new AddPersonCommand(
+            @CurrentUser CallerAuthority caller) {
+        AddResult result = addPerson.add(caller.userId(), new AddPersonCommand(
                 req.fullName(), req.gender(), req.dateOfBirth(), req.mobile(),
                 req.guardianPersonId(), req.homeSabhaId(), req.overrideDuplicateWarning()));
 

@@ -2,6 +2,7 @@ package org.sabha.common.web;
 
 import java.util.List;
 
+import org.sabha.common.CallerAuthorityLookup;
 import org.sabha.common.CallerResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -19,8 +20,8 @@ public class CurrentUserWebConfiguration implements WebMvcConfigurer {
 
     private final CurrentUserArgumentResolver currentUser;
 
-    public CurrentUserWebConfiguration(CallerResolver callers) {
-        this.currentUser = new CurrentUserArgumentResolver(callers);
+    public CurrentUserWebConfiguration(CallerResolver callers, CallerAuthorityLookup authorities) {
+        this.currentUser = new CurrentUserArgumentResolver(callers, authorities);
     }
 
     @Override

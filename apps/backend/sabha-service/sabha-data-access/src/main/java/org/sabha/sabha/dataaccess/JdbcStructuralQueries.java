@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.sabha.common.NirdeshakScopeLookup.NirdeshakScope;
+import org.sabha.common.NirdeshakScope;
 import org.sabha.sabha.applicationservice.StructuralQueries;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.Track;

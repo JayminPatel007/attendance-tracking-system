@@ -22,10 +22,13 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.RoleAssignment;
 import org.sabha.common.SabhaSchedule;
 import org.sabha.common.SabhaScope;
+import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.SabhaFact;
+import org.sabha.common.SanchalakLookup;
 import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
@@ -38,11 +41,15 @@ class OccurrenceShapingServiceTest {
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 24);
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
-    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
+    private static final CallerAuthority SANCHALAK_CALLER = new CallerAuthority(
+            UserId.of(SANCHALAK_USER), List.of(new RoleAssignment("SANCHALAK", SABHA_ID, null, null, null, null)));
     private static final UUID SAH_SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000007");
-    private static final UserId SAH_SANCHALAK_CALLER = UserId.of(SAH_SANCHALAK_USER);
+    private static final CallerAuthority SAH_SANCHALAK_CALLER = new CallerAuthority(
+            UserId.of(SAH_SANCHALAK_USER), List.of(new RoleAssignment("SAH_SANCHALAK", SABHA_ID, null, null, null, null)));
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000051");
-    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
+    /** The proxy holds no row on the Sabha — its authority is the assignment. */
+    private static final CallerAuthority NIRIKSHAK_CALLER =
+            CallerAuthority.withNoRoles(UserId.of(NIRIKSHAK_USER));
     // The Sabha ends 20:00 on the Occurrence date; scheduled-end Instant is 2026-05-24T20:00:00Z.
     private static final Instant SCHEDULED_END = Instant.parse("2026-05-24T20:00:00Z");
 
@@ -204,28 +211,10 @@ class OccurrenceShapingServiceTest {
         }
 
         OccurrenceShapingService service() {
-            RoleAssignmentLookup roles = new RoleAssignmentLookup() {
-                @Override
-                public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-                    if (userId.equals(SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
-                        return Set.of(Role.SANCHALAK);
-                    }
-                    if (userId.equals(SAH_SANCHALAK_USER) && sabhaId.equals(SABHA_ID)) {
-                        return Set.of(Role.SAH_SANCHALAK);
-                    }
-                    return Set.of();
-                }
-
-                @Override
-                public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-                    return Set.of();
-                }
-
-                @Override
-                public Optional<UUID> sanchalakOf(UUID sabhaId) {
-                    return sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
-                }
-            };
+            // Three methods became one: the two caller-keyed reads are on the
+            // caller now, and what is left is keyed by the target Sabha (ADR-0032).
+            SanchalakLookup roles = sabhaId ->
+                    sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
             // Shaping is Sanchalak-scoped, so the engine never asks for a Sabha's scope;
             // the standing slot is the only fact these paths read.
             SabhaFacts sabhaFacts = new SabhaFacts() {
@@ -248,17 +237,8 @@ class OccurrenceShapingServiceTest {
             };
             Clock clock = Clock.fixed(now, ZoneOffset.UTC);
             org.sabha.common.NirikshakAssignmentLookup nirikshakAssignments =
-                    new org.sabha.common.NirikshakAssignmentLookup() {
-                        @Override
-                        public boolean isAssignedTo(UUID userId, UUID sabhaId) {
-                            return userId.equals(NIRIKSHAK_USER) && sabhaId.equals(SABHA_ID);
-                        }
-
-                        @Override
-                        public Set<UUID> sabhasAssignedTo(UUID userId) {
-                            return userId.equals(NIRIKSHAK_USER) ? Set.of(SABHA_ID) : Set.of();
-                        }
-                    };
+                    (userId, sabhaId) ->
+                            userId.equals(NIRIKSHAK_USER) && sabhaId.equals(SABHA_ID);
             OccurrenceWriter writer = new OccurrenceWriter(
                     new AuthorizationEngine(roles, sabhaFacts, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);

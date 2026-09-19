@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -20,8 +20,8 @@ public class IdentityRestController {
     }
 
     @GetMapping("/api/whoami")
-    public ResponseEntity<WhoAmIResponse> whoami(@CurrentUser UserId caller) {
-        return users.findById(caller.value())
+    public ResponseEntity<WhoAmIResponse> whoami(@CurrentUser CallerAuthority caller) {
+        return users.findById(caller.userId().value())
                 .map(IdentityRestController::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(403).build());

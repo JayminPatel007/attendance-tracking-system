@@ -1,17 +1,13 @@
 package org.sabha.identity.applicationservice.selection;
 
 import java.time.Clock;
-import java.util.Set;
 import java.util.UUID;
 
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.DomainEventPublisher;
-import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
-import org.sabha.common.UserId;
-import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.domain.NoSelectiveSabhaException;
 import org.sabha.identity.domain.NominationNotFoundException;
 import org.sabha.identity.domain.NotSelectedException;
@@ -32,41 +28,43 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>It hides the selective-Sabha derivation, the Roster/authority gates, and the
  * audit-bearing nomination record. The Person's Regular Home Sabha is never
  * touched — selection is additive (ADR-0006).</p>
+ *
+ * <p>Both of its authority reads come off the caller parameter since ADR-0032.
+ * The nomination gate is {@link CallerAuthority#runsSabha(UUID)}, the same single
+ * call {@code HomeSabhaTransferService.initiate} makes — those two were byte-for-
+ * byte duplicates of each other. The decision gate is {@link
+ * CallerAuthority#holdsNirdeshakIn(UUID, String)}, which is also what the
+ * appointment engine and the Sabha define/delete paths ask: four sites that
+ * reached two different ports now reach one method, so their agreement is no
+ * longer an invariant anybody has to assert.</p>
  */
 @Service
 public class SelectionService {
 
-    private final RoleAssignmentLookup roleAssignments;
     private final SelectionRoster roster;
     private final SabhaFacts sabhas;
-    private final AppointerAuthorityLookup authority;
     private final SelectionRepository nominations;
     private final DomainEventPublisher events;
     private final Clock clock;
 
     public SelectionService(
-            RoleAssignmentLookup roleAssignments,
             SelectionRoster roster,
             SabhaFacts sabhas,
-            AppointerAuthorityLookup authority,
             SelectionRepository nominations,
             DomainEventPublisher events,
             Clock clock) {
-        this.roleAssignments = roleAssignments;
         this.roster = roster;
         this.sabhas = sabhas;
-        this.authority = authority;
         this.nominations = nominations;
         this.events = events;
         this.clock = clock;
     }
 
     @Transactional
-    public UUID nominate(UserId caller, UUID personId, UUID regularSabhaId) {
-        UUID nominatorUserId = caller.value();
+    public UUID nominate(CallerAuthority caller, UUID personId, UUID regularSabhaId) {
+        UUID nominatorUserId = caller.userId().value();
 
-        Set<Role> roles = roleAssignments.rolesForUserOnSabha(nominatorUserId, regularSabhaId);
-        if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {
+        if (!caller.runsSabha(regularSabhaId)) {
             throw new NominationNotAuthorizedException(nominatorUserId, regularSabhaId);
         }
 
@@ -99,11 +97,11 @@ public class SelectionService {
     }
 
     @Transactional
-    public void approve(UserId caller, UUID nominationId) {
-        UUID deciderUserId = caller.value();
+    public void approve(CallerAuthority caller, UUID nominationId) {
+        UUID deciderUserId = caller.userId().value();
         SelectionNomination nomination = nominations.findById(nominationId)
                 .orElseThrow(() -> new NominationNotFoundException(nominationId));
-        requireNirdeshak(deciderUserId, nomination.kshetraId(), nomination.demographic());
+        requireNirdeshak(caller, nomination.kshetraId(), nomination.demographic());
 
         nomination.approve(deciderUserId, clock.instant());
         roster.addHomeSabha(nomination.personId(), nomination.selectiveSabhaId());
@@ -112,11 +110,11 @@ public class SelectionService {
     }
 
     @Transactional
-    public void reject(UserId caller, UUID nominationId, String reason) {
-        UUID deciderUserId = caller.value();
+    public void reject(CallerAuthority caller, UUID nominationId, String reason) {
+        UUID deciderUserId = caller.userId().value();
         SelectionNomination nomination = nominations.findById(nominationId)
                 .orElseThrow(() -> new NominationNotFoundException(nominationId));
-        requireNirdeshak(deciderUserId, nomination.kshetraId(), nomination.demographic());
+        requireNirdeshak(caller, nomination.kshetraId(), nomination.demographic());
 
         nomination.reject(deciderUserId, reason, clock.instant());
         nominations.save(nomination);
@@ -124,10 +122,10 @@ public class SelectionService {
     }
 
     @Transactional
-    public void deselect(UserId caller, UUID personId, UUID selectiveSabhaId) {
-        UUID deciderUserId = caller.value();
+    public void deselect(CallerAuthority caller, UUID personId, UUID selectiveSabhaId) {
+        UUID deciderUserId = caller.userId().value();
         SabhaScope scope = sabhas.of(selectiveSabhaId).orElseThrow().scope();
-        requireNirdeshak(deciderUserId, scope.kshetraId(), scope.demographic());
+        requireNirdeshak(caller, scope.kshetraId(), scope.demographic());
 
         SelectionNomination nomination = nominations.findApproved(personId, selectiveSabhaId)
                 .orElseThrow(() -> new NotSelectedException(personId, selectiveSabhaId));
@@ -143,9 +141,9 @@ public class SelectionService {
      * the (Kshetra, demographic) from the nomination; deselect resolves it from
      * the selective Sabha's scope.
      */
-    private void requireNirdeshak(UUID deciderUserId, UUID kshetraId, String demographic) {
-        if (!authority.holdsNirdeshak(deciderUserId, kshetraId, demographic)) {
-            throw new SelectionDecisionNotAuthorizedException(deciderUserId);
+    private void requireNirdeshak(CallerAuthority caller, UUID kshetraId, String demographic) {
+        if (!caller.holdsNirdeshakIn(kshetraId, demographic)) {
+            throw new SelectionDecisionNotAuthorizedException(caller.userId().value());
         }
     }
 }

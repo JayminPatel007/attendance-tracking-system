@@ -2,7 +2,7 @@ package org.sabha.sabha.application;
 
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.sabha.applicationservice.StructuralDeletionService;
 import org.springframework.http.ResponseEntity;
@@ -34,25 +34,25 @@ public class StructuralDeletionController {
     }
 
     @DeleteMapping("/bff/structure/cities/{id}")
-    public ResponseEntity<Void> deleteCity(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> deleteCity(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         deletion.deleteCity(caller, id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/bff/structure/zones/{id}")
-    public ResponseEntity<Void> deleteZone(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> deleteZone(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         deletion.deleteZone(caller, id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/bff/structure/kshetras/{id}")
-    public ResponseEntity<Void> deleteKshetra(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> deleteKshetra(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         deletion.deleteKshetra(caller, id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/bff/sabhas/{id}")
-    public ResponseEntity<Void> deleteSabha(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> deleteSabha(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         deletion.deleteSabha(caller, id);
         return ResponseEntity.noContent().build();
     }

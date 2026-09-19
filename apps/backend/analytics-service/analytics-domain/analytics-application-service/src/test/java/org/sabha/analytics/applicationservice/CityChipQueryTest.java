@@ -3,7 +3,6 @@ package org.sabha.analytics.applicationservice;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.UserId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,18 +17,16 @@ class CityChipQueryTest {
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
     private static final UUID CITY_A = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
 
-    private final FakeSantLookup sants = new FakeSantLookup();
     private final FakeSantDefaultCity defaults = new FakeSantDefaultCity();
     private final FakeCityDirectory cities = new FakeCityDirectory();
-    private final CityChipQuery chip = new CityChipQuery(sants, defaults, cities);
+    private final CityChipQuery chip = new CityChipQuery(defaults, cities);
 
     @Test
     void aSantsChipOffersEveryCityAndHighlightsTheirCurrentChoice() {
-        sants.add(SANT);
         cities.add(CITY_A);
         defaults.choose(SANT, CITY_A);
 
-        CityChip rendered = chip.forCaller(UserId.of(SANT));
+        CityChip rendered = chip.forCaller(Callers.sant(SANT));
 
         assertThat(rendered.sant()).isTrue();
         assertThat(rendered.selectedCityId()).isEqualTo(CITY_A);
@@ -38,10 +35,9 @@ class CityChipQueryTest {
 
     @Test
     void aSantWhoHasNotPickedYetGetsAnInteractiveChipWithNoSelection() {
-        sants.add(SANT);
         cities.add(CITY_A);
 
-        CityChip rendered = chip.forCaller(UserId.of(SANT));
+        CityChip rendered = chip.forCaller(Callers.sant(SANT));
 
         assertThat(rendered.sant()).isTrue();
         assertThat(rendered.selectedCityId()).isNull();
@@ -52,7 +48,7 @@ class CityChipQueryTest {
     void aNonSantGetsAnInertChipWithNoCities() {
         cities.add(CITY_A);
 
-        CityChip rendered = chip.forCaller(UserId.of(NIRDESHAK));
+        CityChip rendered = chip.forCaller(Callers.noRoles(NIRDESHAK));
 
         assertThat(rendered.sant()).isFalse();
         assertThat(rendered.selectedCityId()).isNull();

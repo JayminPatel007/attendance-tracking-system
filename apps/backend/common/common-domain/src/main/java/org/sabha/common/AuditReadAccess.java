@@ -1,7 +1,5 @@
 package org.sabha.common;
 
-import java.util.UUID;
-
 /**
  * Cross-context read port (ADR-0019, ADR-0023): whether a user may read the
  * audit log at all. Lives in common-domain so the identity web shell can decide
@@ -19,8 +17,16 @@ import java.util.UUID;
  * admitted exactly when the engine resolves them to a non-{@code Denied} scope —
  * which includes the City-scoped Regional Team, a tier that is deliberately not
  * an operational {@link Role}.</p>
+ *
+ * <p><b>Why this one stayed a port when nine others folded.</b> After ADR-0032
+ * it is fully caller-keyed and issues zero queries — on the face of it the most
+ * foldable thing left in the population. It stays because what it fronts is a
+ * <em>policy</em>, not a table, and ADR-0032's whole thesis is that facts
+ * consolidate and policies do not. The boolean return is compile-enforced rather
+ * than chosen: handing back an {@code AuditScope} would drag an analytics type
+ * into {@code identity-domain-core} and break ADR-0019's ring order.</p>
  */
 public interface AuditReadAccess {
 
-    boolean canRead(UUID userId);
+    boolean canRead(CallerAuthority caller);
 }

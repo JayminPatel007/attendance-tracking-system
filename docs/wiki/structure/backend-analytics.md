@@ -22,6 +22,8 @@ sources:
   - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
   - { id: context, title: "CONTEXT.md — Sant, Madhyastha Karyalaya, Re-engagement Candidate", resource: ../../../CONTEXT.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Analytics Service

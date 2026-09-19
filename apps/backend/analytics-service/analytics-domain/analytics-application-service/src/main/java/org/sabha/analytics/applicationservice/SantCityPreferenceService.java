@@ -3,8 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.UUID;
 
 import org.sabha.common.CityNotFoundException;
-import org.sabha.common.SantLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SantCityPreferenceService {
 
-    private final SantLookup sants;
     private final SantDefaultCity defaultCity;
     private final CityDirectory cities;
 
-    public SantCityPreferenceService(SantLookup sants, SantDefaultCity defaultCity, CityDirectory cities) {
-        this.sants = sants;
+    public SantCityPreferenceService(SantDefaultCity defaultCity, CityDirectory cities) {
         this.defaultCity = defaultCity;
         this.cities = cities;
     }
@@ -45,9 +42,9 @@ public class SantCityPreferenceService {
      * @throws CityNotFoundException the City does not exist (404)
      */
     @Transactional
-    public DashboardScope selectCity(UserId caller, UUID cityId) {
-        UUID userId = caller.value();
-        if (!sants.isSant(userId)) {
+    public DashboardScope selectCity(CallerAuthority caller, UUID cityId) {
+        UUID userId = caller.userId().value();
+        if (!caller.isSant()) {
             throw new NotASantException(userId);
         }
         if (!cities.exists(cityId)) {

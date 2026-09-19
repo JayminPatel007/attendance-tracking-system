@@ -21,9 +21,12 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.RoleAssignment;
 import org.sabha.common.SabhaScope;
+import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.SabhaFact;
+import org.sabha.common.SanchalakLookup;
 import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
@@ -38,9 +41,11 @@ class OccurrenceReopenServiceTest {
     private static final String DEMOGRAPHIC = "YUVAK";
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 24);
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000031");
-    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
+    private static final CallerAuthority NIRIKSHAK_CALLER = new CallerAuthority(
+            UserId.of(NIRIKSHAK_USER), List.of(new RoleAssignment("NIRIKSHAK", null, KSHETRA_ID, null, null, DEMOGRAPHIC)));
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
-    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
+    private static final CallerAuthority SANCHALAK_CALLER = new CallerAuthority(
+            UserId.of(SANCHALAK_USER), List.of(new RoleAssignment("SANCHALAK", SABHA_ID, null, null, null, null)));
     private static final Instant NOW = Instant.parse("2026-05-26T08:00:00Z");
 
     @Test
@@ -88,20 +93,10 @@ class OccurrenceReopenServiceTest {
         }
 
         OccurrenceReopenService service() {
-            RoleAssignmentLookup roles = new RoleAssignmentLookup() {
-                @Override
-                public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-                    return userId.equals(SANCHALAK_USER) && sabhaId.equals(SABHA_ID)
-                            ? Set.of(Role.SANCHALAK) : Set.of();
-                }
-
-                @Override
-                public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-                    return userId.equals(NIRIKSHAK_USER) && kshetraId.equals(KSHETRA_ID)
-                            && demographic.equals(DEMOGRAPHIC)
-                            ? Set.of(Role.NIRIKSHAK) : Set.of();
-                }
-            };
+            // Three methods became one: the two caller-keyed reads are on the
+            // caller now, and what is left is keyed by the target Sabha (ADR-0032).
+            SanchalakLookup roles = sabhaId ->
+                    sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
             SabhaFacts sabhaFacts = new SabhaFacts() {
                 @Override
                 public Optional<SabhaFact> of(UUID sabhaId) {
@@ -122,17 +117,8 @@ class OccurrenceReopenServiceTest {
                 }
             };
             Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
-            org.sabha.common.NirikshakAssignmentLookup noProxy = new org.sabha.common.NirikshakAssignmentLookup() {
-                @Override
-                public boolean isAssignedTo(UUID userId, UUID sabhaId) {
-                    return false;
-                }
-
-                @Override
-                public Set<UUID> sabhasAssignedTo(UUID userId) {
-                    return Set.of();
-                }
-            };
+            // No Nirikshak proxy assignments — these paths are the Kshetra-tier reopen.
+            NirikshakAssignmentLookup noProxy = (userId, sabhaId) -> false;
             OccurrenceWriter writer = new OccurrenceWriter(
                     new AuthorizationEngine(roles, sabhaFacts, noProxy),
                     occurrences, transitions, publisher, clock);

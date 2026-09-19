@@ -12,7 +12,7 @@ import org.sabha.analytics.applicationservice.AuditLogAccess;
 import org.sabha.analytics.applicationservice.AuditLogQueries;
 import org.sabha.analytics.applicationservice.AuditScope;
 import org.sabha.analytics.applicationservice.AuditTargetType;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -67,10 +67,10 @@ public class AuditLogBffController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "false") boolean proxyOnly,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
 
-        AuditScope scope = access.scopeFor(caller.value());
-        if (scope instanceof AuditScope.Denied) {
+        AuditScope scope = access.scopeFor(caller);
+        if (!scope.admitted()) {
             return ResponseEntity.status(403).build();
         }
         AuditFilter filter = new AuditFilter(

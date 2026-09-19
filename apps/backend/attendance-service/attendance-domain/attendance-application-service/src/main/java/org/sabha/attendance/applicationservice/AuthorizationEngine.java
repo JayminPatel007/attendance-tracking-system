@@ -5,11 +5,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.sabha.common.AuthorizedAction;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
+import org.sabha.common.SanchalakLookup;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,38 +37,39 @@ import org.springframework.stereotype.Service;
  * SabhaFacts} and checks the Kshetra-scoped roles.</p>
  *
  * <p>The {@code target} is the Sabha the action acts upon (for an Occurrence,
- * its {@code sabhaId}). Role resolution is delegated to the cross-context
- * {@link RoleAssignmentLookup} port.</p>
+ * its {@code sabhaId}). The caller's own roles arrive as a parameter (ADR-0032);
+ * all three remaining ports are keyed by that target rather than by the caller,
+ * which is why the fold left this engine's constructor the same size it was.</p>
  */
 @Service
 public class AuthorizationEngine {
 
-    private final RoleAssignmentLookup roleAssignments;
+    private final SanchalakLookup sanchalaks;
     private final SabhaFacts sabhas;
     private final NirikshakAssignmentLookup nirikshakAssignments;
 
     public AuthorizationEngine(
-            RoleAssignmentLookup roleAssignments,
+            SanchalakLookup sanchalaks,
             SabhaFacts sabhas,
             NirikshakAssignmentLookup nirikshakAssignments) {
-        this.roleAssignments = roleAssignments;
+        this.sanchalaks = sanchalaks;
         this.sabhas = sabhas;
         this.nirikshakAssignments = nirikshakAssignments;
     }
 
-    public boolean canUserDo(UUID userId, AuthorizedAction action, UUID target) {
+    public boolean canUserDo(CallerAuthority caller, AuthorizedAction action, UUID target) {
         if (action == AuthorizedAction.REOPEN) {
             return sabhas.of(target)
                     .map(SabhaFact::scope)
-                    .map(scope -> roleAssignments
-                            .rolesForUserOnKshetra(userId, scope.kshetraId(), scope.demographic())
+                    .map(scope -> caller
+                            .rolesOnKshetra(scope.kshetraId(), scope.demographic())
                             .stream().anyMatch(Role.REOPEN_TIERS::contains))
                     .orElse(false);
         }
         if (AuthorizedAction.SABHA_SHAPING_ACTIONS.contains(action)) {
-            Set<Role> roles = roleAssignments.rolesForUserOnSabha(userId, target);
+            Set<Role> roles = caller.rolesOnSabha(target);
             return roles.contains(Role.SANCHALAK)
-                    || nirikshakAssignments.isAssignedTo(userId, target);
+                    || nirikshakAssignments.isAssignedTo(caller.userId().value(), target);
         }
         return false;
     }
@@ -80,11 +82,12 @@ public class AuthorizationEngine {
      * is not themselves the Sanchalak. Returns empty for a Sanchalak acting on
      * their own Sabha and for non-proxy authorities (e.g. a Nirdeshak reopen).
      */
-    public Optional<UUID> onBehalfOf(UUID userId, AuthorizedAction action, UUID target) {
+    public Optional<UUID> onBehalfOf(CallerAuthority caller, AuthorizedAction action, UUID target) {
+        UUID userId = caller.userId().value();
         if (!AuthorizedAction.SABHA_SHAPING_ACTIONS.contains(action)
                 || !nirikshakAssignments.isAssignedTo(userId, target)) {
             return Optional.empty();
         }
-        return roleAssignments.sanchalakOf(target).filter(sanchalak -> !sanchalak.equals(userId));
+        return sanchalaks.sanchalakOf(target).filter(sanchalak -> !sanchalak.equals(userId));
     }
 }

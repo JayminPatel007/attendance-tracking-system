@@ -1,7 +1,7 @@
 package org.sabha.attendance.applicationservice;
 
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 
 /**
  * Who is driving a write to an Occurrence, and by what authority. This is the
@@ -12,11 +12,19 @@ import org.sabha.common.UserId;
  * scanner (ADR-0021). It holds no role, so it bypasses the {@link
  * AuthorizationEngine} entirely and is audited as {@link ActorKind#SYSTEM}.</p>
  *
- * <p>A {@link SignedIn} actor is a request-bound user, already resolved to their
- * local {@code users.id} at the edge (ADR-0030). The writer checks {@code
- * authority} against the Occurrence's Sabha before the mutation runs; a Nirikshak
- * exercising the Sanchalak proxy (Slice 14) is attributed to the absent Sanchalak
- * on the audit row.</p>
+ * <p>A {@link SignedIn} actor is a request-bound user, already resolved at the
+ * edge — since ADR-0032 to a whole {@link CallerAuthority}, not just their local
+ * {@code users.id} (ADR-0030). The writer checks {@code authority} against the
+ * Occurrence's Sabha before the mutation runs; a Nirikshak exercising the
+ * Sanchalak proxy (Slice 14) is attributed to the absent Sanchalak on the audit
+ * row.</p>
+ *
+ * <p>Carrying the authority here is what makes ADR-0021's system-actor bypass a
+ * fact the <b>compiler</b> enforces rather than a javadoc claim: there is no
+ * {@code CallerAuthority} to hand a {@code Cron} actor, so the cron path cannot
+ * accidentally acquire one, and a lazily-resolved authority — the alternative
+ * ADR-0032 rejected — would have turned that into a 2am runtime failure
+ * instead.</p>
  */
 public sealed interface TransitionActor {
 
@@ -27,7 +35,7 @@ public sealed interface TransitionActor {
         return new Cron();
     }
 
-    static TransitionActor user(UserId caller, AuthorizedAction authority) {
+    static TransitionActor user(CallerAuthority caller, AuthorizedAction authority) {
         return new SignedIn(caller, authority);
     }
 
@@ -39,7 +47,7 @@ public sealed interface TransitionActor {
         }
     }
 
-    record SignedIn(UserId caller, AuthorizedAction authority) implements TransitionActor {
+    record SignedIn(CallerAuthority caller, AuthorizedAction authority) implements TransitionActor {
 
         @Override
         public ActorKind kind() {

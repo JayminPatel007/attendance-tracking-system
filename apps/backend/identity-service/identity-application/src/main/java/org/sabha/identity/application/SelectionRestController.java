@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.selection.SelectionService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +35,7 @@ public class SelectionRestController {
     @PostMapping("/api/sanchalak/nominations")
     public NominateResponse nominate(
             @RequestBody NominateRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         UUID nominationId = selection.nominate(caller, req.personId(), req.regularSabhaId());
         return new NominateResponse(nominationId);
     }

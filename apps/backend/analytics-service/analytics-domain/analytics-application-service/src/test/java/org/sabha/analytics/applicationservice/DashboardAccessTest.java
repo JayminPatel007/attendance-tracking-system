@@ -3,7 +3,6 @@ package org.sabha.analytics.applicationservice;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.UserId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,27 +22,24 @@ class DashboardAccessTest {
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
     private static final UUID CITY_A = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
 
-    private final FakeSantLookup sants = new FakeSantLookup();
     private final FakeSantDefaultCity defaults = new FakeSantDefaultCity();
-    private final DashboardAccess access = new DashboardAccess(sants, defaults);
+    private final DashboardAccess access = new DashboardAccess(defaults);
 
     @Test
     void aNonSantCallerKeepsTheRoleScopedView() {
-        assertThat(access.viewFor(UserId.of(NIRDESHAK))).isEqualTo(new DashboardScope.RoleScoped(NIRDESHAK));
+        assertThat(access.viewFor(Callers.noRoles(NIRDESHAK))).isEqualTo(new DashboardScope.RoleScoped(NIRDESHAK));
     }
 
     @Test
     void aSantLandsOnTheirChosenCity() {
-        sants.add(SANT);
         defaults.choose(SANT, CITY_A);
 
-        assertThat(access.viewFor(UserId.of(SANT))).isEqualTo(new DashboardScope.CityScoped(CITY_A));
+        assertThat(access.viewFor(Callers.sant(SANT))).isEqualTo(new DashboardScope.CityScoped(CITY_A));
     }
 
     @Test
     void aSantWhoHasNotChosenAcityYetSeesNothing() {
-        sants.add(SANT);
 
-        assertThat(access.viewFor(UserId.of(SANT))).isEqualTo(new DashboardScope.NoCity());
+        assertThat(access.viewFor(Callers.sant(SANT))).isEqualTo(new DashboardScope.NoCity());
     }
 }

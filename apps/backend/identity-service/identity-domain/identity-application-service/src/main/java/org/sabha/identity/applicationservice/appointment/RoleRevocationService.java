@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -55,13 +55,13 @@ public class RoleRevocationService implements RevokeRole {
 
     @Override
     @Transactional
-    public void revoke(UserId caller, UUID assignmentId) {
-        UUID actor = caller.value();
+    public void revoke(CallerAuthority caller, UUID assignmentId) {
+        UUID actor = caller.userId().value();
 
         RevokableAssignment assignment = assignments.findActive(assignmentId)
                 .orElseThrow(() -> new RoleAssignmentNotFoundException(assignmentId));
 
-        if (!authz.canAppoint(actor, assignment.scope())) {
+        if (!authz.canAppoint(caller, assignment.scope())) {
             throw new AuthorizationDeniedException(actor, AuthorizedAction.REVOKE_ROLE);
         }
 

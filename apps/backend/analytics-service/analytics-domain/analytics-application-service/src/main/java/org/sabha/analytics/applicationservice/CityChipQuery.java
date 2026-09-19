@@ -3,8 +3,7 @@ package org.sabha.analytics.applicationservice;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.SantLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,25 +14,25 @@ import org.springframework.stereotype.Service;
  * <p>Not a {@code *Queries} port, because the Sant test reads identity's
  * {@code role_assignments} and that table's SQL is confined to
  * {@code identity-data-access} (ADR-0029, rule R1). The chip is composed above
- * the ports instead, in this ring, and stays exercisable without a database.
+ * the ports instead, in this ring, and stays exercisable without a database —
+ * and since ADR-0032 the Sant test needs no port at all, because it is a question
+ * about the caller's own rows.
  */
 @Service
 public class CityChipQuery {
 
-    private final SantLookup sants;
     private final SantDefaultCity defaultCity;
     private final CityDirectory cities;
 
-    public CityChipQuery(SantLookup sants, SantDefaultCity defaultCity, CityDirectory cities) {
-        this.sants = sants;
+    public CityChipQuery(SantDefaultCity defaultCity, CityDirectory cities) {
         this.defaultCity = defaultCity;
         this.cities = cities;
     }
 
     /** What the dashboard City chip should render for this caller. */
-    public CityChip forCaller(UserId caller) {
-        UUID userId = caller.value();
-        if (!sants.isSant(userId)) {
+    public CityChip forCaller(CallerAuthority caller) {
+        UUID userId = caller.userId().value();
+        if (!caller.isSant()) {
             return new CityChip(false, null, List.of());
         }
         return new CityChip(true, defaultCity.defaultCityOf(userId).orElse(null), cities.allCities());

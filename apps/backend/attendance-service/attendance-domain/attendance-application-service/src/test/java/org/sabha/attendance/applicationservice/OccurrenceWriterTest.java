@@ -29,9 +29,11 @@ import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.OptimisticLockException;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.RoleAssignment;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.SabhaFact;
+import org.sabha.common.SanchalakLookup;
 import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
@@ -50,11 +52,15 @@ class OccurrenceWriterTest {
     private static final UUID SABHA_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
     private static final UUID KSHETRA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000004");
-    private static final UserId SANCHALAK_CALLER = UserId.of(SANCHALAK_USER);
+    private static final CallerAuthority SANCHALAK_CALLER = new CallerAuthority(
+            UserId.of(SANCHALAK_USER), List.of(new RoleAssignment("SANCHALAK", SABHA_ID, null, null, null, null)));
     private static final UUID NIRIKSHAK_USER = UUID.fromString("00000000-0000-0000-0000-000000000031");
-    private static final UserId NIRIKSHAK_CALLER = UserId.of(NIRIKSHAK_USER);
+    /** The proxy holds no row on the Sabha — its authority is the assignment. */
+    private static final CallerAuthority NIRIKSHAK_CALLER =
+            CallerAuthority.withNoRoles(UserId.of(NIRIKSHAK_USER));
     private static final UUID STRANGER_USER = UUID.fromString("00000000-0000-0000-0000-000000000052");
-    private static final UserId STRANGER_CALLER = UserId.of(STRANGER_USER);
+    private static final CallerAuthority STRANGER_CALLER =
+            CallerAuthority.withNoRoles(UserId.of(STRANGER_USER));
     private static final LocalDate OCCURRENCE_DATE = LocalDate.of(2026, 5, 26);
     private static final Instant FIXED_NOW = Instant.parse("2026-05-26T09:00:00Z");
     private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
@@ -189,7 +195,7 @@ class OccurrenceWriterTest {
     void anUnauditedMutationSharesTheSameRetryContract() {
         Fixture f = Fixture.withFlakyOccurrence(OccurrenceState.OPEN_FOR_MARKING, 99);
 
-        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER,
+        assertThatThrownBy(() -> f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER.userId(),
                 (occurrence, actorUserId) -> occurrence.markWalkIn(
                         UUID.randomUUID(), actorUserId, FIXED_NOW)))
                 .isInstanceOf(ConcurrentModificationException.class);
@@ -222,7 +228,7 @@ class OccurrenceWriterTest {
         UUID personId = UUID.fromString("00000000-0000-0000-0000-000000000101");
         List<UUID> markedBy = new ArrayList<>();
 
-        f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER, (occurrence, actorUserId) -> {
+        f.writer().mutateUnaudited(OCCURRENCE_ID, SANCHALAK_CALLER.userId(), (occurrence, actorUserId) -> {
             markedBy.add(actorUserId);
             occurrence.mark(personId, true, actorUserId, FIXED_NOW);
         });
@@ -271,23 +277,10 @@ class OccurrenceWriterTest {
         }
 
         OccurrenceWriter writer(Clock clock) {
-            RoleAssignmentLookup roles = new RoleAssignmentLookup() {
-                @Override
-                public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-                    return userId.equals(SANCHALAK_USER) && sabhaId.equals(SABHA_ID)
-                            ? Set.of(Role.SANCHALAK) : Set.of();
-                }
-
-                @Override
-                public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-                    return Set.of();
-                }
-
-                @Override
-                public Optional<UUID> sanchalakOf(UUID sabhaId) {
-                    return sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
-                }
-            };
+            // Three methods became one: the two caller-keyed reads are on the
+            // caller now, and what is left is keyed by the target Sabha (ADR-0032).
+            SanchalakLookup roles = sabhaId ->
+                    sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
             SabhaFacts sabhaFacts = new SabhaFacts() {
                 @Override
                 public Optional<SabhaFact> of(UUID sabhaId) {
@@ -307,17 +300,8 @@ class OccurrenceWriterTest {
                     return Optional.empty();
                 }
             };
-            NirikshakAssignmentLookup nirikshakAssignments = new NirikshakAssignmentLookup() {
-                @Override
-                public boolean isAssignedTo(UUID userId, UUID sabhaId) {
-                    return userId.equals(NIRIKSHAK_USER) && sabhaId.equals(SABHA_ID);
-                }
-
-                @Override
-                public Set<UUID> sabhasAssignedTo(UUID userId) {
-                    return userId.equals(NIRIKSHAK_USER) ? Set.of(SABHA_ID) : Set.of();
-                }
-            };
+            NirikshakAssignmentLookup nirikshakAssignments = (userId, sabhaId) ->
+                    userId.equals(NIRIKSHAK_USER) && sabhaId.equals(SABHA_ID);
             return new OccurrenceWriter(
                     new AuthorizationEngine(roles, sabhaFacts, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
@@ -346,17 +330,8 @@ class OccurrenceWriterTest {
                                                OccurrenceStateTransitionRepository transitions,
                                                DomainEventPublisher events,
                                                Clock clock) {
-        RoleAssignmentLookup noRoles = new RoleAssignmentLookup() {
-            @Override
-            public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-                return Set.of();
-            }
-
-            @Override
-            public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-                return Set.of();
-            }
-        };
+        // Nobody runs this Sabha, so no proxy attribution is possible either.
+        SanchalakLookup noSanchalak = sabhaId -> Optional.empty();
         SabhaFacts noSabhaFacts = new SabhaFacts() {
             @Override
             public Optional<SabhaFact> of(UUID sabhaId) {
@@ -373,19 +348,9 @@ class OccurrenceWriterTest {
                 return Optional.empty();
             }
         };
-        NirikshakAssignmentLookup noProxy = new NirikshakAssignmentLookup() {
-            @Override
-            public boolean isAssignedTo(UUID userId, UUID sabhaId) {
-                return false;
-            }
-
-            @Override
-            public Set<UUID> sabhasAssignedTo(UUID userId) {
-                return Set.of();
-            }
-        };
+        NirikshakAssignmentLookup noProxy = (userId, sabhaId) -> false;
         return new OccurrenceWriter(
-                new AuthorizationEngine(noRoles, noSabhaFacts, noProxy),
+                new AuthorizationEngine(noSanchalak, noSabhaFacts, noProxy),
                 occurrences, transitions, events, clock);
     }
 

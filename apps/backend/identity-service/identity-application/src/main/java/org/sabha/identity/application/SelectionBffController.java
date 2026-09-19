@@ -3,7 +3,7 @@ package org.sabha.identity.application;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.selection.PendingNominationItem;
 import org.sabha.identity.applicationservice.selection.SelectedPersonItem;
@@ -49,17 +49,17 @@ public class SelectionBffController {
     }
 
     @GetMapping("/bff/selection/nominations")
-    public ResponseEntity<List<PendingNominationItem>> queue(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.pendingQueueFor(caller.value()));
+    public ResponseEntity<List<PendingNominationItem>> queue(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.pendingQueueFor(caller.userId().value()));
     }
 
     @GetMapping("/bff/selection/selected")
-    public ResponseEntity<List<SelectedPersonItem>> selected(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.selectedFor(caller.value()));
+    public ResponseEntity<List<SelectedPersonItem>> selected(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.selectedFor(caller.userId().value()));
     }
 
     @PostMapping("/bff/selection/nominations/{id}/approve")
-    public ResponseEntity<Void> approve(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> approve(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         selection.approve(caller, id);
         return ResponseEntity.noContent().build();
     }
@@ -68,14 +68,14 @@ public class SelectionBffController {
     public ResponseEntity<Void> reject(
             @PathVariable UUID id,
             @RequestBody RejectRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         selection.reject(caller, id, req.reason());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/bff/selection/deselect")
     public ResponseEntity<Void> deselect(
-            @RequestBody DeselectRequest req, @CurrentUser UserId caller) {
+            @RequestBody DeselectRequest req, @CurrentUser CallerAuthority caller) {
         selection.deselect(caller, req.personId(), req.selectiveSabhaId());
         return ResponseEntity.noContent().build();
     }

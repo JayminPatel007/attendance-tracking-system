@@ -1,14 +1,11 @@
 package org.sabha.identity.applicationservice.transfer;
 
-import java.util.Set;
 import java.util.UUID;
 
-import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
-import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.HomeSabhaSwap;
 import org.sabha.identity.domain.HomeSabhaTransfer;
@@ -30,23 +27,28 @@ import org.springframework.transaction.annotation.Transactional;
  * in; the Person's own OTP confirms consent before any Home Sabha changes. The
  * OTP send and code consumption belong to {@link OtpGuardedFlow}; what stays here
  * is who may pull a Person in, and the Roster swap that consent unlocks.
+ *
+ * <p>"Who may pull a Person in" is now one call — {@link
+ * CallerAuthority#runsSabha(UUID)} — where it used to be a two-line role fold
+ * copied byte for byte into {@code SelectionService.nominate}. Reading the
+ * caller's roles inline was flagged as an engine bypass while they came from a
+ * port; under a caller parameter there is no port to bypass, and two new engine
+ * classes would only have preserved the duplication behind two names
+ * (ADR-0032).</p>
  */
 @Service
 public class HomeSabhaTransferService {
 
-    private final RoleAssignmentLookup roleAssignments;
     private final HomeSabhaDirectory directory;
     private final HomeSabhaTransferRepository transfers;
     private final OtpGuardedFlow otpFlow;
     private final SabhaFacts sabhas;
 
     public HomeSabhaTransferService(
-            RoleAssignmentLookup roleAssignments,
             HomeSabhaDirectory directory,
             HomeSabhaTransferRepository transfers,
             OtpGuardedFlow otpFlow,
             SabhaFacts sabhas) {
-        this.roleAssignments = roleAssignments;
         this.directory = directory;
         this.transfers = transfers;
         this.otpFlow = otpFlow;
@@ -54,11 +56,10 @@ public class HomeSabhaTransferService {
     }
 
     @Transactional
-    public UUID initiate(UserId caller, UUID personId, UUID destinationSabhaId) {
-        UUID initiatingUserId = caller.value();
+    public UUID initiate(CallerAuthority caller, UUID personId, UUID destinationSabhaId) {
+        UUID initiatingUserId = caller.userId().value();
 
-        Set<Role> roles = roleAssignments.rolesForUserOnSabha(initiatingUserId, destinationSabhaId);
-        if (!roles.contains(Role.SANCHALAK) && !roles.contains(Role.SAH_SANCHALAK)) {
+        if (!caller.runsSabha(destinationSabhaId)) {
             throw new TransferNotAuthorizedException(initiatingUserId, destinationSabhaId);
         }
 

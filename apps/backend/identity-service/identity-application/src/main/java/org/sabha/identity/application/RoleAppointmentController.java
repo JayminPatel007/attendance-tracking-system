@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
@@ -53,7 +53,7 @@ public class RoleAppointmentController {
 
     @PostMapping("/bff/appointments")
     public ResponseEntity<AppointmentResponse> appoint(
-            @RequestBody AppointmentRequest req, @CurrentUser UserId caller) {
+            @RequestBody AppointmentRequest req, @CurrentUser CallerAuthority caller) {
         AppointmentResult result = appointments.appoint(caller, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(AppointmentResponse.softWarn(result.candidates()));
@@ -71,7 +71,7 @@ public class RoleAppointmentController {
      * {@link RevokeRole} and mapped by the global exception handler. Returns 204.
      */
     @PostMapping("/bff/appointments/{id}/revoke")
-    public ResponseEntity<Void> revoke(@PathVariable UUID id, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> revoke(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         revokeRole.revoke(caller, id);
         return ResponseEntity.noContent().build();
     }
