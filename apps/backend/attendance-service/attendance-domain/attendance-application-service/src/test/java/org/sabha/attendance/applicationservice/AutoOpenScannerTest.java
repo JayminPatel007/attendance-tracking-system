@@ -20,7 +20,9 @@ import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.SabhaScheduleLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.SabhaScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +47,7 @@ class AutoOpenScannerTest {
         queries.scheduled.add(new OccurrenceSlotRef(NOT_YET_DUE_OCCURRENCE, otherSabhaId,
                 LocalDate.of(2026, 5, 26)));
 
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
         lookup.put(otherSabhaId, new SabhaSchedule(DayOfWeek.TUESDAY,
@@ -96,7 +98,7 @@ class AutoOpenScannerTest {
         queries.scheduled.add(new OccurrenceSlotRef(notYetRescheduled, SABHA_ID,
                 LocalDate.of(2026, 5, 31), LocalTime.of(21, 0), LocalTime.of(22, 0)));
 
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.SUNDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
 
@@ -136,7 +138,7 @@ class AutoOpenScannerTest {
         queries.scheduled.add(new OccurrenceSlotRef(monthlyOccurrence, monthlySabha,
                 LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30)));
 
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup(); // no schedule for the monthly Sabha
+        StubSabhaFacts lookup = new StubSabhaFacts(); // no schedule for the monthly Sabha
 
         OccurrenceWriterTest.RecordingOccurrenceRepository occurrences =
                 new OccurrenceWriterTest.RecordingOccurrenceRepository();
@@ -169,7 +171,15 @@ class AutoOpenScannerTest {
         }
     }
 
-    private static final class StubSabhaScheduleLookup implements SabhaScheduleLookup {
+    /**
+     * Only the standing slot matters on these paths, so the stub seeds schedules and
+     * lets {@link SabhaFact#weekly} hold the shape/slot invariant. A Sabha with no
+     * seeded schedule is simply unknown, which is what a monthly-ad-hoc one looked
+     * like through the old schedule-only port.
+     */
+    private static final class StubSabhaFacts implements SabhaFacts {
+        static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
+
         final Map<UUID, SabhaSchedule> schedules = new HashMap<>();
 
         void put(UUID sabhaId, SabhaSchedule schedule) {
@@ -177,8 +187,21 @@ class AutoOpenScannerTest {
         }
 
         @Override
-        public Optional<SabhaSchedule> findSchedule(UUID sabhaId) {
-            return Optional.ofNullable(schedules.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(schedules.get(sabhaId))
+                    .map(schedule -> SabhaFact.weekly(sabhaId, ANY_SCOPE, schedule, false));
+        }
+
+        @Override
+        public List<SabhaFact> allWeekly() {
+            return schedules.entrySet().stream()
+                    .map(e -> SabhaFact.weekly(e.getKey(), ANY_SCOPE, e.getValue(), false))
+                    .toList();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.empty();
         }
     }
 }

@@ -9,9 +9,12 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.StructuralParentage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
 /**
  * The Authorization Engine for role appointment (ADR-0011). Pure decision
@@ -41,7 +44,7 @@ class AppointmentAuthorizationTest {
     @Test
     void nirdeshakMayAppointSanchalakOnASabhaWithinTheirKshetraAndDemographic() {
         Fixture f = new Fixture();
-        f.hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+        f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
         f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
 
         boolean allowed = f.engine().canAppoint(NIRDESHAK,
@@ -54,7 +57,7 @@ class AppointmentAuthorizationTest {
     void nirdeshakMayNotAppointSanchalakOnASabhaInAnotherKshetra() {
         Fixture f = new Fixture();
         // The Sabha sits in a Kshetra/demographic this Nirdeshak does not hold.
-        f.hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+        f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
         f.authority.nirdeshakScopes.add(scope(NIRDESHAK, OTHER_KSHETRA, YUVAK));
 
         boolean allowed = f.engine().canAppoint(NIRDESHAK,
@@ -66,7 +69,7 @@ class AppointmentAuthorizationTest {
     @Test
     void nirdeshakMayAppointSahSanchalakOnASabhaWithinScope() {
         Fixture f = new Fixture();
-        f.hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+        f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
         f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
 
         boolean allowed = f.engine().canAppoint(NIRDESHAK,
@@ -98,7 +101,7 @@ class AppointmentAuthorizationTest {
     @Test
     void sanyojakMayAppointNirdeshakInAKshetraWithinTheirZoneAndDemographic() {
         Fixture f = new Fixture();
-        f.hierarchy.zoneOfKshetra.put(KSHETRA, ZONE);
+        f.parentage.zoneOfKshetra.put(KSHETRA, ZONE);
         f.authority.sanyojakScopes.add(scope(SANYOJAK, ZONE, YUVAK));
 
         boolean allowed = f.engine().canAppoint(SANYOJAK,
@@ -110,7 +113,7 @@ class AppointmentAuthorizationTest {
     @Test
     void sanyojakMayNotAppointNirdeshakInAKshetraOutsideTheirZone() {
         Fixture f = new Fixture();
-        f.hierarchy.zoneOfKshetra.put(KSHETRA, ZONE);
+        f.parentage.zoneOfKshetra.put(KSHETRA, ZONE);
         f.authority.sanyojakScopes.add(scope(SANYOJAK, OTHER_ZONE, YUVAK));
 
         boolean allowed = f.engine().canAppoint(SANYOJAK,
@@ -122,7 +125,7 @@ class AppointmentAuthorizationTest {
     @Test
     void regionalTeamMayAppointSanyojakInAZoneWithinTheirCityAndDemographic() {
         Fixture f = new Fixture();
-        f.hierarchy.cityOfZone.put(ZONE, CITY);
+        f.parentage.cityOfZone.put(ZONE, CITY);
         f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, YUVAK));
 
         boolean allowed = f.engine().canAppoint(REGIONAL,
@@ -134,7 +137,7 @@ class AppointmentAuthorizationTest {
     @Test
     void regionalTeamMayNotAppointSanyojakInAZoneOutsideTheirCity() {
         Fixture f = new Fixture();
-        f.hierarchy.cityOfZone.put(ZONE, CITY);
+        f.parentage.cityOfZone.put(ZONE, CITY);
         f.authority.regionalTeamScopes.add(scope(REGIONAL, OTHER_CITY, YUVAK));
 
         boolean allowed = f.engine().canAppoint(REGIONAL,
@@ -220,7 +223,7 @@ class AppointmentAuthorizationTest {
     void aSanyojakMayNotReachDownAndAppointASanchalakDirectly() {
         // Wrong tier: Sanchalak is the Nirdeshak's to appoint, not the Sanyojak's.
         Fixture f = new Fixture();
-        f.hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+        f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
         f.authority.sanyojakScopes.add(scope(SANYOJAK, ZONE, YUVAK));
 
         boolean allowed = f.engine().canAppoint(SANYOJAK,
@@ -234,25 +237,40 @@ class AppointmentAuthorizationTest {
     }
 
     private static final class Fixture {
-        final FakeHierarchy hierarchy = new FakeHierarchy();
+        final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
+        final FakeParentage parentage = new FakeParentage();
         final FakeAuthority authority = new FakeAuthority();
         UUID mkMember;
 
         AppointmentAuthorization engine() {
-            return new AppointmentAuthorization(hierarchy, authority,
+            return new AppointmentAuthorization(sabhaFacts, parentage, authority,
                     userId -> userId.equals(mkMember));
         }
     }
 
-    private static final class FakeHierarchy implements StructuralHierarchyLookup {
+    private static final class FakeSabhaFacts implements SabhaFacts {
         final Map<UUID, SabhaScope> sabhaScopes = new HashMap<>();
-        final Map<UUID, UUID> zoneOfKshetra = new HashMap<>();
-        final Map<UUID, UUID> cityOfZone = new HashMap<>();
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.ofNullable(sabhaScopes.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(sabhaScopes.get(sabhaId))
+                    .map(scope -> SabhaFact.monthlyAdHoc(sabhaId, scope, false));
         }
+
+        @Override
+        public List<SabhaFact> allWeekly() {
+            return List.of();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.empty();
+        }
+    }
+
+    private static final class FakeParentage implements StructuralParentage {
+        final Map<UUID, UUID> zoneOfKshetra = new HashMap<>();
+        final Map<UUID, UUID> cityOfZone = new HashMap<>();
 
         @Override
         public Optional<UUID> zoneOfKshetra(UUID kshetraId) {

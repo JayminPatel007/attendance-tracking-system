@@ -11,9 +11,11 @@ import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
 class AuthorizationEngineTest {
 
@@ -164,27 +166,28 @@ class AuthorizationEngineTest {
     private static AuthorizationEngine engine(
             RoleAssignmentLookup sabha, FixedRoleAssignments kshetra, NirikshakAssignmentLookup assignments) {
         // The Sabha sits in KSHETRA_ID with demographic DEMOGRAPHIC.
-        StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
+        SabhaFacts sabhaFacts = new SabhaFacts() {
             @Override
-            public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
+            public Optional<SabhaFact> of(UUID sabhaId) {
                 return sabhaId.equals(SABHA_ID)
-                        ? Optional.of(new SabhaScope(KSHETRA_ID, DEMOGRAPHIC, "REGULAR"))
+                        ? Optional.of(SabhaFact.monthlyAdHoc(
+                                sabhaId, new SabhaScope(KSHETRA_ID, DEMOGRAPHIC, "REGULAR"), false))
                         : Optional.empty();
             }
 
             @Override
-            public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-                return Optional.empty();
+            public List<SabhaFact> allWeekly() {
+                return List.of();
             }
 
             @Override
-            public Optional<UUID> cityOfZone(UUID zoneId) {
+            public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
                 return Optional.empty();
             }
         };
         RoleAssignmentLookup roles = new FixedRoleAssignments(
                 ((FixedRoleAssignments) sabha).sabha, kshetra.kshetra);
-        return new AuthorizationEngine(roles, hierarchy, assignments);
+        return new AuthorizationEngine(roles, sabhaFacts, assignments);
     }
 
     private record FixedRoleAssignments(Map<String, Set<Role>> sabha, Map<String, Set<Role>> kshetra)

@@ -16,7 +16,8 @@ import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.identity.domain.Gender;
 import org.sabha.identity.domain.GuardianOrMobileRequiredException;
 import org.sabha.identity.domain.MobileAlreadyRegisteredException;
@@ -134,9 +135,9 @@ class AddPersonApplicationServiceTest {
     @Test
     void blocksAddingWhenTheHomeSabhaKindIsRetired() {
         InMemoryDirectory directory = directoryAt(KSHETRA);
-        FakeHierarchy hierarchy = new FakeHierarchy();
-        hierarchy.retiredSabhas.add(HOME_SABHA);
-        AddPersonApplicationService service = service(directory, new RecordingPublisher(), hierarchy);
+        FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
+        sabhaFacts.retiredSabhas.add(HOME_SABHA);
+        AddPersonApplicationService service = service(directory, new RecordingPublisher(), sabhaFacts);
 
         assertThatThrownBy(() -> service.add(ADDER, addCommand("Ravi Patel", "+919820111000")))
                 .isInstanceOf(SabhaKindRetiredException.class);
@@ -154,39 +155,39 @@ class AddPersonApplicationServiceTest {
     }
 
     private AddPersonApplicationService service(PersonDirectory directory, DomainEventPublisher publisher) {
-        return service(directory, publisher, new FakeHierarchy());
+        return service(directory, publisher, new FakeSabhaFacts());
     }
 
     private AddPersonApplicationService service(
-            PersonDirectory directory, DomainEventPublisher publisher, StructuralHierarchyLookup hierarchy) {
+            PersonDirectory directory, DomainEventPublisher publisher, SabhaFacts sabhaFacts) {
         return new AddPersonApplicationService(
-                directory, hierarchy, publisher, java.time.Clock.systemUTC());
+                directory, sabhaFacts, publisher, java.time.Clock.systemUTC());
     }
 
-    /** Cross-context structural lookup fake — only retirement matters here. */
-    static final class FakeHierarchy implements StructuralHierarchyLookup {
+    /** Cross-context Sabha fact fake — only kind retirement matters here. */
+    static final class FakeSabhaFacts implements SabhaFacts {
         final Set<UUID> retiredSabhas = new HashSet<>();
 
         @Override
-        public boolean isSabhaKindRetired(UUID sabhaId) {
-            return retiredSabhas.contains(sabhaId);
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return retiredSabhas.contains(sabhaId)
+                    ? Optional.of(SabhaFact.monthlyAdHoc(sabhaId, ANY_SCOPE, true))
+                    : Optional.empty();
         }
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.empty();
+        public List<SabhaFact> allWeekly() {
+            return List.of();
         }
 
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }
+
+    /** Scope is irrelevant to the retirement check, so the fake does not model it. */
+    private static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
 
     /** In-memory {@link PersonDirectory} fake driven entirely through the public port. */
     static final class InMemoryDirectory implements PersonDirectory {

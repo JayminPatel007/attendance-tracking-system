@@ -6,7 +6,8 @@ import java.util.UUID;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.HomeSabhaSwap;
@@ -37,19 +38,19 @@ public class HomeSabhaTransferService {
     private final HomeSabhaDirectory directory;
     private final HomeSabhaTransferRepository transfers;
     private final OtpGuardedFlow otpFlow;
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhas;
 
     public HomeSabhaTransferService(
             RoleAssignmentLookup roleAssignments,
             HomeSabhaDirectory directory,
             HomeSabhaTransferRepository transfers,
             OtpGuardedFlow otpFlow,
-            StructuralHierarchyLookup hierarchy) {
+            SabhaFacts sabhas) {
         this.roleAssignments = roleAssignments;
         this.directory = directory;
         this.transfers = transfers;
         this.otpFlow = otpFlow;
-        this.hierarchy = hierarchy;
+        this.sabhas = sabhas;
     }
 
     @Transactional
@@ -61,7 +62,7 @@ public class HomeSabhaTransferService {
             throw new TransferNotAuthorizedException(initiatingUserId, destinationSabhaId);
         }
 
-        if (hierarchy.isSabhaKindRetired(destinationSabhaId)) {
+        if (isKindRetired(destinationSabhaId)) {
             throw new SabhaKindRetiredException(destinationSabhaId);
         }
 
@@ -93,5 +94,15 @@ public class HomeSabhaTransferService {
             transfer.recordSwap(previousSabhaId, now);
             return null;
         });
+    }
+
+    /**
+     * Whether the given Sabha's {@code (demographic, track)} kind has been
+     * soft-retired (ADR-0026). {@code false} when no such Sabha exists — the
+     * retired check is not an existence check, and the caller's own not-found
+     * handling reports a missing Sabha.
+     */
+    private boolean isKindRetired(UUID sabhaId) {
+        return sabhas.of(sabhaId).map(SabhaFact::kindRetired).orElse(false);
     }
 }

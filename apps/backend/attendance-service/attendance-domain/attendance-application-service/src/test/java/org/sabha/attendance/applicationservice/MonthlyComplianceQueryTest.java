@@ -8,18 +8,24 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.SabhaShapeLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.SabhaScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import org.sabha.common.SabhaSchedule;
 
 class MonthlyComplianceQueryTest {
 
     private static final UUID MONTHLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID WEEKLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
 
-    private final FakeShapes shapes = new FakeShapes();
+    private final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
     private final FakeMonths months = new FakeMonths();
-    private final MonthlyComplianceQuery query = new MonthlyComplianceQuery(shapes, months);
+    private final MonthlyComplianceQuery query = new MonthlyComplianceQuery(sabhaFacts, months);
 
     @Test
     void nudgesWhenAMonthlySabhaHasNoOccurrenceAndTheMonthIsPastItsMidpoint() {
@@ -42,15 +48,29 @@ class MonthlyComplianceQueryTest {
         assertThat(query.needsOccurrence(WEEKLY_SABHA, LocalDate.of(2026, 6, 20))).isFalse();
     }
 
-    private static final class FakeShapes implements SabhaShapeLookup {
+    private static final class FakeSabhaFacts implements SabhaFacts {
+        private static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
+        private static final SabhaSchedule ANY_SLOT =
+                new SabhaSchedule(DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30));
+
         @Override
-        public Optional<String> scheduleShapeOf(UUID sabhaId) {
+        public Optional<SabhaFact> of(UUID sabhaId) {
             if (sabhaId.equals(MONTHLY_SABHA)) {
-                return Optional.of("MONTHLY_AD_HOC");
+                return Optional.of(SabhaFact.monthlyAdHoc(sabhaId, ANY_SCOPE, false));
             }
             if (sabhaId.equals(WEEKLY_SABHA)) {
-                return Optional.of("WEEKLY_RECURRING");
+                return Optional.of(SabhaFact.weekly(sabhaId, ANY_SCOPE, ANY_SLOT, false));
             }
+            return Optional.empty();
+        }
+
+        @Override
+        public List<SabhaFact> allWeekly() {
+            return List.of();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }

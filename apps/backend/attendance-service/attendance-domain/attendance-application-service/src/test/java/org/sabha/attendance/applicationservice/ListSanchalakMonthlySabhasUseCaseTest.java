@@ -12,7 +12,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.SabhaShapeLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.SabhaScope;
 
 import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,9 +27,9 @@ class ListSanchalakMonthlySabhasUseCaseTest {
     private static final UUID SABHA_COVERED = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
 
     private final FakeSanchalakSabhas sabhas = new FakeSanchalakSabhas();
-    private final FakeShapes shapes = new FakeShapes();
+    private final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
     private final FakeMonths months = new FakeMonths();
-    private final MonthlyComplianceQuery compliance = new MonthlyComplianceQuery(shapes, months);
+    private final MonthlyComplianceQuery compliance = new MonthlyComplianceQuery(sabhaFacts, months);
     // Past the midpoint of June 2026, so a Sabha with no Occurrence this month is "due".
     private final Clock clock = Clock.fixed(Instant.parse("2026-06-20T08:00:00Z"), ZoneOffset.UTC);
 
@@ -61,10 +63,21 @@ class ListSanchalakMonthlySabhasUseCaseTest {
         }
     }
 
-    private static final class FakeShapes implements SabhaShapeLookup {
+    private static final class FakeSabhaFacts implements SabhaFacts {
         @Override
-        public Optional<String> scheduleShapeOf(UUID sabhaId) {
-            return Optional.of("MONTHLY_AD_HOC");
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.of(SabhaFact.monthlyAdHoc(
+                    sabhaId, new SabhaScope(null, null, null), false));
+        }
+
+        @Override
+        public List<SabhaFact> allWeekly() {
+            return List.of();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.empty();
         }
     }
 

@@ -8,7 +8,8 @@ import org.sabha.common.AuthorizedAction;
 import org.sabha.common.NirikshakAssignmentLookup;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,7 +33,7 @@ import org.springframework.stereotype.Service;
  * Sanchalak/Sah-Sanchalak, nor the oversight tiers (Sanyojak, Sant, MK). Those
  * tiers are appointed against a Kshetra and demographic rather than a single
  * Sabha (ADR-0011), so reopen resolves the Sabha to its scope via {@link
- * StructuralHierarchyLookup} and checks the Kshetra-scoped roles.</p>
+ * SabhaFacts} and checks the Kshetra-scoped roles.</p>
  *
  * <p>The {@code target} is the Sabha the action acts upon (for an Occurrence,
  * its {@code sabhaId}). Role resolution is delegated to the cross-context
@@ -42,21 +43,22 @@ import org.springframework.stereotype.Service;
 public class AuthorizationEngine {
 
     private final RoleAssignmentLookup roleAssignments;
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhas;
     private final NirikshakAssignmentLookup nirikshakAssignments;
 
     public AuthorizationEngine(
             RoleAssignmentLookup roleAssignments,
-            StructuralHierarchyLookup hierarchy,
+            SabhaFacts sabhas,
             NirikshakAssignmentLookup nirikshakAssignments) {
         this.roleAssignments = roleAssignments;
-        this.hierarchy = hierarchy;
+        this.sabhas = sabhas;
         this.nirikshakAssignments = nirikshakAssignments;
     }
 
     public boolean canUserDo(UUID userId, AuthorizedAction action, UUID target) {
         if (action == AuthorizedAction.REOPEN) {
-            return hierarchy.sabhaScope(target)
+            return sabhas.of(target)
+                    .map(SabhaFact::scope)
                     .map(scope -> roleAssignments
                             .rolesForUserOnKshetra(userId, scope.kshetraId(), scope.demographic())
                             .stream().anyMatch(Role.REOPEN_TIERS::contains))

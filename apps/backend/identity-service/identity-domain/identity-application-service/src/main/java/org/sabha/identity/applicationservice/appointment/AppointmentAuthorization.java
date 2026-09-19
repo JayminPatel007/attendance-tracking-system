@@ -3,7 +3,9 @@ package org.sabha.identity.applicationservice.appointment;
 import java.util.UUID;
 
 import org.sabha.common.MadhyasthaKaryalayaLookup;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.StructuralParentage;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,15 +19,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class AppointmentAuthorization {
 
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhas;
+    private final StructuralParentage parentage;
     private final AppointerAuthorityLookup appointer;
     private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
     public AppointmentAuthorization(
-            StructuralHierarchyLookup hierarchy,
+            SabhaFacts sabhas,
+            StructuralParentage parentage,
             AppointerAuthorityLookup appointer,
             MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
-        this.hierarchy = hierarchy;
+        this.sabhas = sabhas;
+        this.parentage = parentage;
         this.appointer = appointer;
         this.madhyasthaKaryalaya = madhyasthaKaryalaya;
     }
@@ -53,19 +58,20 @@ public class AppointmentAuthorization {
     }
 
     private boolean nirdeshakOverSabha(UUID appointerId, UUID sabhaId) {
-        return hierarchy.sabhaScope(sabhaId)
+        return sabhas.of(sabhaId)
+                .map(SabhaFact::scope)
                 .map(s -> appointer.holdsNirdeshak(appointerId, s.kshetraId(), s.demographic()))
                 .orElse(false);
     }
 
     private boolean sanyojakOverKshetra(UUID appointerId, UUID kshetraId, String demographic) {
-        return hierarchy.zoneOfKshetra(kshetraId)
+        return parentage.zoneOfKshetra(kshetraId)
                 .map(zoneId -> appointer.holdsSanyojak(appointerId, zoneId, demographic))
                 .orElse(false);
     }
 
     private boolean regionalTeamOverZone(UUID appointerId, UUID zoneId, String demographic) {
-        return hierarchy.cityOfZone(zoneId)
+        return parentage.cityOfZone(zoneId)
                 .map(cityId -> appointer.holdsRegionalTeam(appointerId, cityId, demographic))
                 .orElse(false);
     }

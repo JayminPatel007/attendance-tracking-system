@@ -18,7 +18,8 @@ import org.sabha.common.UserId;
 import org.sabha.common.ConflictException;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
@@ -33,6 +34,7 @@ import org.sabha.identity.domain.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.sabha.common.StructuralParentage;
 
 /**
  * The one-transaction role-appointment flow (ADR-0011): resolve-or-create the
@@ -179,7 +181,7 @@ class RoleAppointmentServiceTest {
     void appointingASanchalakOnARetiredKindSabhaIsRejectedAndNothingIsCreated() {
         Fixture f = new Fixture();
         UUID personId = f.existingUser("Replacement Sanchalak");
-        f.hierarchy.retiredSabhas.add(SABHA);
+        f.sabhaFacts.retiredSabhas.add(SABHA);
 
         assertThatThrownBy(() -> f.service().appoint(NIRDESHAK_CALLER,
                 RoleAppointmentCommand.forExistingPerson(
@@ -276,7 +278,7 @@ class RoleAppointmentServiceTest {
     }
 
     private static final class Fixture {
-        final FakeHierarchy hierarchy = new FakeHierarchy();
+        final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
         final FakeAuthority authority = new FakeAuthority();
         final FakePersonDirectory directory = new FakePersonDirectory();
         final FakeUserRepository users = new FakeUserRepository();
@@ -286,7 +288,7 @@ class RoleAppointmentServiceTest {
         final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
         Fixture() {
-            hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+            sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
             authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + YUVAK);
             directory.kshetraOfSabha.put(SABHA, KSHETRA);
         }
@@ -314,36 +316,41 @@ class RoleAppointmentServiceTest {
 
         RoleAppointmentService service() {
             AppointmentAuthorization authz = new AppointmentAuthorization(
-                    hierarchy, authority, userId -> false);
+                    sabhaFacts, NO_PARENTAGE, authority, userId -> false);
             AddPersonApplicationService addPerson = new AddPersonApplicationService(
-                    directory, hierarchy, events -> { }, clock);
+                    directory, sabhaFacts, events -> { }, clock);
             return new RoleAppointmentService(
                     authz, addPerson, users, identityProvider, appointments,
-                    new SahNirdeshakCap(sahNirdeshakCount), hierarchy, clock);
+                    new SahNirdeshakCap(sahNirdeshakCount), sabhaFacts, clock);
         }
     }
 
-    private static final class FakeHierarchy implements StructuralHierarchyLookup {
+    /**
+     * Cross-context Sabha fact fake. A Sabha is known if a scope was seeded for it
+     * or it was marked retired; both old maps fold into one {@code of} window.
+     */
+    private static final class FakeSabhaFacts implements SabhaFacts {
         final Map<UUID, SabhaScope> sabhaScopes = new HashMap<>();
         final Set<UUID> retiredSabhas = new HashSet<>();
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.ofNullable(sabhaScopes.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            SabhaScope scope = sabhaScopes.get(sabhaId);
+            boolean retired = retiredSabhas.contains(sabhaId);
+            if (scope == null && !retired) {
+                return Optional.empty();
+            }
+            return Optional.of(SabhaFact.monthlyAdHoc(
+                    sabhaId, scope != null ? scope : new SabhaScope(null, null, null), retired));
         }
 
         @Override
-        public boolean isSabhaKindRetired(UUID sabhaId) {
-            return retiredSabhas.contains(sabhaId);
+        public List<SabhaFact> allWeekly() {
+            return List.of();
         }
 
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }
@@ -500,4 +507,20 @@ class RoleAppointmentServiceTest {
             return counts.getOrDefault(kshetraId + "|" + demographic, 0);
         }
     }
+
+    /**
+     * The geography chain is never walked on these paths — the roles under test are
+     * Sabha- or Kshetra-scoped, so {@code AppointmentAuthorization} takes no hop.
+     */
+    private static final StructuralParentage NO_PARENTAGE = new StructuralParentage() {
+        @Override
+        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> cityOfZone(UUID zoneId) {
+            return Optional.empty();
+        }
+    };
 }

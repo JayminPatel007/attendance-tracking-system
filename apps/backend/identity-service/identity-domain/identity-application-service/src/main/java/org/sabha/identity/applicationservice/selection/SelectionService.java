@@ -8,7 +8,8 @@ import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.domain.NoSelectiveSabhaException;
@@ -37,7 +38,7 @@ public class SelectionService {
 
     private final RoleAssignmentLookup roleAssignments;
     private final SelectionRoster roster;
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhas;
     private final AppointerAuthorityLookup authority;
     private final SelectionRepository nominations;
     private final DomainEventPublisher events;
@@ -46,14 +47,14 @@ public class SelectionService {
     public SelectionService(
             RoleAssignmentLookup roleAssignments,
             SelectionRoster roster,
-            StructuralHierarchyLookup hierarchy,
+            SabhaFacts sabhas,
             AppointerAuthorityLookup authority,
             SelectionRepository nominations,
             DomainEventPublisher events,
             Clock clock) {
         this.roleAssignments = roleAssignments;
         this.roster = roster;
-        this.hierarchy = hierarchy;
+        this.sabhas = sabhas;
         this.authority = authority;
         this.nominations = nominations;
         this.events = events;
@@ -73,10 +74,11 @@ public class SelectionService {
             throw new PersonNotOnRosterException(personId, regularSabhaId);
         }
 
-        SabhaScope scope = hierarchy.sabhaScope(regularSabhaId).orElseThrow();
+        SabhaScope scope = sabhas.of(regularSabhaId).orElseThrow().scope();
         String selectiveTrack = SelectiveTrack.forDemographic(scope.demographic());
-        UUID selectiveSabhaId = hierarchy
-                .selectiveSabhaIn(scope.kshetraId(), scope.demographic(), selectiveTrack)
+        UUID selectiveSabhaId = sabhas
+                .selectiveIn(scope.kshetraId(), scope.demographic(), selectiveTrack)
+                .map(SabhaFact::sabhaId)
                 .orElseThrow(() -> new NoSelectiveSabhaException(
                         scope.kshetraId(), scope.demographic(), selectiveTrack));
 
@@ -124,7 +126,7 @@ public class SelectionService {
     @Transactional
     public void deselect(UserId caller, UUID personId, UUID selectiveSabhaId) {
         UUID deciderUserId = caller.value();
-        SabhaScope scope = hierarchy.sabhaScope(selectiveSabhaId).orElseThrow();
+        SabhaScope scope = sabhas.of(selectiveSabhaId).orElseThrow().scope();
         requireNirdeshak(deciderUserId, scope.kshetraId(), scope.demographic());
 
         SelectionNomination nomination = nominations.findApproved(personId, selectiveSabhaId)

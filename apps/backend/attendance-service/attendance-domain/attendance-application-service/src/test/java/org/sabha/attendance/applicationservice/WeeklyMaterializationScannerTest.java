@@ -16,10 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.WeeklySabhaCatalog;
-import org.sabha.common.WeeklySabhaRef;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.SabhaScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Optional;
 
 class WeeklyMaterializationScannerTest {
 
@@ -80,16 +82,26 @@ class WeeklyMaterializationScannerTest {
         return Clock.fixed(date.atTime(time).atZone(KOLKATA).toInstant(), KOLKATA);
     }
 
-    private static final class FakeCatalog implements WeeklySabhaCatalog {
-        final List<WeeklySabhaRef> refs = new ArrayList<>();
+    private static final class FakeCatalog implements SabhaFacts {
+        final List<SabhaFact> weekly = new ArrayList<>();
 
         void put(UUID sabhaId, SabhaSchedule schedule) {
-            refs.add(new WeeklySabhaRef(sabhaId, schedule));
+            weekly.add(SabhaFact.weekly(sabhaId, new SabhaScope(null, null, null), schedule, false));
         }
 
         @Override
-        public List<WeeklySabhaRef> findAllWeekly() {
-            return refs;
+        public List<SabhaFact> allWeekly() {
+            return weekly;
+        }
+
+        @Override
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return weekly.stream().filter(f -> f.sabhaId().equals(sabhaId)).findFirst();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.empty();
         }
     }
 

@@ -6,7 +6,8 @@ import java.util.UUID;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaKindRetiredException;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.common.UserId;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
@@ -46,7 +47,7 @@ public class RoleAppointmentService implements AppointRole {
     private final IdentityProviderGateway identityProvider;
     private final RoleAppointmentRepository appointments;
     private final SahNirdeshakCap sahNirdeshakCap;
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhas;
     private final Clock clock;
 
     public RoleAppointmentService(
@@ -56,7 +57,7 @@ public class RoleAppointmentService implements AppointRole {
             IdentityProviderGateway identityProvider,
             RoleAppointmentRepository appointments,
             SahNirdeshakCap sahNirdeshakCap,
-            StructuralHierarchyLookup hierarchy,
+            SabhaFacts sabhas,
             Clock clock) {
         this.authz = authz;
         this.addPerson = addPerson;
@@ -64,7 +65,7 @@ public class RoleAppointmentService implements AppointRole {
         this.identityProvider = identityProvider;
         this.appointments = appointments;
         this.sahNirdeshakCap = sahNirdeshakCap;
-        this.hierarchy = hierarchy;
+        this.sabhas = sabhas;
         this.clock = clock;
     }
 
@@ -110,7 +111,7 @@ public class RoleAppointmentService implements AppointRole {
      * are unaffected.
      */
     private void enforceKindActive(AppointmentScope scope) {
-        if (scope.sabhaId() != null && hierarchy.isSabhaKindRetired(scope.sabhaId())) {
+        if (scope.sabhaId() != null && isKindRetired(scope.sabhaId())) {
             throw new SabhaKindRetiredException(scope.sabhaId());
         }
     }
@@ -136,5 +137,15 @@ public class RoleAppointmentService implements AppointRole {
         User user = new User(UUID.randomUUID(), personId, command.username(), keycloakUserId);
         users.save(user);
         return user.id();
+    }
+
+    /**
+     * Whether the given Sabha's {@code (demographic, track)} kind has been
+     * soft-retired (ADR-0026). {@code false} when no such Sabha exists — the
+     * retired check is not an existence check, and the caller's own not-found
+     * handling reports a missing Sabha.
+     */
+    private boolean isKindRetired(UUID sabhaId) {
+        return sabhas.of(sabhaId).map(SabhaFact::kindRetired).orElse(false);
     }
 }

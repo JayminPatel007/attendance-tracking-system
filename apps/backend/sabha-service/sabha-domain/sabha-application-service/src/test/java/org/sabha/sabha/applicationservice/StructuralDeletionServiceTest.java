@@ -35,7 +35,7 @@ class StructuralDeletionServiceTest {
     private final FakeZones zones = new FakeZones();
     private final FakeKshetras kshetras = new FakeKshetras();
     private final FakeSabhas sabhas = new FakeSabhas();
-    private final FakeHierarchy hierarchy = new FakeHierarchy();
+    private final FakeSabhaFacts hierarchy = new FakeSabhaFacts();
     private final FakeRoleAssignments roleAssignments = new FakeRoleAssignments();
 
     /** Scopes the test caller holds — populated per test. */
@@ -342,8 +342,8 @@ class StructuralDeletionServiceTest {
         }
     }
 
-    /** Resolves a seeded Sabha to its (Kshetra, demographic) scope; other walks are unused here. */
-    private static final class FakeHierarchy implements org.sabha.common.StructuralHierarchyLookup {
+    /** Resolves a seeded Sabha to its (Kshetra, demographic) scope; no other window is read here. */
+    private static final class FakeSabhaFacts implements org.sabha.common.SabhaFacts {
         final java.util.Map<UUID, SabhaScope> scopes = new java.util.HashMap<>();
 
         UUID seedSabha(UUID kshetraId, String demographic) {
@@ -353,17 +353,19 @@ class StructuralDeletionServiceTest {
         }
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.ofNullable(scopes.get(sabhaId));
+        public Optional<org.sabha.common.SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(scopes.get(sabhaId))
+                    .map(scope -> org.sabha.common.SabhaFact.monthlyAdHoc(sabhaId, scope, false));
         }
 
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
+        public java.util.List<org.sabha.common.SabhaFact> allWeekly() {
+            return java.util.List.of();
         }
 
         @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
+        public Optional<org.sabha.common.SabhaFact> selectiveIn(
+                UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }

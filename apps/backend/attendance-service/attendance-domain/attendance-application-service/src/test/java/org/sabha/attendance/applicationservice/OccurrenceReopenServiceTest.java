@@ -23,7 +23,8 @@ import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,21 +102,22 @@ class OccurrenceReopenServiceTest {
                             ? Set.of(Role.NIRIKSHAK) : Set.of();
                 }
             };
-            StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
+            SabhaFacts sabhaFacts = new SabhaFacts() {
                 @Override
-                public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-                    return sabhaId.equals(SABHA_ID)
-                            ? Optional.of(new SabhaScope(KSHETRA_ID, DEMOGRAPHIC, "REGULAR"))
-                            : Optional.empty();
+                public Optional<SabhaFact> of(UUID sabhaId) {
+                return sabhaId.equals(SABHA_ID)
+                        ? Optional.of(SabhaFact.monthlyAdHoc(
+                                sabhaId, new SabhaScope(KSHETRA_ID, DEMOGRAPHIC, "REGULAR"), false))
+                        : Optional.empty();
                 }
 
                 @Override
-                public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-                    return Optional.empty();
+                public List<SabhaFact> allWeekly() {
+                    return List.of();
                 }
 
                 @Override
-                public Optional<UUID> cityOfZone(UUID zoneId) {
+                public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
                     return Optional.empty();
                 }
             };
@@ -132,7 +134,7 @@ class OccurrenceReopenServiceTest {
                 }
             };
             OccurrenceWriter writer = new OccurrenceWriter(
-                    new AuthorizationEngine(roles, hierarchy, noProxy),
+                    new AuthorizationEngine(roles, sabhaFacts, noProxy),
                     occurrences, transitions, publisher, clock);
             return new OccurrenceReopenService(writer);
         }
