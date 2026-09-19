@@ -1,25 +1,21 @@
 package org.sabha.analytics.applicationservice;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.CityNotFoundException;
-import org.sabha.common.SantLookup;
 import org.sabha.common.UserId;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit behaviours of the dashboard Authorization Engine (Slice 17): a Sant reads
  * any City in the State (the universal-read exception that Slice 15 denied other
- * roles), filtered to their chosen City; every other role keeps the
- * role-scoped view. The chosen City is the persisted default.
+ * roles), filtered to their chosen City; every other role keeps the role-scoped
+ * view.
+ *
+ * <p>The City pick and the chip moved out with ADR-0032, and so did their tests
+ * ({@link SantCityPreferenceServiceTest}, {@link CityChipQueryTest}). What is
+ * left here is the whole of the engine's surface — one question, one decision.
  */
 class DashboardAccessTest {
 
@@ -28,9 +24,8 @@ class DashboardAccessTest {
     private static final UUID CITY_A = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
 
     private final FakeSantLookup sants = new FakeSantLookup();
-    private final FakeDefaultCity defaults = new FakeDefaultCity();
-    private final FakeCityDirectory cities = new FakeCityDirectory();
-    private final DashboardAccess access = new DashboardAccess(sants, defaults, cities);
+    private final FakeSantDefaultCity defaults = new FakeSantDefaultCity();
+    private final DashboardAccess access = new DashboardAccess(sants, defaults);
 
     @Test
     void aNonSantCallerKeepsTheRoleScopedView() {
@@ -50,105 +45,5 @@ class DashboardAccessTest {
         sants.add(SANT);
 
         assertThat(access.viewFor(UserId.of(SANT))).isEqualTo(new DashboardScope.NoCity());
-    }
-
-    @Test
-    void aSantPickingACityScopesToItAndPersistsItAsTheDefault() {
-        sants.add(SANT);
-        cities.add(CITY_A);
-
-        DashboardScope scope = access.selectCity(UserId.of(SANT), CITY_A);
-
-        assertThat(scope).isEqualTo(new DashboardScope.CityScoped(CITY_A));
-        assertThat(defaults.defaultCityOf(SANT)).contains(CITY_A);
-    }
-
-    @Test
-    void aNonSantCannotPickACityAndNothingIsPersisted() {
-        cities.add(CITY_A);
-
-        assertThatThrownBy(() -> access.selectCity(UserId.of(NIRDESHAK), CITY_A))
-                .isInstanceOf(NotASantException.class);
-        assertThat(defaults.defaultCityOf(NIRDESHAK)).isEmpty();
-    }
-
-    @Test
-    void pickingAnUnknownCityIsRejectedAndNothingIsPersisted() {
-        sants.add(SANT);
-
-        assertThatThrownBy(() -> access.selectCity(UserId.of(SANT), CITY_A))
-                .isInstanceOf(CityNotFoundException.class);
-        assertThat(defaults.defaultCityOf(SANT)).isEmpty();
-    }
-
-    @Test
-    void aSantsChipOffersEveryCityAndHighlightsTheirCurrentChoice() {
-        sants.add(SANT);
-        cities.add(CITY_A);
-        defaults.choose(SANT, CITY_A);
-
-        DashboardAccess.CityChip chip = access.cityChip(UserId.of(SANT));
-
-        assertThat(chip.sant()).isTrue();
-        assertThat(chip.selectedCityId()).isEqualTo(CITY_A);
-        assertThat(chip.cities()).extracting(CityOption::id).containsExactly(CITY_A);
-    }
-
-    @Test
-    void aNonSantGetsAnInertChipWithNoCities() {
-        cities.add(CITY_A);
-
-        DashboardAccess.CityChip chip = access.cityChip(UserId.of(NIRDESHAK));
-
-        assertThat(chip.sant()).isFalse();
-        assertThat(chip.selectedCityId()).isNull();
-        assertThat(chip.cities()).isEmpty();
-    }
-
-    private static final class FakeSantLookup implements SantLookup {
-        private final Set<UUID> sants = new HashSet<>();
-
-        void add(UUID userId) {
-            sants.add(userId);
-        }
-
-        @Override
-        public boolean isSant(UUID userId) {
-            return sants.contains(userId);
-        }
-    }
-
-    private static final class FakeCityDirectory implements CityDirectory {
-        private final Map<UUID, String> cities = new HashMap<>();
-
-        void add(UUID id) {
-            cities.put(id, "City " + id);
-        }
-
-        @Override
-        public boolean exists(UUID cityId) {
-            return cities.containsKey(cityId);
-        }
-
-        @Override
-        public java.util.List<CityOption> allCities() {
-            return cities.entrySet().stream()
-                    .map(e -> new CityOption(e.getKey(), e.getValue()))
-                    .toList();
-        }
-    }
-
-    private static final class FakeDefaultCity implements SantDefaultCity {
-        private final Map<UUID, UUID> defaults = new HashMap<>();
-
-        @Override
-        public Optional<UUID> defaultCityOf(UUID userId) {
-            return Optional.ofNullable(defaults.get(userId));
-        }
-
-        @Override
-        public void choose(UUID userId, UUID cityId) {
-            defaults.put(userId, cityId);
-        }
     }
 }

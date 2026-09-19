@@ -11,6 +11,7 @@ import org.sabha.analytics.applicationservice.DashboardQueries;
 import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.ReEngagementProjectionScanner;
 import org.sabha.analytics.applicationservice.SabhaTree;
+import org.sabha.analytics.applicationservice.SantCityPreferenceService;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
 import org.sabha.analytics.domain.Thresholds;
@@ -88,6 +89,9 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     DashboardAccess access;
 
     @Autowired
+    SantCityPreferenceService cityPreference;
+
+    @Autowired
     ThresholdConfig thresholdConfig;
 
     @Autowired
@@ -114,7 +118,7 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         scanner.refresh();
 
         // Picking the City persists it as the default and scopes the view to it.
-        assertThat(access.selectCity(UserId.of(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(cityPreference.selectCity(UserId.of(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
 
         // Universal read: the Sant holds no role over either Kshetra, yet sees both
         // candidates — the rejection that limited the Nirdeshak to PERSON_1 does not

@@ -5,11 +5,14 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import org.sabha.analytics.applicationservice.CandidateRow;
+import org.sabha.analytics.applicationservice.CityChip;
+import org.sabha.analytics.applicationservice.CityChipQuery;
 import org.sabha.analytics.applicationservice.DashboardAccess;
 import org.sabha.analytics.applicationservice.DashboardOverview;
 import org.sabha.analytics.applicationservice.DashboardQueries;
 import org.sabha.analytics.applicationservice.DashboardScope;
 import org.sabha.analytics.applicationservice.SabhaTree;
+import org.sabha.analytics.applicationservice.SantCityPreferenceService;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
 import org.sabha.analytics.domain.Thresholds;
@@ -36,17 +39,23 @@ public class DashboardBffController {
 
     private final DashboardQueries queries;
     private final DashboardAccess access;
+    private final CityChipQuery cityChip;
+    private final SantCityPreferenceService cityPreference;
     private final ThresholdConfig thresholdConfig;
     private final ThresholdAdmin thresholdAdmin;
     private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
     public DashboardBffController(DashboardQueries queries,
                                   DashboardAccess access,
+                                  CityChipQuery cityChip,
+                                  SantCityPreferenceService cityPreference,
                                   ThresholdConfig thresholdConfig,
                                   ThresholdAdmin thresholdAdmin,
                                   MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
         this.queries = queries;
         this.access = access;
+        this.cityChip = cityChip;
+        this.cityPreference = cityPreference;
         this.thresholdConfig = thresholdConfig;
         this.thresholdAdmin = thresholdAdmin;
         this.madhyasthaKaryalaya = madhyasthaKaryalaya;
@@ -73,8 +82,8 @@ public class DashboardBffController {
      * static scope indicator.
      */
     @GetMapping("/bff/dashboard/scope")
-    public ResponseEntity<DashboardAccess.CityChip> scope(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(access.cityChip(caller));
+    public ResponseEntity<CityChip> scope(@CurrentUser UserId caller) {
+        return ResponseEntity.ok(cityChip.forCaller(caller));
     }
 
     /**
@@ -85,7 +94,7 @@ public class DashboardBffController {
     @PostMapping("/bff/dashboard/city")
     public ResponseEntity<Void> chooseCity(@RequestBody ChooseCityRequest request,
                                            @CurrentUser UserId caller) {
-        access.selectCity(caller, request.cityId());
+        cityPreference.selectCity(caller, request.cityId());
         return ResponseEntity.noContent().build();
     }
 
