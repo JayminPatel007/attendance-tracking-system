@@ -2,6 +2,8 @@
 
 **Status**: accepted (issue [#133](https://github.com/JayminPatel007/attendance-tracking-system/issues/133), decided across the wayfinder map [#222](https://github.com/JayminPatel007/attendance-tracking-system/issues/222)).
 
+**Correction (PR A of #133, issue [#237](https://github.com/JayminPatel007/attendance-tracking-system/issues/237))**: R1's population was recounted by the rule itself once it existed, and three figures below were wrong — the allowlist is **7 today and 6 post-fold, not 8 and 7**; `JdbcDashboardQueries` and `JdbcOccurrenceReopenQueries` carry javadoc only, while `CallerVisibility` (in `common-domain`, not a read-model) holds the SQL and was missed; and the mention/SQL split is 32/7, not 31/8. R1's predicate therefore keys off the **module**, not "an allowlisted CQRS read-model" — that phrase never described `CallerVisibility`. The measurements are corrected in place; the reasoning above them is untouched.
+
 **Supersedes §1, §5 and §6 of [ADR-0027](0027-no-shared-granted-scope-module-behind-the-authorization-engines.md)**, and corrects its §2 inventory. **§3 is preserved and quoted forward verbatim below; §4 stands untouched.** ADR-0027's *ruling* — no shared granted-scope module, no generic `AuthorizationEngine<T>`, no pre-resolved scope — also stands.
 
 **Amends [ADR-0030](0030-caller-identity-resolved-at-the-http-edge.md)** by widening the type behind `@CurrentUser` from `UserId` to `CallerAuthority`. The annotation, the resolver's location, and ADR-0030's "resolve once at the edge" principle are unchanged.
@@ -212,11 +214,11 @@ ArchUnit, which sees strictly less than the SQL text does, is not close.
 
 ### What actually gets written
 
-**R1 — `role_assignments` has one authority reader.** Outside `identity-data-access`, `role_assignments` may appear only in an allowlisted CQRS read-model, each entry carrying its ADR-0029-clause-1 justification. Three-way failure per house style (missing / exemption-now-a-lie / exemption-matches-nothing).
+**R1 — `role_assignments` has one authority reader.** Outside `identity-data-access`, `role_assignments` may appear only in an allowlisted file, each entry carrying its ADR-0029-clause-1 justification. Three-way failure per house style (missing / exemption-now-a-lie / exemption-matches-nothing).
 
 - **This is the first enforcement ADR-0029 has ever had.** ADR-0029 was written because the `role = 'SANT'` check had already been copy-pasted into three adapters across two contexts, and nothing has stopped a fourth since.
-- **R1 cannot be an ArchUnit rule.** ArchUnit reads bytecode, and a SQL text block is a constant-pool entry it does not expose. R1 is a **source-text** check, and it must strip comments before matching: **31 non-test files outside `identity-data-access` mention `role_assignments`, but only 8 carry SQL** — the other 23 are javadoc, 11 of them in `common-domain`.
-- **Today's allowlist is exactly 8 files**: analytics `JdbcAuditFeed`, `JdbcAuditScopeLookup`, `JdbcDashboardQueries`; attendance `JdbcCurrentRosterQuery`, `JdbcCurrentOccurrenceQuery`, `JdbcOccurrenceReopenQueries`, `JdbcProxySabhaQueries`, `JdbcSanchalakSabhasQuery`. **After the fold removes `JdbcAuditScopeLookup` it is 7** — recounted at ADR-writing time against R1's own predicate, not inherited. The surviving `JdbcSantLookup` does **not** raise that figure: it lives *inside* `identity-data-access`, where the table is permitted outright and no allowlist entry is needed.
+- **R1 cannot be an ArchUnit rule.** ArchUnit reads bytecode, and a SQL text block is a constant-pool entry it does not expose. R1 is a **source-text** check, and it must strip comments before matching: **32 non-test files outside `identity-data-access` mention `role_assignments`, but only 7 carry SQL** — the other 25 are javadoc, 10 of them in `common-domain`.
+- **Today's allowlist is exactly 7 files**: analytics `JdbcAuditFeed`, `JdbcAuditScopeLookup`; attendance `JdbcCurrentRosterQuery`, `JdbcCurrentOccurrenceQuery`, `JdbcProxySabhaQueries`, `JdbcSanchalakSabhasQuery`; common `CallerVisibility`. **After the fold removes `JdbcAuditScopeLookup` it is 6** — recounted against R1's own predicate, not inherited. The surviving `JdbcSantLookup` does **not** raise that figure: it lives *inside* `identity-data-access`, where the table is permitted outright and no allowlist entry is needed.
 
 **R2 — amend `every_handler_resolves_its_caller` rather than add to it.** Assert the `@CurrentUser` parameter's **type** is `CallerAuthority`. One predicate on an existing rule is the cheapest possible enforcement of the one-caller-parameter rule, and it is what makes a `UserId`-typed relapse fail instead of pass. #209's exemption map is unaffected and must not be rewritten.
 
