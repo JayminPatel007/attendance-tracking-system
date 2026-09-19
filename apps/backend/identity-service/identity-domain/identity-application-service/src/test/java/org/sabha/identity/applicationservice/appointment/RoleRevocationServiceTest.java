@@ -17,13 +17,15 @@ import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.UserId;
 import org.sabha.common.ConflictException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.sabha.common.StructuralParentage;
 
 /**
  * Role revocation (ADR-0025 §1-2, ADR-0026): a state change authorized by the
@@ -132,7 +134,7 @@ class RoleRevocationServiceTest {
     }
 
     private static final class Fixture {
-        final FakeHierarchy hierarchy = new FakeHierarchy();
+        final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
         final FakeAuthority authority = new FakeAuthority();
         final FakeRevokableRoleAssignments assignments = new FakeRevokableRoleAssignments();
         final FakeUserRepository users = new FakeUserRepository();
@@ -140,7 +142,7 @@ class RoleRevocationServiceTest {
         final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
         Fixture() {
-            hierarchy.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
+            sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
             authority.nirdeshakScopes.add(NIRDESHAK + "|" + KSHETRA + "|" + YUVAK);
             authority.regionalTeamScopes.add(RT_PEER + "|" + CITY + "|" + YUVAK);
         }
@@ -171,32 +173,28 @@ class RoleRevocationServiceTest {
 
         RoleRevocationService service() {
             AppointmentAuthorization authz = new AppointmentAuthorization(
-                    hierarchy, authority, userId -> false);
+                    sabhaFacts, NO_PARENTAGE, authority, userId -> false);
             return new RoleRevocationService(
                     authz, assignments, users, identityProvider, clock);
         }
     }
 
-    private static final class FakeHierarchy implements StructuralHierarchyLookup {
+    private static final class FakeSabhaFacts implements SabhaFacts {
         final Map<UUID, SabhaScope> sabhaScopes = new HashMap<>();
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.ofNullable(sabhaScopes.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(sabhaScopes.get(sabhaId))
+                    .map(scope -> SabhaFact.monthlyAdHoc(sabhaId, scope, false));
         }
 
         @Override
-        public boolean isSabhaKindRetired(UUID sabhaId) {
-            return false;
+        public List<SabhaFact> allWeekly() {
+            return List.of();
         }
 
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }
@@ -301,4 +299,20 @@ class RoleRevocationServiceTest {
             disabled.add(keycloakUserId);
         }
     }
+
+    /**
+     * The geography chain is never walked on these paths — the roles under test are
+     * Sabha- or Kshetra-scoped, so {@code AppointmentAuthorization} takes no hop.
+     */
+    private static final StructuralParentage NO_PARENTAGE = new StructuralParentage() {
+        @Override
+        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<UUID> cityOfZone(UUID zoneId) {
+            return Optional.empty();
+        }
+    };
 }

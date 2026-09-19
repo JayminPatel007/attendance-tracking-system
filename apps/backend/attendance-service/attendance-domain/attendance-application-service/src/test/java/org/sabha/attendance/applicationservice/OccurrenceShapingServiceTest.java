@@ -24,9 +24,9 @@ import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.SabhaScheduleLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -226,24 +226,26 @@ class OccurrenceShapingServiceTest {
                     return sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
                 }
             };
-            // Shaping is Sanchalak-scoped; the engine never consults the hierarchy for these actions.
-            StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
+            // Shaping is Sanchalak-scoped, so the engine never asks for a Sabha's scope;
+            // the standing slot is the only fact these paths read.
+            SabhaFacts sabhaFacts = new SabhaFacts() {
                 @Override
-                public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-                    return Optional.empty();
+                public Optional<SabhaFact> of(UUID sabhaId) {
+                return Optional.ofNullable(standingSchedule)
+                        .map(slot -> SabhaFact.weekly(
+                                sabhaId, new SabhaScope(null, null, null), slot, false));
                 }
 
                 @Override
-                public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-                    return Optional.empty();
+                public List<SabhaFact> allWeekly() {
+                    return List.of();
                 }
 
                 @Override
-                public Optional<UUID> cityOfZone(UUID zoneId) {
+                public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
                     return Optional.empty();
                 }
             };
-            SabhaScheduleLookup schedule = sabhaId -> Optional.ofNullable(standingSchedule);
             Clock clock = Clock.fixed(now, ZoneOffset.UTC);
             org.sabha.common.NirikshakAssignmentLookup nirikshakAssignments =
                     new org.sabha.common.NirikshakAssignmentLookup() {
@@ -258,9 +260,9 @@ class OccurrenceShapingServiceTest {
                         }
                     };
             OccurrenceWriter writer = new OccurrenceWriter(
-                    new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
+                    new AuthorizationEngine(roles, sabhaFacts, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
-            return new OccurrenceShapingService(writer, new EffectiveSlotResolver(schedule, clock),
+            return new OccurrenceShapingService(writer, new EffectiveSlotResolver(sabhaFacts, clock),
                     clock, Duration.ofHours(24));
         }
     }

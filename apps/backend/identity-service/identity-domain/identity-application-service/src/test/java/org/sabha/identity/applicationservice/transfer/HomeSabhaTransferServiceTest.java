@@ -23,7 +23,8 @@ import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.identity.applicationservice.otp.OtpFlowFixture;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
 import org.sabha.identity.domain.Gender;
@@ -196,7 +197,7 @@ class HomeSabhaTransferServiceTest {
     void initiatingATransferIntoARetiredKindSabhaIsRejected() {
         Fixture f = new Fixture();
         f.directory.seedPerson(person(PERSON, PERSON_MOBILE));
-        f.hierarchy.retiredSabhas.add(DESTINATION_SABHA);
+        f.sabhaFacts.retiredSabhas.add(DESTINATION_SABHA);
 
         assertThatThrownBy(() -> f.service().initiate(INITIATOR, PERSON, DESTINATION_SABHA))
                 .isInstanceOf(SabhaKindRetiredException.class);
@@ -253,7 +254,7 @@ class HomeSabhaTransferServiceTest {
         final OtpFlowFixture.RecordingOtpGateway gateway = new OtpFlowFixture.RecordingOtpGateway();
         final RecordingPublisher publisher = new RecordingPublisher();
         final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
-        final FakeHierarchy hierarchy = new FakeHierarchy();
+        final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
         final MutableClock clock = new MutableClock(Instant.parse("2026-05-31T10:00:00Z"));
 
         Fixture() {
@@ -265,34 +266,34 @@ class HomeSabhaTransferServiceTest {
         HomeSabhaTransferService service() {
             OtpGuardedFlow otpFlow = OtpFlowFixture.sending(FIXED_OTP, gateway, publisher, clock);
             return new HomeSabhaTransferService(
-                    roleAssignments, directory, transfers, otpFlow, hierarchy);
+                    roleAssignments, directory, transfers, otpFlow, sabhaFacts);
         }
     }
 
-    /** Cross-context structural lookup fake — only destination retirement matters here. */
-    static final class FakeHierarchy implements StructuralHierarchyLookup {
+    /** Cross-context Sabha fact fake — only kind retirement matters here. */
+    static final class FakeSabhaFacts implements SabhaFacts {
         final Set<UUID> retiredSabhas = new HashSet<>();
 
         @Override
-        public boolean isSabhaKindRetired(UUID sabhaId) {
-            return retiredSabhas.contains(sabhaId);
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return retiredSabhas.contains(sabhaId)
+                    ? Optional.of(SabhaFact.monthlyAdHoc(sabhaId, ANY_SCOPE, true))
+                    : Optional.empty();
         }
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.empty();
+        public List<SabhaFact> allWeekly() {
+            return List.of();
         }
 
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
             return Optional.empty();
         }
     }
+
+    /** Scope is irrelevant to the retirement check, so the fake does not model it. */
+    private static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
 
     static final class InMemoryRoleAssignments implements RoleAssignmentLookup {
         private final Map<String, Set<Role>> roles = new HashMap<>();

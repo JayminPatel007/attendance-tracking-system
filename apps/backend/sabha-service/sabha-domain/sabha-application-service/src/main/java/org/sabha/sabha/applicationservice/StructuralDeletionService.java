@@ -7,7 +7,7 @@ import org.sabha.common.AuthorizedAction;
 import org.sabha.common.CityNotFoundException;
 import org.sabha.common.SabhaNotFoundException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFacts;
 import org.sabha.common.UserId;
 import org.sabha.sabha.domain.KshetraNotFoundException;
 import org.sabha.sabha.domain.StructuralNotEmptyException;
@@ -33,18 +33,18 @@ public class StructuralDeletionService {
     private final ZoneRepository zones;
     private final KshetraRepository kshetras;
     private final SabhaRepository sabhas;
-    private final StructuralHierarchyLookup hierarchy;
+    private final SabhaFacts sabhaFacts;
 
     public StructuralDeletionService(
             StructuralScopeAuthority authz, CityRepository cities,
             ZoneRepository zones, KshetraRepository kshetras,
-            SabhaRepository sabhas, StructuralHierarchyLookup hierarchy) {
+            SabhaRepository sabhas, SabhaFacts sabhaFacts) {
         this.authz = authz;
         this.cities = cities;
         this.zones = zones;
         this.kshetras = kshetras;
         this.sabhas = sabhas;
-        this.hierarchy = hierarchy;
+        this.sabhaFacts = sabhaFacts;
     }
 
     @Transactional
@@ -90,8 +90,9 @@ public class StructuralDeletionService {
 
     @Transactional
     public void deleteSabha(UserId caller, UUID sabhaId) {
-        SabhaScope scope = hierarchy.sabhaScope(sabhaId)
-                .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
+        SabhaScope scope = sabhaFacts.of(sabhaId)
+                .orElseThrow(() -> new SabhaNotFoundException(sabhaId))
+                .scope();
         if (!authz.holdsKshetraScope(caller.value(), scope.kshetraId(), scope.demographic())) {
             throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.DELETE_SABHA);
         }

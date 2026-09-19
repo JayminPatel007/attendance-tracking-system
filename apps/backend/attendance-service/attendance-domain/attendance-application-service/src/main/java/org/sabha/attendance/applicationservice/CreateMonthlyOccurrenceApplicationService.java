@@ -8,7 +8,8 @@ import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaNotFoundException;
-import org.sabha.common.SabhaShapeLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.common.UserId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  * no standing schedule to materialize from.
  *
  * <ol>
- *   <li>Guard the Sabha is monthly-ad-hoc via {@link SabhaShapeLookup} — weekly
+ *   <li>Guard the Sabha is monthly-ad-hoc via {@link SabhaFacts} — weekly
  *       Sabhas materialize automatically and reject manual creation (422); an
  *       unknown Sabha is a 404.</li>
  *   <li>Authorize the caller as the Sabha's Sanchalak via the
@@ -32,24 +33,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateMonthlyOccurrenceApplicationService {
 
     private final AuthorizationEngine authz;
-    private final SabhaShapeLookup sabhaShapes;
+    private final SabhaFacts sabhas;
     private final OccurrenceInsert occurrences;
 
     public CreateMonthlyOccurrenceApplicationService(
             AuthorizationEngine authz,
-            SabhaShapeLookup sabhaShapes,
+            SabhaFacts sabhas,
             OccurrenceInsert occurrences) {
         this.authz = authz;
-        this.sabhaShapes = sabhaShapes;
+        this.sabhas = sabhas;
         this.occurrences = occurrences;
     }
 
     @Transactional
     public UUID create(UserId caller, UUID sabhaId, LocalDate date,
                        LocalTime startTime, LocalTime endTime, String venue) {
-        String shape = sabhaShapes.scheduleShapeOf(sabhaId)
+        SabhaFact sabha = sabhas.of(sabhaId)
                 .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
-        if (!"MONTHLY_AD_HOC".equals(shape)) {
+        if (!sabha.isMonthlyAdHoc()) {
             throw new NotMonthlyAdHocException(sabhaId);
         }
 

@@ -9,24 +9,25 @@ import java.util.Optional;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.SabhaScheduleLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.springframework.stereotype.Component;
 
 /**
  * Resolves an Occurrence to its Effective Slot (see CONTEXT.md): the absolute
  * instants it starts and ends at.
  *
- * <p>Cross-context schedule resolution goes through {@link SabhaScheduleLookup}
+ * <p>Cross-context schedule resolution goes through {@link SabhaFacts}
  * (ADR-0019).</p>
  */
 @Component
 public class EffectiveSlotResolver {
 
-    private final SabhaScheduleLookup scheduleLookup;
+    private final SabhaFacts sabhas;
     private final Clock clock;
 
-    public EffectiveSlotResolver(SabhaScheduleLookup scheduleLookup, Clock clock) {
-        this.scheduleLookup = scheduleLookup;
+    public EffectiveSlotResolver(SabhaFacts sabhas, Clock clock) {
+        this.sabhas = sabhas;
         this.clock = clock;
     }
 
@@ -57,7 +58,7 @@ public class EffectiveSlotResolver {
      */
     public Optional<EffectiveSlot> resolve(OccurrenceSlotRef ref) {
         Optional<SabhaSchedule> standing = ref.overrideStartTime() == null || ref.overrideEndTime() == null
-                ? scheduleLookup.findSchedule(ref.sabhaId())
+                ? sabhas.of(ref.sabhaId()).flatMap(SabhaFact::standingSlot)
                 : Optional.empty();
         LocalTime startTime = boundary(ref.overrideStartTime(), standing.map(SabhaSchedule::startTime));
         LocalTime endTime = boundary(ref.overrideEndTime(), standing.map(SabhaSchedule::endTime));

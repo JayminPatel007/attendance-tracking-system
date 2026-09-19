@@ -31,7 +31,8 @@ import org.sabha.common.OptimisticLockException;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 
 import org.sabha.common.UserId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -287,21 +288,22 @@ class OccurrenceWriterTest {
                     return sabhaId.equals(SABHA_ID) ? Optional.of(SANCHALAK_USER) : Optional.empty();
                 }
             };
-            StructuralHierarchyLookup hierarchy = new StructuralHierarchyLookup() {
+            SabhaFacts sabhaFacts = new SabhaFacts() {
                 @Override
-                public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-                    return sabhaId.equals(SABHA_ID)
-                            ? Optional.of(new SabhaScope(KSHETRA_ID, "YUVAK", "REGULAR"))
-                            : Optional.empty();
+                public Optional<SabhaFact> of(UUID sabhaId) {
+                return sabhaId.equals(SABHA_ID)
+                        ? Optional.of(SabhaFact.monthlyAdHoc(
+                                sabhaId, new SabhaScope(KSHETRA_ID, "YUVAK", "REGULAR"), false))
+                        : Optional.empty();
                 }
 
                 @Override
-                public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-                    return Optional.empty();
+                public List<SabhaFact> allWeekly() {
+                    return List.of();
                 }
 
                 @Override
-                public Optional<UUID> cityOfZone(UUID zoneId) {
+                public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
                     return Optional.empty();
                 }
             };
@@ -317,7 +319,7 @@ class OccurrenceWriterTest {
                 }
             };
             return new OccurrenceWriter(
-                    new AuthorizationEngine(roles, hierarchy, nirikshakAssignments),
+                    new AuthorizationEngine(roles, sabhaFacts, nirikshakAssignments),
                     occurrences, transitions, publisher, clock);
         }
     }
@@ -355,19 +357,19 @@ class OccurrenceWriterTest {
                 return Set.of();
             }
         };
-        StructuralHierarchyLookup noHierarchy = new StructuralHierarchyLookup() {
+        SabhaFacts noSabhaFacts = new SabhaFacts() {
             @Override
-            public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
+            public Optional<SabhaFact> of(UUID sabhaId) {
                 return Optional.empty();
             }
 
             @Override
-            public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-                return Optional.empty();
+            public List<SabhaFact> allWeekly() {
+                return List.of();
             }
 
             @Override
-            public Optional<UUID> cityOfZone(UUID zoneId) {
+            public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
                 return Optional.empty();
             }
         };
@@ -383,7 +385,7 @@ class OccurrenceWriterTest {
             }
         };
         return new OccurrenceWriter(
-                new AuthorizationEngine(noRoles, noHierarchy, noProxy),
+                new AuthorizationEngine(noRoles, noSabhaFacts, noProxy),
                 occurrences, transitions, events, clock);
     }
 

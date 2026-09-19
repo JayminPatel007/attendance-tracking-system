@@ -19,7 +19,8 @@ import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
 import org.sabha.common.RoleAssignmentLookup;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.StructuralHierarchyLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.domain.NoSelectiveSabhaException;
 import org.sabha.identity.domain.NoSelectiveTrackException;
@@ -104,7 +105,7 @@ class SelectionServiceTest {
     @Test
     void nominateFromADemographicWithoutASelectiveTrackIsRejected() {
         Fixture f = new Fixture();
-        f.hierarchy.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, "SANYUKTA", "REGULAR"));
+        f.sabhaFacts.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, "SANYUKTA", "REGULAR"));
 
         assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NoSelectiveTrackException.class);
@@ -114,7 +115,7 @@ class SelectionServiceTest {
     @Test
     void nominateWhenNoSelectiveSabhaExistsInTheKshetraIsRejected() {
         Fixture f = new Fixture();
-        f.hierarchy.clearSelective();
+        f.sabhaFacts.clearSelective();
 
         assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NoSelectiveSabhaException.class);
@@ -252,7 +253,7 @@ class SelectionServiceTest {
         final InMemorySelectionRepository nominations = new InMemorySelectionRepository();
         final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
         final InMemoryRoster roster = new InMemoryRoster();
-        final InMemoryHierarchy hierarchy = new InMemoryHierarchy();
+        final InMemorySabhaFacts sabhaFacts = new InMemorySabhaFacts();
         final InMemoryAppointerAuthority authority = new InMemoryAppointerAuthority();
         final RecordingPublisher publisher = new RecordingPublisher();
         final Clock clock = Clock.fixed(Instant.parse("2026-06-06T10:00:00Z"), ZoneOffset.UTC);
@@ -264,15 +265,15 @@ class SelectionServiceTest {
             // test overrides one of these.
             roleAssignments.grant(SANCHALAK_USER, REGULAR_SABHA, Role.SANCHALAK);
             roster.add(PERSON, REGULAR_SABHA);
-            hierarchy.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "REGULAR"));
-            hierarchy.seedScope(SELECTIVE_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "YSS"));
-            hierarchy.seedSelective(KSHETRA, DEMOGRAPHIC, "YSS", SELECTIVE_SABHA);
+            sabhaFacts.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "REGULAR"));
+            sabhaFacts.seedScope(SELECTIVE_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "YSS"));
+            sabhaFacts.seedSelective(KSHETRA, DEMOGRAPHIC, "YSS", SELECTIVE_SABHA);
             authority.grantNirdeshak(NIRDESHAK_USER, KSHETRA, DEMOGRAPHIC);
         }
 
         SelectionService service() {
             return new SelectionService(
-                    roleAssignments, roster, hierarchy, authority, nominations,
+                    roleAssignments, roster, sabhaFacts, authority, nominations,
                     publisher, clock);
         }
     }
@@ -382,7 +383,7 @@ class SelectionServiceTest {
         }
     }
 
-    static final class InMemoryHierarchy implements StructuralHierarchyLookup {
+    static final class InMemorySabhaFacts implements SabhaFacts {
         private final Map<UUID, SabhaScope> scopes = new HashMap<>();
         private final Map<String, UUID> selective = new HashMap<>();
 
@@ -399,23 +400,21 @@ class SelectionServiceTest {
         }
 
         @Override
-        public Optional<SabhaScope> sabhaScope(UUID sabhaId) {
-            return Optional.ofNullable(scopes.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(scopes.get(sabhaId))
+                    .map(scope -> SabhaFact.monthlyAdHoc(sabhaId, scope, false));
         }
 
         @Override
-        public Optional<UUID> selectiveSabhaIn(UUID kshetraId, String demographic, String track) {
-            return Optional.ofNullable(selective.get(kshetraId + "|" + demographic + "|" + track));
+        public List<SabhaFact> allWeekly() {
+            return List.of();
         }
 
+        /** Both windows return the same type, so the selective Sabha is resolved through {@code of}. */
         @Override
-        public Optional<UUID> zoneOfKshetra(UUID kshetraId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UUID> cityOfZone(UUID zoneId) {
-            return Optional.empty();
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.ofNullable(selective.get(kshetraId + "|" + demographic + "|" + track))
+                    .flatMap(this::of);
         }
     }
 

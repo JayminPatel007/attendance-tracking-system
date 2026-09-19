@@ -14,9 +14,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.SabhaScheduleLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
+import org.sabha.common.SabhaScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
 class EffectiveSlotResolverTest {
 
@@ -26,7 +29,7 @@ class EffectiveSlotResolverTest {
 
     @Test
     void fallsBackToTheSabhaStandingScheduleWhenTheOccurrenceCarriesNoOverride() {
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
         EffectiveSlotResolver resolver = new EffectiveSlotResolver(lookup, clockAt(KOLKATA));
@@ -41,7 +44,7 @@ class EffectiveSlotResolverTest {
 
     @Test
     void prefersThePerOccurrenceOverrideOverTheSabhaStandingSchedule() {
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
         EffectiveSlotResolver resolver = new EffectiveSlotResolver(lookup, clockAt(KOLKATA));
@@ -57,7 +60,7 @@ class EffectiveSlotResolverTest {
 
     @Test
     void appliesOverridePrecedenceOneBoundaryAtATime() {
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
         EffectiveSlotResolver resolver = new EffectiveSlotResolver(lookup, clockAt(KOLKATA));
@@ -75,7 +78,7 @@ class EffectiveSlotResolverTest {
     void resolvesNothingWhenTheSabhaHasNoStandingScheduleAndTheOccurrenceCarriesNoOverride() {
         // A monthly-ad-hoc Sabha has no standing schedule to fall back to.
         EffectiveSlotResolver resolver = new EffectiveSlotResolver(
-                new StubSabhaScheduleLookup(), clockAt(KOLKATA));
+                new StubSabhaFacts(), clockAt(KOLKATA));
 
         Optional<EffectiveSlot> slot = resolver.resolve(new OccurrenceSlotRef(
                 OCCURRENCE_ID, SABHA_ID, LocalDate.of(2026, 5, 26)));
@@ -85,7 +88,7 @@ class EffectiveSlotResolverTest {
 
     @Test
     void resolvesARescheduledOccurrenceAggregateOnItsRescheduledDateAndTime() {
-        StubSabhaScheduleLookup lookup = new StubSabhaScheduleLookup();
+        StubSabhaFacts lookup = new StubSabhaFacts();
         lookup.put(SABHA_ID, new SabhaSchedule(DayOfWeek.TUESDAY,
                 LocalTime.of(19, 0), LocalTime.of(20, 0)));
         EffectiveSlotResolver resolver = new EffectiveSlotResolver(lookup, clockAt(KOLKATA));
@@ -104,7 +107,7 @@ class EffectiveSlotResolverTest {
     void reportsTodayInTheSchedulingZoneNotInUtc() {
         // 2026-05-26 20:00 UTC is already 2026-05-27 in Asia/Kolkata (UTC+05:30).
         Clock clock = Clock.fixed(Instant.parse("2026-05-26T20:00:00Z"), KOLKATA);
-        EffectiveSlotResolver resolver = new EffectiveSlotResolver(new StubSabhaScheduleLookup(), clock);
+        EffectiveSlotResolver resolver = new EffectiveSlotResolver(new StubSabhaFacts(), clock);
 
         assertThat(resolver.today()).isEqualTo(LocalDate.of(2026, 5, 27));
     }
@@ -113,7 +116,15 @@ class EffectiveSlotResolverTest {
         return Clock.fixed(Instant.parse("2026-05-26T00:00:00Z"), zone);
     }
 
-    private static final class StubSabhaScheduleLookup implements SabhaScheduleLookup {
+    /**
+     * Only the standing slot matters on these paths, so the stub seeds schedules and
+     * lets {@link SabhaFact#weekly} hold the shape/slot invariant. A Sabha with no
+     * seeded schedule is simply unknown, which is what a monthly-ad-hoc one looked
+     * like through the old schedule-only port.
+     */
+    private static final class StubSabhaFacts implements SabhaFacts {
+        static final SabhaScope ANY_SCOPE = new SabhaScope(null, null, null);
+
         final Map<UUID, SabhaSchedule> schedules = new HashMap<>();
 
         void put(UUID sabhaId, SabhaSchedule schedule) {
@@ -121,8 +132,21 @@ class EffectiveSlotResolverTest {
         }
 
         @Override
-        public Optional<SabhaSchedule> findSchedule(UUID sabhaId) {
-            return Optional.ofNullable(schedules.get(sabhaId));
+        public Optional<SabhaFact> of(UUID sabhaId) {
+            return Optional.ofNullable(schedules.get(sabhaId))
+                    .map(schedule -> SabhaFact.weekly(sabhaId, ANY_SCOPE, schedule, false));
+        }
+
+        @Override
+        public List<SabhaFact> allWeekly() {
+            return schedules.entrySet().stream()
+                    .map(e -> SabhaFact.weekly(e.getKey(), ANY_SCOPE, e.getValue(), false))
+                    .toList();
+        }
+
+        @Override
+        public Optional<SabhaFact> selectiveIn(UUID kshetraId, String demographic, String track) {
+            return Optional.empty();
         }
     }
 }

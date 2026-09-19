@@ -4,7 +4,8 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.UUID;
 
-import org.sabha.common.SabhaShapeLookup;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,17 +17,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class MonthlyComplianceQuery {
 
-    private final SabhaShapeLookup sabhaShapes;
+    private final SabhaFacts sabhas;
     private final OccurrenceCalendar calendar;
 
-    public MonthlyComplianceQuery(SabhaShapeLookup sabhaShapes, OccurrenceCalendar calendar) {
-        this.sabhaShapes = sabhaShapes;
+    public MonthlyComplianceQuery(SabhaFacts sabhas, OccurrenceCalendar calendar) {
+        this.sabhas = sabhas;
         this.calendar = calendar;
     }
 
     public boolean needsOccurrence(UUID sabhaId, LocalDate asOf) {
-        boolean monthly = sabhaShapes.scheduleShapeOf(sabhaId)
-                .filter("MONTHLY_AD_HOC"::equals)
+        boolean monthly = sabhas.of(sabhaId)
+                .filter(SabhaFact::isMonthlyAdHoc)
                 .isPresent();
         if (!monthly || !pastMidpoint(asOf)) {
             return false;

@@ -11,8 +11,8 @@ import java.util.UUID;
 
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.common.SabhaSchedule;
-import org.sabha.common.WeeklySabhaCatalog;
-import org.sabha.common.WeeklySabhaRef;
+import org.sabha.common.SabhaFact;
+import org.sabha.common.SabhaFacts;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,17 +32,17 @@ public class WeeklyMaterializationScanner {
     private static final Duration MIN_LEAD = Duration.ofHours(24);
     private static final int WINDOW_WEEKS = 8;
 
-    private final WeeklySabhaCatalog catalog;
+    private final SabhaFacts sabhas;
     private final OccurrenceCalendar calendar;
     private final OccurrenceInsert occurrences;
     private final Clock clock;
 
     public WeeklyMaterializationScanner(
-            WeeklySabhaCatalog catalog,
+            SabhaFacts sabhas,
             OccurrenceCalendar calendar,
             OccurrenceInsert occurrences,
             Clock clock) {
-        this.catalog = catalog;
+        this.sabhas = sabhas;
         this.calendar = calendar;
         this.occurrences = occurrences;
         this.clock = clock;
@@ -53,11 +53,13 @@ public class WeeklyMaterializationScanner {
         ZoneId zone = clock.getZone();
         LocalDate windowEnd = LocalDate.ofInstant(now, zone).plusWeeks(WINDOW_WEEKS);
 
-        for (WeeklySabhaRef ref : catalog.findAllWeekly()) {
-            LocalDate slot = firstSlotWithLead(now, zone, ref.schedule());
+        for (SabhaFact sabha : sabhas.allWeekly()) {
+            // allWeekly() filters on WEEKLY_RECURRING, so the standing slot is always present.
+            SabhaSchedule schedule = sabha.standingSlot().orElseThrow();
+            LocalDate slot = firstSlotWithLead(now, zone, schedule);
             while (!slot.isAfter(windowEnd)) {
-                if (!calendar.exists(ref.sabhaId(), slot)) {
-                    occurrences.add(Occurrence.scheduled(UUID.randomUUID(), ref.sabhaId(), slot));
+                if (!calendar.exists(sabha.sabhaId(), slot)) {
+                    occurrences.add(Occurrence.scheduled(UUID.randomUUID(), sabha.sabhaId(), slot));
                 }
                 slot = slot.plusWeeks(1);
             }
