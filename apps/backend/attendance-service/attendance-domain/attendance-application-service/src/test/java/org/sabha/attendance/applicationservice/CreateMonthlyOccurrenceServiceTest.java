@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.OccurrenceState;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.RoleAssignment;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
 import org.sabha.common.SabhaSchedule;
@@ -26,14 +26,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CreateMonthlyOccurrenceServiceTest {
 
     private static final UUID SANCHALAK = UUID.fromString("00000000-0000-0000-0000-0000000000d0");
-    private static final UserId CALLER = UserId.of(SANCHALAK);
     private static final UUID MONTHLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID WEEKLY_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
+
+    private static final CallerAuthority CALLER = new CallerAuthority(UserId.of(SANCHALAK),
+            List.of(new RoleAssignment("SANCHALAK", MONTHLY_SABHA, null, null, null, null)));
 
     private final RecordingInsert occurrences = new RecordingInsert();
     private final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
     private final CreateMonthlyOccurrenceApplicationService service = new CreateMonthlyOccurrenceApplicationService(
-            new AuthorizationEngine(new FakeRoles(), sabhaFacts, new NoNirikshakAssignments()),
+            new AuthorizationEngine(sabhaId -> Optional.empty(), sabhaFacts, (userId, sabhaId) -> false),
             sabhaFacts,
             occurrences);
 
@@ -54,7 +56,8 @@ class CreateMonthlyOccurrenceServiceTest {
 
     @Test
     void aNonSanchalakIsDeniedAndNoOccurrenceIsCreated() {
-        UserId outsider = UserId.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9"));
+        CallerAuthority outsider = CallerAuthority.withNoRoles(
+                UserId.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9")));
 
         assertThatThrownBy(() -> service.create(outsider, MONTHLY_SABHA,
                 LocalDate.of(2026, 6, 21), LocalTime.of(9, 0), LocalTime.of(10, 30), "Andheri Hall"))
@@ -70,30 +73,7 @@ class CreateMonthlyOccurrenceServiceTest {
         assertThat(occurrences.added).isEmpty();
     }
 
-    private static final class FakeRoles implements RoleAssignmentLookup {
-        @Override
-        public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-            return userId.equals(SANCHALAK) && sabhaId.equals(MONTHLY_SABHA) ? Set.of(Role.SANCHALAK) : Set.of();
-        }
 
-        @Override
-        public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-            return Set.of();
-        }
-    }
-
-    /** No Nirikshak proxy assignments — these tests exercise the Sanchalak path only. */
-    private static final class NoNirikshakAssignments implements org.sabha.common.NirikshakAssignmentLookup {
-        @Override
-        public boolean isAssignedTo(UUID userId, UUID sabhaId) {
-            return false;
-        }
-
-        @Override
-        public Set<UUID> sabhasAssignedTo(UUID userId) {
-            return Set.of();
-        }
-    }
 
     /**
      * One fake now serves both the shape guard and the authorization engine — the

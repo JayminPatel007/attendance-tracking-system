@@ -6,7 +6,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.appointment.Appointee;
@@ -43,7 +43,7 @@ public class SabhaDefinitionController {
 
     @PostMapping("/bff/sabhas")
     public ResponseEntity<SabhaDefinitionResponse> define(
-            @RequestBody DefineSabhaRequest req, @CurrentUser UserId caller) {
+            @RequestBody DefineSabhaRequest req, @CurrentUser CallerAuthority caller) {
         SabhaDefinitionResult result = sabhaDefinition.define(caller, req.toCommand());
         if (result.softWarned()) {
             return ResponseEntity.ok(SabhaDefinitionResponse.softWarn(result.candidates()));

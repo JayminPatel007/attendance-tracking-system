@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.session.WebSessionService;
 import org.sabha.identity.domain.Section;
@@ -32,7 +32,7 @@ public class BffSessionController {
     }
 
     @GetMapping("/bff/me")
-    public ResponseEntity<WebSessionResponse> me(@CurrentUser UserId caller) {
+    public ResponseEntity<WebSessionResponse> me(@CurrentUser CallerAuthority caller) {
         return sessions.describe(caller)
                 .map(s -> new WebSessionResponse(
                         s.username(), s.madhyasthaKaryalaya(), s.regionalTeam(), inDeclarationOrder(s.sections())))

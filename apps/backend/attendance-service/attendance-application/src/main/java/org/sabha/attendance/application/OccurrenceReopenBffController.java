@@ -7,7 +7,7 @@ import org.sabha.attendance.applicationservice.OccurrenceReopenQueries;
 import org.sabha.attendance.applicationservice.OccurrenceReopenService;
 import org.sabha.attendance.applicationservice.ReopenListItem;
 import org.sabha.attendance.domain.Reason;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,15 +43,15 @@ public class OccurrenceReopenBffController {
     }
 
     @GetMapping("/bff/occurrences")
-    public ResponseEntity<List<ReopenListItem>> list(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.listForReopener(caller.value()));
+    public ResponseEntity<List<ReopenListItem>> list(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.listForReopener(caller.userId().value()));
     }
 
     @PostMapping("/bff/occurrences/{occurrenceId}/reopen")
     public ResponseEntity<Void> reopen(
             @PathVariable UUID occurrenceId,
             @RequestBody ReopenRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         reopenService.reopen(caller, occurrenceId, new Reason(req.reason()));
         return ResponseEntity.noContent().build();
     }

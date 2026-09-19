@@ -37,6 +37,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.CallerAuthorityLookup;
 import org.sabha.common.UserId;
 
 /**
@@ -97,6 +99,9 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     @Autowired
     ThresholdAdmin thresholdAdmin;
 
+    @Autowired
+    CallerAuthorityLookup authorities;
+
     @Test
     void theProjectionIsServedThroughTheCallerScopeAfterARefresh() {
         seedTwoSabhasEachWithACandidate();
@@ -118,16 +123,16 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
         scanner.refresh();
 
         // Picking the City persists it as the default and scopes the view to it.
-        assertThat(cityPreference.selectCity(UserId.of(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(cityPreference.selectCity(caller(SANT_USER), CITY)).isEqualTo(new DashboardScope.CityScoped(CITY));
 
         // Universal read: the Sant holds no role over either Kshetra, yet sees both
         // candidates — the rejection that limited the Nirdeshak to PERSON_1 does not
         // apply (ADR-0011 Sant exception).
-        assertThat(dashboard.people(access.viewFor(UserId.of(SANT_USER)))).extracting(CandidateRow::personId)
+        assertThat(dashboard.people(access.viewFor(caller(SANT_USER)))).extracting(CandidateRow::personId)
                 .contains(PERSON_1, PERSON_2);
 
         // The default survives a fresh resolution (across logins).
-        assertThat(access.viewFor(UserId.of(SANT_USER))).isEqualTo(new DashboardScope.CityScoped(CITY));
+        assertThat(access.viewFor(caller(SANT_USER))).isEqualTo(new DashboardScope.CityScoped(CITY));
     }
 
     @Test
@@ -212,6 +217,15 @@ class ReEngagementDashboardIntegrationTest extends PostgresIntegrationTest {
     }
 
     /** A Sant: a role_assignments row with role = 'SANT' and no operational scope. */
+    /**
+     * The caller as the edge would resolve them — through the real adapter, against
+     * the rows this test seeded. That makes the Sant's authority a fact about the
+     * database here rather than a stub, which is the point of an integration test.
+     */
+    private CallerAuthority caller(UUID userId) {
+        return new CallerAuthority(UserId.of(userId), authorities.assignmentsOf(userId));
+    }
+
     private void santUser(UUID id, String username) {
         user(id, username);
         jdbc.sql("INSERT INTO role_assignments (id, user_id, role) VALUES (?, ?, 'SANT')")

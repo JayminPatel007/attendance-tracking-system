@@ -16,8 +16,7 @@ import org.sabha.analytics.applicationservice.SantCityPreferenceService;
 import org.sabha.analytics.applicationservice.ThresholdAdmin;
 import org.sabha.analytics.applicationservice.ThresholdConfig;
 import org.sabha.analytics.domain.Thresholds;
-import org.sabha.common.MadhyasthaKaryalayaLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,36 +42,33 @@ public class DashboardBffController {
     private final SantCityPreferenceService cityPreference;
     private final ThresholdConfig thresholdConfig;
     private final ThresholdAdmin thresholdAdmin;
-    private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
     public DashboardBffController(DashboardQueries queries,
                                   DashboardAccess access,
                                   CityChipQuery cityChip,
                                   SantCityPreferenceService cityPreference,
                                   ThresholdConfig thresholdConfig,
-                                  ThresholdAdmin thresholdAdmin,
-                                  MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
+                                  ThresholdAdmin thresholdAdmin) {
         this.queries = queries;
         this.access = access;
         this.cityChip = cityChip;
         this.cityPreference = cityPreference;
         this.thresholdConfig = thresholdConfig;
         this.thresholdAdmin = thresholdAdmin;
-        this.madhyasthaKaryalaya = madhyasthaKaryalaya;
     }
 
     @GetMapping("/bff/dashboard/overview")
-    public ResponseEntity<DashboardOverview> overview(@CurrentUser UserId caller) {
+    public ResponseEntity<DashboardOverview> overview(@CurrentUser CallerAuthority caller) {
         return forScope(caller, queries::overview);
     }
 
     @GetMapping("/bff/dashboard/people")
-    public ResponseEntity<List<CandidateRow>> people(@CurrentUser UserId caller) {
+    public ResponseEntity<List<CandidateRow>> people(@CurrentUser CallerAuthority caller) {
         return forScope(caller, queries::people);
     }
 
     @GetMapping("/bff/dashboard/sabha-tree")
-    public ResponseEntity<SabhaTree> sabhaTree(@CurrentUser UserId caller) {
+    public ResponseEntity<SabhaTree> sabhaTree(@CurrentUser CallerAuthority caller) {
         return forScope(caller, queries::sabhaTree);
     }
 
@@ -82,7 +78,7 @@ public class DashboardBffController {
      * static scope indicator.
      */
     @GetMapping("/bff/dashboard/scope")
-    public ResponseEntity<CityChip> scope(@CurrentUser UserId caller) {
+    public ResponseEntity<CityChip> scope(@CurrentUser CallerAuthority caller) {
         return ResponseEntity.ok(cityChip.forCaller(caller));
     }
 
@@ -93,36 +89,47 @@ public class DashboardBffController {
      */
     @PostMapping("/bff/dashboard/city")
     public ResponseEntity<Void> chooseCity(@RequestBody ChooseCityRequest request,
-                                           @CurrentUser UserId caller) {
+                                           @CurrentUser CallerAuthority caller) {
         cityPreference.selectCity(caller, request.cityId());
         return ResponseEntity.noContent().build();
     }
 
     /**
      * Readable by any caller the system knows. {@code caller} is deliberately
-     * unread: binding it is what requires a resolved local User, so an
-     * authenticated subject with no {@code users} row is refused here exactly as
-     * it was before ADR-0030 — when this endpoint ran through {@code
-     * requireUserId} and discarded the result just the same.
+     * unread, and since ADR-0032 binding it is no longer free: the edge now
+     * resolves a whole {@link CallerAuthority}, so this endpoint pays a
+     * <b>second</b> query, against {@code role_assignments}, whose result it
+     * discards entirely.
+     *
+     * <p>It still pays it. What the bind buys is the {@code users}-row check —
+     * an authenticated subject with no local User is refused here, exactly as it
+     * was before ADR-0030 — and that check is worth one extra statement on an
+     * endpoint nobody hits in a loop. The alternative was a second caller
+     * parameter type so that zero-authority handlers could bind identity alone,
+     * and ADR-0032 rejected that: a permanent fork in the handler population, a
+     * decision for every future handler author, bought for <b>two</b> handlers out
+     * of fifty-three. If that two ever grows past roughly fifteen percent of
+     * caller-bound handlers, the trade flips and the migration is a widened
+     * {@code supportsParameter}, not a redesign.</p>
      */
     @GetMapping("/bff/dashboard/thresholds")
-    public ResponseEntity<Thresholds> thresholds(@CurrentUser UserId caller) {
+    public ResponseEntity<Thresholds> thresholds(@CurrentUser CallerAuthority caller) {
         return ResponseEntity.ok(thresholdConfig.current());
     }
 
     @PutMapping("/bff/dashboard/thresholds")
     public ResponseEntity<Void> updateThresholds(@RequestBody ThresholdsRequest request,
-                                                 @CurrentUser UserId caller) {
-        if (!madhyasthaKaryalaya.isMember(caller.value())) {
+                                                 @CurrentUser CallerAuthority caller) {
+        if (!caller.isMadhyasthaKaryalaya()) {
             return ResponseEntity.status(403).build();
         }
         // Invalid thresholds surface as 422 via the domain invariant on Thresholds.
-        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), caller);
+        thresholdAdmin.update(new Thresholds(request.candidate(), request.priority()), caller.userId());
         return ResponseEntity.noContent().build();
     }
 
     /** Resolves the caller's {@link DashboardScope} then runs a scope-filtered read. */
-    private <T> ResponseEntity<T> forScope(UserId caller, Function<DashboardScope, T> read) {
+    private <T> ResponseEntity<T> forScope(CallerAuthority caller, Function<DashboardScope, T> read) {
         return ResponseEntity.ok(read.apply(access.viewFor(caller)));
     }
 

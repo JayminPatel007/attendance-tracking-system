@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.SabhaKindRetiredException;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
+import org.sabha.identity.applicationservice.Callers;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.Appointee;
-import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentCommand;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
@@ -25,8 +25,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SabhaDefinitionServiceTest {
 
     private static final UUID NIRDESHAK = UUID.fromString("00000000-0000-0000-0000-0000000000d0");
-    private static final UserId CALLER = UserId.of(NIRDESHAK);
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
+
+    /** The one authority this flow reads, now a row rather than a fake (ADR-0032). */
+    private static final CallerAuthority CALLER =
+            Callers.of(NIRDESHAK).nirdeshakOf(KSHETRA, "YUVAK").build();
     private static final UUID KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a2");
     private static final UUID RETIRED_KIND = UUID.fromString("00000000-0000-0000-0000-0000000000a3");
     private static final UUID SANCHALAK_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
@@ -34,10 +37,8 @@ class SabhaDefinitionServiceTest {
 
     private final FakeProvisioning provisioning = new FakeProvisioning();
     private final FakeAppointRole appointments = new FakeAppointRole();
-    private final SabhaDefinitionService service = new SabhaDefinitionService(
-            provisioning,
-            new SabhaDefinitionAuthorization(new FakeNirdeshakAuthority()),
-            appointments);
+    private final SabhaDefinitionService service =
+            new SabhaDefinitionService(provisioning, appointments);
 
     @Test
     void nirdeshakDefinesAWeeklySabhaAndItsSanchalakIsAppointedOnTheNewSabha() {
@@ -66,7 +67,8 @@ class SabhaDefinitionServiceTest {
 
     @Test
     void aCallerOutsideTheirNirdeshakScopeIsDeniedAndNoSabhaIsProvisioned() {
-        UserId outsider = UserId.of(UUID.fromString("00000000-0000-0000-0000-0000000000d9"));
+        CallerAuthority outsider =
+                Callers.noRoles(UUID.fromString("00000000-0000-0000-0000-0000000000d9"));
 
         assertThatThrownBy(() -> service.define(outsider, SabhaDefinitionCommand.weekly(
                 KSHETRA, KIND, DayOfWeek.SUNDAY, LocalTime.of(9, 0), LocalTime.of(10, 30), "Goregaon Mandir",
@@ -141,23 +143,6 @@ class SabhaDefinitionServiceTest {
         assertThat(provisioning.created).isFalse();
     }
 
-    /** Only NIRDESHAK holds Nirdeshak over (KSHETRA, YUVAK). */
-    private static final class FakeNirdeshakAuthority implements AppointerAuthorityLookup {
-        @Override
-        public boolean holdsNirdeshak(UUID userId, UUID kshetraId, String demographic) {
-            return userId.equals(NIRDESHAK) && kshetraId.equals(KSHETRA) && demographic.equals("YUVAK");
-        }
-
-        @Override
-        public boolean holdsSanyojak(UUID userId, UUID zoneId, String demographic) {
-            return false;
-        }
-
-        @Override
-        public boolean holdsRegionalTeam(UUID userId, UUID cityId, String demographic) {
-            return false;
-        }
-    }
 
     private static final class FakeProvisioning implements org.sabha.common.SabhaProvisioning {
         boolean created;
@@ -205,7 +190,7 @@ class SabhaDefinitionServiceTest {
 
     private static final class FakeAppointRole implements AppointRole {
         final java.util.List<RoleAppointmentCommand> commands = new java.util.ArrayList<>();
-        UserId lastCaller;
+        CallerAuthority lastCaller;
         boolean softWarnSanchalak;
 
         RoleAppointmentCommand commandFor(AppointableRole role) {
@@ -213,7 +198,7 @@ class SabhaDefinitionServiceTest {
         }
 
         @Override
-        public AppointmentResult appoint(UserId caller, RoleAppointmentCommand command) {
+        public AppointmentResult appoint(CallerAuthority caller, RoleAppointmentCommand command) {
             this.lastCaller = caller;
             this.commands.add(command);
             if (softWarnSanchalak && command.scope().role() == AppointableRole.SANCHALAK) {

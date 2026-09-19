@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.utils.SpringDocUtils;
@@ -35,7 +36,7 @@ public class OpenApiConfig {
     /*
      * The caller is bound by our own argument resolver (ADR-0030), not from the
      * request, so springdoc must not document it. Without this it renders
-     * `@CurrentUser UserId caller` as a required `caller` query parameter on every
+     * `@CurrentUser CallerAuthority caller` as a required `caller` query parameter on every
      * authenticated endpoint — a parameter no client can send and the server never
      * reads. springdoc's ignore list is global and static, so it is registered on
      * class load, before the first document is built.

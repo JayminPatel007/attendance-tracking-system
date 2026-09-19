@@ -12,7 +12,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
 import org.sabha.common.SabhaKindNotFoundException;
-import org.sabha.common.UserId;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.SabhaKind;
 import org.sabha.sabha.domain.SabhaKindAlreadyRetiredException;
@@ -31,17 +30,13 @@ class SabhaKindLifecycleServiceTest {
     private final FakeSabhaKinds sabhaKinds = new FakeSabhaKinds();
 
     private final SabhaKindLifecycleService service = new SabhaKindLifecycleService(
-            new StructuralScopeAuthority(
-                    userId -> userId.equals(MK), userId -> List.of(), userId -> List.of(),
-                    new FakeRoleAssignments()),
-            sabhaKinds,
-            Clock.fixed(NOW, ZoneOffset.UTC));
+            sabhaKinds, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
     void mkRetiresAnActiveKindAttributedToThemselves() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        service.retire(UserId.of(MK), kindId);
+        service.retire(Callers.madhyasthaKaryalaya(MK), kindId);
 
         SabhaKind retired = sabhaKinds.byId.get(kindId);
         assertThat(retired.isRetired()).isTrue();
@@ -52,9 +47,9 @@ class SabhaKindLifecycleServiceTest {
     @Test
     void mkReactivatesARetiredKind() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(UserId.of(MK), kindId);
+        service.retire(Callers.madhyasthaKaryalaya(MK), kindId);
 
-        service.reactivate(UserId.of(MK), kindId);
+        service.reactivate(Callers.madhyasthaKaryalaya(MK), kindId);
 
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isFalse();
     }
@@ -63,7 +58,7 @@ class SabhaKindLifecycleServiceTest {
     void nonMkRetiringIsDeniedAndNothingChanges() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        assertThatThrownBy(() -> service.retire(UserId.of(NON_MK), kindId))
+        assertThatThrownBy(() -> service.retire(Callers.noRoles(NON_MK), kindId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isFalse();
     }
@@ -71,25 +66,25 @@ class SabhaKindLifecycleServiceTest {
     @Test
     void nonMkReactivatingIsDenied() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(UserId.of(MK), kindId);
+        service.retire(Callers.madhyasthaKaryalaya(MK), kindId);
 
-        assertThatThrownBy(() -> service.reactivate(UserId.of(NON_MK), kindId))
+        assertThatThrownBy(() -> service.reactivate(Callers.noRoles(NON_MK), kindId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhaKinds.byId.get(kindId).isRetired()).isTrue();
     }
 
     @Test
     void retiringAnUnknownKindIsNotFound() {
-        assertThatThrownBy(() -> service.retire(UserId.of(MK), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.retire(Callers.madhyasthaKaryalaya(MK), UUID.randomUUID()))
                 .isInstanceOf(SabhaKindNotFoundException.class);
     }
 
     @Test
     void retiringAnAlreadyRetiredKindIsRejected() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
-        service.retire(UserId.of(MK), kindId);
+        service.retire(Callers.madhyasthaKaryalaya(MK), kindId);
 
-        assertThatThrownBy(() -> service.retire(UserId.of(MK), kindId))
+        assertThatThrownBy(() -> service.retire(Callers.madhyasthaKaryalaya(MK), kindId))
                 .isInstanceOf(SabhaKindAlreadyRetiredException.class);
     }
 
@@ -97,7 +92,7 @@ class SabhaKindLifecycleServiceTest {
     void reactivatingAnActiveKindIsRejected() {
         UUID kindId = sabhaKinds.seedActive(Demographic.YUVAK, Track.BSS);
 
-        assertThatThrownBy(() -> service.reactivate(UserId.of(MK), kindId))
+        assertThatThrownBy(() -> service.reactivate(Callers.madhyasthaKaryalaya(MK), kindId))
                 .isInstanceOf(SabhaKindNotRetiredException.class);
     }
 

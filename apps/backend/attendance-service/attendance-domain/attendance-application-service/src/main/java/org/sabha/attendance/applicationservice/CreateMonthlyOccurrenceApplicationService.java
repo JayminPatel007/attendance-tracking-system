@@ -10,7 +10,7 @@ import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaNotFoundException;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +46,7 @@ public class CreateMonthlyOccurrenceApplicationService {
     }
 
     @Transactional
-    public UUID create(UserId caller, UUID sabhaId, LocalDate date,
+    public UUID create(CallerAuthority caller, UUID sabhaId, LocalDate date,
                        LocalTime startTime, LocalTime endTime, String venue) {
         SabhaFact sabha = sabhas.of(sabhaId)
                 .orElseThrow(() -> new SabhaNotFoundException(sabhaId));
@@ -54,8 +54,8 @@ public class CreateMonthlyOccurrenceApplicationService {
             throw new NotMonthlyAdHocException(sabhaId);
         }
 
-        if (!authz.canUserDo(caller.value(), AuthorizedAction.CREATE_OCCURRENCE, sabhaId)) {
-            throw new AuthorizationDeniedException(caller.value(), AuthorizedAction.CREATE_OCCURRENCE);
+        if (!authz.canUserDo(caller, AuthorizedAction.CREATE_OCCURRENCE, sabhaId)) {
+            throw new AuthorizationDeniedException(caller.userId().value(), AuthorizedAction.CREATE_OCCURRENCE);
         }
 
         Occurrence occurrence = Occurrence.scheduledAt(UUID.randomUUID(), sabhaId, date, startTime, endTime, venue);

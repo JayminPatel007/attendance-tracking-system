@@ -1,20 +1,22 @@
 package org.sabha.identity.applicationservice.appointment;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.RoleAssignment;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
 import org.sabha.common.StructuralParentage;
+import org.sabha.common.UserId;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import java.util.List;
 
 /**
  * The Authorization Engine for role appointment (ADR-0011). Pure decision
@@ -22,6 +24,13 @@ import java.util.List;
  * resolves the geographic containment and answers whether the appointer holds
  * the appointing tier. It never throws or mutates — the application service
  * turns a {@code false} into an {@link org.sabha.common.AuthorizationDeniedException}.
+ *
+ * <p>Since ADR-0032 the appointer arrives as a {@link CallerAuthority} literal
+ * rather than through a string-keyed fake of {@code AppointerAuthorityLookup}:
+ * the two ports left are the ones that resolve containment, and they are keyed by
+ * the target scope. Building the appointer's rows directly is what makes a test
+ * like "an RT member may not appoint a peer for another demographic" read as the
+ * one row it is about.</p>
  */
 class AppointmentAuthorizationTest {
 
@@ -45,9 +54,9 @@ class AppointmentAuthorizationTest {
     void nirdeshakMayAppointSanchalakOnASabhaWithinTheirKshetraAndDemographic() {
         Fixture f = new Fixture();
         f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
-        f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
+        f.authority.nirdeshakIn(KSHETRA, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(NIRDESHAK,
+        boolean allowed = f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA));
 
         assertThat(allowed).isTrue();
@@ -58,9 +67,9 @@ class AppointmentAuthorizationTest {
         Fixture f = new Fixture();
         // The Sabha sits in a Kshetra/demographic this Nirdeshak does not hold.
         f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
-        f.authority.nirdeshakScopes.add(scope(NIRDESHAK, OTHER_KSHETRA, YUVAK));
+        f.authority.nirdeshakIn(OTHER_KSHETRA, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(NIRDESHAK,
+        boolean allowed = f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA));
 
         assertThat(allowed).isFalse();
@@ -70,9 +79,9 @@ class AppointmentAuthorizationTest {
     void nirdeshakMayAppointSahSanchalakOnASabhaWithinScope() {
         Fixture f = new Fixture();
         f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
-        f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
+        f.authority.nirdeshakIn(KSHETRA, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(NIRDESHAK,
+        boolean allowed = f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onSabha(AppointableRole.SAH_SANCHALAK, SABHA));
 
         assertThat(allowed).isTrue();
@@ -81,20 +90,20 @@ class AppointmentAuthorizationTest {
     @Test
     void nirdeshakMayAppointNirikshakAndSahNirdeshakWithinTheirKshetraAndDemographic() {
         Fixture f = new Fixture();
-        f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
+        f.authority.nirdeshakIn(KSHETRA, YUVAK);
 
-        assertThat(f.engine().canAppoint(NIRDESHAK,
+        assertThat(f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onKshetra(AppointableRole.NIRIKSHAK, KSHETRA, YUVAK))).isTrue();
-        assertThat(f.engine().canAppoint(NIRDESHAK,
+        assertThat(f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onKshetra(AppointableRole.SAH_NIRDESHAK, KSHETRA, YUVAK))).isTrue();
     }
 
     @Test
     void nirdeshakMayNotAppointAKshetraRoleForADemographicTheyDoNotHold() {
         Fixture f = new Fixture();
-        f.authority.nirdeshakScopes.add(scope(NIRDESHAK, KSHETRA, YUVAK));
+        f.authority.nirdeshakIn(KSHETRA, YUVAK);
 
-        assertThat(f.engine().canAppoint(NIRDESHAK,
+        assertThat(f.engine().canAppoint(f.caller(NIRDESHAK),
                 AppointmentScope.onKshetra(AppointableRole.NIRIKSHAK, KSHETRA, BAAL))).isFalse();
     }
 
@@ -102,9 +111,9 @@ class AppointmentAuthorizationTest {
     void sanyojakMayAppointNirdeshakInAKshetraWithinTheirZoneAndDemographic() {
         Fixture f = new Fixture();
         f.parentage.zoneOfKshetra.put(KSHETRA, ZONE);
-        f.authority.sanyojakScopes.add(scope(SANYOJAK, ZONE, YUVAK));
+        f.authority.sanyojakIn(ZONE, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(SANYOJAK,
+        boolean allowed = f.engine().canAppoint(f.caller(SANYOJAK),
                 AppointmentScope.onKshetra(AppointableRole.NIRDESHAK, KSHETRA, YUVAK));
 
         assertThat(allowed).isTrue();
@@ -114,9 +123,9 @@ class AppointmentAuthorizationTest {
     void sanyojakMayNotAppointNirdeshakInAKshetraOutsideTheirZone() {
         Fixture f = new Fixture();
         f.parentage.zoneOfKshetra.put(KSHETRA, ZONE);
-        f.authority.sanyojakScopes.add(scope(SANYOJAK, OTHER_ZONE, YUVAK));
+        f.authority.sanyojakIn(OTHER_ZONE, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(SANYOJAK,
+        boolean allowed = f.engine().canAppoint(f.caller(SANYOJAK),
                 AppointmentScope.onKshetra(AppointableRole.NIRDESHAK, KSHETRA, YUVAK));
 
         assertThat(allowed).isFalse();
@@ -126,9 +135,9 @@ class AppointmentAuthorizationTest {
     void regionalTeamMayAppointSanyojakInAZoneWithinTheirCityAndDemographic() {
         Fixture f = new Fixture();
         f.parentage.cityOfZone.put(ZONE, CITY);
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, YUVAK));
+        f.authority.regionalTeamIn(CITY, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onZone(AppointableRole.SANYOJAK, ZONE, YUVAK));
 
         assertThat(allowed).isTrue();
@@ -138,9 +147,9 @@ class AppointmentAuthorizationTest {
     void regionalTeamMayNotAppointSanyojakInAZoneOutsideTheirCity() {
         Fixture f = new Fixture();
         f.parentage.cityOfZone.put(ZONE, CITY);
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, OTHER_CITY, YUVAK));
+        f.authority.regionalTeamIn(OTHER_CITY, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onZone(AppointableRole.SANYOJAK, ZONE, YUVAK));
 
         assertThat(allowed).isFalse();
@@ -149,11 +158,11 @@ class AppointmentAuthorizationTest {
     @Test
     void madhyasthaKaryalayaMayAppointRegionalTeamMembersAndCreateSants() {
         Fixture f = new Fixture();
-        f.mkMember = MK;
+        f.authority.madhyasthaKaryalaya();
 
-        assertThat(f.engine().canAppoint(MK,
+        assertThat(f.engine().canAppoint(f.caller(MK),
                 AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, YUVAK))).isTrue();
-        assertThat(f.engine().canAppoint(MK,
+        assertThat(f.engine().canAppoint(f.caller(MK),
                 AppointmentScope.onCity(AppointableRole.SANT, CITY, YUVAK))).isTrue();
     }
 
@@ -162,9 +171,9 @@ class AppointmentAuthorizationTest {
         // Self-replication (ADR-0025 §2): an existing RT member of (City, Baal)
         // appoints another RT member for (City, Baal) — no MK round-trip.
         Fixture f = new Fixture();
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, BAAL));
+        f.authority.regionalTeamIn(CITY, BAAL);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
 
         assertThat(allowed).isTrue();
@@ -175,9 +184,9 @@ class AppointmentAuthorizationTest {
         // RT authority is bound to (City, demographic): holding (OTHER_CITY, Baal)
         // grants nothing over (CITY, Baal).
         Fixture f = new Fixture();
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, OTHER_CITY, BAAL));
+        f.authority.regionalTeamIn(OTHER_CITY, BAAL);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
 
         assertThat(allowed).isFalse();
@@ -188,9 +197,9 @@ class AppointmentAuthorizationTest {
         // RT authority does not cross demographics: a (CITY, Yuvak) member cannot
         // appoint into (CITY, Baal).
         Fixture f = new Fixture();
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, YUVAK));
+        f.authority.regionalTeamIn(CITY, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, BAAL));
 
         assertThat(allowed).isFalse();
@@ -200,9 +209,9 @@ class AppointmentAuthorizationTest {
     void aRegionalTeamMemberMayNotCreateASant() {
         // Self-replication is RT-only; Sant remains an MK-only administrative act.
         Fixture f = new Fixture();
-        f.authority.regionalTeamScopes.add(scope(REGIONAL, CITY, BAAL));
+        f.authority.regionalTeamIn(CITY, BAAL);
 
-        boolean allowed = f.engine().canAppoint(REGIONAL,
+        boolean allowed = f.engine().canAppoint(f.caller(REGIONAL),
                 AppointmentScope.onCity(AppointableRole.SANT, CITY, BAAL));
 
         assertThat(allowed).isFalse();
@@ -210,12 +219,13 @@ class AppointmentAuthorizationTest {
 
     @Test
     void nonMkMayNotAppointRegionalTeamMembersOrCreateSants() {
+        // The outsider holds no row at all — which under the fold is simply an
+        // empty authority, not a fake configured to say no.
         Fixture f = new Fixture();
-        f.mkMember = MK;
 
-        assertThat(f.engine().canAppoint(OUTSIDER,
+        assertThat(f.engine().canAppoint(f.caller(OUTSIDER),
                 AppointmentScope.onCity(AppointableRole.REGIONAL_TEAM, CITY, YUVAK))).isFalse();
-        assertThat(f.engine().canAppoint(OUTSIDER,
+        assertThat(f.engine().canAppoint(f.caller(OUTSIDER),
                 AppointmentScope.onCity(AppointableRole.SANT, CITY, YUVAK))).isFalse();
     }
 
@@ -224,27 +234,51 @@ class AppointmentAuthorizationTest {
         // Wrong tier: Sanchalak is the Nirdeshak's to appoint, not the Sanyojak's.
         Fixture f = new Fixture();
         f.sabhaFacts.sabhaScopes.put(SABHA, new SabhaScope(KSHETRA, YUVAK, "REGULAR"));
-        f.authority.sanyojakScopes.add(scope(SANYOJAK, ZONE, YUVAK));
+        f.authority.sanyojakIn(ZONE, YUVAK);
 
-        boolean allowed = f.engine().canAppoint(SANYOJAK,
+        boolean allowed = f.engine().canAppoint(f.caller(SANYOJAK),
                 AppointmentScope.onSabha(AppointableRole.SANCHALAK, SABHA));
 
         assertThat(allowed).isFalse();
     }
 
-    private static String scope(UUID user, UUID scopeId, String demographic) {
-        return user + "|" + scopeId + "|" + demographic;
-    }
-
     private static final class Fixture {
         final FakeSabhaFacts sabhaFacts = new FakeSabhaFacts();
         final FakeParentage parentage = new FakeParentage();
-        final FakeAuthority authority = new FakeAuthority();
-        UUID mkMember;
+        final Rows authority = new Rows();
 
         AppointmentAuthorization engine() {
-            return new AppointmentAuthorization(sabhaFacts, parentage, authority,
-                    userId -> userId.equals(mkMember));
+            return new AppointmentAuthorization(sabhaFacts, parentage);
+        }
+
+        CallerAuthority caller(UUID userId) {
+            return new CallerAuthority(UserId.of(userId), authority.rows);
+        }
+    }
+
+    /**
+     * The fake that stopped being one. These are literal {@code role_assignments}
+     * rows, spelled the way the single adapter reads them — the scope column each
+     * tier uses is part of what the test is asserting.
+     */
+    private static final class Rows {
+        final List<RoleAssignment> rows = new ArrayList<>();
+
+        void nirdeshakIn(UUID kshetraId, String demographic) {
+            rows.add(new RoleAssignment("NIRDESHAK", null, kshetraId, null, null, demographic));
+        }
+
+        void sanyojakIn(UUID zoneId, String demographic) {
+            rows.add(new RoleAssignment("SANYOJAK", null, null, zoneId, null, demographic));
+        }
+
+        void regionalTeamIn(UUID cityId, String demographic) {
+            rows.add(new RoleAssignment("REGIONAL_TEAM", null, null, null, cityId, demographic));
+        }
+
+        /** State-level: a null-scope row, which is exactly how MK is stored (ADR-0005). */
+        void madhyasthaKaryalaya() {
+            rows.add(new RoleAssignment("MADHYASTHA_KARYALAYA", null, null, null, null, null));
         }
     }
 
@@ -280,27 +314,6 @@ class AppointmentAuthorizationTest {
         @Override
         public Optional<UUID> cityOfZone(UUID zoneId) {
             return Optional.ofNullable(cityOfZone.get(zoneId));
-        }
-    }
-
-    private static final class FakeAuthority implements AppointerAuthorityLookup {
-        final Set<String> nirdeshakScopes = new HashSet<>();
-        final Set<String> sanyojakScopes = new HashSet<>();
-        final Set<String> regionalTeamScopes = new HashSet<>();
-
-        @Override
-        public boolean holdsNirdeshak(UUID userId, UUID kshetraId, String demographic) {
-            return nirdeshakScopes.contains(userId + "|" + kshetraId + "|" + demographic);
-        }
-
-        @Override
-        public boolean holdsSanyojak(UUID userId, UUID zoneId, String demographic) {
-            return sanyojakScopes.contains(userId + "|" + zoneId + "|" + demographic);
-        }
-
-        @Override
-        public boolean holdsRegionalTeam(UUID userId, UUID cityId, String demographic) {
-            return regionalTeamScopes.contains(userId + "|" + cityId + "|" + demographic);
         }
     }
 }

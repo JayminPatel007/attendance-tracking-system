@@ -2,6 +2,8 @@ package org.sabha.common.web;
 
 import java.util.UUID;
 
+import org.sabha.common.CallerAuthority;
+import org.sabha.common.CallerAuthorityLookup;
 import org.sabha.common.CallerResolver;
 import org.sabha.common.CallerUnknownException;
 import org.sabha.common.UserId;
@@ -28,19 +30,37 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  * <em>here</em>, as a 403, rather than several frames into a use case: no
  * authentication, an anonymous one, a subject that is not a UUID, or a subject
  * with no local {@code users} row.</p>
+ *
+ * <p>Since ADR-0032 it resolves a {@link CallerAuthority} rather than a bare
+ * {@link UserId}: the caller's {@code role_assignments} rows are loaded here too,
+ * so every engine in the request is handed the same instance and a request costs
+ * one authority query however many authority questions it asks. The two loads
+ * stay <b>two sequential statements</b> — {@code users} by subject, then
+ * assignments by {@code users.id}. The {@code LEFT JOIN} that would collapse them
+ * is available and deliberately not taken: it fuses the two questions ADR-0030
+ * separated, and only the first of them is a 403 when it fails.</p>
+ *
+ * <p>There is nothing to cache and nothing caching is built for. The resolver
+ * runs once per <em>declared parameter</em>, and {@code CallerAuthority} is the
+ * only caller parameter type there is, so request-scoped reuse falls out of
+ * parameter passing — no {@code @RequestScope} bean, no {@code ThreadLocal}, no
+ * memoization. A second caller parameter type is what would make caching a real
+ * problem, and ADR-0032 rejected one.</p>
  */
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final CallerResolver callers;
+    private final CallerAuthorityLookup authorities;
 
-    public CurrentUserArgumentResolver(CallerResolver callers) {
+    public CurrentUserArgumentResolver(CallerResolver callers, CallerAuthorityLookup authorities) {
         this.callers = callers;
+        this.authorities = authorities;
     }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class)
-                && UserId.class.isAssignableFrom(parameter.getParameterType());
+                && CallerAuthority.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
@@ -52,7 +72,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     }
 
     /** Package-visible so the resolution rules can be tested without a servlet stack. */
-    UserId resolve(Authentication authentication) {
+    CallerAuthority resolve(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             // Defensive, and unreachable by design: both filter chains end in
             // anyRequest().authenticated(), so an unauthenticated request to a route
@@ -79,8 +99,9 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         } catch (IllegalArgumentException | NullPointerException e) {
             throw CallerUnknownException.unusableSubject(name);
         }
-        return callers.resolveUserId(subject)
+        UserId caller = callers.resolveUserId(subject)
                 .map(UserId::of)
                 .orElseThrow(() -> new CallerUnknownException(subject));
+        return new CallerAuthority(caller, authorities.assignmentsOf(caller.value()));
     }
 }

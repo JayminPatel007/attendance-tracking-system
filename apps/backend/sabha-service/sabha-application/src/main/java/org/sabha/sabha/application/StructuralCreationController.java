@@ -3,9 +3,7 @@ package org.sabha.sabha.application;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.RegionalTeamCityLookup;
-import org.sabha.common.SanyojakZoneLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.sabha.applicationservice.SabhaKindLifecycleService;
 import org.sabha.sabha.applicationservice.StructuralCreationService;
@@ -38,57 +36,51 @@ public class StructuralCreationController {
     private final StructuralCreationService creation;
     private final SabhaKindLifecycleService sabhaKindLifecycle;
     private final StructuralQueries queries;
-    private final SanyojakZoneLookup sanyojakZones;
-    private final RegionalTeamCityLookup regionalTeamCities;
 
     public StructuralCreationController(
             StructuralCreationService creation,
             SabhaKindLifecycleService sabhaKindLifecycle,
-            StructuralQueries queries,
-            SanyojakZoneLookup sanyojakZones,
-            RegionalTeamCityLookup regionalTeamCities) {
+            StructuralQueries queries) {
         this.creation = creation;
         this.sabhaKindLifecycle = sabhaKindLifecycle;
         this.queries = queries;
-        this.sanyojakZones = sanyojakZones;
-        this.regionalTeamCities = regionalTeamCities;
     }
 
     @PostMapping("/bff/structure/cities")
     public ResponseEntity<CreatedResponse> createCity(
-            @RequestBody CreateCityRequest req, @CurrentUser UserId caller) {
+            @RequestBody CreateCityRequest req, @CurrentUser CallerAuthority caller) {
         return created(creation.createCity(caller, req.name()));
     }
 
     @PostMapping("/bff/structure/zones")
     public ResponseEntity<CreatedResponse> createZone(
-            @RequestBody CreateZoneRequest req, @CurrentUser UserId caller) {
+            @RequestBody CreateZoneRequest req, @CurrentUser CallerAuthority caller) {
         return created(creation.createZone(caller, req.cityId(), req.name()));
     }
 
     @PostMapping("/bff/structure/sabha-kinds")
     public ResponseEntity<CreatedResponse> createSabhaKind(
-            @RequestBody CreateSabhaKindRequest req, @CurrentUser UserId caller) {
+            @RequestBody CreateSabhaKindRequest req, @CurrentUser CallerAuthority caller) {
         return created(creation.createSabhaKind(caller, req.demographic(), req.track()));
     }
 
     @PostMapping("/bff/structure/sabha-kinds/{id}/retire")
     public ResponseEntity<Void> retireSabhaKind(
-            @PathVariable UUID id, @CurrentUser UserId caller) {
+            @PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         sabhaKindLifecycle.retire(caller, id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/bff/structure/sabha-kinds/{id}/reactivate")
     public ResponseEntity<Void> reactivateSabhaKind(
-            @PathVariable UUID id, @CurrentUser UserId caller) {
+            @PathVariable UUID id, @CurrentUser CallerAuthority caller) {
         sabhaKindLifecycle.reactivate(caller, id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/bff/structure/kshetras")
     public ResponseEntity<CreatedResponse> createKshetra(
-            @RequestBody CreateKshetraRequest req, @CurrentUser UserId caller) {
+            @RequestBody CreateKshetraRequest req, @CurrentUser CallerAuthority caller) {
         return created(creation.createKshetra(caller, req.zoneId(), req.name()));
     }
 
@@ -113,13 +105,13 @@ public class StructuralCreationController {
     }
 
     @GetMapping("/bff/structure/my-zones")
-    public ResponseEntity<List<StructuralQueries.ZoneView>> myZones(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.zonesByIds(sanyojakZones.zonesOf(caller.value())));
+    public ResponseEntity<List<StructuralQueries.ZoneView>> myZones(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.zonesByIds(caller.sanyojakZones()));
     }
 
     @GetMapping("/bff/structure/my-cities")
-    public ResponseEntity<List<StructuralQueries.CityView>> myCities(@CurrentUser UserId caller) {
-        return ResponseEntity.ok(queries.citiesByIds(regionalTeamCities.citiesOf(caller.value())));
+    public ResponseEntity<List<StructuralQueries.CityView>> myCities(@CurrentUser CallerAuthority caller) {
+        return ResponseEntity.ok(queries.citiesByIds(caller.regionalTeamCities()));
     }
 
     private static ResponseEntity<CreatedResponse> created(UUID id) {

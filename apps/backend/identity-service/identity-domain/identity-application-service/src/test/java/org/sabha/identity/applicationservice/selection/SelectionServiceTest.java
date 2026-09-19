@@ -13,15 +13,14 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.DomainEventPublisher;
 import org.sabha.common.Role;
-import org.sabha.common.RoleAssignmentLookup;
+import org.sabha.identity.applicationservice.Callers;
 import org.sabha.common.SabhaScope;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
-import org.sabha.identity.applicationservice.appointment.AppointerAuthorityLookup;
 import org.sabha.identity.domain.NoSelectiveSabhaException;
 import org.sabha.identity.domain.NoSelectiveTrackException;
 import org.sabha.identity.domain.NominationStatus;
@@ -38,14 +37,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SelectionServiceTest {
 
     private static final UUID SANCHALAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000c2");
-    private static final UserId SANCHALAK = UserId.of(SANCHALAK_USER);
     private static final UUID PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000c3");
     private static final UUID REGULAR_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000c4");
     private static final UUID SELECTIVE_SABHA = UUID.fromString("00000000-0000-0000-0000-0000000000c5");
     private static final UUID KSHETRA = UUID.fromString("00000000-0000-0000-0000-0000000000c6");
     private static final UUID NIRDESHAK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000c8");
-    private static final UserId NIRDESHAK = UserId.of(NIRDESHAK_USER);
     private static final String DEMOGRAPHIC = "YUVAK";
+
+    /**
+     * The two callers this workflow distinguishes, as rows rather than fakes. Both
+     * gates read the caller directly now: {@code runsSabha} for nomination — the
+     * same single call the home-Sabha transfer makes — and {@code holdsNirdeshakIn}
+     * for the decision (ADR-0032).
+     */
+    private static final CallerAuthority SANCHALAK =
+            Callers.of(SANCHALAK_USER).sanchalakOf(REGULAR_SABHA).build();
+    private static final CallerAuthority NIRDESHAK =
+            Callers.of(NIRDESHAK_USER).nirdeshakOf(KSHETRA, DEMOGRAPHIC).build();
 
     @Test
     void nominateCreatesPendingNominationForARosterPersonWithTheDerivedSelectiveSabha() {
@@ -75,9 +83,9 @@ class SelectionServiceTest {
     @Test
     void nominateBySomeoneWhoIsNotTheRegularSabhasSanchalakIsDenied() {
         Fixture f = new Fixture();
-        f.roleAssignments.revoke(SANCHALAK_USER, REGULAR_SABHA);
+        CallerAuthority notSanchalak = Callers.noRoles(SANCHALAK_USER);
 
-        assertThatThrownBy(() -> f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA))
+        assertThatThrownBy(() -> f.service().nominate(notSanchalak, PERSON, REGULAR_SABHA))
                 .isInstanceOf(NominationNotAuthorizedException.class);
         assertThat(f.publisher.events).isEmpty();
     }
@@ -85,9 +93,10 @@ class SelectionServiceTest {
     @Test
     void sahSanchalakOfTheRegularSabhaMayNominate() {
         Fixture f = new Fixture();
-        f.roleAssignments.grant(SANCHALAK_USER, REGULAR_SABHA, Role.SAH_SANCHALAK);
+        CallerAuthority sahSanchalak =
+                Callers.of(SANCHALAK_USER).sahSanchalakOf(REGULAR_SABHA).build();
 
-        UUID nominationId = f.service().nominate(SANCHALAK, PERSON, REGULAR_SABHA);
+        UUID nominationId = f.service().nominate(sahSanchalak, PERSON, REGULAR_SABHA);
 
         assertThat(f.nominations.findById(nominationId)).isPresent();
     }
@@ -251,55 +260,27 @@ class SelectionServiceTest {
     /** Wires the orchestrator against in-memory fakes driven through its ports. */
     static final class Fixture {
         final InMemorySelectionRepository nominations = new InMemorySelectionRepository();
-        final InMemoryRoleAssignments roleAssignments = new InMemoryRoleAssignments();
         final InMemoryRoster roster = new InMemoryRoster();
         final InMemorySabhaFacts sabhaFacts = new InMemorySabhaFacts();
-        final InMemoryAppointerAuthority authority = new InMemoryAppointerAuthority();
         final RecordingPublisher publisher = new RecordingPublisher();
         final Clock clock = Clock.fixed(Instant.parse("2026-06-06T10:00:00Z"), ZoneOffset.UTC);
 
         Fixture() {
-            // Default: the caller is the Regular Sabha's Sanchalak, the Person is on
-            // that Sabha's Roster, a YSS selective Sabha exists in the Kshetra, and the
-            // demographic Nirdeshak holds authority — so the happy paths pass unless a
-            // test overrides one of these.
-            roleAssignments.grant(SANCHALAK_USER, REGULAR_SABHA, Role.SANCHALAK);
+            // Default: the Person is on the Regular Sabha's Roster and a YSS selective
+            // Sabha exists in the Kshetra, so the happy paths pass unless a test
+            // overrides one. Who the caller is no longer lives here — it is the
+            // argument, so a test that varies authority varies the argument.
             roster.add(PERSON, REGULAR_SABHA);
             sabhaFacts.seedScope(REGULAR_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "REGULAR"));
             sabhaFacts.seedScope(SELECTIVE_SABHA, new SabhaScope(KSHETRA, DEMOGRAPHIC, "YSS"));
             sabhaFacts.seedSelective(KSHETRA, DEMOGRAPHIC, "YSS", SELECTIVE_SABHA);
-            authority.grantNirdeshak(NIRDESHAK_USER, KSHETRA, DEMOGRAPHIC);
         }
 
         SelectionService service() {
-            return new SelectionService(
-                    roleAssignments, roster, sabhaFacts, authority, nominations,
-                    publisher, clock);
+            return new SelectionService(roster, sabhaFacts, nominations, publisher, clock);
         }
     }
 
-    static final class InMemoryAppointerAuthority implements AppointerAuthorityLookup {
-        private final Set<String> nirdeshaks = new java.util.HashSet<>();
-
-        void grantNirdeshak(UUID userId, UUID kshetraId, String demographic) {
-            nirdeshaks.add(userId + "|" + kshetraId + "|" + demographic);
-        }
-
-        @Override
-        public boolean holdsNirdeshak(UUID userId, UUID kshetraId, String demographic) {
-            return nirdeshaks.contains(userId + "|" + kshetraId + "|" + demographic);
-        }
-
-        @Override
-        public boolean holdsSanyojak(UUID userId, UUID zoneId, String demographic) {
-            return false;
-        }
-
-        @Override
-        public boolean holdsRegionalTeam(UUID userId, UUID cityId, String demographic) {
-            return false;
-        }
-    }
 
     static final class InMemorySelectionRepository implements SelectionRepository {
         private final Map<UUID, SelectionNomination> byId = new HashMap<>();
@@ -331,27 +312,6 @@ class SelectionServiceTest {
         }
     }
 
-    static final class InMemoryRoleAssignments implements RoleAssignmentLookup {
-        private final Map<String, Set<Role>> roles = new HashMap<>();
-
-        void grant(UUID userId, UUID sabhaId, Role... granted) {
-            roles.put(userId + "|" + sabhaId, Set.of(granted));
-        }
-
-        void revoke(UUID userId, UUID sabhaId) {
-            roles.remove(userId + "|" + sabhaId);
-        }
-
-        @Override
-        public Set<Role> rolesForUserOnSabha(UUID userId, UUID sabhaId) {
-            return roles.getOrDefault(userId + "|" + sabhaId, Set.of());
-        }
-
-        @Override
-        public Set<Role> rolesForUserOnKshetra(UUID userId, UUID kshetraId, String demographic) {
-            return Set.of();
-        }
-    }
 
     static final class InMemoryRoster implements SelectionRoster {
         private final Map<UUID, List<UUID>> homeSabhas = new HashMap<>();

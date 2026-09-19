@@ -11,6 +11,12 @@ import java.util.UUID;
  * null scope (State-level; the system is single-organization per ADR-0005, so
  * there is no per-State column). This port keeps that representation behind a
  * named membership concept rather than leaking the string into callers.</p>
+ *
+ * <p>It carried an {@code isMember(userId)} until ADR-0032. Every one of its six
+ * call sites asked about the <em>caller</em>, so all six became {@code
+ * CallerAuthority.isMadhyasthaKaryalaya()} and the method was left with no
+ * consumers. What remains is a question about the organization and a write —
+ * neither caller-keyed, which is why the port survives at all.</p>
  */
 public interface MadhyasthaKaryalayaMembership {
 
@@ -19,7 +25,4 @@ public interface MadhyasthaKaryalayaMembership {
 
     /** Records that the given local user is an MK member. */
     void grantTo(UUID userId);
-
-    /** Whether the given local user holds MK membership. */
-    boolean isMember(UUID userId);
 }

@@ -11,7 +11,7 @@ import org.sabha.common.CityNotFoundException;
 import org.sabha.common.Role;
 import org.sabha.common.SabhaNotFoundException;
 import org.sabha.common.SabhaScope;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.sabha.domain.City;
 import org.sabha.sabha.domain.Kshetra;
 import org.sabha.sabha.domain.KshetraNotFoundException;
@@ -36,25 +36,16 @@ class StructuralDeletionServiceTest {
     private final FakeKshetras kshetras = new FakeKshetras();
     private final FakeSabhas sabhas = new FakeSabhas();
     private final FakeSabhaFacts hierarchy = new FakeSabhaFacts();
-    private final FakeRoleAssignments roleAssignments = new FakeRoleAssignments();
-
-    /** Scopes the test caller holds — populated per test. */
-    private final java.util.Map<UUID, List<UUID>> sanyojakZones = new java.util.HashMap<>();
-    private final java.util.Map<UUID, List<UUID>> regionalTeamCities = new java.util.HashMap<>();
-
-    private final StructuralDeletionService service = new StructuralDeletionService(
-            new StructuralScopeAuthority(
-                    userId -> userId.equals(MK),
-                    userId -> sanyojakZones.getOrDefault(userId, List.of()),
-                    userId -> regionalTeamCities.getOrDefault(userId, List.of()),
-                    roleAssignments),
-            cities, zones, kshetras, sabhas, hierarchy);
+    // Delete reads the same four methods create does — the tier table ADR-0032
+    // relocated onto CallerAuthority when it deleted the engine that held both.
+    private final StructuralDeletionService service =
+            new StructuralDeletionService(cities, zones, kshetras, sabhas, hierarchy);
 
     @Test
     void mkDeletesAnEmptyCity() {
         UUID cityId = cities.seed("Surat");
 
-        service.deleteCity(UserId.of(MK), cityId);
+        service.deleteCity(Callers.madhyasthaKaryalaya(MK), cityId);
 
         assertThat(cities.existsById(cityId)).isFalse();
     }
@@ -64,7 +55,7 @@ class StructuralDeletionServiceTest {
         UUID cityId = cities.seed("Mumbai");
         cities.setZoneCount(cityId, 6);
 
-        assertThatThrownBy(() -> service.deleteCity(UserId.of(MK), cityId))
+        assertThatThrownBy(() -> service.deleteCity(Callers.madhyasthaKaryalaya(MK), cityId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 6 Zones");
         assertThat(cities.existsById(cityId)).isTrue();
@@ -74,14 +65,14 @@ class StructuralDeletionServiceTest {
     void aNonMkUserCannotDeleteACityAndNothingIsRemoved() {
         UUID cityId = cities.seed("Surat");
 
-        assertThatThrownBy(() -> service.deleteCity(UserId.of(SOMEONE_ELSE), cityId))
+        assertThatThrownBy(() -> service.deleteCity(Callers.noRoles(SOMEONE_ELSE), cityId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(cities.existsById(cityId)).isTrue();
     }
 
     @Test
     void deletingAnUnknownCityIs404() {
-        assertThatThrownBy(() -> service.deleteCity(UserId.of(MK), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteCity(Callers.madhyasthaKaryalaya(MK), UUID.randomUUID()))
                 .isInstanceOf(CityNotFoundException.class);
     }
 
@@ -89,9 +80,9 @@ class StructuralDeletionServiceTest {
     void aRegionalTeamMemberOfTheZonesCityDeletesAnEmptyZone() {
         UUID cityId = UUID.randomUUID();
         UUID zoneId = zones.seed(cityId);
-        regionalTeamCities.put(REGIONAL_TEAM, List.of(cityId));
+        CallerAuthority regionalTeam = Callers.of(REGIONAL_TEAM).regionalTeamIn(cityId).build();
 
-        service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId);
+        service.deleteZone(regionalTeam, zoneId);
 
         assertThat(zones.existsById(zoneId)).isFalse();
     }
@@ -100,9 +91,9 @@ class StructuralDeletionServiceTest {
     void aRegionalTeamMemberOfAnotherCityCannotDeleteThisZone() {
         UUID cityId = UUID.randomUUID();
         UUID zoneId = zones.seed(cityId);
-        regionalTeamCities.put(REGIONAL_TEAM, List.of(UUID.randomUUID()));
+        CallerAuthority regionalTeam = Callers.of(REGIONAL_TEAM).regionalTeamIn(UUID.randomUUID()).build();
 
-        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId))
+        assertThatThrownBy(() -> service.deleteZone(regionalTeam, zoneId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(zones.existsById(zoneId)).isTrue();
     }
@@ -112,9 +103,9 @@ class StructuralDeletionServiceTest {
         UUID cityId = UUID.randomUUID();
         UUID zoneId = zones.seed(cityId);
         zones.setKshetraCount(zoneId, 3);
-        regionalTeamCities.put(REGIONAL_TEAM, List.of(cityId));
+        CallerAuthority regionalTeam = Callers.of(REGIONAL_TEAM).regionalTeamIn(cityId).build();
 
-        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), zoneId))
+        assertThatThrownBy(() -> service.deleteZone(regionalTeam, zoneId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 3 Kshetras");
         assertThat(zones.existsById(zoneId)).isTrue();
@@ -122,7 +113,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownZoneIs404() {
-        assertThatThrownBy(() -> service.deleteZone(UserId.of(REGIONAL_TEAM), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteZone(Callers.noRoles(REGIONAL_TEAM), UUID.randomUUID()))
                 .isInstanceOf(ZoneNotFoundException.class);
     }
 
@@ -130,9 +121,9 @@ class StructuralDeletionServiceTest {
     void theZonesSanyojakDeletesAnEmptyKshetra() {
         UUID zoneId = UUID.randomUUID();
         UUID kshetraId = kshetras.seed(zoneId);
-        sanyojakZones.put(SANYOJAK, List.of(zoneId));
+        CallerAuthority sanyojak = Callers.of(SANYOJAK).sanyojakOf(zoneId).build();
 
-        service.deleteKshetra(UserId.of(SANYOJAK), kshetraId);
+        service.deleteKshetra(sanyojak, kshetraId);
 
         assertThat(kshetras.existsById(kshetraId)).isFalse();
     }
@@ -141,9 +132,9 @@ class StructuralDeletionServiceTest {
     void aSanyojakOfAnotherZoneCannotDeleteThisKshetra() {
         UUID zoneId = UUID.randomUUID();
         UUID kshetraId = kshetras.seed(zoneId);
-        sanyojakZones.put(SANYOJAK, List.of(UUID.randomUUID()));
+        CallerAuthority sanyojak = Callers.of(SANYOJAK).sanyojakOf(UUID.randomUUID()).build();
 
-        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), kshetraId))
+        assertThatThrownBy(() -> service.deleteKshetra(sanyojak, kshetraId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(kshetras.existsById(kshetraId)).isTrue();
     }
@@ -153,9 +144,9 @@ class StructuralDeletionServiceTest {
         UUID zoneId = UUID.randomUUID();
         UUID kshetraId = kshetras.seed(zoneId);
         kshetras.setSabhaCount(kshetraId, 1);
-        sanyojakZones.put(SANYOJAK, List.of(zoneId));
+        CallerAuthority sanyojak = Callers.of(SANYOJAK).sanyojakOf(zoneId).build();
 
-        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), kshetraId))
+        assertThatThrownBy(() -> service.deleteKshetra(sanyojak, kshetraId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 1 Sabha");
         assertThat(kshetras.existsById(kshetraId)).isTrue();
@@ -163,7 +154,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownKshetraIs404() {
-        assertThatThrownBy(() -> service.deleteKshetra(UserId.of(SANYOJAK), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteKshetra(Callers.noRoles(SANYOJAK), UUID.randomUUID()))
                 .isInstanceOf(KshetraNotFoundException.class);
     }
 
@@ -171,9 +162,9 @@ class StructuralDeletionServiceTest {
     void theNirdeshakOverTheSabhasScopeDeletesAnEmptySabha() {
         UUID kshetraId = UUID.randomUUID();
         UUID sabhaId = hierarchy.seedSabha(kshetraId, YUVAK);
-        roleAssignments.grant(NIRDESHAK, kshetraId, YUVAK, Role.NIRDESHAK);
+        CallerAuthority nirdeshak = Callers.of(NIRDESHAK).nirdeshakOf(kshetraId, YUVAK).build();
 
-        service.deleteSabha(UserId.of(NIRDESHAK), sabhaId);
+        service.deleteSabha(nirdeshak, sabhaId);
 
         assertThat(sabhas.deleted).contains(sabhaId);
     }
@@ -183,9 +174,9 @@ class StructuralDeletionServiceTest {
         UUID kshetraId = UUID.randomUUID();
         UUID sabhaId = hierarchy.seedSabha(kshetraId, YUVAK);
         // Holds Nirdeshak over a different demographic in the same Kshetra.
-        roleAssignments.grant(NIRDESHAK, kshetraId, "BAAL", Role.NIRDESHAK);
+        CallerAuthority nirdeshak = Callers.of(NIRDESHAK).nirdeshakOf(kshetraId, "BAAL").build();
 
-        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), sabhaId))
+        assertThatThrownBy(() -> service.deleteSabha(nirdeshak, sabhaId))
                 .isInstanceOf(AuthorizationDeniedException.class);
         assertThat(sabhas.deleted).isEmpty();
     }
@@ -195,9 +186,9 @@ class StructuralDeletionServiceTest {
         UUID kshetraId = UUID.randomUUID();
         UUID sabhaId = hierarchy.seedSabha(kshetraId, YUVAK);
         sabhas.setOccurrenceCount(sabhaId, 12);
-        roleAssignments.grant(NIRDESHAK, kshetraId, YUVAK, Role.NIRDESHAK);
+        CallerAuthority nirdeshak = Callers.of(NIRDESHAK).nirdeshakOf(kshetraId, YUVAK).build();
 
-        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), sabhaId))
+        assertThatThrownBy(() -> service.deleteSabha(nirdeshak, sabhaId))
                 .isInstanceOf(StructuralNotEmptyException.class)
                 .hasMessage("has 12 Occurrences");
         assertThat(sabhas.deleted).isEmpty();
@@ -205,7 +196,7 @@ class StructuralDeletionServiceTest {
 
     @Test
     void deletingAnUnknownSabhaIs404() {
-        assertThatThrownBy(() -> service.deleteSabha(UserId.of(NIRDESHAK), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.deleteSabha(Callers.noRoles(NIRDESHAK), UUID.randomUUID()))
                 .isInstanceOf(SabhaNotFoundException.class);
     }
 

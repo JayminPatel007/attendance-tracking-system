@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.passwordreset.PasswordReissueService;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class PasswordReissueController {
     }
 
     @PostMapping("/bff/password-reissue")
-    public ResponseEntity<Void> reissue(@RequestBody ReissueRequest req, @CurrentUser UserId caller) {
+    public ResponseEntity<Void> reissue(@RequestBody ReissueRequest req, @CurrentUser CallerAuthority caller) {
         reissues.reissue(caller, req.targetUserId(), req.newPassword());
         return ResponseEntity.noContent().build();
     }

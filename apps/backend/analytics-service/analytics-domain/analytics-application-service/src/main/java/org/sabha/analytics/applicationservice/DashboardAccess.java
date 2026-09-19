@@ -2,8 +2,7 @@ package org.sabha.analytics.applicationservice;
 
 import java.util.UUID;
 
-import org.sabha.common.SantLookup;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,22 +17,26 @@ import org.springframework.stereotype.Service;
  * {@link SantCityPreferenceService}; rendering the chip is a read and lives in
  * {@link CityChipQuery}. Both were methods here until ADR-0032 named the engine
  * contract: an engine returns a decision and holds no transaction.
+ *
+ * <p>Down to one port. The Sant check was a {@code SantLookup} call keyed on the
+ * caller, so ADR-0032 folded it into the caller parameter; what is left —
+ * "which City did this Sant last choose?" — is a stored preference, not a role
+ * assignment, and stays a query. The Sant/City/{@code NoCity} fold above it is
+ * the policy, and policies do not move.</p>
  */
 @Service
 public class DashboardAccess {
 
-    private final SantLookup sants;
     private final SantDefaultCity defaultCity;
 
-    public DashboardAccess(SantLookup sants, SantDefaultCity defaultCity) {
-        this.sants = sants;
+    public DashboardAccess(SantDefaultCity defaultCity) {
         this.defaultCity = defaultCity;
     }
 
     /** The view to serve on landing: a Sant's chosen City, or the caller's role scope. */
-    public DashboardScope viewFor(UserId caller) {
-        UUID userId = caller.value();
-        if (!sants.isSant(userId)) {
+    public DashboardScope viewFor(CallerAuthority caller) {
+        UUID userId = caller.userId().value();
+        if (!caller.isSant()) {
             return new DashboardScope.RoleScoped(userId);
         }
         return defaultCity.defaultCityOf(userId)

@@ -23,6 +23,17 @@ import java.util.UUID;
  */
 public sealed interface AuditScope {
 
+    /**
+     * Whether this scope admits the caller to the audit log at all. The one
+     * admission rule, read from one place by both surfaces that need it: the web
+     * shell's sidebar (through {@link org.sabha.common.AuditReadAccess}) and the
+     * audit BFF. Before ADR-0032 each restated {@code !(x instanceof Denied)}
+     * for itself.
+     */
+    default boolean admitted() {
+        return !(this instanceof Denied);
+    }
+
     record Unrestricted() implements AuditScope {
     }
 

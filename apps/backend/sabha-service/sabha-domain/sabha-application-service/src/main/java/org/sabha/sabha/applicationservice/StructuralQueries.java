@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.sabha.common.NirdeshakScopeLookup.NirdeshakScope;
+import org.sabha.common.NirdeshakScope;
 import org.sabha.sabha.domain.Demographic;
 import org.sabha.sabha.domain.Track;
 
@@ -16,12 +16,14 @@ import org.sabha.sabha.domain.Track;
  * for populating the create forms (parent-City dropdown, the Sanyojak's own Zone,
  * the Regional Team's own City), and for the Nirdeshak's deletable Sabhas. Every
  * query reads only sabha-owned tables; resolving "which Zones is this user a
- * Sanyojak of" is the identity context's {@link org.sabha.common.SanyojakZoneLookup},
- * "which Cities is this user a Regional Team member of" its
- * {@link org.sabha.common.RegionalTeamCityLookup}, and "which (Kshetra,demographic)
- * scopes does this user direct" its {@link org.sabha.common.NirdeshakScopeLookup},
- * which yield the ids/scopes this port then hydrates via {@link #zonesByIds} /
- * {@link #citiesByIds} / {@link #sabhasOwnedBy}.
+ * Sanyojak of", "which Cities is this user a Regional Team member of" and "which
+ * (Kshetra, demographic) scopes does this user direct" are all questions about the
+ * caller's own {@code role_assignments}, and since ADR-0032 they are answered by
+ * {@link org.sabha.common.CallerAuthority#sanyojakZones()}, {@link
+ * org.sabha.common.CallerAuthority#regionalTeamCities()} and {@link
+ * org.sabha.common.CallerAuthority#nirdeshakScopes()} rather than by three
+ * identity ports. The ids and scopes they yield are what this port then hydrates,
+ * via {@link #zonesByIds} / {@link #citiesByIds} / {@link #sabhasOwnedBy}.
  */
 public interface StructuralQueries {
 

@@ -178,7 +178,7 @@ public class OccurrenceWriter {
 
     /** The acting user, or {@code null} for the cron actor, which holds no identity. */
     private static UUID actorUserId(TransitionActor actor) {
-        return actor instanceof TransitionActor.SignedIn user ? user.caller().value() : null;
+        return actor instanceof TransitionActor.SignedIn user ? user.caller().userId().value() : null;
     }
 
     /**
@@ -206,10 +206,10 @@ public class OccurrenceWriter {
         if (!(actor instanceof TransitionActor.SignedIn user)) {
             return null;
         }
-        if (!authorization.canUserDo(actorUserId, user.authority(), occurrence.sabhaId())) {
+        if (!authorization.canUserDo(user.caller(), user.authority(), occurrence.sabhaId())) {
             throw new AuthorizationDeniedException(actorUserId, user.authority());
         }
-        return authorization.onBehalfOf(actorUserId, user.authority(), occurrence.sabhaId())
+        return authorization.onBehalfOf(user.caller(), user.authority(), occurrence.sabhaId())
                 .orElse(null);
     }
 }

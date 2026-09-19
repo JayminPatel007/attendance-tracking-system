@@ -22,6 +22,7 @@ import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -30,6 +31,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.sabha.common.AggregateRoot;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.DomainEvent;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.otp.OtpGuardedFlow;
@@ -167,7 +169,7 @@ class IntraModuleArchitectureRulesTest {
      * </ol>
      */
     private static final ArchCondition<JavaMethod> RESOLVE_THEIR_CALLER =
-            new ArchCondition<>("resolve their caller with @CurrentUser (ADR-0030)") {
+            new ArchCondition<>("resolve their caller as a @CurrentUser CallerAuthority (ADR-0030, ADR-0032)") {
                 private Set<String> unmatchedExemptions;
 
                 @Override
@@ -178,8 +180,10 @@ class IntraModuleArchitectureRulesTest {
                 @Override
                 public void check(JavaMethod handler, ConditionEvents events) {
                     String route = routeOf(handler);
-                    boolean resolvesCaller = handler.getParameters().stream()
-                            .anyMatch(parameter -> parameter.isAnnotatedWith(CurrentUser.class));
+                    List<JavaParameter> bound = handler.getParameters().stream()
+                            .filter(parameter -> parameter.isAnnotatedWith(CurrentUser.class))
+                            .toList();
+                    boolean resolvesCaller = !bound.isEmpty();
 
                     if (HANDLERS_THAT_RESOLVE_NO_CALLER.containsKey(route)) {
                         unmatchedExemptions.remove(route);
@@ -189,6 +193,21 @@ class IntraModuleArchitectureRulesTest {
                     }
                     events.add(new SimpleConditionEvent(handler, resolvesCaller,
                             route + " takes no @CurrentUser parameter (" + handler.getFullName() + ")"));
+
+                    // ADR-0032 rule R2: one predicate on this rule, not a rule of its
+                    // own. There is exactly one caller parameter type, and that is what
+                    // makes the authority query happen once per request with nothing
+                    // resembling a cache. A relapse to @CurrentUser UserId still
+                    // satisfies the clause above — it is this clause that fails it.
+                    for (JavaParameter parameter : bound) {
+                        boolean isAuthority = parameter.getRawType()
+                                .isAssignableTo(CallerAuthority.class);
+                        events.add(new SimpleConditionEvent(handler, isAuthority,
+                                route + " binds @CurrentUser to "
+                                        + parameter.getRawType().getSimpleName()
+                                        + ", not CallerAuthority — ADR-0032 allows exactly one caller "
+                                        + "parameter type (" + handler.getFullName() + ")"));
+                    }
                 }
 
                 @Override
@@ -454,7 +473,7 @@ class IntraModuleArchitectureRulesTest {
      * handler as happily as any other.
      *
      * <p><b>What it checks is that the parameter is declared, not that it is
-     * used.</b> A handler could take {@code @CurrentUser UserId caller} and
+     * used.</b> A handler could take {@code @CurrentUser CallerAuthority caller} and
      * ignore it, reproducing issue #209's hole while passing. That gap is
      * accepted: a parameter's use lives in local-variable bytecode that ArchUnit
      * does not model, and the alternative — matching against method calls that
@@ -541,4 +560,115 @@ class IntraModuleArchitectureRulesTest {
                     .should().resideInAnyPackage("..domain..", "org.sabha.common")
                     .as("DomainEvent implementations must live in *-domain-core (ADR-0020)")
                     .because("domain events are emitted by aggregates and belong in the innermost ring");
+
+    /**
+     * ADR-0032 rule R3. The five Authorization Engines that survived the
+     * caller-authority fold, by name: every public method returns a decision — a
+     * {@code boolean}, a sealed type, or an {@link java.util.Optional} — and
+     * neither the class nor any method is {@code @Transactional}.
+     *
+     * <p><b>A reviewed list, not a marker interface.</b> The repo's two existing
+     * markers earn their keep by carrying behaviour ({@link AggregateRoot}) or a
+     * dispatch contract ({@link DomainEvent}); one carrying neither would be the
+     * test leaking into the domain, which ADR-0019's ring discipline exists to
+     * prevent. A list also <em>detects its own staleness</em> — a marker on a
+     * deleted class vanishes in silence, while a stale entry here fails
+     * loudly.</p>
+     *
+     * <p>Retrodiction, which is why this rule is believable rather than merely
+     * true: it catches {@code DashboardAccess.cityChip}, a DTO-returning method
+     * that PR B of #133 relocated to the query side <em>before</em> this rule
+     * existed. What it cannot catch is a write — {@code selectCity} returned a
+     * sealed {@code DashboardScope} and would have passed while mutating. The
+     * instrument that found that one was human inventory, and the fix was
+     * relocation, not a rule; "an engine never throws or mutates" stays
+     * javadoc, deliberately.</p>
+     */
+    private static final Set<String> THE_AUTHORIZATION_ENGINES = Set.of(
+            "org.sabha.attendance.applicationservice.AuthorizationEngine",
+            "org.sabha.identity.applicationservice.appointment.AppointmentAuthorization",
+            "org.sabha.identity.applicationservice.passwordreset.ReissueAuthorization",
+            "org.sabha.analytics.applicationservice.AuditLogAccess",
+            "org.sabha.analytics.applicationservice.DashboardAccess");
+
+    private static final DescribedPredicate<JavaClass> ARE_AUTHORIZATION_ENGINES =
+            DescribedPredicate.describe("are one of the five Authorization Engines (ADR-0032)",
+                    type -> THE_AUTHORIZATION_ENGINES.contains(type.getName()));
+
+    private static final ArchCondition<JavaClass> RETURN_A_DECISION_AND_HOLD_NO_TRANSACTION =
+            new ArchCondition<>("return a decision and hold no transaction") {
+                private Set<String> unmatched;
+
+                @Override
+                public void init(Collection<JavaClass> types) {
+                    unmatched = new TreeSet<>(THE_AUTHORIZATION_ENGINES);
+                }
+
+                @Override
+                public void check(JavaClass type, ConditionEvents events) {
+                    unmatched.remove(type.getName());
+
+                    events.add(new SimpleConditionEvent(type, !type.isAnnotatedWith(Transactional.class),
+                            type.getSimpleName() + " is @Transactional — an engine decides, it does not write"));
+
+                    for (JavaMethod method : type.getMethods()) {
+                        if (!method.getModifiers().contains(JavaModifier.PUBLIC)) {
+                            continue;
+                        }
+                        events.add(new SimpleConditionEvent(method, !method.isAnnotatedWith(Transactional.class),
+                                method.getFullName() + " is @Transactional — an engine decides, it does not write"));
+
+                        JavaClass returned = method.getRawReturnType();
+                        boolean decides = returned.getName().equals("boolean")
+                                || returned.isAssignableTo(java.util.Optional.class)
+                                || returned.getModifiers().contains(JavaModifier.valueOf("ABSTRACT"))
+                                && returned.isInterface()
+                                || isSealed(returned);
+                        events.add(new SimpleConditionEvent(method, decides,
+                                method.getFullName() + " returns " + returned.getSimpleName()
+                                        + " — an engine's public methods return a boolean, a sealed type "
+                                        + "or an Optional, never a DTO (ADR-0032 R3)"));
+                    }
+                }
+
+                @Override
+                public void finish(ConditionEvents events) {
+                    for (String name : unmatched) {
+                        events.add(SimpleConditionEvent.violated(name,
+                                "listed engine " + name + " matches no class — delete or rename its entry"));
+                    }
+                }
+
+                /** Sealed-ness is not on ArchUnit's model, so it is read off the bytecode's own type. */
+                private boolean isSealed(JavaClass type) {
+                    return type.reflect().isSealed();
+                }
+            };
+
+    @ArchTest
+    static final ArchRule authority_engines_return_a_decision_and_hold_no_transaction =
+            classes()
+                    .that(ARE_AUTHORIZATION_ENGINES)
+                    .should(RETURN_A_DECISION_AND_HOLD_NO_TRANSACTION)
+                    .as("an Authorization Engine returns a decision and holds no transaction (ADR-0032 R3)")
+                    .because("an engine that writes, or hands back a view-model, has stopped being a decision component");
+
+    /**
+     * ADR-0032 rule R4. {@link CallerAuthority} is an application-ring type: the
+     * innermost ring ({@code *-domain-core}) and the outermost ({@code
+     * *-data-access}, {@code *-messaging}) may not depend on it (ADR-0019).
+     *
+     * <p>Plain ArchUnit, because it keys off one named type — no marker, no list.
+     * <b>Verified non-vacuous</b>: the poms do not already close this. {@code
+     * VisibleSections}, in {@code identity-domain-core}, imports {@code
+     * org.sabha.common.Role} today, so {@code common-domain} <em>is</em> visible
+     * from the innermost ring and this rule has something real to forbid.</p>
+     */
+    @ArchTest
+    static final ArchRule caller_authority_stays_out_of_the_inner_and_outer_rings =
+            noClasses()
+                    .that().resideInAnyPackage("org.sabha..domain", "org.sabha..dataaccess", "org.sabha..messaging")
+                    .should().dependOnClassesThat().areAssignableTo(CallerAuthority.class)
+                    .as("no *-domain-core, *-data-access or *-messaging class may depend on CallerAuthority (ADR-0032 R4)")
+                    .because("the caller's authority is resolved in the application ring and decided above the aggregates");
 }

@@ -20,7 +20,7 @@ import org.sabha.attendance.applicationservice.SyncAttendanceApplicationService;
 import org.sabha.attendance.applicationservice.SyncRequestItem;
 import org.sabha.attendance.applicationservice.SyncResult;
 import org.sabha.attendance.domain.Reason;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,15 +58,15 @@ public class AttendanceRestController {
     }
 
     @GetMapping("/api/sanchalak/current-roster")
-    public ResponseEntity<CurrentRoster> currentRoster(@CurrentUser UserId caller) {
-        return currentRoster.findForSanchalak(caller)
+    public ResponseEntity<CurrentRoster> currentRoster(@CurrentUser CallerAuthority caller) {
+        return currentRoster.findForSanchalak(caller.userId())
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/api/sanchalak/current-occurrence")
-    public ResponseEntity<CurrentOccurrence> currentOccurrence(@CurrentUser UserId caller) {
-        return currentOccurrence.findShapeableForSanchalak(caller)
+    public ResponseEntity<CurrentOccurrence> currentOccurrence(@CurrentUser CallerAuthority caller) {
+        return currentOccurrence.findShapeableForSanchalak(caller.userId())
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -75,9 +75,9 @@ public class AttendanceRestController {
     public ResponseEntity<Void> mark(
             @PathVariable UUID occurrenceId,
             @RequestBody MarkRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         Instant clientMarkedAt = req.clientMarkedAt() != null ? req.clientMarkedAt() : Instant.now();
-        markAttendance.execute(caller, occurrenceId, req.personId(), req.present(), clientMarkedAt);
+        markAttendance.execute(caller.userId(), occurrenceId, req.personId(), req.present(), clientMarkedAt);
         return ResponseEntity.ok().build();
     }
 
@@ -85,9 +85,9 @@ public class AttendanceRestController {
     public ResponseEntity<Void> walkIn(
             @PathVariable UUID occurrenceId,
             @RequestBody WalkInRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         Instant clientMarkedAt = req.clientMarkedAt() != null ? req.clientMarkedAt() : Instant.now();
-        markAttendance.executeBatch(caller, occurrenceId,
+        markAttendance.executeBatch(caller.userId(), occurrenceId,
                 List.of(MarkItem.walkIn(req.personId(), clientMarkedAt)));
         return ResponseEntity.ok().build();
     }
@@ -95,11 +95,11 @@ public class AttendanceRestController {
     @PostMapping("/api/sync")
     public ResponseEntity<SyncResponse> sync(
             @RequestBody SyncRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         List<SyncRequestItem> items = req.markings().stream()
                 .map(m -> new SyncRequestItem(m.occurrenceId(), m.personId(), m.present(), m.clientMarkedAt()))
                 .toList();
-        SyncResult result = syncAttendance.execute(caller, req.rosterVersion(), items);
+        SyncResult result = syncAttendance.execute(caller.userId(), req.rosterVersion(), items);
         return ResponseEntity.ok(new SyncResponse(result.appliedCount()));
     }
 
@@ -107,7 +107,7 @@ public class AttendanceRestController {
     public ResponseEntity<Void> cancel(
             @PathVariable UUID occurrenceId,
             @RequestBody CancelRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.cancel(caller, occurrenceId, new Reason(req.reason()));
         return ResponseEntity.ok().build();
     }
@@ -115,7 +115,7 @@ public class AttendanceRestController {
     @PostMapping("/api/occurrences/{occurrenceId}/revert")
     public ResponseEntity<Void> revert(
             @PathVariable UUID occurrenceId,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.revert(caller, occurrenceId);
         return ResponseEntity.ok().build();
     }
@@ -124,7 +124,7 @@ public class AttendanceRestController {
     public ResponseEntity<Void> reschedule(
             @PathVariable UUID occurrenceId,
             @RequestBody RescheduleRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.reschedule(caller, occurrenceId,
                 req.date(), req.startTime(), req.endTime());
         return ResponseEntity.ok().build();
@@ -134,7 +134,7 @@ public class AttendanceRestController {
     public ResponseEntity<Void> venueOverride(
             @PathVariable UUID occurrenceId,
             @RequestBody VenueOverrideRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         shapeOccurrence.overrideVenue(caller, occurrenceId, req.venue());
         return ResponseEntity.ok().build();
     }
@@ -143,15 +143,15 @@ public class AttendanceRestController {
     public ResponseEntity<CreatedOccurrenceResponse> createMonthlyOccurrence(
             @PathVariable UUID sabhaId,
             @RequestBody CreateOccurrenceRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         UUID occurrenceId = createMonthlyOccurrence.create(
                 caller, sabhaId, req.date(), req.startTime(), req.endTime(), req.venue());
         return ResponseEntity.status(201).body(new CreatedOccurrenceResponse(occurrenceId));
     }
 
     @GetMapping("/api/sanchalak/monthly-sabhas")
-    public List<MonthlySabha> monthlySabhas(@CurrentUser UserId caller) {
-        return listMonthlySabhas.execute(caller);
+    public List<MonthlySabha> monthlySabhas(@CurrentUser CallerAuthority caller) {
+        return listMonthlySabhas.execute(caller.userId());
     }
 
     public record CreateOccurrenceRequest(LocalDate date, LocalTime startTime, LocalTime endTime, String venue) {

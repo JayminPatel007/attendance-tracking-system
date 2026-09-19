@@ -8,7 +8,7 @@ import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
@@ -71,10 +71,10 @@ public class RoleAppointmentService implements AppointRole {
 
     @Override
     @Transactional
-    public AppointmentResult appoint(UserId caller, RoleAppointmentCommand command) {
-        UUID appointer = caller.value();
+    public AppointmentResult appoint(CallerAuthority caller, RoleAppointmentCommand command) {
+        UUID appointer = caller.userId().value();
 
-        if (!authz.canAppoint(appointer, command.scope())) {
+        if (!authz.canAppoint(caller, command.scope())) {
             throw new AuthorizationDeniedException(appointer, AuthorizedAction.APPOINT_ROLE);
         }
 
@@ -83,7 +83,7 @@ public class RoleAppointmentService implements AppointRole {
 
         UUID personId;
         if (command.createsNewPerson()) {
-            AddResult added = addPerson.add(caller, command.newPerson());
+            AddResult added = addPerson.add(caller.userId(), command.newPerson());
             if (added.softWarned()) {
                 return AppointmentResult.softWarn(added.candidates());
             }

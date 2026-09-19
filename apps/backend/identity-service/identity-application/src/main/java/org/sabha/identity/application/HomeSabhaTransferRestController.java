@@ -2,7 +2,7 @@ package org.sabha.identity.application;
 
 import java.util.UUID;
 
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.transfer.HomeSabhaTransferService;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +36,7 @@ public class HomeSabhaTransferRestController {
     @PostMapping("/api/home-sabha-transfers")
     public InitiateTransferResponse initiate(
             @RequestBody InitiateTransferRequest req,
-            @CurrentUser UserId caller) {
+            @CurrentUser CallerAuthority caller) {
         UUID transferId = transfers.initiate(caller, req.personId(), req.destinationSabhaId());
         return new InitiateTransferResponse(transferId);
     }

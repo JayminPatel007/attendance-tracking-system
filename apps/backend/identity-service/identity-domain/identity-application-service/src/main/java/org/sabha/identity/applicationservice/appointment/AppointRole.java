@@ -1,7 +1,7 @@
 package org.sabha.identity.applicationservice.appointment;
 
 import java.util.UUID;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 
 /**
  * The role-appointment use case (ADR-0011), extracted so collaborators — notably
@@ -13,5 +13,5 @@ import org.sabha.common.UserId;
  */
 public interface AppointRole {
 
-    AppointmentResult appoint(UserId caller, RoleAppointmentCommand command);
+    AppointmentResult appoint(CallerAuthority caller, RoleAppointmentCommand command);
 }

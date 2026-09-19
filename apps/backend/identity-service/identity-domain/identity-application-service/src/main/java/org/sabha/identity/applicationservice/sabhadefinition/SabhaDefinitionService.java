@@ -8,7 +8,7 @@ import org.sabha.common.AuthorizedAction;
 import org.sabha.common.SabhaKindNotFoundException;
 import org.sabha.common.SabhaKindRetiredException;
 import org.sabha.common.SabhaProvisioning;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.sabha.identity.applicationservice.appointment.AppointRole;
 import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
@@ -27,7 +27,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * <ol>
  *   <li>Resolve the chosen kind's demographic and authorize the caller as
  *       Nirdeshak over (Kshetra, demographic) — a denial becomes an
- *       {@link AuthorizationDeniedException} (HTTP 403) before anything is created.</li>
+ *       {@link AuthorizationDeniedException} (HTTP 403) before anything is created.
+ *       That check is one call on the caller, {@link
+ *       org.sabha.common.CallerAuthority#holdsNirdeshakIn(java.util.UUID, String)}.
+ *       It was a {@code SabhaDefinitionAuthorization} bean until ADR-0032, whose
+ *       whole executable content was delegating this one predicate to a port; the
+ *       same method now answers here, in the appointment engine, and on both Sabha
+ *       delete paths, so those four readings cannot drift apart.</li>
  *   <li>Provision the Sabha across the seam via {@link SabhaProvisioning} (the
  *       sabha context owns the aggregate and its schedule-shape invariants).</li>
  *   <li>Appoint the Sanchalak — and any Sah-Sanchalak — on the new Sabha by
@@ -40,26 +46,21 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class SabhaDefinitionService {
 
     private final SabhaProvisioning provisioning;
-    private final SabhaDefinitionAuthorization authz;
     private final AppointRole appointments;
 
-    public SabhaDefinitionService(
-            SabhaProvisioning provisioning,
-            SabhaDefinitionAuthorization authz,
-            AppointRole appointments) {
+    public SabhaDefinitionService(SabhaProvisioning provisioning, AppointRole appointments) {
         this.provisioning = provisioning;
-        this.authz = authz;
         this.appointments = appointments;
     }
 
     @Transactional
-    public SabhaDefinitionResult define(UserId caller, SabhaDefinitionCommand command) {
-        UUID nirdeshak = caller.value();
+    public SabhaDefinitionResult define(CallerAuthority caller, SabhaDefinitionCommand command) {
+        UUID nirdeshak = caller.userId().value();
 
         String demographic = provisioning.demographicOfKind(command.sabhaKindId())
                 .orElseThrow(() -> new SabhaKindNotFoundException(command.sabhaKindId()));
 
-        if (!authz.canDefineSabha(nirdeshak, command.kshetraId(), demographic)) {
+        if (!caller.holdsNirdeshakIn(command.kshetraId(), demographic)) {
             throw new AuthorizationDeniedException(nirdeshak, AuthorizedAction.CREATE_SABHA);
         }
 

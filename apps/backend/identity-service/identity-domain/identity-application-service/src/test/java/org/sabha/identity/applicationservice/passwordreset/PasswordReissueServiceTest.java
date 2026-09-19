@@ -13,9 +13,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.sabha.common.AuthorizationDeniedException;
-import org.sabha.common.UserId;
-import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.SantLookup;
+import org.sabha.identity.applicationservice.Callers;
 import org.sabha.identity.applicationservice.IdentityProviderGateway;
 import org.sabha.identity.applicationservice.UserRepository;
 import org.sabha.identity.domain.User;
@@ -26,12 +26,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PasswordReissueServiceTest {
 
     private static final UUID APPOINTER_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d2");
-    private static final UserId APPOINTER = UserId.of(APPOINTER_USER);
+    /** The appointer holds no role of their own — their authority is the target's appointed_by. */
+    private static final CallerAuthority APPOINTER = Callers.noRoles(APPOINTER_USER);
     private static final UUID TARGET_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d3");
     private static final UUID TARGET_PERSON = UUID.fromString("00000000-0000-0000-0000-0000000000d4");
     private static final UUID TARGET_KEYCLOAK = UUID.fromString("00000000-0000-0000-0000-0000000000d5");
     private static final UUID MK_USER = UUID.fromString("00000000-0000-0000-0000-0000000000d7");
-    private static final UserId MK = UserId.of(MK_USER);
+    private static final CallerAuthority MK = Callers.madhyasthaKaryalaya(MK_USER);
 
     @Test
     void originalAppointerCanReissueWithAForceChangePasswordAndAuditsTheAct() {
@@ -57,7 +58,6 @@ class PasswordReissueServiceTest {
         Fixture f = new Fixture();
         f.users.seed(new User(TARGET_USER, TARGET_PERSON, "sant.user", TARGET_KEYCLOAK));
         f.sants.markSant(TARGET_USER);
-        f.mkMembership.grant(MK_USER);
 
         f.service().reissue(MK, TARGET_USER, "fresh-secret-2");
 
@@ -100,14 +100,16 @@ class PasswordReissueServiceTest {
         final InMemoryUserRepository users = new InMemoryUserRepository();
         final InMemoryReissueAuthority authority = new InMemoryReissueAuthority();
         final InMemorySantLookup sants = new InMemorySantLookup();
-        final InMemoryMkMembership mkMembership = new InMemoryMkMembership();
         final InMemoryReissueAuditLog audit = new InMemoryReissueAuditLog();
         final RecordingIdentityProvider identityProvider = new RecordingIdentityProvider();
         final MutableClock clock = new MutableClock(Instant.parse("2026-06-07T10:00:00Z"));
 
         PasswordReissueService service() {
+            // The authority rule is its own engine now (ADR-0032): both its ports are
+            // keyed on the target, so nothing about it folded into the caller.
             return new PasswordReissueService(
-                    authority, sants, mkMembership, users, identityProvider, audit, clock);
+                    new ReissueAuthorization(authority, sants),
+                    users, identityProvider, audit, clock);
         }
     }
 
@@ -171,18 +173,6 @@ class PasswordReissueServiceTest {
         }
     }
 
-    static final class InMemoryMkMembership implements MadhyasthaKaryalayaLookup {
-        private final Set<UUID> members = new HashSet<>();
-
-        void grant(UUID userId) {
-            members.add(userId);
-        }
-
-        @Override
-        public boolean isMember(UUID userId) {
-            return members.contains(userId);
-        }
-    }
 
     static final class InMemoryReissueAuditLog implements PasswordReissueAuditLog {
         final java.util.List<ReissueAudit> reissues = new java.util.ArrayList<>();

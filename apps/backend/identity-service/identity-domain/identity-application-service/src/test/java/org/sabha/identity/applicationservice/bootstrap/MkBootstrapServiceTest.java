@@ -155,10 +155,5 @@ class MkBootstrapServiceTest {
         public void grantTo(UUID userId) {
             granted.add(userId);
         }
-
-        @Override
-        public boolean isMember(UUID userId) {
-            return granted.contains(userId);
-        }
     }
 }

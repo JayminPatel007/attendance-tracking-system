@@ -112,8 +112,6 @@ class RoleAssignmentsAccessRuleTest {
 
         allowed.put("JdbcAuditFeed.java",
                 "clause 1: the audit log is a read-model over existing tables (ADR-0023)");
-        allowed.put("JdbcAuditScopeLookup.java",
-                "clause 1: projects the viewer's geographic scope for the audit feed (ADR-0023)");
 
         allowed.put("JdbcCurrentRosterQuery.java",
                 "clause 1: joins identity, attendance and sabha to render the Sanchalak's roster");

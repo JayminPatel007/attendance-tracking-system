@@ -2,7 +2,7 @@ package org.sabha.identity.applicationservice.appointment;
 
 import java.util.UUID;
 
-import org.sabha.common.MadhyasthaKaryalayaLookup;
+import org.sabha.common.CallerAuthority;
 import org.sabha.common.SabhaFact;
 import org.sabha.common.SabhaFacts;
 import org.sabha.common.StructuralParentage;
@@ -15,35 +15,33 @@ import org.springframework.stereotype.Service;
  * at the parent scope. Pure decision component — returns a boolean, never throws
  * or mutates; {@link RoleAppointmentService} turns a {@code false} into an
  * {@link org.sabha.common.AuthorizationDeniedException}.
+ *
+ * <p>Its two authority ports folded into the caller parameter under ADR-0032,
+ * leaving only the two that resolve <em>containment</em> — which are keyed by the
+ * target scope, not the appointer. What survives here is the whole of the
+ * policy: the six-arm switch, the inverted rank (you appoint the tier beneath
+ * you), and the Regional Team's self-replication disjunction.</p>
  */
 @Service
 public class AppointmentAuthorization {
 
     private final SabhaFacts sabhas;
     private final StructuralParentage parentage;
-    private final AppointerAuthorityLookup appointer;
-    private final MadhyasthaKaryalayaLookup madhyasthaKaryalaya;
 
-    public AppointmentAuthorization(
-            SabhaFacts sabhas,
-            StructuralParentage parentage,
-            AppointerAuthorityLookup appointer,
-            MadhyasthaKaryalayaLookup madhyasthaKaryalaya) {
+    public AppointmentAuthorization(SabhaFacts sabhas, StructuralParentage parentage) {
         this.sabhas = sabhas;
         this.parentage = parentage;
-        this.appointer = appointer;
-        this.madhyasthaKaryalaya = madhyasthaKaryalaya;
     }
 
-    public boolean canAppoint(UUID appointerId, AppointmentScope scope) {
+    public boolean canAppoint(CallerAuthority appointer, AppointmentScope scope) {
         return switch (scope.role()) {
-            case SANCHALAK, SAH_SANCHALAK -> nirdeshakOverSabha(appointerId, scope.sabhaId());
+            case SANCHALAK, SAH_SANCHALAK -> nirdeshakOverSabha(appointer, scope.sabhaId());
             case NIRIKSHAK, SAH_NIRDESHAK ->
-                    appointer.holdsNirdeshak(appointerId, scope.kshetraId(), scope.demographic());
-            case NIRDESHAK -> sanyojakOverKshetra(appointerId, scope.kshetraId(), scope.demographic());
-            case SANYOJAK -> regionalTeamOverZone(appointerId, scope.zoneId(), scope.demographic());
-            case REGIONAL_TEAM -> regionalTeamPeerOrMk(appointerId, scope.cityId(), scope.demographic());
-            case SANT -> madhyasthaKaryalaya.isMember(appointerId);
+                    appointer.holdsNirdeshakIn(scope.kshetraId(), scope.demographic());
+            case NIRDESHAK -> sanyojakOverKshetra(appointer, scope.kshetraId(), scope.demographic());
+            case SANYOJAK -> regionalTeamOverZone(appointer, scope.zoneId(), scope.demographic());
+            case REGIONAL_TEAM -> regionalTeamPeerOrMk(appointer, scope.cityId(), scope.demographic());
+            case SANT -> appointer.isMadhyasthaKaryalaya();
         };
     }
 
@@ -52,27 +50,27 @@ public class AppointmentAuthorization {
      * a Regional Team role for the same (City, demographic) may appoint another,
      * in addition to the Madhyastha Karyalaya's bootstrap path (ADR-0011).
      */
-    private boolean regionalTeamPeerOrMk(UUID appointerId, UUID cityId, String demographic) {
-        return madhyasthaKaryalaya.isMember(appointerId)
-                || appointer.holdsRegionalTeam(appointerId, cityId, demographic);
+    private boolean regionalTeamPeerOrMk(CallerAuthority appointer, UUID cityId, String demographic) {
+        return appointer.isMadhyasthaKaryalaya()
+                || appointer.holdsRegionalTeamIn(cityId, demographic);
     }
 
-    private boolean nirdeshakOverSabha(UUID appointerId, UUID sabhaId) {
+    private boolean nirdeshakOverSabha(CallerAuthority appointer, UUID sabhaId) {
         return sabhas.of(sabhaId)
                 .map(SabhaFact::scope)
-                .map(s -> appointer.holdsNirdeshak(appointerId, s.kshetraId(), s.demographic()))
+                .map(s -> appointer.holdsNirdeshakIn(s.kshetraId(), s.demographic()))
                 .orElse(false);
     }
 
-    private boolean sanyojakOverKshetra(UUID appointerId, UUID kshetraId, String demographic) {
+    private boolean sanyojakOverKshetra(CallerAuthority appointer, UUID kshetraId, String demographic) {
         return parentage.zoneOfKshetra(kshetraId)
-                .map(zoneId -> appointer.holdsSanyojak(appointerId, zoneId, demographic))
+                .map(zoneId -> appointer.holdsSanyojakIn(zoneId, demographic))
                 .orElse(false);
     }
 
-    private boolean regionalTeamOverZone(UUID appointerId, UUID zoneId, String demographic) {
+    private boolean regionalTeamOverZone(CallerAuthority appointer, UUID zoneId, String demographic) {
         return parentage.cityOfZone(zoneId)
-                .map(cityId -> appointer.holdsRegionalTeam(appointerId, cityId, demographic))
+                .map(cityId -> appointer.holdsRegionalTeamIn(cityId, demographic))
                 .orElse(false);
     }
 }

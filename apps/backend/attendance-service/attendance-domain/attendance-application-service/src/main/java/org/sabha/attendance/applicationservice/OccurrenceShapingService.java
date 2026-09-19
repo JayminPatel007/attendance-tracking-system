@@ -11,7 +11,7 @@ import java.util.UUID;
 import org.sabha.attendance.domain.Occurrence;
 import org.sabha.attendance.domain.Reason;
 import org.sabha.common.AuthorizedAction;
-import org.sabha.common.UserId;
+import org.sabha.common.CallerAuthority;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,13 +48,13 @@ public class OccurrenceShapingService {
     }
 
     @Transactional
-    public void cancel(UserId caller, UUID occurrenceId, Reason reason) {
+    public void cancel(CallerAuthority caller, UUID occurrenceId, Reason reason) {
         writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.CANCEL),
                 OccurrenceAction.CANCEL, reason, Occurrence::cancel);
     }
 
     @Transactional
-    public void revert(UserId caller, UUID occurrenceId) {
+    public void revert(CallerAuthority caller, UUID occurrenceId) {
         writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.CANCEL),
                 OccurrenceAction.REVERT, occurrence -> {
                     requireWithinRevertWindow(occurrence);
@@ -63,7 +63,7 @@ public class OccurrenceShapingService {
     }
 
     @Transactional
-    public void reschedule(UserId caller, UUID occurrenceId,
+    public void reschedule(CallerAuthority caller, UUID occurrenceId,
                            LocalDate newDate, LocalTime newStartTime, LocalTime newEndTime) {
         writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.RESCHEDULE),
                 OccurrenceAction.RESCHEDULE,
@@ -71,7 +71,7 @@ public class OccurrenceShapingService {
     }
 
     @Transactional
-    public void overrideVenue(UserId caller, UUID occurrenceId, String venue) {
+    public void overrideVenue(CallerAuthority caller, UUID occurrenceId, String venue) {
         writer.transition(occurrenceId, TransitionActor.user(caller, AuthorizedAction.VENUE_OVERRIDE),
                 OccurrenceAction.OVERRIDE_VENUE,
                 occurrence -> occurrence.overrideVenue(venue));
