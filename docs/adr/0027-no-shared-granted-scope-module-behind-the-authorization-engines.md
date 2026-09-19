@@ -1,6 +1,8 @@
 # No shared granted-scope module behind the four authorization engines
 
-**Status**: accepted. Records the outcome of the design spike in issue #68; rejects "candidate 5" from the 2026-06-10 architecture review. No code changes.
+**Status**: accepted, but **§1, §5 and §6 are superseded by [ADR-0032](0032-caller-authority-resolved-at-the-request-edge.md)** (issue #133), which also corrects §2's port inventory. **§3 survives and is quoted forward verbatim by ADR-0032; §4 stands untouched.** The **ruling** below — no shared granted-scope module, no generic `AuthorizationEngine<T>`, no pre-resolved *scope* — also stands. What ADR-0032 overturns is narrower and specific: this ADR rejected a shared *policy* module and a shared *fact* layer in one breath, and conflated them. The caller's own rows in `role_assignments` **do** consolidate, to a value resolved at the request edge; the policies do not. §1 is separately **bent** by [ADR-0033](0033-sabha-lookups-re-partition-by-subject.md) (two windows on one relation are not §1's mismatched-shapes case). Two premises recorded below have failed independently: the §1 table's claim that `DashboardAccess` reads no `role_assignments` is false post-#79, and the Consequences' "revisit if a fifth and sixth engine appear" trigger has fired.
+
+Records the outcome of the design spike in issue #68; rejects "candidate 5" from the 2026-06-10 architecture review. No code changes.
 
 Four authorization engines each read `role_assignments` to answer "what authority does this caller hold":
 

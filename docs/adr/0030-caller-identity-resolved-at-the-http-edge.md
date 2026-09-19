@@ -1,6 +1,6 @@
 # Caller identity is resolved at the HTTP edge; below it, signatures speak `UserId`
 
-**Status**: accepted. **Amends [ADR-0019](0019-bounded-context-module-taxonomy.md)** by adding a sixth shared module, `common-application`, which ADR-0019's Q11.3 had deliberately dropped. Extends [ADR-0016](0016-oidc-auth-via-keycloak.md) and completes the `requireUserId` consolidation from issue #78.
+**Status**: accepted. **Amends [ADR-0019](0019-bounded-context-module-taxonomy.md)** by adding a sixth shared module, `common-application`, which ADR-0019's Q11.3 had deliberately dropped. Extends [ADR-0016](0016-oidc-auth-via-keycloak.md) and completes the `requireUserId` consolidation from issue #78. **Amended by [ADR-0032](0032-caller-authority-resolved-at-the-request-edge.md)**, which widens the type behind `@CurrentUser` from `UserId` to `CallerAuthority` — the annotation, the resolver's location and the resolve-once-at-the-edge principle below are unchanged; `UserId` is now reached through `caller.userId()`.
 
 Every authenticated endpoint opened by parsing the Keycloak subject out of the credential and threading it downward:
 
