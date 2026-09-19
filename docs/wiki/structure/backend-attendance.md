@@ -26,6 +26,8 @@ sources:
   - { id: adr-0028, title: "Persistence stays on JdbcClient (no JPA); aggregate lifecycles stay in-aggregate (no Spring State Machine)", resource: ../../adr/0028-jdbcclient-persistence-and-in-aggregate-lifecycles.md }
   - { id: context, title: "CONTEXT.md — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Attendance Service

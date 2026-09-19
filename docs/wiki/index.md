@@ -74,7 +74,7 @@ Recurring patterns that reconcile ADR clusters — the interlink surface over th
 
 | Page | Description | Also known as |
 |---|---|---|
-| [authorization](patterns/authorization.md) | How every authority decision is made — one stateless engine per context, resolving current scope through identity-owned ports. | authz, permissions, Authorization Engine, who may, scope, RoleAssignmentLookup |
+| [authorization](patterns/authorization.md) | How every authority decision is made — the caller's own roles resolved once at the request edge, each context's policy kept in its own stateless engine. | authz, permissions, Authorization Engine, who may, scope, CallerAuthority |
 | [module-ring](patterns/module-ring.md) | The five-module Clean-Architecture ring every backend bounded context is built from, and what the Maven graph enforces. | ring, the hexagon, five modules, Clean Architecture, domain-core, application-service, data-access |
 
 ## Notes

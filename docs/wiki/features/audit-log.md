@@ -21,6 +21,8 @@ sources:
   - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
   - { id: context, title: "CONTEXT.md — Nirdeshak, Sanyojak, Regional Team, Sant, Madhyastha Karyalaya, Nirikshak", resource: ../../../CONTEXT.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Audit Log

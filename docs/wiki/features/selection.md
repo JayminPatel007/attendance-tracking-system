@@ -21,6 +21,8 @@ sources:
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
   - { id: context, title: "CONTEXT.md — Selection (BSS / YSS), Bal Sevak Sabha, Yuvak Sevak Sabha, Home Sabha, Nirdeshak, Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Selection

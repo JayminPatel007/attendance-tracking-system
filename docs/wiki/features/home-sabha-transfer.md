@@ -24,6 +24,8 @@ sources:
   - { id: adr-0026, title: "Deletion Model", resource: ../../adr/0026-deletion-model.md }
   - { id: context, title: "CONTEXT.md — Home Sabha, Sabha Kind, Roster, Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: 6e43fd984ca097e05d67237d341afc11c0bf41ea
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Home Sabha Transfer

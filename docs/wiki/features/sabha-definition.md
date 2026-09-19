@@ -24,6 +24,8 @@ sources:
   - { id: adr-0026, title: "Deletion model: block-if-non-empty for geography, soft-retire for Sabha Kind, revoke-with-inheritance for roles", resource: ../../adr/0026-deletion-model.md }
   - { id: context, title: "CONTEXT.md — Sabha, Sabha Type (aka Sabha Kind), Schedule shapes, Nirdeshak, Sanchalak", resource: ../../../CONTEXT.md }
 last_compiled: 85eaa7a00240b54e15e35da00229a19ee8c71ce7
+status: disputed
+disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
 ---
 
 # Sabha Definition
