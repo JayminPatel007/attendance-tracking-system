@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </ol>
  */
 @Service
-public class RoleRevocationService implements RevokeRole {
+public class RoleRevocationService {
 
     private final AppointmentAuthorization authz;
     private final RevokableRoleAssignments assignments;
@@ -53,7 +53,6 @@ public class RoleRevocationService implements RevokeRole {
         this.clock = clock;
     }
 
-    @Override
     @Transactional
     public void revoke(CallerAuthority caller, UUID assignmentId) {
         UUID actor = caller.userId().value();
