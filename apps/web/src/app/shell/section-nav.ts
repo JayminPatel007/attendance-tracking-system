@@ -14,7 +14,7 @@ export interface SectionNavItem extends NavItem {
 /**
  * The full set of shell sections in display order (Slice 9). Each user sees the
  * subset the BFF returns on `/bff/me`; the sidebar and the route guard both read
- * this single source of truth. Later slices fill each route with real screens.
+ * this single source of truth.
  */
 export const SECTION_NAV: readonly SectionNavItem[] = [
   { section: 'DASHBOARD', path: 'dashboard', label: 'Dashboard' },

@@ -11,9 +11,9 @@ import org.sabha.identity.applicationservice.appointment.AppointableRole;
 import org.sabha.identity.applicationservice.appointment.AppointmentResult;
 import org.sabha.identity.applicationservice.appointment.AppointmentScope;
 import org.sabha.identity.applicationservice.directory.NameCandidate;
-import org.sabha.identity.applicationservice.appointment.RevokeRole;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentCommand;
 import org.sabha.identity.applicationservice.appointment.RoleAppointmentService;
+import org.sabha.identity.applicationservice.appointment.RoleRevocationService;
 import org.sabha.identity.applicationservice.appointment.SahNirdeshakCap;
 import org.sabha.identity.domain.Gender;
 import org.springframework.http.ResponseEntity;
@@ -42,13 +42,14 @@ public class RoleAppointmentController {
 
     private final RoleAppointmentService appointments;
     private final SahNirdeshakCap sahNirdeshakCap;
-    private final RevokeRole revokeRole;
+    private final RoleRevocationService revocations;
 
     public RoleAppointmentController(
-            RoleAppointmentService appointments, SahNirdeshakCap sahNirdeshakCap, RevokeRole revokeRole) {
+            RoleAppointmentService appointments, SahNirdeshakCap sahNirdeshakCap,
+            RoleRevocationService revocations) {
         this.appointments = appointments;
         this.sahNirdeshakCap = sahNirdeshakCap;
-        this.revokeRole = revokeRole;
+        this.revocations = revocations;
     }
 
     @PostMapping("/bff/appointments")
@@ -68,11 +69,11 @@ public class RoleAppointmentController {
      * row revoked, the User loses login on their last active role, and no
      * appointees or structure cascade. Authority, the Regional Team last-one-out
      * guard (409), and unknown/already-revoked ids (404) are arbitrated by
-     * {@link RevokeRole} and mapped by the global exception handler. Returns 204.
+     * {@link RoleRevocationService} and mapped by the global exception handler. Returns 204.
      */
     @PostMapping("/bff/appointments/{id}/revoke")
     public ResponseEntity<Void> revoke(@PathVariable UUID id, @CurrentUser CallerAuthority caller) {
-        revokeRole.revoke(caller, id);
+        revocations.revoke(caller, id);
         return ResponseEntity.noContent().build();
     }
 

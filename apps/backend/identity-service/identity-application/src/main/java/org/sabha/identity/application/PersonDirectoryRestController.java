@@ -9,8 +9,8 @@ import org.sabha.common.web.CurrentUser;
 import org.sabha.identity.applicationservice.directory.AddPersonApplicationService;
 import org.sabha.identity.applicationservice.directory.AddPersonCommand;
 import org.sabha.identity.applicationservice.directory.AddResult;
-import org.sabha.identity.applicationservice.directory.GetPersonDetailUseCase;
 import org.sabha.identity.applicationservice.directory.NameCandidate;
+import org.sabha.identity.applicationservice.directory.PersonDirectory;
 import org.sabha.identity.applicationservice.directory.SearchDirectoryUseCase;
 import org.sabha.identity.applicationservice.directory.SearchWalkInCandidatesUseCase;
 import org.sabha.identity.applicationservice.directory.WalkInCandidate;
@@ -42,17 +42,17 @@ public class PersonDirectoryRestController {
     private final AddPersonApplicationService addPerson;
     private final SearchDirectoryUseCase searchDirectory;
     private final SearchWalkInCandidatesUseCase searchWalkInCandidates;
-    private final GetPersonDetailUseCase getPersonDetail;
+    private final PersonDirectory directory;
 
     public PersonDirectoryRestController(
             AddPersonApplicationService addPerson,
             SearchDirectoryUseCase searchDirectory,
             SearchWalkInCandidatesUseCase searchWalkInCandidates,
-            GetPersonDetailUseCase getPersonDetail) {
+            PersonDirectory directory) {
         this.addPerson = addPerson;
         this.searchDirectory = searchDirectory;
         this.searchWalkInCandidates = searchWalkInCandidates;
-        this.getPersonDetail = getPersonDetail;
+        this.directory = directory;
     }
 
     @PostMapping("/api/directory/persons")
@@ -112,7 +112,7 @@ public class PersonDirectoryRestController {
 
     @GetMapping("/api/directory/persons/{id}")
     public ResponseEntity<PersonResponse> detail(@PathVariable UUID id) {
-        return getPersonDetail.byId(id)
+        return directory.findById(id)
                 .map(p -> ResponseEntity.ok(PersonResponse.of(p)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
