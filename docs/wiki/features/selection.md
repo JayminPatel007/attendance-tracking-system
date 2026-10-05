@@ -12,14 +12,14 @@ source_paths: [
   docs/adr/0003-*.md,
   docs/adr/0006-*.md,
   docs/adr/0022-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [17, 73]
 sources:
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
   - { id: adr-0006, title: "BSS Membership Is Additive, Not Replacement", resource: ../../adr/0006-bss-is-additive-not-replacement.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
-  - { id: context, title: "CONTEXT.md — Selection (BSS / YSS), Bal Sevak Sabha, Yuvak Sevak Sabha, Home Sabha, Nirdeshak, Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Selection (BSS / YSS), Bal Sevak Sabha, Yuvak Sevak Sabha, Home Sabha, Nirdeshak, Sanchalak", resource: ../../../GLOSSARY.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
@@ -29,7 +29,7 @@ disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-con
 
 ## What it does
 
-<!-- [coverage: high -- CONTEXT.md's Selection entry and ADR-0006, read against SelectionNomination and SelectionService] -->
+<!-- [coverage: high -- GLOSSARY.md's Selection entry and ADR-0006, read against SelectionNomination and SelectionService] -->
 
 **Bal Sevak Sabha** and **Yuvak Sevak Sabha** are selective programs, and a Person joins one in two
 steps: their **Regular Sanchalak nominates**, and the **demographic Nirdeshak** approves or rejects.
@@ -66,7 +66,7 @@ approve and deselect only — add or remove the selective Home Sabha.
 
 ## Rules & authority
 
-<!-- [coverage: high -- SelectionService and SelectionNomination read directly against ADR-0006 and CONTEXT.md] -->
+<!-- [coverage: high -- SelectionService and SelectionNomination read directly against ADR-0006 and GLOSSARY.md] -->
 
 - **Nominating is the Sabha's Sanchalak or Sah-Sanchalak**, on that Sabha; anyone else is **403**.
 - **Deciding is the demographic Nirdeshak**, and that authority is **track-shared** — the same
@@ -120,7 +120,7 @@ being refused up front — the screen never offers it, so the path is unreachabl
 
 - `SelectionService.nominate` is the source that paid: its five guards in order are the entire
   contract, and the two derivations inside it — demographic → track, then `(Kshetra, demographic,
-  track)` → Sabha — are stated in no ADR. `CONTEXT.md` describes the outcome and never says who
+  track)` → Sabha — are stated in no ADR. `GLOSSARY.md` describes the outcome and never says who
   derives the target Sabha.
 - The `slice-16` migration header supplied the two things the Java does not: why the row is
   denormalized (the queue scopes without re-walking the hierarchy) and that the row doubles as the

@@ -13,7 +13,7 @@ source_paths: [
   docs/adr/0009-*.md,
   docs/adr/0024-*.md,
   docs/adr/0026-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [11, 84, 88]
 sources:
@@ -21,7 +21,7 @@ sources:
   - { id: adr-0009, title: "Structural Creation Authority Lives at the Tier Above", resource: ../../adr/0009-structural-creation-authority.md }
   - { id: adr-0024, title: "Zone creation moves from Madhyastha Karyalaya to the Regional Team", resource: ../../adr/0024-zone-creation-moves-to-regional-team.md }
   - { id: adr-0026, title: "Deletion model: block-if-non-empty for geography, soft-retire for Sabha Kind, revoke-with-inheritance for roles", resource: ../../adr/0026-deletion-model.md }
-  - { id: context, title: "CONTEXT.md — Geographic hierarchy, Kshetra, Sanyojak, Regional Team, Madhyastha Karyalaya", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Geographic hierarchy, Kshetra, Sanyojak, Regional Team, Madhyastha Karyalaya", resource: ../../../GLOSSARY.md }
 last_compiled: 85eaa7a00240b54e15e35da00229a19ee8c71ce7
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."

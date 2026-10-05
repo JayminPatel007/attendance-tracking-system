@@ -93,7 +93,7 @@ never a trigger: a page over its cap with no admission test met is *misfiled*, n
   did under `concept`, because `pattern` is the softer word and every codebase thinks it has fifty.
 - **note** — see §7.
 
-**No ADR digest and no `CONTEXT.md` mirror page.** Those stay canonical and immutable; a
+**No ADR digest and no `GLOSSARY.md` mirror page.** Those stay canonical and immutable; a
 summarising page of an immutable original is a second copy that can only drift. OKF §6.3's
 `references/` convention would be a sanctioned place to mirror them and is **declined for the same
 reason** — including for `.claude/skills/wiki-sweep/`, which §6.3's "run instructions" would cover.
@@ -190,12 +190,12 @@ source_paths: [                 # required; ≥1 glob, what invalidates this pag
   apps/backend/identity-service/*/pom.xml,
   apps/backend/identity-service/pom.xml,
   docs/adr/0015-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [12, 84, 86]            # optional; feature pages mainly
 sources:                        # required, ≥1; what was READ to write this page
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
-  - { id: context, title: "CONTEXT.md — Nirdeshak, Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Nirdeshak, Sanchalak", resource: ../../../GLOSSARY.md }
 appears_in: [backend-identity, backend-sabha]   # `pattern` pages only; bare stems
 last_compiled: <full-sha>       # required; the commit this page was compiled against
 status: disputed                # optional; see §6. Absent means "current and not deprecated"
@@ -385,7 +385,7 @@ per-ADR globs fan out to a **median of 1 page** (max 6, and that was the ADR-001
 taxonomy commit, which genuinely governs all six backend units), where a blanket glob would dirty
 every page every time.
 
-**2. `CONTEXT.md` is on every compiled page.** The glossary is the vocabulary these pages are written
+**2. `GLOSSARY.md` is on every compiled page.** The glossary is the vocabulary these pages are written
 in. Precision was not bought here — unlike ADRs there is no existing field mapping a term to the
 pages using it, and inventing one would be new machinery for an event that has occurred **3 times in
 199 commits**. Blanket over-firing costs ~2 spurious verdicts a year. Notes are excluded: their
@@ -527,7 +527,7 @@ The final section on every compiled page is a **method statement**: how this pag
 where the next compiler should look first. It is not provenance-as-artifact — that moved wholesale
 into `sources[]` (§3) — and this is the reason the section survived the move at all.
 
-The three bullets it replaced were an ADR line, a `CONTEXT.md` line and a **code line**, and reading
+The three bullets it replaced were an ADR line, a `GLOSSARY.md` line and a **code line**, and reading
 the code lines together shows what they always were:
 
 > "Class listing + writer/reader SQL grep over `analytics-service/**`"
@@ -561,7 +561,7 @@ by the sweep that next recompiles its page, which is the same deferral #160 esta
 
 Two further consequences. `## Method` **names globs and bare filenames**, which are not followable, so
 lint path-checks only genuine markdown links inside it. And the glossary term list that used to trail the
-`CONTEXT.md` bullet (`— Nirdeshak, Sanchalak, Nirikshak, Kshetra`) lives on in the `context` entry's
+`GLOSSARY.md` bullet (`— Nirdeshak, Sanchalak, Nirikshak, Kshetra`) lives on in the `context` entry's
 `title`, where it is still greppable.
 
 ### feature
@@ -569,7 +569,7 @@ lint path-checks only genuine markdown links inside it. And the glossary term li
 ```markdown
 # <Capability Name>
 
-## What it does      <!-- user-facing, in CONTEXT.md's language -->
+## What it does      <!-- user-facing, in GLOSSARY.md's language -->
 ## Flow              <!-- per app: mobile/web -> BFF -> context -> data -->
 ## Rules & authority <!-- who may, what is rejected and with what code -->
 ## Where the code is <!-- structure-page links; no code detail restated -->
@@ -625,7 +625,7 @@ proves wrong.
 | 7 | What must I not break? |
 | 8 | What did we learn the hard way? |
 
-Rows 1 and 2 point **out** of the wiki, to `CONTEXT.md` and `docs/dev-setup.md`, which already
+Rows 1 and 2 point **out** of the wiki, to `GLOSSARY.md` and `docs/dev-setup.md`, which already
 answer them better than a wiki page would. Rows 3, 4 and 8 point at same-file catalog anchors. Rows
 5, 6 and 7 point at a page; until that page exists the compiler points the row at its type's
 catalog anchor instead, so the router never carries a dangling link. That idiom — **a catalog anchor
@@ -896,7 +896,7 @@ canonical surface has declined it:
 
 1. environment / tooling → `docs/dev-setup.md`
 2. a decision → an ADR
-3. vocabulary → `CONTEXT.md`
+3. vocabulary → `GLOSSARY.md`
 4. behaviour of one build unit → that `structure/` page's `Gotchas`
 5. cross-cutting, no owning surface → **`notes/`**
 
@@ -950,8 +950,8 @@ the **lint** layer, by where they point:
   Inflection stays outside the brackets: `[web](web.md)'s`.
 - **Out of the wiki** (lint check 3): relative markdown links, in `## Method` and in the
   machine-readable frontmatter (`source_paths`, `sources[].resource`, `resource`).
-- **In prose:** cite **bare** — `per ADR-0011`, and glossary terms in `CONTEXT.md`'s exact wording,
-  unlinked. **No anchors into `CONTEXT.md`**: it has no per-term headings, only five coarse `###`
+- **In prose:** cite **bare** — `per ADR-0011`, and glossary terms in `GLOSSARY.md`'s exact wording,
+  unlinked. **No anchors into `GLOSSARY.md`**: it has no per-term headings, only five coarse `###`
   groups, so an anchor would be both imprecise and one rewording from broken.
 
 **Why link text is pinned to the stem.** Markdown would permit `[the Flutter app](../structure/mobile-shell.md)`,

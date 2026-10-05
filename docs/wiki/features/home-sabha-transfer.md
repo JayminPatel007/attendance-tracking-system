@@ -14,7 +14,7 @@ source_paths: [
   docs/adr/0007-*.md,
   docs/adr/0013-*.md,
   docs/adr/0026-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [9, 77, 87, 130]
 sources:
@@ -22,7 +22,7 @@ sources:
   - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
   - { id: adr-0013, title: "Directory De-duplication on Person Add", resource: ../../adr/0013-directory-de-duplication-on-person-add.md }
   - { id: adr-0026, title: "Deletion Model", resource: ../../adr/0026-deletion-model.md }
-  - { id: context, title: "CONTEXT.md — Home Sabha, Sabha Kind, Roster, Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Home Sabha, Sabha Kind, Roster, Sanchalak", resource: ../../../GLOSSARY.md }
 last_compiled: 6e43fd984ca097e05d67237d341afc11c0bf41ea
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."

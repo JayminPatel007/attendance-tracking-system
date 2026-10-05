@@ -14,7 +14,7 @@ source_paths: [
   docs/adr/0019-*.md,
   docs/adr/0024-*.md,
   docs/adr/0026-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0009, title: "Structural Creation Authority Lives at the Tier Above", resource: ../../adr/0009-structural-creation-authority.md }
@@ -22,7 +22,7 @@ sources:
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0024, title: "Zone creation moves from Madhyastha Karyalaya to the Regional Team", resource: ../../adr/0024-zone-creation-moves-to-regional-team.md }
   - { id: adr-0026, title: "Deletion model: block-if-non-empty for geography, soft-retire for Sabha Kind, revoke-with-inheritance for roles", resource: ../../adr/0026-deletion-model.md }
-  - { id: context, title: "CONTEXT.md — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Kshetra, Zone, Sabha, Sabha Kind, Sanyojak, Regional Team", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 status: disputed
 disputed_reason: "The `SabhaKind` name collision the page warns about is gone — the common-domain copy is now `SabhaKindCode` (#217) — and this unit's three `*NotFoundException`s have moved to common-domain (#218)."

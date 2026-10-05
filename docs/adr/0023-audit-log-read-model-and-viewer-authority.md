@@ -40,7 +40,7 @@ Authority to see the audit surface is **Nirdeshak-and-above**, and what each cal
 - **Nirdeshak / Sah-Nirdeshak** → the Kshetra(s) they hold (`kshetra_id IN …`).
 - **Sanyojak** → the Zone(s) they coordinate (`zone_id IN …`).
 - **Regional Team** → the City(ies) they oversee (`city_id IN …`).
-- **Sant** → universal read across the State (their read access is universal per CONTEXT.md; the audit surface honours it).
+- **Sant** → universal read across the State (their read access is universal per GLOSSARY.md; the audit surface honours it).
 - **Madhyastha Karyalaya** → state-wide.
 - **Sanchalak / Sah-Sanchalak / Nirikshak** → **no access** (403). Their work flows through their own dashboards and mobile screens (ADR-0003); they do not get an oversight surface in v1.
 

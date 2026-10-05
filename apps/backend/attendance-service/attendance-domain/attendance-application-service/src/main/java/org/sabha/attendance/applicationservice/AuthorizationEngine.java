@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
  * are granted to the Sanchalak of the target Sabha; the Sah-Sanchalak is
  * explicitly excluded. They are <em>also</em> granted to a Nirikshak currently
  * assigned to that Sabha, who exercises the full Sanchalak operational toolkit as
- * a proxy when the Sanchalak is unavailable (CONTEXT.md, ADR-0001, Slice 14). The
+ * a proxy when the Sanchalak is unavailable (GLOSSARY.md, ADR-0001, Slice 14). The
  * proxy is scoped to the explicit Sabha assignment via {@link
  * NirikshakAssignmentLookup}, so a Nirikshak is rejected on any Sabha outside
  * their assignment. The audit attribution of a proxy action (acting Nirikshak vs

@@ -11,13 +11,13 @@ source_paths: [
   apps/mobile/melos.yaml,
   docs/adr/0014-*.md,
   docs/adr/0015-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [73, 75]
 sources:
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
-  - { id: context, title: "CONTEXT.md — Walk-in, Roster, Sabha Occurrence", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Walk-in, Roster, Sabha Occurrence", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 

@@ -62,7 +62,7 @@
 
         <div class="page-head" style="margin-bottom:14px;">
           <h1 style="font-size:18px;margin:0 0 4px;">Sanchalak toolkit · ${s.name}</h1>
-          <div class="sub small muted">Full Sanchalak operational authority on this Sabha (per CONTEXT.md).</div>
+          <div class="sub small muted">Full Sanchalak operational authority on this Sabha (per GLOSSARY.md).</div>
         </div>
 
         <div class="proxy-toolkit">

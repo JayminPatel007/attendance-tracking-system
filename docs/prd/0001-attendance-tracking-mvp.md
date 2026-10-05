@@ -2,11 +2,11 @@
 
 **Status:** Ready for implementation
 **Label:** ready-for-agent
-**Domain reference:** [`CONTEXT.md`](../../CONTEXT.md)
+**Domain reference:** [`GLOSSARY.md`](../../GLOSSARY.md)
 **Architectural decisions:** [`docs/adr/0001`](../adr/0001-sabha-occurrence-lifecycle.md) through [`docs/adr/0013`](../adr/0013-directory-de-duplication-on-person-add.md)
 **Prototypes:** [`prototypes/NOTES.md`](../../prototypes/NOTES.md)
 
-This PRD synthesises a 24-question grilling session ([`CONTEXT.md`](../../CONTEXT.md) and ADRs 0001–0013) and a 12-prototype UI pass ([`prototypes/`](../../prototypes/)). Open questions raised by prototyping have been resolved in this document — see the *Implementation Decisions* section.
+This PRD synthesises a 24-question grilling session ([`GLOSSARY.md`](../../GLOSSARY.md) and ADRs 0001–0013) and a 12-prototype UI pass ([`prototypes/`](../../prototypes/)). Open questions raised by prototyping have been resolved in this document — see the *Implementation Decisions* section.
 
 ## Problem Statement
 
@@ -117,7 +117,7 @@ One Spring Boot application, one Postgres database, single deployment per ADR-00
 
 - Person Directory with mobile-keyed identity (ADR-0013). Mobile required at creation; unique system-wide; parent/guardian linking for children without their own phone.
 - User account lifecycle (a Person becomes a User when assigned a role; loses User status when all roles revoked; Person record persists).
-- Role assignments scoped per the role-scoping table in CONTEXT.md (Sanchalak/Sah-Sanchalak per `(Kshetra, demographic, track)`; Nirikshak Regular-only; Nirdeshak/Sah-Nirdeshak/Sanyojak/Regional Team per `(geographic level, demographic)`; Sant per `(City, demographics…)`; MK per State).
+- Role assignments scoped per the role-scoping table in GLOSSARY.md (Sanchalak/Sah-Sanchalak per `(Kshetra, demographic, track)`; Nirikshak Regular-only; Nirdeshak/Sah-Nirdeshak/Sanyojak/Regional Team per `(geographic level, demographic)`; Sant per `(City, demographics…)`; MK per State).
 - Appointment workflow per ADR-0011 with the Person-create-at-appointment exception per ADR-0002.
 - OTP infrastructure used by both Verified Home Sabha Transfer (ADR-0002) and password reset (ADR-0004).
 
@@ -140,7 +140,7 @@ Hides role scoping, demographic-vs-track scope, proxy authority (Nirikshak-as-Sa
 ```
 transition(occurrenceId, action, actor) → Result
 ```
-State diagram (from CONTEXT.md and ADR-0001):
+State diagram (from GLOSSARY.md and ADR-0001):
 
 ```
 Scheduled ─cancel→ Cancelled ─revert→ Scheduled
@@ -270,7 +270,7 @@ None — this is the first round of code. Tests for these four modules establish
 
 ## Out of Scope
 
-- **Ad-hoc Sabha creation** (one-off gatherings outside the standing schedule — visiting Sant lectures, festival one-offs). Concept is in `CONTEXT.md` flagged as deferred.
+- **Ad-hoc Sabha creation** (one-off gatherings outside the standing schedule — visiting Sant lectures, festival one-offs). Concept is in `GLOSSARY.md` flagged as deferred.
 - **Re-engagement candidate follow-up tracking** ("marked as followed up" toggle). v1 ships the read-only list; revisit after a quarter of usage.
 - **Push notifications / alerts.** Including the "Nirikshak alerted when their Sanchalak hasn't opened the app for N days" idea — flagged as "revisit if operational pain emerges."
 - **Multi-tenant / per-State deployment.** Single deployment covers every State per ADR-0005.
@@ -288,5 +288,5 @@ None — this is the first round of code. Tests for these four modules establish
 - **YSS expansion:** Yuvak Sevak Sabha (males) and Yuvati Sevak Sabha (females) share the YSS acronym in the organisation's usage, mirroring BSS's loose application to both Baal and Balika.
 - **The Sant universal-read scope is load-bearing.** The dashboard's city picker must behave fundamentally differently for a Sant (any city) than for every other role (strict scope). Don't paper over the difference.
 - **Mobile-keyed identity is foundational.** A v1 with optional mobile numbers would create dupes from day one — keep mobile required at Person creation. Children without their own phones link to a parent's mobile via `guardianFor`.
-- **This PRD is the synthesis of two prior sessions:** a 24-question domain grilling with the domain expert ([`CONTEXT.md`](../../CONTEXT.md) and ADRs 0001–0013) and a 12-prototype UI pass ([`prototypes/`](../../prototypes/)). Implementation should treat the ADRs as the canonical source of architectural decisions and `CONTEXT.md` as the canonical source of language. The 12 prototype open questions have all been resolved in this PRD's *Implementation Decisions* section — do not re-litigate them.
+- **This PRD is the synthesis of two prior sessions:** a 24-question domain grilling with the domain expert ([`GLOSSARY.md`](../../GLOSSARY.md) and ADRs 0001–0013) and a 12-prototype UI pass ([`prototypes/`](../../prototypes/)). Implementation should treat the ADRs as the canonical source of architectural decisions and `GLOSSARY.md` as the canonical source of language. The 12 prototype open questions have all been resolved in this PRD's *Implementation Decisions* section — do not re-litigate them.
 - **Bootstrap:** the very first MK member for the deployed State is seeded by the installer, outside the normal appointment flow. After that, every credential and every Person record traces back to a User action with audit attribution.

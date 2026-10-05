@@ -11,13 +11,13 @@ source_paths: [
   apps/backend/application-container/src/main/resources/db/changelog/slice-14/**,
   docs/adr/0001-*.md,
   docs/adr/0003-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [15]
 sources:
   - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
-  - { id: context, title: "CONTEXT.md — Nirikshak, Sanchalak, Sabha Occurrence", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Nirikshak, Sanchalak, Sabha Occurrence", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 
@@ -25,7 +25,7 @@ last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 
 ## What it does
 
-<!-- [coverage: high -- CONTEXT.md's Nirikshak entry and ADR-0001, read against AuthorizationEngine and SanchalakProxyBffController] -->
+<!-- [coverage: high -- GLOSSARY.md's Nirikshak entry and ADR-0001, read against AuthorizationEngine and SanchalakProxyBffController] -->
 
 A **Nirikshak** oversees three or four Sabhas within a Kshetra. On any Sabha assigned to them, they
 may step into the **Sanchalak's** operational toolkit when the Sanchalak is unavailable — cancelling,
@@ -72,7 +72,7 @@ while the Sanchalak works from the phone, so the same operations are reached fro
 
 ## Rules & authority
 
-<!-- [coverage: high -- AuthorizationEngine, AuthorizedAction.SABHA_SHAPING_ACTIONS and the slice-14 migration read directly against ADR-0001 and CONTEXT.md's Nirikshak entry] -->
+<!-- [coverage: high -- AuthorizationEngine, AuthorizedAction.SABHA_SHAPING_ACTIONS and the slice-14 migration read directly against ADR-0001 and GLOSSARY.md's Nirikshak entry] -->
 
 - **Scope is the explicit assignment, not the role.** `nirikshak_sabha_assignments` is what the engine
   checks; a Nirikshak is refused on any Sabha outside it, even inside their own Kshetra. This is a
@@ -81,12 +81,12 @@ while the Sanchalak works from the phone, so the same operations are reached fro
 - **The proxy borrows the shaping set, and only it.** `SABHA_SHAPING_ACTIONS` is what the engine
   grants an assigned Nirikshak; the web toolkit surfaces three. It is not a second reopen
   path; reopen resolves through the role row.
-  **Three claims, not a conflict:** CONTEXT.md's Nirikshak entry also lists five proxy powers, and it
+  **Three claims, not a conflict:** GLOSSARY.md's Nirikshak entry also lists five proxy powers, and it
   is a *different* five. Cancel, reschedule and standing-schedule change are in both;
-  `VENUE_OVERRIDE` and `CREATE_OCCURRENCE` are in the set and not in CONTEXT.md; and CONTEXT.md's
+  `VENUE_OVERRIDE` and `CREATE_OCCURRENCE` are in the set and not in GLOSSARY.md; and GLOSSARY.md's
   marking, walk-ins and directory-add are outside the set entirely — `canUserDo` returns `false` for
   anything that is neither shaping nor `REOPEN`, so whatever grants those three, it is not this
-  engine. So: five in the set, five in CONTEXT.md, three in the toolkit — the last being the shipped
+  engine. So: five in the set, five in GLOSSARY.md, three in the toolkit — the last being the shipped
   surface, not the granted one.
 - **Attribution is two ids, never one.** `actor_user_id` is the Nirikshak who acted;
   `on_behalf_of_user_id` is the Sanchalak it was done for. A Sanchalak acting on their own Sabha
@@ -127,7 +127,7 @@ from `slice-14/002-seed.sql`, so the assignment the Nirdeshak is supposed to mak
 
 - `AuthorizationEngine.onBehalfOf` is the source that paid: its three conditions are the entire
   distinction between a Sanchalak acting and a Nirikshak proxying, and neither ADR-0001 nor
-  `CONTEXT.md` says how the two are told apart at write time.
+  `GLOSSARY.md` says how the two are told apart at write time.
 - `slice-14/001-sanchalak-proxy.sql`'s header is unusually load-bearing for a migration — it names all
   three structural additions and, decisively, distinguishes the assignment table from the
   Kshetra-tier role row. Read it before the Java on any recompile.

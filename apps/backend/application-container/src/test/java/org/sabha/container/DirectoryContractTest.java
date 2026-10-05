@@ -63,7 +63,7 @@ class DirectoryContractTest {
                 .containsExactlyInAnyOrder("candidates", "requiresOverride");
     }
 
-    /** DOB, mobile and guardian are genuinely optional on a Person (CONTEXT.md). */
+    /** DOB, mobile and guardian are genuinely optional on a Person (GLOSSARY.md). */
     @Test
     void personResponseAlwaysCarriesIdentityAndGender() {
         assertThat(requiredOf("PersonResponse"))

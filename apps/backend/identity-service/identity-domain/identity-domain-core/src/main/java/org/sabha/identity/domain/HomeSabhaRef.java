@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * One of a Person's current Home Sabhas, paired with the {@code sabha_kind} that
- * fixes its demographic+track dimension (CONTEXT.md). The Verified Home Sabha
+ * fixes its demographic+track dimension (GLOSSARY.md). The Verified Home Sabha
  * Transfer swap matches on {@code kind} so only the affected demographic's Home
  * Sabha moves and the others are left untouched.
  */

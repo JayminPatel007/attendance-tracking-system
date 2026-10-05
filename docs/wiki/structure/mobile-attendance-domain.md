@@ -13,14 +13,14 @@ source_paths: [
   docs/adr/0007-*.md,
   docs/adr/0014-*.md,
   docs/adr/0015-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
   - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
-  - { id: context, title: "CONTEXT.md — Attendance Marking, Walk-in, Roster", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Attendance Marking, Walk-in, Roster", resource: ../../../GLOSSARY.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 

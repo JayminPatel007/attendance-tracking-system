@@ -13,7 +13,7 @@ source_paths: [
   docs/adr/0008-*.md,
   docs/adr/0010-*.md,
   docs/adr/0022-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [16, 18, 66, 73]
 sources:
@@ -21,7 +21,7 @@ sources:
   - { id: adr-0008, title: "Single Bounded Context, with Internal Package Seams", resource: ../../adr/0008-single-bounded-context-with-internal-seams.md }
   - { id: adr-0010, title: "Re-engagement Candidate Definition", resource: ../../adr/0010-re-engagement-candidate-definition.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
-  - { id: context, title: "CONTEXT.md — Sant, Madhyastha Karyalaya, Regional Team, Nirdeshak, Re-engagement candidate", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Sant, Madhyastha Karyalaya, Regional Team, Nirdeshak, Re-engagement candidate", resource: ../../../GLOSSARY.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
@@ -31,7 +31,7 @@ disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-con
 
 ## What it does
 
-<!-- [coverage: high -- ADR-0010 and CONTEXT.md's Sant entry, read against DashboardAccess, DashboardQueries and the web section] -->
+<!-- [coverage: high -- ADR-0010 and GLOSSARY.md's Sant entry, read against DashboardAccess, DashboardQueries and the web section] -->
 
 Every signed-in web user lands on a **dashboard**, and every dashboard shows the same three views of
 whatever slice of the organisation that person is entitled to:
@@ -41,7 +41,7 @@ whatever slice of the organisation that person is entitled to:
 - **People analytics** — the in-scope People one row each, with the Home Sabha they are drifting
   from and their streak.
 - **Sabha analytics** — the Zone → Kshetra → Sabha tree with a count at every level, which is the
-  roll-up `CONTEXT.md` promises each tier.
+  roll-up `GLOSSARY.md` promises each tier.
 
 What the views *contain* is [re-engagement](re-engagement.md)'s subject; this page is **who sees which rows**, which
 is the whole of the capability: one screen, and a scope resolved per caller. A
@@ -76,7 +76,7 @@ projection joined live to `sabhas → kshetras → zones`.
 
 ## Rules & authority
 
-<!-- [coverage: high -- DashboardAccess, DashboardScope and JdbcDashboardQueries read directly against ADR-0010 and CONTEXT.md] -->
+<!-- [coverage: high -- DashboardAccess, DashboardScope and JdbcDashboardQueries read directly against ADR-0010 and GLOSSARY.md] -->
 
 - **The scope is a sealed three-case answer**, not a filter the client sends: `RoleScoped` (the
   caller's own `role_assignments`), `CityScoped` (a Sant's chosen City) and `NoCity`. `DashboardAccess`
@@ -126,5 +126,5 @@ projection joined live to `sabhas → kshetras → zones`.
   the only statement anywhere of *which* tiers the dashboard admits and that the Nirikshak resolves
   through the proxy assignment instead of their role row — ADR-0010 says "every tier with scope" and
   stops there.
-- The Sant rules needed both ends: `CONTEXT.md` gives the universal read and the default City,
+- The Sant rules needed both ends: `GLOSSARY.md` gives the universal read and the default City,
   `DashboardAccess` gives what happens before the first pick, and neither implies the other.

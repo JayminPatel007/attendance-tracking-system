@@ -65,7 +65,7 @@ class WalkInApiException implements Exception {
 /// A Directory match offered when recording a Walk-in. [homeSabhas] carries all
 /// of the Person's current Home Sabha kinds (now away) — a Person has one per
 /// Sabha kind they qualify for (typically their demographic Sabha + Sanyukta,
-/// CONTEXT.md) — shown on the confirm sheet. Elements are `sabha_kind` strings.
+/// GLOSSARY.md) — shown on the confirm sheet. Elements are `sabha_kind` strings.
 class WalkInCandidate {
   WalkInCandidate({required this.personId, required this.fullName, this.homeSabhas = const []});
 

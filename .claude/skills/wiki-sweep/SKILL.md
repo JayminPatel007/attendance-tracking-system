@@ -28,7 +28,7 @@ link rules — is `docs/wiki/protocol.md`. Read it before compiling anything; do
 - **Never drop a `sources[]` entry on recompile.** Adding one is ordinary; removing one sheds
   provenance quietly, which is exactly the drift `sources[]` exists to stop. If a source genuinely no
   longer informs the page, say so in the PR body rather than deleting it silently.
-- **Never rewrite `CONTEXT.md` or `docs/adr/`.** They are canonical and immutable. Cite them.
+- **Never rewrite `GLOSSARY.md` or `docs/adr/`.** They are canonical and immutable. Cite them.
 - **Sweeps are separate and batched** — never folded into a feature PR. The per-page cost is
   dominated by *input* (~4,500 words of ADRs for one page), so batching amortises the re-reads.
 
@@ -105,7 +105,7 @@ git diff --name-only <page.last_compiled>..HEAD -- <each source_paths glob>
 
 Per-page SHAs mean N diffs instead of one; that is the price of never having a checkpoint that lies.
 
-`source_paths` now carries a page's **ADR globs and `CONTEXT.md`** alongside its code globs, so this
+`source_paths` now carries a page's **ADR globs and `GLOSSARY.md`** alongside its code globs, so this
 one diff covers the hand-written docs that are the dominant input — they used to be watched by
 nothing. It also carries **production source and manifests only, never the test tree**. Both rules,
 and the git-versus-Python `**` trap that decides how the globs must be spelled, are `protocol.md` §3;

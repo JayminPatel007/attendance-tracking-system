@@ -1,6 +1,6 @@
 # UI prototypes — chosen designs
 
-Throwaway UI prototypes for all high-priority flows in CONTEXT.md, ADR-0001 through ADR-0013. Each prototype has converged on a single chosen design.
+Throwaway UI prototypes for all high-priority flows in GLOSSARY.md, ADR-0001 through ADR-0013. Each prototype has converged on a single chosen design.
 
 ## How to run
 
@@ -108,12 +108,12 @@ Block-if-non-empty delete buttons show the reason inline (e.g. "has 6 Kshetras")
 
 ## What's still out of scope
 
-- **Ad-hoc Sabha** — deferred per CONTEXT.md.
+- **Ad-hoc Sabha** — deferred per GLOSSARY.md.
 - Sant-specific landing (the dashboard already covers their read view; a Sant-default city picker is a minor add).
 
 ## Revised authority chain — question answered (2026-06-13)
 
-**Question:** does the reworked *scope-based* creation/appointment/deletion chain (per the updated `CONTEXT.md` role glossary; ADRs 0009 + 0011 to be superseded) hold up as UI?
+**Question:** does the reworked *scope-based* creation/appointment/deletion chain (per the updated `GLOSSARY.md` role glossary; ADRs 0009 + 0011 to be superseded) hold up as UI?
 
 **Verdict (from the prototypes):** yes. The four flows above demonstrate it end-to-end:
 - Authority reads as **by scope, not by creator** — every delete/revoke button sits on the holder/entity row, independent of who created it.
@@ -127,4 +127,4 @@ Block-if-non-empty delete buttons show the reason inline (e.g. "has 6 Kshetras")
 
 ## Open thread
 
-"Regional Team" is now used as a first-class actor in `web-structural-create`, `web-role-appointment`, and `web-authority-matrix`, but the label is still a **placeholder** (`canonical domain name TBD` in CONTEXT.md) — swap it everywhere once the canonical name is settled.
+"Regional Team" is now used as a first-class actor in `web-structural-create`, `web-role-appointment`, and `web-authority-matrix`, but the label is still a **placeholder** (`canonical domain name TBD` in GLOSSARY.md) — swap it everywhere once the canonical name is settled.

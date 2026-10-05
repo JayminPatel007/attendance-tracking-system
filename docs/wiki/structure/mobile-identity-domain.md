@@ -11,13 +11,13 @@ source_paths: [
   docs/adr/0014-*.md,
   docs/adr/0015-*.md,
   docs/adr/0016-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0015, title: "Bounded-Context Seams Are Build Modules (DDD + Hexagonal + Clean)", resource: ../../adr/0015-bounded-context-seams-as-build-modules.md }
   - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
-  - { id: context, title: "CONTEXT.md — Karyakar, Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Karyakar, Sanchalak", resource: ../../../GLOSSARY.md }
 last_compiled: aa7634cf7a76074911b3642c107aabe3062259c7
 ---
 

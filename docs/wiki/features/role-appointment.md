@@ -20,7 +20,7 @@ source_paths: [
   docs/adr/0025-*.md,
   docs/adr/0026-*.md,
   docs/adr/0029-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [12, 86, 89, 90]
 sources:
@@ -31,7 +31,7 @@ sources:
   - { id: adr-0025, title: "Appointment is scope-based; the Regional Team is self-replicating; Sah-Nirdeshak holds no appointment authority", resource: ../../adr/0025-scope-based-appointment-rt-self-replication-sah-nirdeshak.md }
   - { id: adr-0026, title: "Deletion Model", resource: ../../adr/0026-deletion-model.md }
   - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
-  - { id: context, title: "CONTEXT.md — Roles (each tier has its own role), Geographic hierarchy, Karyakar", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Roles (each tier has its own role), Geographic hierarchy, Karyakar", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."
