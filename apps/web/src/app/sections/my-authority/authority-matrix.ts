@@ -40,7 +40,7 @@ export interface AuthorityItem {
   name: string;
   /**
    * How this tier brings the item about, in the domain's own words — a Sant is
-   * *provisioned* as an administrative act, never "appointed" (CONTEXT.md).
+   * *provisioned* as an administrative act, never "appointed" (GLOSSARY.md).
    */
   verb: 'Create' | 'Appoint' | 'Provision';
   /** The scope the creation/appointment is bound to. */

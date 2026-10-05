@@ -15,7 +15,7 @@ source_paths: [
   docs/adr/0020-*.md,
   docs/adr/0027-*.md,
   docs/adr/0031-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0008, title: "Single Bounded Context, with Internal Package Seams", resource: ../../adr/0008-single-bounded-context-with-internal-seams.md }
@@ -24,7 +24,7 @@ sources:
   - { id: adr-0020, title: "AggregateRoot base class, domain events, and optimistic locking", resource: ../../adr/0020-aggregate-root-and-domain-events.md }
   - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
   - { id: adr-0031, title: "Shared backend modules group under a `common` aggregator", resource: ../../adr/0031-shared-modules-group-under-a-common-aggregator.md }
-  - { id: context, title: "CONTEXT.md", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md", resource: ../../../GLOSSARY.md }
 last_compiled: 815d1125783ff65d72ad63ed9c7a7c2e3d455584
 status: disputed
 disputed_reason: "`org.sabha.common.SabhaKind` is now `SabhaKindCode` (#217), and common-domain now also holds the merged `City`/`Sabha`/`SabhaKind` `NotFoundException`s (#218) — the page records the name collision as a live hazard and lists only the exception bases."

@@ -28,7 +28,7 @@ source_paths: [
   docs/adr/0030-*.md,
   docs/adr/0032-*.md,
   docs/adr/0033-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
@@ -41,7 +41,7 @@ sources:
   - { id: adr-0030, title: "Caller identity is resolved at the HTTP edge", resource: ../../adr/0030-caller-identity-resolved-at-the-http-edge.md }
   - { id: adr-0032, title: "Caller authority is resolved at the request edge: the facts consolidate, the policies do not", resource: ../../adr/0032-caller-authority-resolved-at-the-request-edge.md }
   - { id: adr-0033, title: "The sabha lookups re-partition by subject", resource: ../../adr/0033-sabha-lookups-re-partition-by-subject.md }
-  - { id: context, title: "CONTEXT.md — Roles (each tier has its own role), Geographic hierarchy", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Roles (each tier has its own role), Geographic hierarchy", resource: ../../../GLOSSARY.md }
 appears_in: [backend-identity, backend-sabha, backend-attendance, backend-analytics, backend-common-domain, web, attendance-marking]
 last_compiled: 03f289295b1ed467219db64fdc0f81ce032f1b10
 ---

@@ -3,7 +3,7 @@
 How to **read** the in-repo wiki, and how to **write back** what a session learned the hard way.
 
 Enter at **`docs/wiki/index.md`**. Its `Start here` router is eight fixed questions over a catalog
-of every page; three of them point straight back out to `CONTEXT.md` and `docs/dev-setup.md`.
+of every page; three of them point straight back out to `GLOSSARY.md` and `docs/dev-setup.md`.
 
 The wiki is an **OKF v0.2 knowledge bundle** (`okf_version` is declared at the front door). You do
 not need to know that to read it — everything below is the whole reading contract — but it is why
@@ -20,7 +20,7 @@ If `docs/wiki/` doesn't exist, **proceed silently** — same rule as the rest of
 | `patterns/` | the pattern behind a cluster of ADRs | the compiler |
 | `notes/` | what we learned the hard way | **you**, in a feature PR |
 
-**The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win** — they are canonical and
+**The wiki is derived. On conflict, `GLOSSARY.md` and `docs/adr/` win** — they are canonical and
 immutable, and the wiki cites them rather than restating them. Glossary terms and ADR numbers appear
 **bare** in wiki prose; the resolvable links live in each page's `sources[]` frontmatter, one entry
 per document, keyed `adr-0011` / `context`.
@@ -109,7 +109,7 @@ In order. `notes/` is the **residue**, reached only when every surface above has
 
 1. environment / tooling → `docs/dev-setup.md`
 2. a decision → an ADR
-3. vocabulary → `CONTEXT.md`
+3. vocabulary → `GLOSSARY.md`
 4. behaviour of one build unit → that `structure/` page's `Gotchas`
 5. cross-cutting, no owning surface → **`notes/`**
 

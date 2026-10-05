@@ -821,7 +821,7 @@ def check_9_sources_watched(pages: list[Page], root: Path, git_ok: bool, f: Fail
     prevent for the `decisions:` field it replaced, and the discharge of #160's
     binding condition on adopting `sources[]` at all.
 
-    Generalising it closed protocol.md §3 rule 2 for free: *`CONTEXT.md` on every
+    Generalising it closed protocol.md §3 rule 2 for free: *`GLOSSARY.md` on every
     compiled page* was mandated by the contract and enforced by nothing.
     """
     for page in pages:

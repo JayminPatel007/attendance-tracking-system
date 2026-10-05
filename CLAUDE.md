@@ -8,7 +8,7 @@
 or route, or how a capability works end to end — open `docs/wiki/index.md` and follow it to the one
 `structure/` or `features/` page. Use that page as a **map** to the right files and governing ADRs,
 and confirm any specific you act on in the source: the wiki is **derived**, and on conflict
-`CONTEXT.md` and the ADRs win.
+`GLOSSARY.md` and the ADRs win.
 
 **At PR-open**, write session learnings back. Reading and write-back rules: `docs/agents/wiki.md`.
 
@@ -24,5 +24,5 @@ Canonical vocabulary — `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` and one `docs/adr/` at the repo root, shared by all three
+Single-context: one `GLOSSARY.md` and one `docs/adr/` at the repo root, shared by all three
 apps. See `docs/agents/domain.md`.

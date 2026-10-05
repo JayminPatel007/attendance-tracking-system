@@ -18,14 +18,14 @@ source_paths: [
   docs/adr/0004-*.md,
   docs/adr/0016-*.md,
   docs/adr/0022-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [3, 10, 19, 77, 130]
 sources:
   - { id: adr-0004, title: "User Authentication: Custom Username + Password, Set by Assigner", resource: ../../adr/0004-user-authentication-username-password.md }
   - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
-  - { id: context, title: "CONTEXT.md — Karyakar, Roles (each tier has its own role)", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Karyakar, Roles (each tier has its own role)", resource: ../../../GLOSSARY.md }
 last_compiled: 6e43fd984ca097e05d67237d341afc11c0bf41ea
 ---
 

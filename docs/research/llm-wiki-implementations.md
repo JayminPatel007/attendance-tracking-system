@@ -313,7 +313,7 @@ Findings only — the decisions belong to the downstream tickets.
   (one topic per directory-with-a-manifest) would map our backend's bounded-context modules to pages
   almost for free, but has no home for a vertical slice that crosses all three apps. yysun's `risks/`
   ("what not to break") and llm-wiki-compiler's `Talks To` and `Gotchas` sections are the page
-  elements with no existing home in our `CONTEXT.md` / ADR layer.
+  elements with no existing home in our `GLOSSARY.md` / ADR layer.
 - **Entry point** ([Decide where the wiki lives and how a cold agent enters it](https://github.com/JayminPatel007/attendance-tracking-system/issues/145)):
   `index.md` is unanimous and non-optional; the aliases column and the 2-minute orientation bar are
   cheap adoptions. Open for us: whether a dot-directory (`.wiki/`, untracked in yysun's default) or a
@@ -342,6 +342,6 @@ Findings only — the decisions belong to the downstream tickets.
   density. Constraints to hold it to: ~500 words, facts separated from inferences, `path:line`
   anchors, no pasted code blocks.
 - **A gap none of them fill**, and it is ours specifically: every implementation assumes the wiki is
-  the *only* synthesised layer. We already have `CONTEXT.md` (canonical glossary) and 29 immutable
+  the *only* synthesised layer. We already have `GLOSSARY.md` (canonical glossary) and 29 immutable
   ADRs that the wiki must cite without rewriting. Nothing in this research addresses coexistence with
   a pre-existing hand-written knowledge layer — that boundary is ours to draw.

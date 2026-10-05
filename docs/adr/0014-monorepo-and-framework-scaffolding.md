@@ -4,7 +4,7 @@ The Slice-1 scaffold (#2) commits the system to a single Git monorepo containing
 
 ## Why a monorepo rather than three separate repos
 
-The three apps share one domain model (`CONTEXT.md`) and one bounded context (ADR-0008). Cross-app changes — adding a field on the backend that the mobile and web clients both need to read — happen routinely in this codebase. Polyrepos turn those into multi-PR coordination exercises; a monorepo makes them atomic. Single-org / small-team (ADR-0005) means we don't gain anything from per-app release cadence yet, and the cost — one CI runner, shared `.github/workflows/`, a single ADR directory — is small.
+The three apps share one domain model (`GLOSSARY.md`) and one bounded context (ADR-0008). Cross-app changes — adding a field on the backend that the mobile and web clients both need to read — happen routinely in this codebase. Polyrepos turn those into multi-PR coordination exercises; a monorepo makes them atomic. Single-org / small-team (ADR-0005) means we don't gain anything from per-app release cadence yet, and the cost — one CI runner, shared `.github/workflows/`, a single ADR directory — is small.
 
 The risk a monorepo carries is CI bloat (every push runs everything). We mitigate this with `paths:` filters per workflow, so a `apps/web/**` change does not build the backend or mobile pipelines.
 

@@ -160,7 +160,7 @@ class AddPersonRequest {
   /// [gender] is a closed set on the wire. The generated transformer answers
   /// `null` for a value outside it, which would quietly post a Person with no
   /// gender; say so instead, since gender decides which demographic Sabhas the
-  /// Person is eligible for (CONTEXT.md).
+  /// Person is eligible for (GLOSSARY.md).
   static api.AddPersonRequestGenderEnum _genderValue(String gender) {
     final value = api.AddPersonRequestGenderEnum.fromJson(gender);
     if (value == null) {
@@ -203,7 +203,7 @@ class AddPersonOutcome {
 
 /// A possible duplicate surfaced by the name soft-warn. [homeSabhas] carries all
 /// of the Person's current Home Sabha kinds — a Person has one per Sabha kind
-/// they qualify for (typically their demographic Sabha + Sanyukta, CONTEXT.md) —
+/// they qualify for (typically their demographic Sabha + Sanyukta, GLOSSARY.md) —
 /// so the adder sees the demographic Sabha and not just whichever sorts first.
 /// Elements are `sabha_kind` strings.
 class NameCandidate {

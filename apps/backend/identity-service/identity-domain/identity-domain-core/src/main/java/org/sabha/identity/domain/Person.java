@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * A human known to the system, held in the central Directory (CONTEXT.md).
+ * A human known to the system, held in the central Directory (GLOSSARY.md).
  *
  * <p>Identity is mobile-keyed (ADR-0013): a Person carries either their own
  * system-wide-unique {@code mobile} or, for a child without their own phone, a

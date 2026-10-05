@@ -13,7 +13,7 @@ source_paths: [
   docs/adr/0018-*.md,
   docs/adr/0019-*.md,
   docs/adr/0031-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }

@@ -20,7 +20,7 @@ source_paths: [
   docs/adr/0014-*.md,
   docs/adr/0016-*.md,
   docs/adr/0022-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
@@ -28,7 +28,7 @@ sources:
   - { id: adr-0014, title: "Monorepo, Angular Web, Spring Boot Backend Layout, and CI Structure", resource: ../../adr/0014-monorepo-and-framework-scaffolding.md }
   - { id: adr-0016, title: "OIDC Authentication via Keycloak (Separate Container)", resource: ../../adr/0016-oidc-auth-via-keycloak.md }
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
-  - { id: context, title: "CONTEXT.md — Sanyojak, Nirdeshak, Sant, Madhyastha Karyalaya, Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Sanyojak, Nirdeshak, Sant, Madhyastha Karyalaya, Sanchalak", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 ---
 

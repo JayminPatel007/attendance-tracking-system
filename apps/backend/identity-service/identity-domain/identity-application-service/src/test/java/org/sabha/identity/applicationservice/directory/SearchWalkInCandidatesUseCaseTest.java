@@ -23,7 +23,7 @@ class SearchWalkInCandidatesUseCaseTest {
         directory.mapSabhaToKshetra(SABHA, KSHETRA);
         // A typical Person has more than one Home Sabha (their demographic kind +
         // the universal Sanyukta), so the candidate must carry all of them rather
-        // than collapsing to one (CONTEXT.md).
+        // than collapsing to one (GLOSSARY.md).
         NameCandidate match = new NameCandidate(
                 UUID.randomUUID(), "Ramesh Shah", List.of("REGULAR_BAAL", "REGULAR_SANYUKTA"));
         directory.seedNameCandidates(KSHETRA, List.of(match));

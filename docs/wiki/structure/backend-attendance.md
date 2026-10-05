@@ -15,7 +15,7 @@ source_paths: [
   docs/adr/0019-*.md,
   docs/adr/0021-*.md,
   docs/adr/0028-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0001, title: "Sabha Occurrence Lifecycle", resource: ../../adr/0001-sabha-occurrence-lifecycle.md }
@@ -24,7 +24,7 @@ sources:
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0021, title: "Spring Scheduling for Occurrence cron jobs", resource: ../../adr/0021-spring-scheduling-for-occurrence-cron.md }
   - { id: adr-0028, title: "Persistence stays on JdbcClient (no JPA); aggregate lifecycles stay in-aggregate (no Spring State Machine)", resource: ../../adr/0028-jdbcclient-persistence-and-in-aggregate-lifecycles.md }
-  - { id: context, title: "CONTEXT.md — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Sabha Occurrence, Attendance Marking, Walk-in, Sanchalak, Nirikshak", resource: ../../../GLOSSARY.md }
 last_compiled: 725c3bb2acc25b0d6eca106747727b427695b0b1
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."

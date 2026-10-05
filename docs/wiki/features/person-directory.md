@@ -14,14 +14,14 @@ source_paths: [
   docs/adr/0005-*.md,
   docs/adr/0007-*.md,
   docs/adr/0013-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [7, 81, 104]
 sources:
   - { id: adr-0005, title: "Single Organization, Not Multi-Tenant", resource: ../../adr/0005-single-organization-not-multi-tenant.md }
   - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
   - { id: adr-0013, title: "Directory De-duplication on Person Add", resource: ../../adr/0013-directory-de-duplication-on-person-add.md }
-  - { id: context, title: "CONTEXT.md — Person, Directory, Home Sabha, Sabha Kind", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Person, Directory, Home Sabha, Sabha Kind", resource: ../../../GLOSSARY.md }
 last_compiled: 6e43fd984ca097e05d67237d341afc11c0bf41ea
 ---
 

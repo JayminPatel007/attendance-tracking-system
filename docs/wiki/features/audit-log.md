@@ -12,14 +12,14 @@ source_paths: [
   docs/adr/0022-*.md,
   docs/adr/0023-*.md,
   docs/adr/0029-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [20, 80, 131]
 sources:
   - { id: adr-0022, title: "Web session via a Backend-for-Frontend with an HTTP-only cookie", resource: ../../adr/0022-web-session-via-bff-http-only-cookie.md }
   - { id: adr-0023, title: "Audit log is a read-model over existing tables, viewable by Nirdeshak and above within scope", resource: ../../adr/0023-audit-log-read-model-and-viewer-authority.md }
   - { id: adr-0029, title: "`role_assignments` is identity-owned: read-models may join it, authority checks go through ports", resource: ../../adr/0029-role-assignments-access-rule.md }
-  - { id: context, title: "CONTEXT.md — Nirdeshak, Sanyojak, Regional Team, Sant, Madhyastha Karyalaya, Nirikshak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Nirdeshak, Sanyojak, Regional Team, Sant, Madhyastha Karyalaya, Nirikshak", resource: ../../../GLOSSARY.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."

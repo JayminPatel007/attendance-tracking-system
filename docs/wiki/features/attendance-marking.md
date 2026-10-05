@@ -16,7 +16,7 @@ source_paths: [
   docs/adr/0003-*.md,
   docs/adr/0007-*.md,
   docs/adr/0013-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [3, 5]
 sources:
@@ -24,7 +24,7 @@ sources:
   - { id: adr-0003, title: "Platform Split: Mobile for Sabha-Level Operations, Web for Everything Else", resource: ../../adr/0003-platform-split-by-role.md }
   - { id: adr-0007, title: "Mobile App is Offline-Capable for Attendance Marking Only", resource: ../../adr/0007-offline-capable-attendance-marking.md }
   - { id: adr-0013, title: "Directory De-duplication on Person Add", resource: ../../adr/0013-directory-de-duplication-on-person-add.md }
-  - { id: context, title: "CONTEXT.md — Attendance Marking, Walk-in, Roster, Sabha Occurrence, Sanchalak, Sah-Sanchalak", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Attendance Marking, Walk-in, Roster, Sabha Occurrence, Sanchalak, Sah-Sanchalak", resource: ../../../GLOSSARY.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 ---
 

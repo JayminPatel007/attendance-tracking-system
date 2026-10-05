@@ -75,7 +75,7 @@ class WalkInSearchIntegrationTest extends PostgresIntegrationTest {
     void aSearchReturnsAllOfAMultiHomeSabhaPersonsKinds() {
         // A Person with both a demographic (Baal) and the universal Sanyukta Home
         // Sabha. MIN(sabha_kind) would surface only "REGULAR_BAAL"; the candidate
-        // must carry both (CONTEXT.md: one Home Sabha per kind).
+        // must carry both (GLOSSARY.md: one Home Sabha per kind).
         jdbc.sql("""
                 INSERT INTO sabhas (id, kshetra_id, sabha_kind, schedule_shape,
                                     day_of_week, start_time, end_time, standing_venue)

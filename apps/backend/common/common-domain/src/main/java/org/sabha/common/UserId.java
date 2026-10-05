@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * The local {@code users.id} of a signed-in caller — the identity the domain
- * actually works in, and the one {@code CONTEXT.md} names (a <em>User</em> is a
+ * actually works in, and the one {@code GLOSSARY.md} names (a <em>User</em> is a
  * Person who can log into the system).
  *
  * <p>Resolved once at the HTTP edge from the credential's Keycloak subject and

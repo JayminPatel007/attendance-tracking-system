@@ -8,7 +8,7 @@ import java.util.UUID;
  * (kshetra, demographic)} in {@code role_assignments} and read from {@link
  * CallerAuthority#rolesOnKshetra(UUID, String)} — the Nirikshak's
  * Sanchalak-proxy capability is scoped to the explicit set of 3–4 Sabhas a
- * Nirdeshak has assigned to them (CONTEXT.md, Slice 14).
+ * Nirdeshak has assigned to them (GLOSSARY.md, Slice 14).
  *
  * <p>It survived the ADR-0032 fold on purpose, and it is the carve-out most
  * likely to be questioned: post-fold it is fully caller-keyed. It stays because

@@ -13,14 +13,14 @@ source_paths: [
   docs/adr/0019-*.md,
   docs/adr/0023-*.md,
   docs/adr/0027-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 sources:
   - { id: adr-0010, title: "Re-engagement Candidate Definition", resource: ../../adr/0010-re-engagement-candidate-definition.md }
   - { id: adr-0019, title: "Bounded-context module taxonomy: five modules per context, presentation split from application service", resource: ../../adr/0019-bounded-context-module-taxonomy.md }
   - { id: adr-0023, title: "Audit log is a read-model over existing tables, viewable by Nirdeshak and above within scope", resource: ../../adr/0023-audit-log-read-model-and-viewer-authority.md }
   - { id: adr-0027, title: "No shared granted-scope module behind the four authorization engines", resource: ../../adr/0027-no-shared-granted-scope-module-behind-the-authorization-engines.md }
-  - { id: context, title: "CONTEXT.md — Sant, Madhyastha Karyalaya, Re-engagement Candidate", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Sant, Madhyastha Karyalaya, Re-engagement Candidate", resource: ../../../GLOSSARY.md }
 last_compiled: 09fb2075173eb4fc030ce2c26e85311aa26f064a
 status: disputed
 disputed_reason: "ADR-0032's caller-authority fold deleted nine of the cross-context lookup ports this page names and cut six engines to five; recompile in the #244 sweep."

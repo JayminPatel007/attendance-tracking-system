@@ -11,7 +11,7 @@ UUID subject = UUID.fromString(authentication.getName());   // web, BFF session 
 
 **39 non-test call sites** did this across all four contexts. The subject was then passed through layers that never read it — `GetCurrentRosterUseCase`, `OccurrenceShapingService`, `TransitionActor.SignedIn`, `OccurrenceWriter` — until, several frames deep, someone called `CallerResolver.requireUserId(...)` and converted it into the thing the domain actually wanted: the local `users.id`.
 
-That is a pass-through parameter on the hottest path in the system, and it leaks a transport decision ("a caller is a Keycloak subject, which is a UUID, parsed from the `sub` claim") into 24 files of domain-facing signatures. `CONTEXT.md` names the system's identity concept **User** — "a Person who can log into the system". "Keycloak subject" is not in the ubiquitous language, yet it was in the method signatures.
+That is a pass-through parameter on the hottest path in the system, and it leaks a transport decision ("a caller is a Keycloak subject, which is a UUID, parsed from the `sub` claim") into 24 files of domain-facing signatures. `GLOSSARY.md` names the system's identity concept **User** — "a Person who can log into the system". "Keycloak subject" is not in the ubiquitous language, yet it was in the method signatures.
 
 **Decision: resolve the caller once, in an argument resolver at the HTTP edge. Everything below takes a `UserId`.**
 

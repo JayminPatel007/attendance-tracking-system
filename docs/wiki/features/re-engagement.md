@@ -11,14 +11,14 @@ source_paths: [
   docs/adr/0008-*.md,
   docs/adr/0010-*.md,
   docs/adr/0018-*.md,
-  CONTEXT.md
+  GLOSSARY.md
 ]
 issues: [16]
 sources:
   - { id: adr-0008, title: "Single Bounded Context, with Internal Package Seams", resource: ../../adr/0008-single-bounded-context-with-internal-seams.md }
   - { id: adr-0010, title: "Re-engagement Candidate Definition", resource: ../../adr/0010-re-engagement-candidate-definition.md }
   - { id: adr-0018, title: "Application services split: `*-application` vs `*-application-service`", resource: ../../adr/0018-application-service-split.md }
-  - { id: context, title: "CONTEXT.md — Re-engagement candidate, Home Sabha, Walk-in, Madhyastha Karyalaya", resource: ../../../CONTEXT.md }
+  - { id: context, title: "GLOSSARY.md — Re-engagement candidate, Home Sabha, Walk-in, Madhyastha Karyalaya", resource: ../../../GLOSSARY.md }
 last_compiled: 86a4e5242ce1f547f13bb0411745db918726a921
 ---
 

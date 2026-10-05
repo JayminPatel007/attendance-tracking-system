@@ -28,5 +28,5 @@ The "one Occurrence per calendar month" rule is an organisational expectation, n
 
 - The Occurrence materialization job only iterates weekly-recurring Sabhas; monthly-ad-hoc Sabhas are excluded.
 - The mobile app's Roster cache (per ADR-0007) needs both schedule shapes — a Sanchalak running a BSS Sabha still benefits from offline marking against the cached Roster.
-- Per-Occurrence venue override (mentioned in CONTEXT.md) applies to both shapes uniformly — the override is a property of the Occurrence, not the schedule.
+- Per-Occurrence venue override (mentioned in GLOSSARY.md) applies to both shapes uniformly — the override is a property of the Occurrence, not the schedule.
 - A future need for richer cadences (fortnightly, quarterly) becomes a new shape on the discriminator, not a retrofit of a generic rule engine.

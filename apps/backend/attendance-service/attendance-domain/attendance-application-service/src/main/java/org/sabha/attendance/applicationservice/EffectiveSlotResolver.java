@@ -14,7 +14,7 @@ import org.sabha.common.SabhaFacts;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves an Occurrence to its Effective Slot (see CONTEXT.md): the absolute
+ * Resolves an Occurrence to its Effective Slot (see GLOSSARY.md): the absolute
  * instants it starts and ends at.
  *
  * <p>Cross-context schedule resolution goes through {@link SabhaFacts}

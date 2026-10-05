@@ -1,4 +1,4 @@
-// PROTOTYPE — shared fake domain data, using the canonical vocabulary from CONTEXT.md.
+// PROTOTYPE — shared fake domain data, using the canonical vocabulary from GLOSSARY.md.
 
 window.__DATA = (function () {
   const roster = [

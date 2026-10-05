@@ -7,7 +7,7 @@ The front door to this codebase's knowledge. Read `docs/agents/wiki.md` for the 
 (what each type means, how to tell whether a page is still true) and `docs/wiki/protocol.md` for the
 page contract.
 
-**The wiki is derived. On conflict, `CONTEXT.md` and `docs/adr/` win.**
+**The wiki is derived. On conflict, `GLOSSARY.md` and `docs/adr/` win.**
 
 ## Start here
 
@@ -15,7 +15,7 @@ The eight questions are fixed in `protocol.md`; the compiler fills only the targ
 
 | I need to know… | Go to |
 |---|---|
-| What is this system, in domain terms? | [CONTEXT.md](../../CONTEXT.md) |
+| What is this system, in domain terms? | [GLOSSARY.md](../../GLOSSARY.md) |
 | How do I run it locally? | [dev-setup](../dev-setup.md) |
 | Which app/module owns X? | [Structure](#structure) |
 | How does capability Y work end to end? | [Features](#features) |
